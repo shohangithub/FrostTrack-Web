@@ -1,0 +1,51 @@
+/* Invoice Header */
+.invoice-header {
+    display: flex;
+}
+
+.company-logo {
+    width: 33.33%;
+    text-align: center;
+
+    img {
+        max-width: 150px;
+        height: auto;
+    }
+}
+
+.invoice-meta {
+    p {
+        margin-bottom: 5px;
+        // font-size: 0.9rem;
+    }
+}
+
+/* Company Information */
+.company-info {
+    // border-bottom: 1px solid #dee2e6;
+    // padding-bottom: 20px;
+    // margin-bottom: 20px;
+    // width: 66.66%;
+    padding: 10px;
+    border-left: 1px dotted #000000;
+    border-right: 1px dotted #000000;
+}
+
+.company-name {
+    color: #2c3e50;
+    font-weight: 700;
+    // font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.company-address,
+.company-contact {
+    font-size: 10px;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.invoice-info {
+    width: 33.33%;
+    text-align: right;
+}

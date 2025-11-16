@@ -1,0 +1,307 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Asset
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{
+  <form class="register-form" [formGroup]="register" (ngSubmit)="submit()">
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Asset Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Asset Name"
+          formControlName="assetName"
+          required
+        />
+        @if (!register.get('assetName')?.valid &&
+        register.get('assetName')?.touched) {
+        <small class="form-text text-danger"> Asset Name is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Asset Code<span class="text-danger">*</span></label>
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Asset Code"
+              formControlName="assetCode"
+              readonly
+              required
+            />
+            <div
+              class="input-group-append"
+              style="cursor: pointer"
+              (click)="generateCode()"
+            >
+              <span
+                class="input-group-text input-group-text-append"
+                id="basic-addon5"
+                ><i
+                  class="fas"
+                  [ngClass]="
+                    isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'
+                  "
+                ></i
+              ></span>
+            </div>
+          </div>
+        </div>
+        @if (!register.get('assetCode')?.valid &&
+        register.get('assetCode')?.touched) {
+        <small class="form-text text-danger"> Asset Code is required </small>
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Asset Type</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Type to search or enter new asset type..."
+          formControlName="assetType"
+          [ngbTypeahead]="search"
+          [editable]="true"
+          [showHint]="true"
+          [focusFirst]="false"
+          autocomplete="off"
+        />
+        <small class="form-text text-muted">
+          Start typing to see suggestions or enter a new asset type
+        </small>
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Serial Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Serial Number"
+          formControlName="serialNumber"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Model</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Model"
+          formControlName="model"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Manufacturer</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Manufacturer"
+          formControlName="manufacturer"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Purchase Date</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="purchaseDate"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Purchase Cost <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Purchase Cost"
+          formControlName="purchaseCost"
+          min="0"
+          step="0.01"
+          required
+        />
+        @if (!register.get('purchaseCost')?.valid &&
+        register.get('purchaseCost')?.touched) {
+        <small class="form-text text-danger"> Purchase Cost is required </small>
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Current Value <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Current Value"
+          formControlName="currentValue"
+          min="0"
+          step="0.01"
+          required
+        />
+        @if (!register.get('currentValue')?.valid &&
+        register.get('currentValue')?.touched) {
+        <small class="form-text text-danger"> Current Value is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Depreciation Rate (%)</label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Depreciation Rate"
+          formControlName="depreciationRate"
+          min="0"
+          max="100"
+          step="0.01"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Location</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Location"
+          formControlName="location"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Department</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Department"
+          formControlName="department"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Assigned To</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Assigned To"
+          formControlName="assignedTo"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Condition</label>
+        <select
+          class="form-control form-control-sm"
+          formControlName="condition"
+        >
+          @for (condition of conditionList; track condition.value) {
+          <option [value]="condition.value">{{ condition.text }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Warranty Expiry Date</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="warrantyExpiryDate"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Last Maintenance Date</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="maintenanceDate"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Image URL</label>
+        <input
+          type="url"
+          class="form-control form-control-sm"
+          placeholder="Image URL"
+          formControlName="imageUrl"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-control form-control-sm"
+          formControlName="isActive"
+          required
+        >
+          @for (status of statusList; track status.id) {
+          <option [value]="status.id">{{ status.value }}</option>
+          }
+        </select>
+        @if (!register.get('isActive')?.valid &&
+        register.get('isActive')?.touched) {
+        <small class="form-text text-danger"> Status is required </small>
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Notes</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Notes"
+          formControlName="notes"
+          rows="3"
+        ></textarea>
+      </div>
+    </div>
+  </form>
+  }
+</div>
+
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-outline-secondary"
+    (click)="closeModal()"
+  >
+    Close
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary btn-sm"
+    [class.btn-progress]="isLoading"
+    [disabled]="isLoading || register.invalid"
+    (click)="submit()"
+  >
+    @if(isLoading){
+    <div class="loading-btn-wrapper">
+      <div class="loading-btn"></div>
+    </div>
+    } @else{ {{ isEditing ? "Update" : "Save" }} Asset }
+  </button>
+</div>

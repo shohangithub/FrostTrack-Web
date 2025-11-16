@@ -1,0 +1,160 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Product Suppliers</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <!-- <div class="col-auto p-0">
+                      <div class="ngxTableHeader">
+                        <div class="table-title">
+                          <h2><strong>Categorys</strong></h2>
+                        </div>
+                      </div>
+                    </div> -->
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            (keyup)="filterDatatable($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            class="btn btn-icon icon-left btn-primary rounded-button"
+                            (click)="addRow()"
+                          >
+                            <i class="material-icons">add</i>
+                          </button>
+                          <button
+                            [hidden]="!isRowSelected"
+                            class="btn btn-icon icon-left btn-danger rounded-button"
+                            (click)="deleteSelected()"
+                          >
+                            <i class="material-icons">delete</i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <ngx-datatable
+              #table
+              class="material"
+              [rows]="data"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="60"
+              [footerHeight]="80"
+              rowHeight="auto"
+              [externalPaging]="true"
+              [limit]="pagination.pageSize"
+              [offset]="pagination.pageIndex"
+              [count]="paging?.totalData ?? 0"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+              [selected]="selected"
+              [selectionType]="selection"
+              (select)="onSelect($event)"
+              (page)="changePagination($event)"
+              (sort)="onSortring($event)"
+            >
+              <ngx-datatable-column
+                [width]="70"
+                [sortable]="false"
+                [draggable]="false"
+                [resizeable]="false"
+                [canAutoResize]="false"
+                [headerCheckboxable]="true"
+                [checkboxable]="true"
+              >
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="SupplierName"
+                prop="supplierName"
+                [width]="200"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.supplierName }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="SupplierCode" prop="supplierCode">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.supplierCode }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Mobile" prop="supplierMobile">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.supplierMobile }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Email" prop="supplierEmail">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.supplierEmail }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Credit Limit" prop="creditLimit">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.creditLimit }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Status" prop="isActive">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  @if (row.status==='Active') {
+                  <div class="badge-outline col-green">{{ row.status }}</div>
+                  } @if (row.status==='Inactive') {
+                  <div class="badge-outline col-red">{{ row.status }}</div>
+                  } @if (row.status==='Pending') {
+                  <div class="badge-outline col-indigo">{{ row.status }}</div>
+                  }
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                [width]="50"
+                name="Actions"
+                [sortable]="false"
+              >
+                <ng-template
+                  let-value="value"
+                  let-row="row"
+                  let-rowIndex="rowIndex"
+                  ngx-datatable-cell-template
+                >
+                  <span>
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="editRow(row, rowIndex)"
+                    >
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="delete(row)"
+                    >
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

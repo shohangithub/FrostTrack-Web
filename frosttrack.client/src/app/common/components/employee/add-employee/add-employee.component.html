@@ -1,0 +1,337 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Employee
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{
+  <form class="register-form" [formGroup]="register" (ngSubmit)="onSubmit()">
+    <!-- Employee Code and Name -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Employee Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Employee Name"
+          formControlName="employeeName"
+          required
+        />
+        @if (!register.get('employeeName')?.valid &&
+        register.get('employeeName')?.touched) {
+        <small class="form-text text-danger"> Employee Name is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Employee Code <span class="text-danger">*</span></label>
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Employee Code"
+              formControlName="employeeCode"
+              readonly
+              required
+            />
+            <div
+              class="input-group-append"
+              style="cursor: pointer"
+              (click)="generateCode()"
+            >
+              <span
+                class="input-group-text input-group-text-append"
+                id="basic-addon5"
+                ><i
+                  class="fas"
+                  [ngClass]="
+                    isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'
+                  "
+                ></i
+              ></span>
+            </div>
+          </div>
+        </div>
+        @if (!register.get('employeeCode')?.valid &&
+        register.get('employeeCode')?.touched) {
+        <small class="form-text text-danger"> Employee Code is required </small>
+        }
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Email</label>
+        <input
+          type="email"
+          class="form-control form-control-sm"
+          placeholder="Email"
+          formControlName="email"
+        />
+        @if (!register.get('email')?.valid && register.get('email')?.touched) {
+        <small class="form-text text-danger"> Valid email is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Phone Number</label>
+        <input
+          type="tel"
+          class="form-control form-control-sm"
+          placeholder="Phone Number"
+          formControlName="phone"
+        />
+      </div>
+    </div>
+
+    <!-- Department and Designation with Autocomplete -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Department</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Type to search or enter new department..."
+          formControlName="department"
+          [ngbTypeahead]="searchDepartments"
+          [editable]="true"
+          [showHint]="true"
+          [focusFirst]="false"
+          autocomplete="off"
+        />
+        <small class="form-text text-muted">
+          Start typing to see suggestions or enter a new department
+        </small>
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Designation</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Type to search or enter new designation..."
+          formControlName="designation"
+          [ngbTypeahead]="searchDesignations"
+          [editable]="true"
+          [showHint]="true"
+          [focusFirst]="false"
+          autocomplete="off"
+        />
+        <small class="form-text text-muted">
+          Start typing to see suggestions or enter a new designation
+        </small>
+      </div>
+    </div>
+
+    <!-- Employment Details -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Joining Date <span class="text-danger">*</span></label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="joiningDate"
+          required
+        />
+        @if (!register.get('joiningDate')?.valid &&
+        register.get('joiningDate')?.touched) {
+        <small class="form-text text-danger"> Joining Date is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Employment Type <span class="text-danger">*</span></label>
+        <select
+          class="form-control form-control-sm"
+          formControlName="employmentType"
+          required
+        >
+          <option value="">Select Employment Type</option>
+          @for (type of employmentTypeList; track type.value) {
+          <option [value]="type.value">{{ type.text }}</option>
+          }
+        </select>
+        @if (!register.get('employmentType')?.valid &&
+        register.get('employmentType')?.touched) {
+        <small class="form-text text-danger">
+          Employment Type is required
+        </small>
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Salary <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Salary"
+          formControlName="salary"
+          min="0"
+          step="0.01"
+          required
+        />
+        @if (!register.get('salary')?.valid && register.get('salary')?.touched)
+        {
+        <small class="form-text text-danger"> Salary is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Date of Birth</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="dateOfBirth"
+        />
+      </div>
+    </div>
+
+    <!-- Address Information -->
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Address</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Address"
+          formControlName="address"
+          rows="2"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>City</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="City"
+          formControlName="city"
+        />
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>State</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="State"
+          formControlName="state"
+        />
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Zip Code</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Zip Code"
+          formControlName="zipCode"
+        />
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Country</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Country"
+          formControlName="country"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Account Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Account Number"
+          formControlName="bankAccountNumber"
+        />
+      </div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Emergency Contact Name</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Emergency Contact Name"
+          formControlName="emergencyContactName"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Emergency Contact Phone</label>
+        <input
+          type="tel"
+          class="form-control form-control-sm"
+          placeholder="Emergency Contact Phone"
+          formControlName="emergencyContactPhone"
+        />
+      </div>
+    </div>
+
+    <!-- Notes and Status -->
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Notes</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Notes"
+          formControlName="notes"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-select-sm"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">
+            {{ status.value }}
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+  </form>
+  }
+</div>
+
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-light"
+    data-dismiss="modal"
+    (click)="onClose()"
+  >
+    Close
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary"
+    [disabled]="!register.valid || isLoading"
+    (click)="onSubmit()"
+  >
+    @if (isLoading) {
+    <i class="fas fa-spinner fa-spin"></i>
+    }
+    {{ isEditing ? "Update" : "Add" }}
+  </button>
+</div>

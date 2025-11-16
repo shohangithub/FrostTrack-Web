@@ -1,0 +1,565 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="register"
+        (ngSubmit)="savePayment()"
+      >
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card mb-3">
+            <div class="card-body-narrow">
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="paymentNumber" class="col-sm-4 col-form-label"
+                      >Payment Number:</label
+                    >
+                    <div class="col-sm-8">
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="paymentNumber"
+                        formControlName="paymentNumber"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="paymentDate" class="col-sm-4 col-form-label"
+                      >Payment Date:</label
+                    >
+                    <div class="col-sm-8">
+                      <input
+                        type="date"
+                        class="form-control form-control-sm"
+                        id="paymentDate"
+                        formControlName="paymentDate"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branchId" class="col-sm-4 col-form-label"
+                      >Branch:</label
+                    >
+                    <div class="col-sm-8">
+                      <select
+                        class="form-select form-control-sm"
+                        formControlName="branchId"
+                      >
+                        @for (branch of branchs; track branch.value) {
+                        <option [value]="branch.value">
+                          {{ branch.text }}
+                        </option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+            <div class="row">
+              <!-- Supplier Information -->
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="card mb-2">
+                  <span class="card-label">Supplier Information</span>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-lg-8 col-md-8 col-sm-8">
+                        <div class="form-group row">
+                          <label for="supplier" class="col-sm-3 col-form-label"
+                            >Supplier:</label
+                          >
+                          <div class="col-sm-9">
+                            <ng-select
+                              [items]="suppliers"
+                              bindLabel="supplierName"
+                              bindValue="id"
+                              formControlName="supplierId"
+                              [loading]="supplierLoading"
+                              (ngModelChange)="onSupplierChange()"
+                              placeholder="Select Supplier..."
+                            >
+                            </ng-select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-4 col-md-4 col-sm-4">
+                        @if (selectedSupplier) {
+                        <div class="text-end">
+                          <label class="form-label text-muted"
+                            >Current Due Amount</label
+                          >
+                          @if (dueBalanceLoading) {
+                          <div class="text-center">
+                            <div
+                              class="spinner-border spinner-border-sm text-primary"
+                              role="status"
+                            >
+                              <span class="visually-hidden">Loading...</span>
+                            </div>
+                          </div>
+                          } @else {
+                          <div class="h4 fw-bold text-danger mb-0">
+                            {{
+                              supplierDueBalance
+                                | currency : "BDT" : "symbol" : "1.2-2"
+                            }}
+                          </div>
+                          }
+                          <small class="text-muted">Outstanding Balance</small>
+                        </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Method Information -->
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="card mb-2">
+                  <span class="card-label">Payment Method</span>
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label class="col-form-label mb-3"
+                        >Select Payment Method:
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="d-flex flex-wrap gap-3">
+                        @for (method of paymentMethods; track method.value) {
+
+                        <div class="payment-method-option">
+                          <input
+                            class="form-check-input visually-hidden"
+                            type="radio"
+                            formControlName="paymentMethod"
+                            [value]="method.value"
+                            [id]="'paymentMethod_' + method.value"
+                          />
+                          <label
+                            class="payment-method-card d-flex flex-column align-items-center p-3 border rounded-3"
+                            [for]="'paymentMethod_' + method.value"
+                            [class.border-primary]="
+                              register.get('paymentMethod')?.value ===
+                              method.value
+                            "
+                            [class.bg-light]="
+                              register.get('paymentMethod')?.value ===
+                              method.value
+                            "
+                            style="
+                              cursor: pointer;
+                              min-width: 120px;
+                              max-width: 140px;
+                              transition: all 0.2s ease;
+                              border-width: 2px !important;
+                            "
+                          >
+                            <i
+                              class="{{ method.icon }} fs-4 mb-2"
+                              [class]="method.colorClass"
+                            ></i>
+                            <span class="fw-medium text-center">{{
+                              method.text
+                            }}</span>
+                            <small class="text-muted text-center mt-1">{{
+                              method.description
+                            }}</small>
+                          </label>
+                        </div>
+                        }
+                      </div>
+                    </div>
+                    <section class="payment-method-details mt-3">
+                      <!-- Conditional Fields Based on Payment Method -->
+                      @if(requiresBankAccount()) {
+                      <div class="form-group row">
+                        <label for="bank" class="col-sm-4 col-form-label"
+                          >Bank:</label
+                        >
+                        <div class="col-sm-8">
+                          <ng-select
+                            [items]="banks"
+                            bindLabel="text"
+                            bindValue="value"
+                            formControlName="bankId"
+                            [loading]="bankLoading"
+                          >
+                          </ng-select>
+                        </div>
+                      </div>
+                      } @if (requiresCheckDetails()) {
+                      <div class="form-group row">
+                        <label for="checkNumber" class="col-sm-4 col-form-label"
+                          >Check No:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="checkNumber"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label for="checkDate" class="col-sm-4 col-form-label"
+                          >Check Date:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            formControlName="checkDate"
+                          />
+                        </div>
+                      </div>
+                      } @if (requiresOnlineDetails()) {
+                      <!-- Online Payment Fields -->
+                      <div class="form-group row">
+                        <label
+                          for="onlinePaymentMethod"
+                          class="col-sm-4 col-form-label"
+                          >Gateway:</label
+                        >
+                        <div class="col-sm-8">
+                          <select
+                            class="form-select form-control-sm"
+                            formControlName="onlinePaymentMethod"
+                          >
+                            <option value="">Select Gateway</option>
+                            @for (gateway of onlinePaymentMethods; track
+                            gateway) {
+                            <option [value]="gateway.value">
+                              {{ gateway.text }}
+                            </option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="transactionId"
+                          class="col-sm-4 col-form-label"
+                          >Transaction ID:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="transactionId"
+                            placeholder="Enter transaction ID"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="gatewayReference"
+                          class="col-sm-4 col-form-label"
+                          >Gateway Ref:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="gatewayReference"
+                            placeholder="Gateway reference number"
+                          />
+                        </div>
+                      </div>
+                      } @if (requiresMobileWalletDetails()) {
+                      <!-- Mobile Wallet Fields -->
+                      <div class="form-group row">
+                        <label
+                          for="mobileWalletType"
+                          class="col-sm-4 col-form-label"
+                          >Wallet Type:</label
+                        >
+                        <div class="col-sm-8">
+                          <select
+                            class="form-select form-control-sm"
+                            formControlName="mobileWalletType"
+                          >
+                            <option value="">Select Wallet</option>
+                            @for (wallet of mobileWallets; track wallet) {
+                            <option [value]="wallet.value">
+                              {{ wallet.text }}
+                            </option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="walletNumber"
+                          class="col-sm-4 col-form-label"
+                          >Wallet Number:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="walletNumber"
+                            placeholder="Mobile wallet number"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="walletTransactionId"
+                          class="col-sm-4 col-form-label"
+                          >Transaction ID:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="walletTransactionId"
+                            placeholder="Wallet transaction ID"
+                          />
+                        </div>
+                      </div>
+                      } @if (requiresCardDetails()) {
+                      <!-- Card Payment Fields -->
+                      <div class="form-group row">
+                        <label for="cardType" class="col-sm-4 col-form-label"
+                          >Card Type:</label
+                        >
+                        <div class="col-sm-8">
+                          <select
+                            class="form-select form-control-sm"
+                            formControlName="cardType"
+                          >
+                            <option value="">Select Card Type</option>
+                            @for (cardType of cardTypes; track cardType) {
+                            <option [value]="cardType.value">
+                              {{ cardType.text }}
+                            </option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="cardLastFour"
+                          class="col-sm-4 col-form-label"
+                          >Last 4 Digits:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="cardLastFour"
+                            placeholder="****"
+                            maxlength="4"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label
+                          for="cardTransactionId"
+                          class="col-sm-4 col-form-label"
+                          >Transaction ID:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            formControlName="cardTransactionId"
+                            placeholder="Card transaction ID"
+                          />
+                        </div>
+                      </div>
+                      }
+                    </section>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Card -->
+          <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+            <div class="card">
+              <span class="card-label">Payment Summary</span>
+              <div class="card-body">
+                <!-- Financial Summary -->
+                @if (selectedSupplier) {
+                <div class="mb-3 p-3 bg-light rounded">
+                  <h6 class="text-muted mb-3">Financial Overview</h6>
+
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Total Due:</span>
+                    @if (dueBalanceLoading) {
+                    <div
+                      class="spinner-border spinner-border-sm text-primary"
+                      role="status"
+                    >
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    } @else {
+                    <strong class="text-danger">
+                      {{
+                        supplierDueBalance
+                          | currency : "BDT" : "symbol" : "1.2-2"
+                      }}
+                    </strong>
+                    }
+                  </div>
+
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Credit Limit:</span>
+                    <span class="text-info">
+                      {{
+                        selectedSupplier.creditLimit
+                          | currency : "BDT" : "symbol" : "1.2-2"
+                      }}
+                    </span>
+                  </div>
+
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Current Payment:</span>
+                    <strong class="text-success">
+                      {{
+                        register.get("paymentAmount")?.value
+                          | currency : "BDT" : "symbol" : "1.2-2"
+                      }}
+                    </strong>
+                  </div>
+
+                  <hr class="my-2" />
+
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-bold">Remaining Due:</span>
+                    <strong class="text-primary">
+                      {{
+                        supplierDueBalance -
+                          (register.get("paymentAmount")?.value || 0)
+                          | currency : "BDT" : "symbol" : "1.2-2"
+                      }}
+                    </strong>
+                  </div>
+                </div>
+                }
+
+                <div class="form-group row">
+                  <label for="paymentAmount" class="col-sm-6 col-form-label"
+                    >Payment Amount:</label
+                  >
+                  <div class="col-sm-6">
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      formControlName="paymentAmount"
+                      (input)="calculatePaymentSummary()"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label for="notes" class="col-sm-6 col-form-label"
+                    >Notes:</label
+                  >
+                  <div class="col-sm-6">
+                    <textarea
+                      class="form-control form-control-sm"
+                      formControlName="notes"
+                      rows="3"
+                      placeholder="Payment notes..."
+                    ></textarea>
+                  </div>
+                </div>
+
+                <hr />
+
+                <div class="d-grid gap-2">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                        [disabled]="
+                          !register.valid ||
+                          !selectedSupplier ||
+                          (register.get('paymentAmount')?.value || 0) <= 0
+                        "
+                      >
+                        <i class="fa fa-save me-2"></i>
+                        {{ isEditMode ? "Update" : "Save" }} Payment
+                      </button>
+                    </div>
+                    <div class="col-md-6">
+                      <button
+                        type="button"
+                        class="btn btn-success w-100"
+                        [disabled]="
+                          !register.valid ||
+                          !selectedSupplier ||
+                          (register.get('paymentAmount')?.value || 0) <= 0
+                        "
+                        (click)="saveAndPrint()"
+                      >
+                        <i class="fa fa-print me-2"></i>
+                        {{ isEditMode ? "Update" : "Pay" }} & Print
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="row mt-2">
+                    <div class="col-md-6">
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary w-100"
+                        [disabled]="!selectedSupplier"
+                        (click)="showPrintPreview()"
+                      >
+                        <i class="fa fa-eye me-2"></i>
+                        Print Preview
+                      </button>
+                    </div>
+                    <div class="col-md-6">
+                      <button
+                        type="button"
+                        class="btn btn-secondary w-100"
+                        (click)="resetForm()"
+                      >
+                        <i class="fa fa-refresh me-2"></i>
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Print existing receipt button (only show in edit mode) -->
+                  <div class="row mt-2" *ngIf="isEditMode && paymentId > 0">
+                    <div class="col-12">
+                      <button
+                        type="button"
+                        class="btn btn-info w-100"
+                        (click)="printCurrentPaymentReceipt()"
+                      >
+                        <i class="fa fa-receipt me-2"></i>
+                        Print Receipt
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

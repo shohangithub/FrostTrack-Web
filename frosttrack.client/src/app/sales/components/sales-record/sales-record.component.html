@@ -1,0 +1,161 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form class="register-form"
+            [formGroup]="searchForm"
+            (ngSubmit)="getRecord()">
+        <div class="row">
+          <div class="card mb-2">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branch" class="col-sm-4 col-form-label">Search Type:</label>
+                    <div class="col-sm-8">
+                      <select class="form-select form-control-sm"
+                              formControlName="searchType"
+                              required
+                              [disabled]="true">
+                        <option value="" selected disabled>
+                          Please select
+                        </option>
+                        @for (option of searchTypes; track option) {
+                        <option [value]="option.value">
+                          {{ option.text }}
+                        </option>
+                        }
+                      </select>
+                      @if (!searchForm.get('searchType')?.valid &&
+                      searchForm.get('searchType')?.touched) {
+                      <small class="form-text text-danger">
+                        Search type is required
+                      </small>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                  <div class="form-group row">
+                    <label for="supplier" class="col-sm-4 col-form-label">Supplier:</label>
+                    <div class="col-sm-8">
+                        <ng-select [items]="suppliers"
+                                   bindLabel="supplierName"
+                                   formControlName="supplier"
+                                   [loading]="supplierLoading"
+                                   >
+                        </ng-select>
+                    </div>
+                    @if (!searchForm.get('supplier')?.valid &&
+                    searchForm.get('supplier')?.touched) {
+                    <small class="form-text text-danger">
+                      Supplier is required
+                    </small>
+                    }
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branch" class="col-sm-4 col-form-label">Record Type:</label>
+                    <div class="col-sm-8">
+                      <select class="form-select form-control-sm"
+                              formControlName="recordType"
+                              required
+                              [disabled]="true">
+                        <option value="" selected disabled>
+                          Please select
+                        </option>
+                        @for (option of recordTypes; track option) {
+                        <option [value]="option.value">
+                          {{ option.text }}
+                        </option>
+                        }
+                      </select>
+                      @if (!searchForm.get('recordType')?.valid &&
+                      searchForm.get('recordType')?.touched) {
+                      <small class="form-text text-danger">
+                        Record type is required
+                      </small>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branch" class="col-sm-4 col-form-label">Date Range:</label>
+                    <div class="col-sm-8">
+                      <date-range-picker [data]="searchForm.get('dateRange')?.value" formControlName="dateRange"/>
+                      @if (!searchForm.get('dateRange')?.valid &&
+                      searchForm.get('dateRange')?.touched) {
+                      <small class="form-text text-danger">
+                        Date range is required
+                      </small>
+                      }
+                    </div>
+                  </div>
+                 
+                </div>
+                {{searchForm.get('dateRange')?.value | json}}
+                
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="invoiceDate" class="col-sm-4 col-form-label">Date:</label>
+                    <div class="col-sm-8">
+                      <input type="text"
+                             class="form-control form-control-sm"
+                             id="invoiceDate"
+                             formControlName="invoiceDate"
+                             readonly />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </form>
+    </div>
+    <div class="row">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-0">
+          <div class="card-body">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center">SL</th>
+                  <th scope="col" class="text-center">Product</th>
+                  <!-- <th scope="col">Category</th> -->
+                  <th scope="col" class="text-center">Rate</th>
+                  <th scope="col" class="text-center">Quantity</th>
+                  <th scope="col" class="text-center">Total</th>
+                  <th scope="col" class="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+               <!-- // @for (row of register.get('customerDetails')?.value;
+                track row; let idx = $index) {
+                <tr>
+                  <th class="text-center" scope="row">{{ idx + 1 }}</th>
+                  <td class="text-center">{{ row.productName }}</td>
+                  <td class="text-center">{{ row.customerRate }}</td>
+                  <td class="text-center">
+                    {{ row.customerQuantity }}
+                  </td>
+                  <td class="text-center">{{ row.customerAmount }}</td>
+                  <td class="text-center">
+                    <a data-toggle="tooltip"
+                       title=""
+                       data-original-title="Delete"
+                       (click)="removeFromCart(idx)">
+                      <i class="far fa-trash-alt m-1"></i>
+                    </a>
+                  </td>
+                </tr>
+               // } -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

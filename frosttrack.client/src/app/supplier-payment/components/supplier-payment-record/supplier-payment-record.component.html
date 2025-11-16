@@ -1,0 +1,277 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="row align-items-center">
+              <div class="col-6">
+                <h4 class="card-title">Payment Records</h4>
+              </div>
+              <div class="col-6 text-end">
+                <button
+                  type="button"
+                  class="btn btn-success me-2"
+                  (click)="exportToExcel()"
+                >
+                  <i class="fas fa-download"></i> Export
+                </button>
+                <a
+                  [routerLink]="['/supplier-payment/create']"
+                  class="btn btn-primary"
+                >
+                  <i class="fas fa-plus"></i> New Payment
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Filters -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Payment number, party name..."
+                  [(ngModel)]="searchQuery"
+                  (keyup.enter)="onSearch()"
+                />
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Payment Type</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="paymentTypeFilter"
+                  (change)="onSearch()"
+                >
+                  @for (type of paymentTypes; track type) {
+                  <option [value]="type.value">{{ type.text }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Payment Method</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="paymentMethodFilter"
+                  (change)="onSearch()"
+                >
+                  @for (method of paymentMethods; track method) {
+                  <option [value]="method.value">{{ method.text }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Date From</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [(ngModel)]="dateFromFilter"
+                  (change)="onSearch()"
+                />
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Date To</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [(ngModel)]="dateToFilter"
+                  (change)="onSearch()"
+                />
+              </div>
+              <div class="col-md-1 d-flex align-items-end">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearFilters()"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary Info -->
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <div class="alert alert-info d-flex justify-content-between">
+                  <span><strong>Total Records:</strong> {{ totalItems }}</span>
+                  <span
+                    ><strong>Total Amount:</strong>
+                    {{ getTotalAmount() | currency }}</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Table -->
+            <ngx-datatable
+              #table
+              class="bootstrap"
+              [rows]="rows"
+              [loadingIndicator]="loadingIndicator"
+              [reorderable]="reorderable"
+              [sortType]="sortType"
+              [headerHeight]="40"
+              [footerHeight]="50"
+              [rowHeight]="'auto'"
+              [limit]="pageSize"
+              [externalPaging]="true"
+              [count]="totalItems"
+              (page)="onPageChange($event)"
+            >
+              <!-- Payment Number Column -->
+              <ngx-datatable-column
+                name="Payment Number"
+                prop="paymentNumber"
+                [width]="150"
+              >
+                <ng-template
+                  let-row="row"
+                  let-value="value"
+                  ngx-datatable-cell-template
+                >
+                  <a
+                    [routerLink]="['/supplier-payment/edit', row.id]"
+                    class="text-primary fw-bold"
+                  >
+                    {{ value }}
+                  </a>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Payment Date Column -->
+              <ngx-datatable-column
+                name="Date"
+                prop="paymentDate"
+                [width]="120"
+              >
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{ value | date : "dd/MM/yyyy" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Payment Type Column -->
+              <ngx-datatable-column
+                name="Type"
+                prop="paymentType"
+                [width]="100"
+              >
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <span
+                    class="badge"
+                    [ngClass]="
+                      value === 'Supplier' ? 'bg-primary' : 'bg-success'
+                    "
+                  >
+                    {{ value }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Supplier/Customer Column -->
+              <ngx-datatable-column name="Party" prop="party" [width]="200">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  @if (row.supplier) {
+                  <div>
+                    <strong>{{ row.supplier.supplierName }}</strong>
+                    <br /><small class="text-muted">Supplier</small>
+                  </div>
+                  } @else if (row.customer) {
+                  <div>
+                    <strong>{{ row.customer.customerName }}</strong>
+                    <br /><small class="text-muted">Customer</small>
+                  </div>
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Payment Method Column -->
+              <ngx-datatable-column
+                name="Method"
+                prop="paymentMethod"
+                [width]="120"
+              >
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <span class="badge bg-info">{{ value }}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Payment Amount Column -->
+              <ngx-datatable-column
+                name="Amount"
+                prop="paymentAmount"
+                [width]="140"
+              >
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <strong class="text-success">{{ value | currency }}</strong>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Bank/Check Details Column -->
+              <ngx-datatable-column
+                name="Bank/Check Details"
+                prop="bankDetails"
+                [width]="180"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  @if (row.bank && row.paymentMethod === 'Bank') {
+                  <small> <strong>Bank:</strong> {{ row.bank.text }} </small>
+                  } @else if (row.checkNumber && row.paymentMethod === 'Check')
+                  {
+                  <small>
+                    <strong>Check:</strong> {{ row.checkNumber }}<br />
+                    <strong>Date:</strong>
+                    {{ row.checkDate | date : "dd/MM/yyyy" }}<br />
+                    @if (row.bank) {
+                    <strong>Bank:</strong> {{ row.bank.text }}
+                    }
+                  </small>
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Notes Column -->
+              <ngx-datatable-column name="Notes" prop="notes" [width]="150">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  @if (value) {
+                  <small
+                    >{{ value | slice : 0 : 50 }}@if (value.length > 50) { ...
+                    }</small
+                  >
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Actions Column -->
+              <ngx-datatable-column
+                name="Actions"
+                [canAutoResize]="false"
+                [sortable]="false"
+                [width]="100"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a
+                      [routerLink]="['/supplier-payment/edit', row.id]"
+                      class="btn btn-outline-primary btn-sm"
+                      title="View/Edit"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

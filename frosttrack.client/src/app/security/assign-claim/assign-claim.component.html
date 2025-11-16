@@ -1,0 +1,278 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Assign Claim</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input"
+                            ><i class="material-icons search-icon"
+                              >search</i
+                            ></label
+                          >
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            class="btn btn-icon icon-left btn-primary rounded-button"
+                            type="button"
+                          >
+                            <i class="material-icons">add</i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inline assign claim form (keeps original functionality) -->
+            <div class="mt-3 mb-4">
+              <form [formGroup]="form" (ngSubmit)="addClaim()">
+                <div class="row">
+                  <div class="col-4">
+                    <label>User</label>
+                    <select
+                      formControlName="userId"
+                      class="form-control"
+                      (change)="onUserChange($any($event.target).value)"
+                    >
+                      <option value="" disabled>Please select</option>
+                      <option *ngFor="let u of users" [value]="u.id">
+                        {{ u.userName }} ({{ u.email }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-4">
+                    <label>Claim Key</label>
+                    <input formControlName="claimKey" class="form-control" />
+                  </div>
+                  <div class="col-4">
+                    <label>Claim Value</label>
+                    <input formControlName="claimValue" class="form-control" />
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button
+                    class="btn btn-primary"
+                    type="submit"
+                    [disabled]="form.invalid"
+                  >
+                    Add Claim
+                  </button>
+                  <button
+                    class="btn btn-danger"
+                    type="button"
+                    (click)="removeClaim()"
+                  >
+                    Remove Claim
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Single ngx-datatable combining Users and Claims using row-detail -->
+            <ngx-datatable
+              #claimsTable
+              class="material"
+              [rows]="usersWithClaims"
+              columnMode="force"
+              [headerHeight]="50"
+              [footerHeight]="50"
+              rowHeight="auto"
+              (activate)="onActivate($event)"
+            >
+              <ngx-datatable-column name="User" prop="userName">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.userName }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Email" prop="email">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.email }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="Actions"
+                [width]="120"
+                [sortable]="false"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <button
+                    class="btn btn-tbl-edit h-auto"
+                    (click)="onUserChange(row.id)"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary ml-2"
+                    type="button"
+                    (click)="toggleRow(row); $event.stopPropagation()"
+                  >
+                    <i
+                      class="fas"
+                      [ngClass]="{
+                        'fa-chevron-down': !isExpanded(row.id),
+                        'fa-chevron-up': isExpanded(row.id)
+                      }"
+                    ></i>
+                  </button>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-row-detail>
+                <ng-template let-row="row" ngx-datatable-row-detail-template>
+                  <div class="p-2">
+                    <strong>Claims:</strong>
+                    <table class="table table-sm table-bordered mt-2 mb-0">
+                      <thead>
+                        <tr>
+                          <th style="width: 40%">Key / Type</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let c of row.claims || []">
+                          <td>{{ c.type || c.key }}</td>
+                          <td>{{ c.value }}</td>
+                        </tr>
+                        <tr *ngIf="!(row.claims || []).length">
+                          <td colspan="2" class="text-muted">No claims</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </ng-template>
+              </ngx-datatable-row-detail>
+            </ngx-datatable>
+
+            <!-- Add and Edit templates (present for parity with pattern) -->
+            <ng-template #addRecord let-modal>
+              <div class="modal-header editRowModal">
+                <h4 class="modal-title">Add Claim</h4>
+                <button
+                  type="button"
+                  class="close"
+                  aria-label="Close"
+                  (click)="modal.dismiss()"
+                >
+                  <span aria-hidden="true"
+                    ><i class="material-icons">close</i></span
+                  >
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Reuse form controls if modal opened via future TS changes -->
+                <form [formGroup]="form" (ngSubmit)="addClaim()">
+                  <div class="row">
+                    <div class="col-12 mb-2">
+                      <label>User</label>
+                      <select formControlName="userId" class="form-control">
+                        <option value="" disabled>Please select</option>
+                        <option *ngFor="let u of users" [value]="u.id">
+                          {{ u.userName }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-12 mb-2">
+                      <label>Claim Key</label>
+                      <input formControlName="claimKey" class="form-control" />
+                    </div>
+                    <div class="col-12 mb-2">
+                      <label>Claim Value</label>
+                      <input
+                        formControlName="claimValue"
+                        class="form-control"
+                      />
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      [disabled]="form.invalid"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-light"
+                      (click)="modal.dismiss('Close click')"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </ng-template>
+
+            <ng-template #editRecord let-modal>
+              <div class="modal-header editRowModal">
+                <h4 class="modal-title">Edit Claim</h4>
+                <button
+                  type="button"
+                  class="close"
+                  aria-label="Close"
+                  (click)="modal.dismiss('Cross click')"
+                >
+                  <span aria-hidden="true"
+                    ><i class="material-icons">close</i></span
+                  >
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Placeholder: edit uses same form structure -->
+                <form [formGroup]="form" (ngSubmit)="addClaim()">
+                  <div class="row">
+                    <div class="col-12 mb-2">
+                      <label>Claim Key</label>
+                      <input formControlName="claimKey" class="form-control" />
+                    </div>
+                    <div class="col-12 mb-2">
+                      <label>Claim Value</label>
+                      <input
+                        formControlName="claimValue"
+                        class="form-control"
+                      />
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      [disabled]="form.invalid"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-light"
+                      (click)="modal.close()"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

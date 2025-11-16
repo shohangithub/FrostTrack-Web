@@ -1,0 +1,486 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Payment Method
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="modal.dismiss(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{ @if (!isEditing){
+  <!-- Add Record Modal Window -->
+  <form class="register-form" [formGroup]="register" (ngSubmit)="add(register)">
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Display Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Display Name"
+          formControlName="methodName"
+          required
+        />
+        @if (!register.get('methodName')?.valid &&
+        register.get('methodName')?.touched) {
+        <small class="form-text text-danger"> Method name is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Code <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Payment Code"
+            formControlName="code"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            (click)="generateCode()"
+            title="Generate Code"
+          >
+            <span class="">
+              <i
+                class="fas"
+                [ngClass]="isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'"
+              ></i>
+            </span>
+          </button>
+        </div>
+        @if (!register.get('code')?.valid && register.get('code')?.touched) {
+        <small class="form-text text-danger"> Code is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Description</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Description"
+          formControlName="description"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-3">
+        <label class="form-label fw-bold"
+          >Category <span class="text-danger">*</span></label
+        >
+        <div class="d-flex flex-wrap gap-3">
+          @for (category of categories; track category.value) {
+          <div class="category-option">
+            <input
+              class="form-check-input visually-hidden"
+              type="radio"
+              formControlName="category"
+              [value]="category.value"
+              [id]="'category_' + category.value"
+            />
+            <label
+              class="category-card d-flex flex-column align-items-center p-3 border rounded-3"
+              [for]="'category_' + category.value"
+              [class.border-primary]="
+                register.get('category')?.value === category.value
+              "
+              [class.bg-light]="
+                register.get('category')?.value === category.value
+              "
+              style="
+                cursor: pointer;
+                min-width: 140px;
+                transition: all 0.2s ease;
+              "
+            >
+              <i
+                class="{{ category.icon }} fs-1 mb-2"
+                [class]="category.colorClass"
+              ></i>
+              <span class="fw-medium text-center">{{ category.text }}</span>
+              <small class="text-muted text-center mt-1">{{
+                category.description
+              }}</small>
+            </label>
+          </div>
+          }
+        </div>
+        @if (!register.get('category')?.valid &&
+        register.get('category')?.touched) {
+        <small class="form-text text-danger">Category is required</small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-8 col-lg-8 col-md-10 col-sm-12 mb-2">
+        <label>Icon Class</label>
+        <ng-select
+          [items]="iconOptions"
+          bindLabel="text"
+          bindValue="value"
+          placeholder="Select an icon..."
+          formControlName="iconClass"
+          [clearable]="true"
+          [searchable]="true"
+          [selectOnTab]="true"
+        >
+          <ng-option *ngFor="let item of iconOptions" [value]="item.value">
+            <i class="{{ item.icon }} me-2"></i>
+            {{ item.text }}
+            <small class="text-muted d-block">{{ item.description }}</small>
+          </ng-option>
+        </ng-select>
+        <small class="form-text text-muted">
+          Choose an icon that represents your payment method
+        </small>
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-2 col-sm-12 mb-2">
+        <label>Preview</label>
+        <div
+          class="form-control text-center"
+          style="
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          @if (register.get('iconClass')?.value) {
+          <i
+            class="{{ register.get('iconClass')?.value }}"
+            style="font-size: 24px; color: #6c757d"
+          ></i>
+          } @else {
+          <span class="text-muted">No icon selected</span>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Sort Order</label>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Sort Order"
+          formControlName="sortOrder"
+          min="0"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">
+            {{ status.value }}
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!register.valid || isSubmitted"
+      >
+        Submit
+      </button>
+      <button type="button" class="btn btn-light" (click)="modal.close(false)">
+        Close
+      </button>
+    </div>
+  </form>
+  } @else {
+  <!-- Edit Record Modal Window -->
+  <form [formGroup]="editForm" (ngSubmit)="edit(editForm)">
+    <div class="input-field col s12 d-none">
+      <input formControlName="id" class="form-control" type="hidden" />
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Display Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Display Name"
+          formControlName="methodName"
+          required
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Code <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Payment Code"
+            formControlName="code"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            title="Generate Code"
+          >
+            <span class="">
+              <i
+                class="fas"
+                [ngClass]="isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'"
+              ></i>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Description</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Description"
+          formControlName="description"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-3">
+        <label class="form-label fw-bold"
+          >Category <span class="text-danger">*</span></label
+        >
+        <div class="d-flex flex-wrap gap-3">
+          @for (category of categories; track category.value) {
+          <div class="category-option">
+            <input
+              class="form-check-input visually-hidden"
+              type="radio"
+              formControlName="category"
+              [value]="category.value"
+              [id]="'edit_category_' + category.value"
+            />
+            <label
+              class="category-card d-flex flex-column align-items-center p-3 border rounded-3"
+              [for]="'edit_category_' + category.value"
+              [class.border-primary]="
+                editForm.get('category')?.value === category.value
+              "
+              [class.bg-light]="
+                editForm.get('category')?.value === category.value
+              "
+              style="
+                cursor: pointer;
+                min-width: 140px;
+                transition: all 0.2s ease;
+              "
+            >
+              <i
+                class="{{ category.icon }} fs-1 mb-2"
+                [class]="category.colorClass"
+              ></i>
+              <span class="fw-medium text-center">{{ category.text }}</span>
+              <small class="text-muted text-center mt-1">{{
+                category.description
+              }}</small>
+            </label>
+          </div>
+          }
+        </div>
+        @if (!editForm.get('category')?.valid &&
+        editForm.get('category')?.touched) {
+        <small class="form-text text-danger">Category is required</small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-8 col-lg-8 col-md-10 col-sm-12 mb-2">
+        <label>Icon Class</label>
+        <ng-select
+          [items]="iconOptions"
+          bindLabel="text"
+          bindValue="value"
+          placeholder="Select an icon..."
+          formControlName="iconClass"
+          [clearable]="true"
+          [searchable]="true"
+          [selectOnTab]="true"
+        >
+          <ng-option *ngFor="let item of iconOptions" [value]="item.value">
+            <i class="{{ item.icon }} me-2"></i>
+            {{ item.text }}
+            <small class="text-muted d-block">{{ item.description }}</small>
+          </ng-option>
+        </ng-select>
+        <small class="form-text text-muted">
+          Choose an icon that represents your payment method
+        </small>
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-2 col-sm-12 mb-2">
+        <label>Preview</label>
+        <div
+          class="form-control text-center"
+          style="
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          @if (editForm.get('iconClass')?.value) {
+          <i
+            class="{{ editForm.get('iconClass')?.value }}"
+            style="font-size: 24px; color: #6c757d"
+          ></i>
+          } @else {
+          <span class="text-muted">No icon selected</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Requirements Section - Conditional based on category -->
+    @if (editForm.get('category')?.value) {
+    <div class="row">
+      <div class="col-12 mb-2">
+        <h6>
+          Requirements for
+          {{ getCategoryText(editForm.get("category")?.value) }}
+        </h6>
+      </div>
+      @if (editForm.get('category')?.value === 'Bank') {
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="requiresBankAccount"
+            id="edit_requiresBankAccount"
+          />
+          <label class="form-check-label" for="edit_requiresBankAccount">
+            Requires Bank Account Details
+          </label>
+        </div>
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="requiresCheckDetails"
+            id="edit_requiresCheckDetails"
+          />
+          <label class="form-check-label" for="edit_requiresCheckDetails">
+            Requires Check Details
+          </label>
+        </div>
+      </div>
+      } @if (editForm.get('category')?.value === 'MobileWallet') {
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="requiresOnlineDetails"
+            id="edit_requiresOnlineDetails"
+          />
+          <label class="form-check-label" for="edit_requiresOnlineDetails">
+            Requires Online Details
+          </label>
+        </div>
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="requiresMobileWalletDetails"
+            id="edit_requiresMobileWalletDetails"
+          />
+          <label
+            class="form-check-label"
+            for="edit_requiresMobileWalletDetails"
+          >
+            Requires Mobile Wallet Details
+          </label>
+        </div>
+      </div>
+      } @if (editForm.get('category')?.value === 'Card') {
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="requiresCardDetails"
+            id="edit_requiresCardDetails"
+          />
+          <label class="form-check-label" for="edit_requiresCardDetails">
+            Requires Card Details
+          </label>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Sort Order</label>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Sort Order"
+          formControlName="sortOrder"
+          min="0"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">
+            {{ status.value }}
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!editForm.valid || !editForm.dirty || isSubmitted"
+      >
+        Save
+      </button>
+      <button type="button" class="btn btn-light" (click)="modal.close(false)">
+        Close
+      </button>
+    </div>
+  </form>
+  } }
+</div>

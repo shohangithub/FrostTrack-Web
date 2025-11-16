@@ -1,0 +1,522 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Bank Account
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{ @if (!isEditing){
+  <!-- Add Record Modal Window -->
+  <form class="register-form" [formGroup]="register" (ngSubmit)="add(register)">
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Name"
+          formControlName="bankName"
+          required
+        />
+        @if (!register.get('bankName')?.valid &&
+        register.get('bankName')?.touched) {
+        <small class="form-text text-danger"> Bank Name is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Code<span class="text-danger">*</span></label>
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Bank Code"
+              formControlName="bankCode"
+              readonly
+              required
+            />
+            <div
+              class="input-group-append"
+              style="cursor: pointer"
+              (click)="generateCode()"
+            >
+              <span
+                class="input-group-text input-group-text-append"
+                id="basic-addon5"
+                ><i
+                  class="fas"
+                  [ngClass]="
+                    isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'
+                  "
+                ></i
+              ></span>
+            </div>
+          </div>
+        </div>
+        @if (!register.get('bankCode')?.valid &&
+        register.get('bankCode')?.touched) {
+        <small class="form-text text-danger"> Bank Code is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Branch <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Branch"
+          formControlName="bankBranch"
+          required
+        />
+        @if (!register.get('bankBranch')?.valid &&
+        register.get('bankBranch')?.touched) {
+        <small class="form-text text-danger"> Bank Branch is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Account Number <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Account Number"
+          formControlName="accountNumber"
+          required
+        />
+        @if (!register.get('accountNumber')?.valid &&
+        register.get('accountNumber')?.touched) {
+        <small class="form-text text-danger">
+          Account Number is required
+        </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Account Title <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Account Title"
+          formControlName="accountTitle"
+          required
+        />
+        @if (!register.get('accountTitle')?.valid &&
+        register.get('accountTitle')?.touched) {
+        <small class="form-text text-danger"> Account Title is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>SWIFT Code</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="SWIFT Code"
+          formControlName="swiftCode"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Routing Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Routing Number"
+          formControlName="routingNumber"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>IBAN Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="IBAN Number"
+          formControlName="ibanNumber"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Person</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Contact Person"
+          formControlName="contactPerson"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Phone</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Contact Phone"
+          formControlName="contactPhone"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Email</label>
+        <input
+          type="email"
+          class="form-control form-control-sm"
+          placeholder="Contact Email"
+          formControlName="contactEmail"
+        />
+        @if (!register.get('contactEmail')?.valid &&
+        register.get('contactEmail')?.touched) {
+        <small class="form-text text-danger"> Invalid email address </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Opening Balance</label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Opening Balance"
+          formControlName="openingBalance"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Current Balance</label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Current Balance"
+          formControlName="currentBalance"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-select-sm"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">
+            {{ status.value }}
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <div class="form-group position-relative">
+          <label>Address</label>
+          <i class="fas fa-map-marker-alt input-icons"></i>
+          <textarea
+            type="text"
+            class="form-control psl-5"
+            formControlName="address"
+            placeholder="Address"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <div class="form-group position-relative">
+          <label>Description</label>
+          <textarea
+            type="text"
+            class="form-control"
+            formControlName="description"
+            placeholder="Description"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Main Account</label>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="isMainAccount"
+            id="isMainAccount"
+          />
+          <label class="form-check-label" for="isMainAccount">
+            Is Main Account
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!register.valid"
+      >
+        Submit
+      </button>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
+        Close
+      </button>
+    </div>
+  </form>
+  } @else {
+  <!-- Edit Record Modal Window -->
+  <form [formGroup]="editForm" (ngSubmit)="edit(editForm)">
+    <div class="input-field col s12 d-none">
+      <input formControlName="id" class="form-control" type="hidden" />
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Name"
+          formControlName="bankName"
+          required
+        />
+        @if (!register.get('bankName')?.valid &&
+        register.get('bankName')?.touched) {
+        <small class="form-text text-danger"> Bank Name is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Code<span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Code"
+          formControlName="bankCode"
+          readonly
+          required
+        />
+        @if (!register.get('bankCode')?.valid &&
+        register.get('bankCode')?.touched) {
+        <small class="form-text text-danger"> Bank Code is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Bank Branch <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Bank Branch"
+          formControlName="bankBranch"
+          required
+        />
+        @if (!register.get('bankBranch')?.valid &&
+        register.get('bankBranch')?.touched) {
+        <small class="form-text text-danger"> Bank Branch is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Account Number <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Account Number"
+          formControlName="accountNumber"
+          required
+        />
+        @if (!register.get('accountNumber')?.valid &&
+        register.get('accountNumber')?.touched) {
+        <small class="form-text text-danger">
+          Account Number is required
+        </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Account Title <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Account Title"
+          formControlName="accountTitle"
+          required
+        />
+        @if (!register.get('accountTitle')?.valid &&
+        register.get('accountTitle')?.touched) {
+        <small class="form-text text-danger"> Account Title is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>SWIFT Code</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="SWIFT Code"
+          formControlName="swiftCode"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Routing Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Routing Number"
+          formControlName="routingNumber"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>IBAN Number</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="IBAN Number"
+          formControlName="ibanNumber"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Person</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Contact Person"
+          formControlName="contactPerson"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Phone</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Contact Phone"
+          formControlName="contactPhone"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Contact Email</label>
+        <input
+          type="email"
+          class="form-control form-control-sm"
+          placeholder="Contact Email"
+          formControlName="contactEmail"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Opening Balance</label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Opening Balance"
+          formControlName="openingBalance"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Current Balance</label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Current Balance"
+          formControlName="currentBalance"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-select-sm"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">
+            {{ status.value }}
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <div class="form-group position-relative">
+          <label>Address</label>
+          <i class="fas fa-map-marker-alt input-icons"></i>
+          <textarea
+            type="text"
+            class="form-control psl-5"
+            formControlName="address"
+            placeholder="Address"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <div class="form-group position-relative">
+          <label>Description</label>
+          <textarea
+            type="text"
+            class="form-control"
+            formControlName="description"
+            placeholder="Description"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Main Account</label>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            formControlName="isMainAccount"
+            id="isMainAccountEdit"
+          />
+          <label class="form-check-label" for="isMainAccountEdit">
+            Is Main Account
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!editForm.valid"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
+        Close
+      </button>
+    </div>
+  </form>
+  } }
+</div>

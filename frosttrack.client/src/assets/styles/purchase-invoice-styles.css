@@ -1,0 +1,50 @@
+h5 {
+    background-color: brown;
+    border: 1px solid grey;
+}
+
+.invoice-header {
+
+    text-align: center;
+
+
+
+}
+
+.invoice-header-content {
+    padding: 5px 0;
+    border-top: 1px dotted gray;
+    border-bottom: 1px dotted gray;
+}
+
+.invoice-top-body {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    padding: 10px;
+}
+
+.left {
+    flex: 0 0 auto;
+    width: 50%;
+    text-align: left;
+}
+
+.right {
+    flex: 0 0 auto;
+    width: 100%;
+    text-align: right;
+}
+
+table {
+    border-spacing: 0px;
+}
+
+td {
+    padding: 0px;
+    border: 1px solid #ccc
+}

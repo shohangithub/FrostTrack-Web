@@ -1,0 +1,455 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Damage
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{ @if (!isEditing){
+  <!-- Add Record Modal Window -->
+  <form class="register-form" [formGroup]="register" (ngSubmit)="add(register)">
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Damage Number <span class="text-danger">*</span></label>
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Damage Number"
+              formControlName="damageNumber"
+              readonly
+              required
+            />
+            <div
+              class="input-group-append"
+              style="cursor: pointer"
+              (click)="generateCode()"
+            >
+              <span
+                class="input-group-text input-group-text-append"
+                id="basic-addon5"
+                ><i
+                  class="fas"
+                  [ngClass]="
+                    isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'
+                  "
+                ></i
+              ></span>
+            </div>
+          </div>
+        </div>
+        @if (!register.get('damageNumber')?.valid &&
+        register.get('damageNumber')?.touched) {
+        <small class="form-text text-danger"> Damage Number is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Damage Date <span class="text-danger">*</span></label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="damageDate"
+          required
+        />
+        @if (!register.get('damageDate')?.valid &&
+        register.get('damageDate')?.touched) {
+        <small class="form-text text-danger"> Damage Date is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Product <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="productId"
+          required
+          (change)="onProductChange()"
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (product of products; track product) {
+          <option [value]="product.value">{{ product.text }}</option>
+          }
+        </select>
+        @if (!register.get('productId')?.valid &&
+        register.get('productId')?.touched) {
+        <small class="form-text text-danger"> Product is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Unit <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="unitId"
+          required
+          (change)="onUnitChange()"
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (unit of units; track unit) {
+          <option [value]="unit.value">{{ unit.text }}</option>
+          }
+        </select>
+        @if (!register.get('unitId')?.valid && register.get('unitId')?.touched)
+        {
+        <small class="form-text text-danger"> Unit is required </small>
+        }
+      </div>
+    </div>
+
+    <!-- Stock Display Section -->
+    @if(selectedProduct && selectedProduct.currentStock !== null){
+    <div class="row">
+      <div class="col-12 mb-2">
+        <div class="card mb-2">
+          <div class="card-body" style="padding: 5px">
+            <div class="row">
+              <div
+                class="col-lg-6 col-md-6 col-sm-12 col-xs-12 text-center mt-2"
+              >
+                <small
+                  class="text-center fw-bold"
+                  [class]="
+                    selectedProduct.currentStock > 0
+                      ? 'text-success'
+                      : 'text-danger'
+                  "
+                  >Available Stock</small
+                >
+                <div class="form-group row">
+                  <div class="col-sm-12">
+                    <input
+                      type="text"
+                      class="form-control form-control-sm text-center border border-2 fw-bolder"
+                      [class]="
+                        selectedProduct.currentStock > 0
+                          ? 'text-success border-success'
+                          : 'text-danger border-danger'
+                      "
+                      [value]="selectedProduct.currentStock"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+              <div
+                class="col-lg-6 col-md-6 col-sm-12 col-xs-12 text-center mt-2"
+              >
+                <small class="text-center fw-bold">Unit</small>
+                <div class="form-group row">
+                  <div class="col-sm-12">
+                    <input
+                      type="text"
+                      class="form-control form-control-sm text-center"
+                      [value]="selectedProduct.unitName"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <div class="row">
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Quantity <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Enter quantity"
+          formControlName="quantity"
+          min="0.01"
+          step="0.01"
+          required
+        />
+        @if (!register.get('quantity')?.valid &&
+        register.get('quantity')?.touched) {
+        <small class="form-text text-danger"> Quantity is required </small>
+        }
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Unit Cost <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Enter unit cost"
+          formControlName="unitCost"
+          min="0"
+          step="0.01"
+          required
+        />
+        @if (!register.get('unitCost')?.valid &&
+        register.get('unitCost')?.touched) {
+        <small class="form-text text-danger"> Unit Cost is required </small>
+        }
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Total Cost <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Total cost"
+          formControlName="totalCost"
+          readonly
+          required
+        />
+        @if (!register.get('totalCost')?.valid &&
+        register.get('totalCost')?.touched) {
+        <small class="form-text text-danger"> Total Cost is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Reason</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Enter reason for damage"
+          formControlName="reason"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">{{ status.value }}</option>
+          }
+        </select>
+        @if (!register.get('isActive')?.valid &&
+        register.get('isActive')?.touched) {
+        <small class="form-text text-danger"> Status is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Description</label>
+        <textarea
+          class="form-control form-control-sm"
+          formControlName="description"
+          rows="3"
+          placeholder="Enter additional description"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!register.valid || isSubmitted"
+      >
+        Submit
+      </button>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
+        Close
+      </button>
+    </div>
+  </form>
+  } @else {
+  <!-- Edit Record Modal Window -->
+  <form [formGroup]="editForm" (ngSubmit)="edit(editForm)">
+    <div class="input-field col s12 d-none">
+      <input formControlName="id" class="form-control" type="hidden" />
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Damage Number <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Damage Number"
+          formControlName="damageNumber"
+          readonly
+          required
+        />
+        @if (!editForm.get('damageNumber')?.valid &&
+        editForm.get('damageNumber')?.touched) {
+        <small class="form-text text-danger"> Damage Number is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Damage Date <span class="text-danger">*</span></label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          formControlName="damageDate"
+          required
+        />
+        @if (!editForm.get('damageDate')?.valid &&
+        editForm.get('damageDate')?.touched) {
+        <small class="form-text text-danger"> Damage Date is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Product <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="productId"
+          required
+          (change)="onEditProductChange()"
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (product of products; track product) {
+          <option [value]="product.value">{{ product.text }}</option>
+          }
+        </select>
+        @if (!editForm.get('productId')?.valid &&
+        editForm.get('productId')?.touched) {
+        <small class="form-text text-danger"> Product is required </small>
+        }
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Unit <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="unitId"
+          required
+          (change)="onEditUnitChange()"
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (unit of units; track unit) {
+          <option [value]="unit.value">{{ unit.text }}</option>
+          }
+        </select>
+        @if (!editForm.get('unitId')?.valid && editForm.get('unitId')?.touched)
+        {
+        <small class="form-text text-danger"> Unit is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Quantity <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Enter quantity"
+          formControlName="quantity"
+          min="0.01"
+          step="0.01"
+          required
+        />
+        @if (!editForm.get('quantity')?.valid &&
+        editForm.get('quantity')?.touched) {
+        <small class="form-text text-danger"> Quantity is required </small>
+        }
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Unit Cost <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Enter unit cost"
+          formControlName="unitCost"
+          min="0"
+          step="0.01"
+          required
+        />
+        @if (!editForm.get('unitCost')?.valid &&
+        editForm.get('unitCost')?.touched) {
+        <small class="form-text text-danger"> Unit Cost is required </small>
+        }
+      </div>
+      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-2">
+        <label>Total Cost <span class="text-danger">*</span></label>
+        <input
+          type="number"
+          class="form-control form-control-sm"
+          placeholder="Total cost"
+          formControlName="totalCost"
+          readonly
+          required
+        />
+        @if (!editForm.get('totalCost')?.valid &&
+        editForm.get('totalCost')?.touched) {
+        <small class="form-text text-danger"> Total Cost is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Reason</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Enter reason for damage"
+          formControlName="reason"
+        />
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Status <span class="text-danger">*</span></label>
+        <select
+          class="form-select form-control form-control-sm"
+          formControlName="isActive"
+          required
+        >
+          <option value="" selected disabled>Please select</option>
+          @for (status of statusList; track status) {
+          <option [value]="status.id">{{ status.value }}</option>
+          }
+        </select>
+        @if (!editForm.get('isActive')?.valid &&
+        editForm.get('isActive')?.touched) {
+        <small class="form-text text-danger"> Status is required </small>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Description</label>
+        <textarea
+          class="form-control form-control-sm"
+          formControlName="description"
+          rows="3"
+          placeholder="Enter additional description"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!editForm.valid || !editForm.dirty || isSubmitted"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
+        Close
+      </button>
+    </div>
+  </form>
+  } }
+</div>

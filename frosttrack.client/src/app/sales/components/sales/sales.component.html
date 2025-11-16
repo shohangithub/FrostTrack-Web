@@ -1,0 +1,787 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="register"
+        (ngSubmit)="sales(register)"
+      >
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card mb-3">
+            <div class="card-body-narrow">
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="invoiceNumber" class="col-sm-4 col-form-label"
+                      >Invoice Number:</label
+                    >
+                    <div class="col-sm-8">
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="invoiceNumber"
+                        formControlName="invoiceNumber"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branch" class="col-sm-4 col-form-label"
+                      >Sales for:</label
+                    >
+                    <div class="col-sm-8">
+                      <select
+                        class="form-select form-control-sm"
+                        formControlName="branchId"
+                        required
+                        [disabled]="true"
+                      >
+                        <option value="" selected disabled>
+                          Please select
+                        </option>
+                        @for (option of branchs; track option) {
+                        <option [value]="option.value">
+                          {{ option.text }}
+                        </option>
+                        }
+                      </select>
+                      @if (!register.get('branchId')?.valid &&
+                      register.get('branchId')?.touched) {
+                      <small class="form-text text-danger">
+                        Branch is required
+                      </small>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="invoiceDate" class="col-sm-4 col-form-label"
+                      >Date:</label
+                    >
+                    <div class="col-sm-8">
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="invoiceDate"
+                        formControlName="invoiceDate"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+            <div class="row">
+              <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                <div class="card mb-2">
+                  <span class="card-label">Customer Information</span>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 m-1">
+                        <div class="form-group row">
+                          <label for="salesType" class="col-sm-4 col-form-label"
+                            >Sales Type:</label
+                          >
+                          <div class="col-sm-8">
+                            <div class="form-group row">
+                              <div class="input-group">
+                                <input
+                                  type="radio"
+                                  class="m-2"
+                                  formControlName="salesType"
+                                  id="retial"
+                                  name="salesType"
+                                  [value]="salesTypes.RETAIL"
+                                />
+                                <label
+                                  for="retial"
+                                  class="col-sm-4 col-form-label"
+                                  >Retail</label
+                                >
+                                <input
+                                  type="radio"
+                                  class="m-2"
+                                  formControlName="salesType"
+                                  id="wholesale"
+                                  name="salesType"
+                                  [value]="salesTypes.WHOLESALE"
+                                />
+                                <label
+                                  for="wholesale"
+                                  class="col-sm-4 col-form-label"
+                                  >Wholesale</label
+                                >
+                              </div>
+                            </div>
+                          </div>
+                          @if (!register.get('customer')?.valid &&
+                          register.get('customer')?.touched) {
+                          <small class="form-text text-danger">
+                            Customer is required
+                          </small>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group row">
+                          <label for="customer" class="col-sm-4 col-form-label"
+                            >Customer:</label
+                          >
+                          <div class="col-sm-8">
+                            <div class="input-group input-group-select">
+                              <ng-select
+                                [items]="customers"
+                                bindLabel="customerName"
+                                formControlName="customer"
+                                [loading]="customerLoading"
+                                (ngModelChange)="
+                                  register.get('customer')?.value
+                                    ?.isSystemDefault == true
+                                    ? register.get('paidAmount')?.disable()
+                                    : register.get('paidAmount')?.enable()
+                                "
+                              >
+                              </ng-select>
+                              <div class="input-group-append">
+                                <button
+                                  class="btn btn-primary fw-bold font-20"
+                                  type="button"
+                                  (click)="addCustomer()"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          @if (!register.get('customer')?.valid &&
+                          register.get('customer')?.touched) {
+                          <small class="form-text text-danger">
+                            Customer is required
+                          </small>
+                          }
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group row">
+                          <label
+                            for="customerMobile"
+                            class="col-sm-4 col-form-label"
+                            >Mobile:</label
+                          >
+                          <div class="col-sm-8">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="customerMobile"
+                              [value]="register.get('customer')?.value?.['customerMobile']??''"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3">
+                        <div class="form-group row">
+                          <label
+                            for="customerAddress"
+                            class="col-sm-4 col-form-label"
+                            >Address:</label
+                          >
+                          <div class="col-sm-8">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="customerAddress"
+                              [value]="register.get('customer')?.value?.['address']??''"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                <form
+                  class="product-form"
+                  [formGroup]="productForm"
+                  (ngSubmit)="addToCart()"
+                >
+                  <div class="card mb-2">
+                    <span class="card-label">Product Information</span>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label for="product" class="col-sm-3 col-form-label"
+                              >Product:</label
+                            >
+                            <div class="col-sm-9">
+                              <div class="input-group input-group-select">
+                                <ng-select
+                                  [items]="products"
+                                  bindLabel="productName"
+                                  formControlName="product"
+                                  [loading]="productLoading"
+                                  (change)="setProductDetails()"
+                                >
+                                </ng-select>
+                                <div class="input-group-append">
+                                  <button
+                                    class="btn btn-primary fw-bold font-20"
+                                    type="button"
+                                    (click)="addProduct()"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            @if (!productForm.get('product')?.valid &&
+                            productForm.get('product')?.touched) {
+                            <small class="form-text text-danger text-end">
+                              Product is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="salesRate"
+                              class="col-sm-3 col-form-label"
+                              >Sale. Rate:</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="salesRate"
+                                formControlName="salesRate"
+                                (ngModelChange)="setSalesAmount()"
+                                decimal
+                                [control]="productForm.get('salesRate')?.value"
+                                [floatingPoint]="2"
+                              />
+                            </div>
+
+                            @if ((!productForm.get('salesRate')?.valid &&
+                            productForm.get('salesRate')?.touched)) {
+                            <small class="form-text text-danger text-end">
+                              Sales rate is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="salesQuantity"
+                              class="col-sm-3 col-form-label"
+                              >Qty</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="salesQuantity"
+                                formControlName="salesQuantity"
+                                [readonly]="
+                                  (!productForm.get('product')?.value
+                                    ?.currentStock ||
+                                    productForm.get('product')?.value
+                                      ?.currentStock < 0) &&
+                                  !productForm.get('product')?.value
+                                    ?.isProductAsService
+                                "
+                                (ngModelChange)="setSalesAmount()"
+                              />
+                            </div>
+                            @if ((!productForm.get('salesQuantity')?.valid &&
+                            productForm.get('salesQuantity')?.touched) &&
+                            productForm.get('product')?.value?.currentStock > 0
+                            &&
+                            !productForm.get('product')?.value?.isProductAsService)
+                            {
+                            <small class="form-text text-danger text-end">
+                              Sales quantity is required
+                            </small>
+                            } @if ((!productForm.get('salesQuantity')?.valid &&
+                            productForm.get('salesQuantity')?.touched) &&
+                            !productForm.get('product')?.value?.currentStock &&
+                            !productForm.get('product')?.value?.isProductAsService)
+                            {
+                            <small class="form-text text-danger text-end">
+                              Stock Unavailable
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="salesAmount"
+                              class="col-sm-3 col-form-label"
+                              >T. Amount:</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="salesAmount"
+                                formControlName="salesAmount"
+                                decimal
+                                [control]="
+                                  productForm.get('salesAmount')?.value
+                                "
+                                [floatingPoint]="2"
+                                readonly
+                              />
+                            </div>
+                            @if (!productForm.get('salesAmount')?.valid &&
+                            productForm.get('salesAmount')?.touched) {
+                            <small class="form-text text-danger text-end">
+                              Total amount is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <!--<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label for="sellingRate"
+                                   class="col-sm-3 col-form-label">Sel. Price:</label>
+                            <div class="col-sm-9">
+                              <input type="number"
+                                     class="form-control form-control-sm"
+                                     id="sellingRate"
+                                     formControlName="sellingRate"
+                                     readonly />
+                            </div>
+                          </div>
+                        </div>-->
+
+                        <div
+                          class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
+                        >
+                          <button
+                            type="button"
+                            class="btn btn-warning px-3 py-0 mx-1"
+                            [disabled]="!productForm.dirty"
+                            (click)="productForm.reset()"
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="submit"
+                            class="btn btn-primary px-2 py-0"
+                            [disabled]="!productForm.valid"
+                          >
+                            Add to cart
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div
+                class="col-lg-1 col-md-1 col-sm-1 col-xs-12"
+                style="padding: 0px"
+              >
+                <div class="card mb-2">
+                  <div class="card-body" style="padding: 5px">
+                    @if(productForm.get('product')?.value?.isProductAsService){
+                    <div class="row">
+                      <div
+                        class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center mt-2"
+                      >
+                        <label
+                          class="text-info text-center fw-bolder text-uppercase mt-2"
+                          style="writing-mode: vertical-lr"
+                          >No stock Item</label
+                        >
+                      </div>
+                    </div>
+                    } @else{
+                    <div class="row">
+                      <div
+                        class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center mt-2"
+                      >
+                        <small
+                          class="text-center fw-bold"
+                          [class]="
+                            productForm.get('product')?.value?.currentStock > 0
+                              ? 'text-success'
+                              : 'text-danger'
+                          "
+                          >Stock</small
+                        >
+                        <div class="form-group row">
+                          <div class="col-sm-12">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm text-center border border-2 fw-bolder"
+                              [class]="
+                                productForm.get('product')?.value
+                                  ?.currentStock > 0
+                                  ? 'text-success  border-success'
+                                  : 'text-danger  border-danger'
+                              "
+                              [value]="
+                                productForm.get('product')?.value?.currentStock
+                              "
+                              id="currentStock"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 mt-2">
+                        <div class="form-group">
+                          <div class="col-sm-12">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm text-center"
+                              [value]="
+                                productForm.get('product')?.value?.stockUnit
+                                  ?.unitName
+                              "
+                              id="unitName"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 mt-2">
+                        <div class="form-group">
+                          <div class="col-sm-12">
+                            <input
+                              type="password"
+                              (mouseover)="lastPurchaseRateIn($event)"
+                              (mouseout)="lastPurchaseRateOut($event)"
+                              class="form-control form-control-sm text-center fw-bold"
+                              [value]="
+                                productForm.get('product')?.value
+                                  ?.lastPurchaseRate
+                              "
+                              id="lastPurchaseRate"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="card mt-0">
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th scope="col" class="text-center">SL</th>
+                          <th scope="col" class="text-center">Product</th>
+                          <!-- <th scope="col">Category</th> -->
+                          <th scope="col" class="text-center">Rate</th>
+                          <th scope="col" class="text-center">Quantity</th>
+                          <th scope="col" class="text-center">Total</th>
+                          <th scope="col" class="text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of register.get('salesDetails')?.value; track
+                        row; let idx = $index) {
+                        <tr>
+                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
+                          <td class="text-center">{{ row.productName }}</td>
+                          <td class="text-center">{{ row.salesRate }}</td>
+                          <td class="text-center">
+                            {{ row.salesQuantity }}
+                          </td>
+                          <td class="text-center">{{ row.salesAmount }}</td>
+                          <td class="text-center">
+                            <a
+                              data-toggle="tooltip"
+                              title=""
+                              data-original-title="Delete"
+                              (click)="removeFromCart(idx)"
+                            >
+                              <i class="far fa-trash-alt m-1"></i>
+                            </a>
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+            <div class="card">
+              <span class="card-label">Amount Details</span>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="form-group">
+                      <label for="subtotal">Sub Total</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        formControlName="subtotal"
+                        (ngModelChange)="setInvoiceTotal()"
+                        readonly
+                      />
+                    </div>
+                    @if (!register.get('subtotal')?.valid &&
+                    register.get('subtotal')?.touched) {
+                    <small class="form-text text-danger">
+                      Subtotal is required
+                    </small>
+                    }
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group">
+                      <label for="vatPercent">Vat</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="vatPercent"
+                        formControlName="vatPercent"
+                        (change)="
+                          register
+                            .get('vatAmount')
+                            ?.setValue(
+                              (register.get('vatPercent')?.value *
+                                register.get('subtotal')?.value) /
+                                100
+                            );
+                          setInvoiceTotal()
+                        "
+                      />
+                    </div>
+                  </div>
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group row mt-4">
+                      <label
+                        for="vatAmount"
+                        class="col-sm-4 col-form-label mt-1"
+                        >%</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm mt-1"
+                          id="vatAmount"
+                          formControlName="vatAmount"
+                          (change)="
+                            register
+                              .get('vatPercent')
+                              ?.setValue(
+                                (register.get('vatAmount')?.value * 100) /
+                                  register.get('subtotal')?.value
+                              );
+                            setInvoiceTotal()
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group">
+                      <label for="discountPercent">Discount</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="discountPercent"
+                        formControlName="discountPercent"
+                        (change)="
+                          register
+                            .get('discountAmount')
+                            ?.setValue(
+                              (register.get('discountPercent')?.value *
+                                register.get('subtotal')?.value) /
+                                100
+                            );
+                          setInvoiceTotal()
+                        "
+                      />
+                    </div>
+                  </div>
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group row mt-4">
+                      <label
+                        for="discountAmount"
+                        class="col-sm-4 col-form-label mt-1"
+                        >%</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm mt-1"
+                          id="discountAmount"
+                          formControlName="discountAmount"
+                          (change)="
+                            register
+                              .get('discountPercent')
+                              ?.setValue(
+                                (register.get('discountAmount')?.value * 100) /
+                                  register.get('subtotal')?.value
+                              );
+                            setInvoiceTotal()
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="form-group">
+                      <label for="otherCost">Transport / Other cost</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="otherCost"
+                        formControlName="otherCost"
+                        (ngModelChange)="setInvoiceTotal()"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="form-group">
+                      <label for="invoiceAmount">Total</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        formControlName="invoiceAmount"
+                        (ngModelChange)="
+                          register
+                            .get('paidAmount')
+                            ?.setValue(register.get('invoiceAmount')?.value)
+                        "
+                      />
+                    </div>
+                    @if (!register.get('invoiceAmount')?.valid &&
+                    register.get('invoiceAmount')?.touched) {
+                    <small class="form-text text-danger">
+                      Total amount is required
+                    </small>
+                    }
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="form-group">
+                      <label for="paidAmount">Paid</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="paidAmount"
+                        formControlName="paidAmount"
+                        (ngModelChange)="
+                          register
+                            .get('dueAmount')
+                            ?.setValue(
+                              register.get('invoiceAmount')?.value -
+                                register.get('paidAmount')?.value
+                            )
+                        "
+                      />
+                    </div>
+                    @if (!register.get('paidAmount')?.valid &&
+                    register.get('paidAmount')?.touched) {
+                    <small class="form-text text-danger">
+                      Paid amount is required
+                    </small>
+                    }
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group">
+                      <label for="dueAmount">Due</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        id="dueAmount"
+                        formControlName="dueAmount"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group">
+                      <label for="prevDueAmount">Prev. Due</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm text-danger fw-bolder"
+                        id="prevDueAmount"
+                        [value]="register.get('customer')?.value?.previousDue"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="col-lg-12 col-md-12 col-sm-12 col-xs-12 mt-2 text-end"
+                >
+                  <button
+                    type="submit"
+                    class="btn btn-primary mx-2"
+                    [disabled]="
+                      register.get('salesDetails')?.value?.length == 0 ||
+                      !register.valid ||
+                      isSubmitted
+                    "
+                  >
+                    Sales
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-success mx-2"
+                    [disabled]="
+                      register.get('salesDetails')?.value?.length == 0 ||
+                      !register.valid ||
+                      isSubmitted
+                    "
+                    (click)="salesAndPrint(register)"
+                  >
+                    <i class="fas fa-print me-1"></i>
+                    Sales & Print
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-light"
+                    (click)="initFormData()"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

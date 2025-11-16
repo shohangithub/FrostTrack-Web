@@ -1,0 +1,467 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <div class="p-10">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <!-- Transaction Form with Tabs -->
+          <div class="card mb-3">
+            <span class="card-label">Transaction History</span>
+            <div class="p-10">
+              <div class="row">
+                <div
+                  class="card-header d-flex justify-content-between align-items-center"
+                >
+                  <ul
+                    class="nav nav-tabs card-header-tabs mb-0"
+                    id="transactionTabs"
+                    role="tablist"
+                  >
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-link"
+                        [class.active]="activeTab === 'deposit'"
+                        (click)="switchTab('deposit')"
+                        type="button"
+                      >
+                        Deposit
+                      </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-link"
+                        [class.active]="activeTab === 'withdraw'"
+                        (click)="switchTab('withdraw')"
+                        type="button"
+                      >
+                        Withdraw
+                      </button>
+                    </li>
+                  </ul>
+
+                  <!-- Bank Balance Display -->
+                  <div class="bank-balance-section" *ngIf="selectedBankName">
+                    <div class="text-right">
+                      <div class="text-muted small">{{ selectedBankName }}</div>
+                      <div
+                        class="font-weight-bold text-primary"
+                        style="font-size: 1.1rem"
+                      >
+                        <span
+                          *ngIf="isLoadingBalance"
+                          class="spinner-border spinner-border-sm me-2"
+                          role="status"
+                        ></span>
+                        <span *ngIf="!isLoadingBalance">Current Balance: </span>
+                        <span class="text-success" *ngIf="!isLoadingBalance">
+                          {{
+                            selectedBankBalance
+                              | currency : "USD" : "symbol" : "1.2-2"
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <form
+                    [formGroup]="currentForm"
+                    (ngSubmit)="submitTransaction()"
+                  >
+                    <div class="row">
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label
+                          >Transaction Number
+                          <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            placeholder="Transaction Number"
+                            formControlName="transactionNumber"
+                            readonly
+                            required
+                          />
+                          <div
+                            class="input-group-append"
+                            style="cursor: pointer"
+                            (click)="generateCode()"
+                          >
+                            <span class="input-group-text">
+                              <i
+                                class="fas"
+                                [ngClass]="
+                                  isGeneratingCode
+                                    ? 'fa-spinner fa-spin'
+                                    : 'fa-sync'
+                                "
+                              ></i>
+                            </span>
+                          </div>
+                        </div>
+                        @if (!currentForm.get('transactionNumber')?.valid &&
+                        currentForm.get('transactionNumber')?.touched) {
+                        <small class="form-text text-danger"
+                          >Transaction Number is required</small
+                        >
+                        }
+                      </div>
+
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label
+                          >Transaction Date
+                          <span class="text-danger">*</span></label
+                        >
+                        <input
+                          type="date"
+                          class="form-control form-control-sm"
+                          formControlName="transactionDate"
+                          required
+                        />
+                        @if (!currentForm.get('transactionDate')?.valid &&
+                        currentForm.get('transactionDate')?.touched) {
+                        <small class="form-text text-danger"
+                          >Transaction Date is required</small
+                        >
+                        }
+                      </div>
+
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label>Bank <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-select">
+                          <ng-select
+                            formControlName="bankId"
+                            placeholder="Select Bank"
+                            [clearable]="false"
+                            bindLabel="text"
+                            bindValue="value"
+                          >
+                            <ng-option
+                              *ngFor="let bank of banks"
+                              [value]="bank.value"
+                              >{{ bank.text }}</ng-option
+                            >
+                          </ng-select>
+                          <div class="input-group-append">
+                            <button
+                              class="btn btn-primary fw-bold font-20"
+                              type="button"
+                              (click)="addBank()"
+                              title="Add New Bank"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        @if (!currentForm.get('bankId')?.valid &&
+                        currentForm.get('bankId')?.touched) {
+                        <small class="form-text text-danger"
+                          >Bank is required</small
+                        >
+                        }
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label>Amount <span class="text-danger">*</span></label>
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          placeholder="Amount"
+                          formControlName="amount"
+                          step="0.01"
+                          min="0.01"
+                          required
+                        />
+                        @if (!currentForm.get('amount')?.valid &&
+                        currentForm.get('amount')?.touched) {
+                        <small class="form-text text-danger">
+                          @if (currentForm.get('amount')?.errors?.['required'])
+                          { Amount is required } @if
+                          (currentForm.get('amount')?.errors?.['min']) { Amount
+                          must be greater than 0 } @if
+                          (currentForm.get('amount')?.errors?.['maxAmount']) {
+                          {{ currentForm.get('amount')?.errors?.['maxAmount'].message }}
+                          }
+                        </small>
+                        }
+                      </div>
+
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label>Reference</label>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          placeholder="Reference"
+                          formControlName="reference"
+                        />
+                      </div>
+
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
+                        <label>Receipt Number</label>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          placeholder="Receipt Number"
+                          formControlName="receiptNumber"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 mb-2">
+                        <label>Description</label>
+                        <textarea
+                          class="form-control form-control-sm"
+                          placeholder="Description"
+                          formControlName="description"
+                          rows="3"
+                        ></textarea>
+                      </div>
+
+                      <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 mb-2">
+                        <label>Status <span class="text-danger">*</span></label>
+                        <select
+                          class="form-select form-select-sm"
+                          formControlName="isActive"
+                          required
+                        >
+                          <option value="" selected disabled>
+                            Please select
+                          </option>
+                          @for (status of statusList; track status) {
+                          <option [value]="status.id">
+                            {{ status.value }}
+                          </option>
+                          }
+                        </select>
+                        @if (!currentForm.get('isActive')?.valid &&
+                        currentForm.get('isActive')?.touched) {
+                        <small class="form-text text-danger"
+                          >Status is required</small
+                        >
+                        }
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-12">
+                        <div class="d-flex gap-2">
+                          <button
+                            type="submit"
+                            class="btn btn-primary"
+                            [disabled]="!currentForm.valid || isSubmitted"
+                          >
+                            @if (isSubmitted) {
+                            <i class="fa fa-spinner fa-spin"></i>
+                            }
+                            {{
+                              activeTab === "deposit" ? "Deposit" : "Withdraw"
+                            }}
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            (click)="resetForm()"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transaction History -->
+          <div class="card">
+            <span class="card-label">Transaction History</span>
+            <div class="p-10">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="row m-0">
+                    <div class="col-lg-8 p-0">
+                      <div class="ngxTableHeader">
+                        <div class="table-search-area">
+                          <div>
+                            <label for="search-input">
+                              <i class="material-icons search-icon">search</i>
+                            </label>
+                            <input
+                              placeholder="Search"
+                              type="text"
+                              class="browser-default search-field"
+                              (keyup)="filterDatatable($event)"
+                              aria-label="Search box"
+                            />
+                          </div>
+                        </div>
+                        <div class="header-buttons-left">
+                          <div class="tbl-btn-style">
+                            <button
+                              [hidden]="!isRowSelected"
+                              class="btn btn-icon icon-left btn-danger rounded-button"
+                              (click)="deleteSelected()"
+                            >
+                              <i class="material-icons">delete</i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <ngx-datatable
+                #table
+                class="material"
+                [rows]="data"
+                [loadingIndicator]="loadingIndicator"
+                columnMode="force"
+                [headerHeight]="60"
+                [footerHeight]="80"
+                rowHeight="auto"
+                [externalPaging]="true"
+                [limit]="pagination.pageSize"
+                [offset]="pagination.pageIndex"
+                [count]="paging?.totalData ?? 0"
+                [scrollbarH]="scrollBarHorizontal"
+                [reorderable]="reorderable"
+                [selected]="selected"
+                [selectionType]="selection"
+                (select)="onSelect($event)"
+                (page)="changePagination($event)"
+                (sort)="onSortring($event)"
+              >
+                <ngx-datatable-column
+                  [width]="70"
+                  [sortable]="false"
+                  [draggable]="false"
+                  [resizeable]="false"
+                  [canAutoResize]="false"
+                  [headerCheckboxable]="true"
+                  [checkboxable]="true"
+                >
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  name="Transaction #"
+                  prop="transactionNumber"
+                  [width]="150"
+                >
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.transactionNumber }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  name="Date"
+                  prop="transactionDate"
+                  [width]="120"
+                >
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column name="Bank" prop="bankName" [width]="200">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.bankName }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  name="Type"
+                  prop="transactionType"
+                  [width]="100"
+                >
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    @if (row.transactionType === 'Deposit') {
+                    <div class="badge-outline col-green">
+                      {{ row.transactionType }}
+                    </div>
+                    } @else {
+                    <div class="badge-outline col-red">
+                      {{ row.transactionType }}
+                    </div>
+                    }
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column name="Amount" prop="amount" [width]="120">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <span
+                      [class]="
+                        row.transactionType === 'Deposit'
+                          ? 'text-success'
+                          : 'text-danger'
+                      "
+                    >
+                      {{ row.amount | currency }}
+                    </span>
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  name="Balance After"
+                  prop="balanceAfter"
+                  [width]="130"
+                >
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.balanceAfter | currency }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  name="Reference"
+                  prop="reference"
+                  [width]="150"
+                >
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.reference }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column name="Status" prop="status" [width]="100">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    @if (row.status === 'Active') {
+                    <div class="badge-outline col-green">{{ row.status }}</div>
+                    } @else {
+                    <div class="badge-outline col-red">{{ row.status }}</div>
+                    }
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                  [width]="50"
+                  name="Actions"
+                  [sortable]="false"
+                >
+                  <ng-template
+                    let-value="value"
+                    let-row="row"
+                    ngx-datatable-cell-template
+                  >
+                    <span>
+                      <button
+                        class="btn btn-tbl-delete h-auto"
+                        (click)="delete(row)"
+                      >
+                        <i class="far fa-trash-alt"></i>
+                      </button>
+                    </span>
+                  </ng-template>
+                </ngx-datatable-column>
+              </ngx-datatable>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

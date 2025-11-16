@@ -1,0 +1,36 @@
+.invoice-content{
+  background-color: #ffffff;
+.invoice-header{
+ 
+  text-align: center;
+
+  .invoice-header-content{
+    padding: 5px 0;
+    border-top: 1px dotted solid gray;
+    border-bottom: 1px dotted gray;
+  }
+
+}
+.invoice-top-body{
+    
+  .left{
+    text-align: left;
+  }
+  .right{
+    text-align: right;
+  };
+}
+table{
+  width: 100%;
+  border: none;
+}
+
+td {
+  padding: 3px; border: 1px solid #ccc
+}
+
+}
+
+@media print{
+  body{display: none;}
+}

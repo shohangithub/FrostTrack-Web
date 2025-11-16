@@ -1,0 +1,10 @@
+﻿global using Application.Contractors;
+global using Application.ReponseDTO;
+global using Application.RequestDTO;
+global using Domain.Entitites;
+global using Microsoft.EntityFrameworkCore;
+global using Application.Contractors.Common;
+global using Mapster;
+global using Application.Repositories;
+global using Domain.Enums;
+global using FluentValidation;
