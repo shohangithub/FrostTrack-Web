@@ -64,11 +64,11 @@
           <input
             type="text"
             class="form-control form-control-sm"
-            formControlName="sellingRate"
+            formControlName="bookingRate"
           />
         </div>
-        @if (!register.get('sellingRate')?.valid &&
-        register.get('sellingRate')?.touched) {
+        @if (!register.get('bookingRate')?.valid &&
+        register.get('bookingRate')?.touched) {
         <small class="form-text text-danger"> Sales Rate is required </small>
         }
       </div>
@@ -144,7 +144,7 @@
     </div>
 
     <div class="modal-footer">
-     <button
+      <button
         type="submit"
         class="btn btn-primary"
         [disabled]="!register.valid || !register.dirty || isSubmitted"
@@ -156,7 +156,17 @@
         class="btn btn-warning"
         printSectionId="print-template"
         [previewOnly]="false"
-        [printStyle]="{span : {'float':'left','min-height': '65px','max-height':'100px','writing-mode':'tb-rl','line-height':'0','font-weight':'700','transform': 'rotate(180deg)'}}"
+        [printStyle]="{
+          span: {
+            float: 'left',
+            'min-height': '65px',
+            'max-height': '100px',
+            'writing-mode': 'tb-rl',
+            'line-height': '0',
+            'font-weight': '700',
+            transform: 'rotate(180deg)'
+          }
+        }"
         ngxPrint
       >
         Print
@@ -173,11 +183,10 @@
     <div class="modal-footer">
       <div class="mb-5">
         <div id="print-template">
-          
-          <app-barcode 
+          <app-barcode
             [code]="barcodeModel?.productCode || ''"
             [name]="barcodeModel?.productName || ''"
-            [price]="barcodeModel?.sellingRate || 0"
+            [price]="barcodeModel?.bookingRate || 0"
             [quantity]="barcodeModel?.quantity || 1"
             [article]="barcodeModel?.article || ''"
             [isShow]="isGenerated"
@@ -187,5 +196,4 @@
     </div>
   </form>
   }
-  
 </div>

@@ -6,30 +6,32 @@
         [formGroup]="register"
         (ngSubmit)="purchase(register)"
       >
-        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-          <div class="card mb-3">
-            <div class="card-body-narrow">
-              <div class="row">
-                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
-                  <div class="form-group row">
-                    <label for="invoiceNumber" class="col-sm-4 col-form-label"
-                      >Invoice Number:</label
-                    >
-                    <div class="col-sm-8">
-                      <input
-                        type="text"
-                        class="form-control form-control-sm"
-                        id="invoiceNumber"
-                        formControlName="invoiceNumber"
-                        readonly
-                      />
+        <div class="row mt-2">
+          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+            <div class="card mb-3">
+              <span class="card-label">Booking Information</span>
+              <div class="card-body-narrow">
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="receiveNumber" class="col-sm-4 col-form-label"
+                        >Receive Number:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="receiveNumber"
+                          formControlName="receiveNumber"
+                          readonly
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                   <div class="form-group row">
                     <label for="branch" class="col-sm-4 col-form-label"
-                      >Purchase for:</label
+                      >Receive for:</label
                     >
                     <div class="col-sm-8">
                       <select
@@ -55,70 +57,61 @@
                       }
                     </div>
                   </div>
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
-                  <div class="form-group row">
-                    <label for="invoiceDate" class="col-sm-4 col-form-label"
-                      >Date:</label
-                    >
-                    <div class="col-sm-8">
-                      <input
-                        type="text"
-                        class="form-control form-control-sm"
-                        id="invoiceDate"
-                        formControlName="invoiceDate"
-                        readonly
-                      />
+                </div> -->
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="receiveDate" class="col-sm-4 col-form-label"
+                        >Date:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="receiveDate"
+                          formControlName="receiveDate"
+                          readonly
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
             <div class="row">
               <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
                 <div class="card mb-2">
-                  <span class="card-label">Supplier Information</span>
+                  <span class="card-label">Customer Information</span>
                   <div class="card-body">
                     <div class="row">
                       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                         <div class="form-group row">
-                          <label for="supplier" class="col-sm-4 col-form-label"
-                            >Supplier:</label
+                          <label for="customer" class="col-sm-4 col-form-label"
+                            >Customer:</label
                           >
                           <div class="col-sm-8">
                             <div class="input-group input-group-select">
                               <ng-select
-                                [items]="suppliers"
-                                bindLabel="supplierName"
-                                formControlName="supplier"
-                                [loading]="supplierLoading"
-                                (ngModelChange)="
-                                  register.get('supplier')?.value
-                                    ?.isSystemDefault === true
-                                    ? register.get('paidAmount')?.disable()
-                                    : register.get('paidAmount')?.enable()
-                                "
+                                [items]="customers"
+                                bindLabel="customerName"
+                                formControlName="customer"
+                                [loading]="customerLoading"
                               >
                               </ng-select>
                               <div class="input-group-append">
                                 <button
                                   class="btn btn-primary fw-bold font-20"
                                   type="button"
-                                  (click)="addSupplier()"
+                                  (click)="addCustomer()"
                                 >
                                   +
                                 </button>
                               </div>
                             </div>
                           </div>
-                          @if (!register.get('supplier')?.valid &&
-                          register.get('supplier')?.touched) {
+                          @if (!register.get('customer')?.valid &&
+                          register.get('customer')?.touched) {
                           <small class="form-text text-danger">
-                            Supplier is required
+                            Customer is required
                           </small>
                           }
                         </div>
@@ -126,7 +119,7 @@
                       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                         <div class="form-group row">
                           <label
-                            for="supplierMobile"
+                            for="customerMobile"
                             class="col-sm-4 col-form-label"
                             >Mobile:</label
                           >
@@ -134,8 +127,8 @@
                             <input
                               type="text"
                               class="form-control form-control-sm"
-                              id="supplierMobile"
-                              [value]="register.get('supplier')?.value?.['supplierMobile']??''"
+                              id="customerMobile"
+                              [value]="register.get('customer')?.value?.['customerMobile']??''"
                               readonly
                             />
                           </div>
@@ -144,7 +137,7 @@
                       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3">
                         <div class="form-group row">
                           <label
-                            for="supplierAddress"
+                            for="customerAddress"
                             class="col-sm-4 col-form-label"
                             >Address:</label
                           >
@@ -152,9 +145,9 @@
                             <textarea
                               type="text"
                               class="form-control"
-                              id="supplierAddress"
+                              id="customerAddress"
                               style="height: 90px !important"
-                              [value]="register.get('supplier')?.value?.['address']??''"
+                              [value]="register.get('customer')?.value?.['address']??''"
                               readonly
                             ></textarea>
                           </div>
@@ -172,7 +165,6 @@
                 >
                   <div class="card mb-2">
                     <span class="card-label">Product Information</span>
-                    <!-- <div class="card-body" formGroupName="child"> -->
                     <div class="card-body">
                       <div class="row">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -212,72 +204,34 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                           <div class="form-group row">
                             <label
-                              for="purchaseRate"
+                              for="receiveUnit"
                               class="col-sm-3 col-form-label"
-                              >Pur. Rate:</label
-                            >
-                            <div class="col-sm-4">
-                              <input
-                                type="text"
-                                class="form-control form-control-sm"
-                                id="purchaseRate"
-                                formControlName="purchaseRate"
-                                (ngModelChange)="setPurchaseAmount()"
-                                decimal
-                                [control]="
-                                  productForm.get('purchaseRate')?.value
-                                "
-                                [floatingPoint]="2"
-                              />
-                            </div>
-                            <label
-                              for="purchaseQuantity"
-                              class="col-sm-2 col-form-label"
-                              >Qty</label
-                            >
-                            <div class="col-sm-3">
-                              <input
-                                type="text"
-                                class="form-control form-control-sm"
-                                id="purchaseQuantity"
-                                formControlName="purchaseQuantity"
-                                (ngModelChange)="setPurchaseAmount()"
-                              />
-                            </div>
-                            @if ((!productForm.get('purchaseRate')?.valid &&
-                            productForm.get('purchaseRate')?.touched)
-                            ||(!productForm.get('purchaseQuantity')?.valid &&
-                            productForm.get('purchaseQuantity')?.touched) ) {
-                            <small class="form-text text-danger text-end">
-                              Purchase rate & quantity is required
-                            </small>
-                            }
-                          </div>
-                        </div>
-                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                          <div class="form-group row">
-                            <label
-                              for="purchaseAmount"
-                              class="col-sm-3 col-form-label"
-                              >T. Amount:</label
+                              >Unit:</label
                             >
                             <div class="col-sm-9">
-                              <input
-                                type="text"
-                                class="form-control form-control-sm"
-                                id="purchaseAmount"
-                                formControlName="purchaseAmount"
-                                decimal
-                                [control]="
-                                  productForm.get('purchaseAmount')?.value
-                                "
-                                [floatingPoint]="2"
-                              />
+                              <div class="input-group input-group-select">
+                                <ng-select
+                                  [items]="productUnits"
+                                  bindLabel="text"
+                                  formControlName="receiveUnit"
+                                  [loading]="productUnitLoading"
+                                >
+                                </ng-select>
+                                <div class="input-group-append">
+                                  <button
+                                    class="btn btn-primary fw-bold font-20"
+                                    type="button"
+                                    (click)="addUnit()"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                            @if (!productForm.get('purchaseAmount')?.valid &&
-                            productForm.get('purchaseAmount')?.touched) {
-                            <small class="form-text text-danger text-end">
-                              Total amount is required
+                            @if (!productForm.get('receiveUnit')?.valid &&
+                            productForm.get('receiveUnit')?.touched) {
+                            <small class="form-text text-danger">
+                              Unit is required
                             </small>
                             }
                           </div>
@@ -287,35 +241,67 @@
                             <label
                               for="bookingRate"
                               class="col-sm-3 col-form-label"
-                              >Sel. Price:</label
+                              >Rate:</label
                             >
-                            <div class="col-sm-9">
+                            <div class="col-sm-4">
                               <input
-                                type="number"
+                                type="text"
                                 class="form-control form-control-sm"
                                 id="bookingRate"
                                 formControlName="bookingRate"
-                                readonly
+                                (ngModelChange)="setReceiveAmount()"
                               />
                             </div>
+                            <label
+                              for="receiveQuantity"
+                              class="col-sm-2 col-form-label"
+                              >Qty</label
+                            >
+                            <div class="col-sm-3">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="receiveQuantity"
+                                formControlName="receiveQuantity"
+                                (ngModelChange)="setReceiveAmount()"
+                              />
+                            </div>
+                            @if ((!productForm.get('bookingRate')?.valid &&
+                            productForm.get('bookingRate')?.touched)
+                            ||(!productForm.get('receiveQuantity')?.valid &&
+                            productForm.get('receiveQuantity')?.touched) ) {
+                            <small class="form-text text-danger text-end">
+                              Rate & quantity is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="receiveAmount"
+                              class="col-sm-3 col-form-label"
+                              >T. Amount:</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="receiveAmount"
+                                formControlName="receiveAmount"
+                              />
+                            </div>
+                            @if (!productForm.get('receiveAmount')?.valid &&
+                            productForm.get('receiveAmount')?.touched) {
+                            <small class="form-text text-danger text-end">
+                              Total amount is required
+                            </small>
+                            }
                           </div>
                         </div>
                         <div
                           class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
                         >
-                          <!-- <button type="button"
-                                  class="btn btn-warning px-3 py-0 mx-1"
-                                  [disabled]="!productForm.dirty"
-                                  (click)="productForm.reset()">
-                            Reset
-                          </button>
-                          <button type="submit"
-                                  class="btn btn-primary px-2 py-0"
-                                  [disabled]="!productForm.valid"
-                                  (click)="addToCart()">
-                            Add to cart
-                          </button> -->
-
                           <button
                             type="button"
                             class="btn btn-warning px-3 py-0 mx-1"
@@ -347,7 +333,6 @@
                         <tr>
                           <th scope="col" class="text-center">SL</th>
                           <th scope="col" class="text-center">Product</th>
-                          <!-- <th scope="col">Category</th> -->
                           <th scope="col" class="text-center">Rate</th>
                           <th scope="col" class="text-center">Quantity</th>
                           <th scope="col" class="text-center">Total</th>
@@ -355,16 +340,17 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (row of register.get('purchaseDetails')?.value;
-                        track row; let idx = $index) {
+                        @for (row of
+                        register.get('productReceiveDetails')?.value; track row;
+                        let idx = $index) {
                         <tr>
                           <th class="text-center" scope="row">{{ idx + 1 }}</th>
                           <td class="text-center">{{ row.productName }}</td>
-                          <td class="text-center">{{ row.purchaseRate }}</td>
+                          <td class="text-center">{{ row.bookingRate }}</td>
                           <td class="text-center">
-                            {{ row.purchaseQuantity }}
+                            {{ row.receiveQuantity }}
                           </td>
-                          <td class="text-center">{{ row.purchaseAmount }}</td>
+                          <td class="text-center">{{ row.receiveAmount }}</td>
                           <td class="text-center">
                             <a
                               data-toggle="tooltip"
@@ -396,7 +382,7 @@
                         type="text"
                         class="form-control form-control-sm"
                         formControlName="subtotal"
-                        (ngModelChange)="setInvoiceTotal()"
+                        (ngModelChange)="setReceiveTotal()"
                         readonly
                       />
                     </div>
@@ -408,55 +394,20 @@
                     }
                   </div>
                 </div>
-                <div class="row">
+                <!-- <div class="row">
                   <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                     <div class="form-group">
-                      <label for="vatPercent">Vat</label>
+                      <label for="vatAmount">Vat Amount</label>
                       <input
                         type="text"
                         class="form-control form-control-sm"
-                        id="vatPercent"
-                        formControlName="vatPercent"
-                        (change)="
-                          register
-                            .get('vatAmount')
-                            ?.setValue(
-                              (register.get('vatPercent')?.value *
-                                register.get('subtotal')?.value) /
-                                100
-                            );
-                          setInvoiceTotal()
-                        "
+                        id="vatAmount"
+                        formControlName="vatAmount"
+                        (change)="setReceiveTotal()"
                       />
                     </div>
                   </div>
-                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
-                    <div class="form-group row mt-4">
-                      <label
-                        for="vatAmount"
-                        class="col-sm-4 col-form-label mt-1"
-                        >%</label
-                      >
-                      <div class="col-sm-8">
-                        <input
-                          type="text"
-                          class="form-control form-control-sm mt-1"
-                          id="vatAmount"
-                          formControlName="vatAmount"
-                          (change)="
-                            register
-                              .get('vatPercent')
-                              ?.setValue(
-                                (register.get('vatAmount')?.value * 100) /
-                                  register.get('subtotal')?.value
-                              );
-                            setInvoiceTotal()
-                          "
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                </div> -->
                 <div class="row">
                   <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                     <div class="form-group">
@@ -474,7 +425,7 @@
                                 register.get('subtotal')?.value) /
                                 100
                             );
-                          setInvoiceTotal()
+                          setReceiveTotal()
                         "
                       />
                     </div>
@@ -499,7 +450,7 @@
                                 (register.get('discountAmount')?.value * 100) /
                                   register.get('subtotal')?.value
                               );
-                            setInvoiceTotal()
+                            setReceiveTotal()
                           "
                         />
                       </div>
@@ -515,7 +466,7 @@
                         class="form-control form-control-sm"
                         id="otherCost"
                         formControlName="otherCost"
-                        (ngModelChange)="setInvoiceTotal()"
+                        (change)="setReceiveTotal()"
                       />
                     </div>
                   </div>
@@ -523,20 +474,20 @@
                 <div class="row">
                   <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                     <div class="form-group">
-                      <label for="invoiceAmount">Total</label>
+                      <label for="totalAmount">Total</label>
                       <input
                         type="text"
                         class="form-control form-control-sm"
-                        formControlName="invoiceAmount"
+                        formControlName="totalAmount"
                         (ngModelChange)="
                           register
                             .get('paidAmount')
-                            ?.setValue(register.get('invoiceAmount')?.value)
+                            ?.setValue(register.get('totalAmount')?.value)
                         "
                       />
                     </div>
-                    @if (!register.get('invoiceAmount')?.valid &&
-                    register.get('invoiceAmount')?.touched) {
+                    @if (!register.get('totalAmount')?.valid &&
+                    register.get('totalAmount')?.touched) {
                     <small class="form-text text-danger">
                       Total amount is required
                     </small>
@@ -556,7 +507,7 @@
                           register
                             .get('dueAmount')
                             ?.setValue(
-                              register.get('invoiceAmount')?.value -
+                              register.get('totalAmount')?.value -
                                 register.get('paidAmount')?.value
                             )
                         "
@@ -590,7 +541,7 @@
                         type="text"
                         class="form-control form-control-sm text-danger fw-bolder"
                         id="prevDueAmount"
-                        [value]="register.get('supplier')?.value?.previousDue"
+                        [value]="register.get('customer')?.value?.previousDue"
                         readonly
                       />
                     </div>
@@ -603,12 +554,13 @@
                     type="submit"
                     class="btn btn-primary mx-2"
                     [disabled]="
-                      register.get('purchaseDetails')?.value?.length == 0 ||
-                      !register.valid ||
+                      register.invalid ||
+                      register.get('productReceiveDetails')?.value?.length ===
+                        0 ||
                       isSubmitted
                     "
                   >
-                    Purchase
+                    Receive
                   </button>
                   <button
                     type="button"

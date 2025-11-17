@@ -82,14 +82,7 @@ export class AddProductComponent implements OnInit {
       productCategory: new UntypedFormControl(),
       defaultUnit: new UntypedFormControl(),
       imageUrl: new UntypedFormControl(),
-      isRawMaterial: new UntypedFormControl(),
-      isFinishedGoods: new UntypedFormControl(),
-      reOrederLevel: new UntypedFormControl(),
-      purchaseRate: new UntypedFormControl(),
-      sellingRate: new UntypedFormControl(),
-      wholesalePrice: new UntypedFormControl(),
-      vatPercent: new UntypedFormControl(),
-      isProductAsService: new UntypedFormControl(),
+      bookingRate: new UntypedFormControl(),
       isActive: new UntypedFormControl(),
     });
   }
@@ -125,14 +118,7 @@ export class AddProductComponent implements OnInit {
       productCategory: [1, [Validators.required]],
       defaultUnit: [null, [Validators.required]],
       imageUrl: [''],
-      isRawMaterial: [false],
-      isFinishedGoods: [true],
-      reOrederLevel: [0],
-      purchaseRate: [0],
-      sellingRate: [0],
-      wholesalePrice: [0],
-      vatPercent: [0],
-      isProductAsService: [false],
+      bookingRate: [0],
       isActive: [true],
     });
   }
@@ -178,14 +164,7 @@ export class AddProductComponent implements OnInit {
           productCode: response.productCode,
           customBarcode: response.customBarcode,
           imageUrl: response.imageUrl,
-          isRawMaterial: response.isRawMaterial,
-          isFinishedGoods: response.isFinishedGoods,
-          reOrederLevel: response.reOrederLevel,
-          purchaseRate: response.purchaseRate,
-          sellingRate: response.sellingRate,
-          wholesalePrice: response.wholesalePrice,
-          vatPercent: response.vatPercent,
-          isProductAsService: response.isProductAsService,
+          bookingRate: response.bookingRate,
           isActive: response.isActive,
           productCategory:
             this.productCategories.find(
@@ -195,7 +174,6 @@ export class AddProductComponent implements OnInit {
             this.productUnits.find((x) => x.value == response.defaultUnitId) ||
             null,
         });
-        this.onServiceChanges(this.editForm);
         this.editableProductCatId = response.categoryId;
         this.editableProductUnitId = response.defaultUnitId;
 
@@ -310,26 +288,5 @@ export class AddProductComponent implements OnInit {
         this.isGeneratingCode = false;
       },
     });
-  }
-
-  onServiceChanges(form: UntypedFormGroup) {
-    const isProductAsService = form.get('isProductAsService')?.value;
-    const purchaseRate = form.get('purchaseRate');
-    const reOrederLevel = form.get('reOrederLevel');
-    const vatPercent = form.get('vatPercent');
-    if (isProductAsService) {
-      purchaseRate?.setValue(0);
-      purchaseRate?.disable();
-
-      reOrederLevel?.setValue(0);
-      reOrederLevel?.disable();
-
-      vatPercent?.setValue(0);
-      vatPercent?.disable();
-    } else {
-      purchaseRate?.enable();
-      reOrederLevel?.enable();
-      vatPercent?.enable();
-    }
   }
 }

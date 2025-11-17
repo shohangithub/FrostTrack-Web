@@ -9,18 +9,10 @@ public record ProductResponse(
     string? CustomBarcode,
     int CategoryId,
     int? DefaultUnitId,
-    bool IsRawMaterial,
-    bool IsFinishedGoods,
     string? ImageUrl,
-    int? ReOrederLevel,
-    decimal? PurchaseRate,
-    decimal? SellingRate,
-    decimal? WholesalePrice,
-    decimal? VatPercent,
+    decimal? BookingRate,
     bool IsActive,
-    string Status,
-    bool IsProductAsService,
-    string ProductAs
+    string Status
     );
 public record ProductListResponse(
     int Id,
@@ -31,17 +23,9 @@ public record ProductListResponse(
     string CategoryName,
     int? DefaultUnitId,
     string? UnitName,
-    bool IsRawMaterial,
-    bool IsFinishedGoods,
     string? ImageUrl,
-    int? ReOrederLevel,
-    decimal? PurchaseRate,
-    decimal? SellingRate,
-    decimal? WholesalePrice,
-    decimal? VatPercent,
-    string Status,
-    bool IsProductAsService,
-    string ProductAs
+    decimal? BookingRate,
+    string Status
     );
 
 
@@ -53,17 +37,9 @@ public record ProductLisWithStockResponse(
     string CategoryName,
     int? DefaultUnitId,
     string? UnitName,
-    bool IsRawMaterial,
-    bool IsFinishedGoods,
     string? ImageUrl,
-    int? ReOrederLevel,
-    decimal? PurchaseRate,
-    decimal? SellingRate,
-    decimal? WholesalePrice,
-    decimal? VatPercent,
+    decimal? BookingRate,
     string Status,
-    bool IsProductAsService,
-    string ProductAs,
     double? CurrentStock,
     decimal? LastPurchaseRate,
     UnitConversion StockUnit

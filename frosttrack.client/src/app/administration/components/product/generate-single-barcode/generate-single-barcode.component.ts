@@ -6,7 +6,7 @@ import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validators
+  Validators,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +20,7 @@ import { ISingleBarcode } from 'app/administration/models/single-barcode.interfa
 @Component({
   selector: 'app-generate-single-barcode',
   templateUrl: './generate-single-barcode.component.html',
-  styles:`
+  styles: `
   @media print {
         .page-break {
             display: block;
@@ -53,7 +53,7 @@ import { ISingleBarcode } from 'app/administration/models/single-barcode.interfa
     CommonModule,
     BarcodeComponent,
     FormShimmerComponent,
-    NgxPrintModule
+    NgxPrintModule,
   ],
 })
 export class GenerateSingleBarcodeComponent implements OnInit {
@@ -62,7 +62,6 @@ export class GenerateSingleBarcodeComponent implements OnInit {
   register!: UntypedFormGroup;
   isLoading = false;
   isSubmitted = false;
-
 
   @ViewChild('printBody', { static: true }) templateRef?: ElementRef;
   constructor(
@@ -79,7 +78,7 @@ export class GenerateSingleBarcodeComponent implements OnInit {
       article: new UntypedFormControl(),
       width: new UntypedFormControl(),
       height: new UntypedFormControl(),
-      sellingRate: new UntypedFormControl(),
+      bookingRate: new UntypedFormControl(),
       quantity: new UntypedFormControl(),
       isSingle: new UntypedFormControl(),
     });
@@ -97,8 +96,8 @@ export class GenerateSingleBarcodeComponent implements OnInit {
       productCode: [this.data?.productName, [Validators.required]],
       productName: [this.data?.productCode, [Validators.required]],
       customBarcode: [this.data?.customBarcode],
-      sellingRate: [this.data?.sellingRate, [Validators.required]],
-      quantity: [null,[Validators.required]],
+      bookingRate: [this.data?.bookingRate, [Validators.required]],
+      quantity: [null, [Validators.required]],
       article: [null],
       isSingle: [false],
       width: [1.5],
@@ -106,9 +105,8 @@ export class GenerateSingleBarcodeComponent implements OnInit {
     });
   }
 
-  
   // edit a record
-  isGenerated:boolean=false;
+  isGenerated: boolean = false;
   barcodeModel?: ISingleBarcode;
   generate(form: UntypedFormGroup) {
     if (this.register.valid) {
@@ -117,5 +115,4 @@ export class GenerateSingleBarcodeComponent implements OnInit {
       this.isGenerated = true;
     }
   }
-  
 }

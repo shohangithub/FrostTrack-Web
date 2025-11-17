@@ -44,14 +44,9 @@ public record ProductReportResponse(
     int CategoryId,
     int? DefaultUnitId,
     string? ImageUrl,
-    decimal? PurchaseRate,
-    decimal? SellingRate,
-    decimal? WholesalePrice,
-    decimal? VatPercent,
+    decimal? BookingRate,
     bool IsActive,
-    string Status,
-    bool IsProductAsService,
-    string ProductAs
+    string Status
     );
 
 public record UnitConversionReportResponse(

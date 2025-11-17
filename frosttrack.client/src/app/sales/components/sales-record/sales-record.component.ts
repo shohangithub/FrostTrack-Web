@@ -51,7 +51,7 @@ export class SalesRecordComponent implements OnInit {
 
   recordTypes = [
     { value: 'SIMPLE', text: 'Simple' },
-    { value: 'DETAIL', text: 'With Detail' }
+    { value: 'DETAIL', text: 'With Detail' },
   ];
 
   suppliers: ISupplierListResponse[] = [];
@@ -77,7 +77,7 @@ export class SalesRecordComponent implements OnInit {
   initFormData() {
     this.searchForm = this.fb.group({
       searchType: ['ALL', [Validators.required]],
-      recordType: ['SIMPLE',[Validators.required]],
+      recordType: ['SIMPLE', [Validators.required]],
       supplier: [null],
       dateRange: [null, [Validators.required]],
       invoiceDate: [new Date().systemFormat(), [Validators.required]],
@@ -89,7 +89,7 @@ export class SalesRecordComponent implements OnInit {
       //   salesUnitId: [null, [Validators.required]],
       //   salesQuantity: [null, [Validators.required]],
       //   salesAmount: [null, [Validators.required]],
-      //   sellingRate: [null],
+      //   bookingRate: [null],
       // }),
       subtotal: [0, [Validators.required]],
       vatPercent: [0],

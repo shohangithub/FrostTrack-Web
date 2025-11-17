@@ -5,4 +5,8 @@ export class MessageHub {
   public static DELETE = 'Data Deleted Successfully';
   public static DELETE_ONE = '1 Record Deleted Successfully';
   public static DELETE_BATCH = 'Records Deleted Successfully';
+  public static ProductReceiveCreatedSuccessfully =
+    'Product Receive Created Successfully';
+  public static ProductReceiveUpdatedSuccessfully =
+    'Product Receive Updated Successfully';
 }

@@ -1037,6 +1037,9 @@ namespace Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("BookingRate")
+                        .HasColumnType("decimal(10, 2)");
+
                     b.Property<int?>("BranchId")
                         .HasColumnType("int");
 
@@ -1063,15 +1066,6 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsFinishedGoods")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsProductAsService")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsRawMaterial")
-                        .HasColumnType("bit");
-
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
 
@@ -1086,23 +1080,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("PurchaseRate")
-                        .HasColumnType("decimal(10, 2)");
-
-                    b.Property<int?>("ReOrederLevel")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("SellingRate")
-                        .HasColumnType("decimal(10, 2)");
-
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal?>("VatPercent")
-                        .HasColumnType("decimal(5, 2)");
-
-                    b.Property<decimal?>("WholesalePrice")
-                        .HasColumnType("decimal(10, 2)");
 
                     b.HasKey("Id");
 
@@ -1154,6 +1133,132 @@ namespace Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("ProductCategories", "product");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.ProductReceive", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnOrder(0);
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<float>("DiscountPercent")
+                        .HasColumnType("real");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("OtherCost")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<DateTime>("ReceiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReceiveNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<decimal>("VatAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<float>("VatPercent")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("ProductReceives", "product");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.ProductReceiveDetail", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnOrder(0);
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("BookingRate")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<long>("ProductReceiveId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("ReceiveAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<float>("ReceiveQuantity")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ReceiveUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductReceiveId");
+
+                    b.HasIndex("ReceiveUnitId");
+
+                    b.ToTable("ProductReceiveDetails", "product");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>
@@ -2065,6 +2170,52 @@ namespace Persistence.Migrations
                     b.Navigation("DefaultUnit");
                 });
 
+            modelBuilder.Entity("Domain.Entitites.ProductReceive", b =>
+                {
+                    b.HasOne("Domain.Entitites.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.ProductReceiveDetail", b =>
+                {
+                    b.HasOne("Domain.Entitites.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.ProductReceive", "ProductReceive")
+                        .WithMany("ProductReceiveDetails")
+                        .HasForeignKey("ProductReceiveId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.UnitConversion", "ReceiveUnit")
+                        .WithMany()
+                        .HasForeignKey("ReceiveUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ProductReceive");
+
+                    b.Navigation("ReceiveUnit");
+                });
+
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>
                 {
                     b.HasOne("Domain.Entitites.Branch", "Branch")
@@ -2387,6 +2538,11 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entitites.ProductCategory", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.ProductReceive", b =>
+                {
+                    b.Navigation("ProductReceiveDetails");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>

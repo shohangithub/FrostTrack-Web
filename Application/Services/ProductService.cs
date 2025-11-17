@@ -101,14 +101,8 @@ public class ProductService : IProductService
                .SetProperty(cmd => cmd.DefaultUnitId, product.DefaultUnitId)
                .SetProperty(cmd => cmd.ImageUrl, product.ImageUrl)
                .SetProperty(cmd => cmd.IsActive, product.IsActive)
-               .SetProperty(cmd => cmd.IsRawMaterial, product.IsRawMaterial)
-               .SetProperty(cmd => cmd.IsFinishedGoods, product.IsFinishedGoods)
                .SetProperty(cmd => cmd.ProductName, product.ProductName)
-               .SetProperty(cmd => cmd.PurchaseRate, product.PurchaseRate)
-               .SetProperty(cmd => cmd.ReOrederLevel, product.ReOrederLevel)
-               .SetProperty(cmd => cmd.SellingRate, product.SellingRate)
-               .SetProperty(cmd => cmd.VatPercent, product.VatPercent)
-               .SetProperty(cmd => cmd.WholesalePrice, product.WholesalePrice)
+               .SetProperty(cmd => cmd.BookingRate, product.BookingRate)
         );
 
         var response = product.Adapt<ProductResponse>();
@@ -127,17 +121,9 @@ public class ProductService : IProductService
                x.Category.CategoryName,
                x.DefaultUnitId,
                x.DefaultUnit.UnitName,
-               x.IsRawMaterial,
-               x.IsFinishedGoods,
                x.ImageUrl,
-               x.ReOrederLevel,
-               x.PurchaseRate,
-               x.SellingRate,
-               x.WholesalePrice,
-               x.VatPercent,
-               x.Status,
-               x.IsProductAsService,
-               x.ProductAs
+               x.BookingRate,
+               x.Status
                ))
            .ToListAsync(cancellationToken);
         return response;
@@ -154,17 +140,9 @@ public class ProductService : IProductService
                x.Category.CategoryName,
                x.DefaultUnitId,
                x.DefaultUnit.UnitName,
-               x.IsRawMaterial,
-               x.IsFinishedGoods,
                x.ImageUrl,
-               x.ReOrederLevel,
-               x.PurchaseRate,
-               x.SellingRate,
-               x.WholesalePrice,
-               x.VatPercent,
+               x.BookingRate,
                x.Status,
-               x.IsProductAsService,
-               x.ProductAs,
                x.Stock.StockQuantity,
                x.Stock.LastPurchaseRate,
                x.Stock.UnitConversion
@@ -193,17 +171,9 @@ public class ProductService : IProductService
                x.Category.CategoryName,
                x.DefaultUnitId,
                x.DefaultUnit.UnitName,
-               x.IsRawMaterial,
-               x.IsFinishedGoods,
                x.ImageUrl,
-               x.ReOrederLevel,
-               x.PurchaseRate,
-               x.SellingRate,
-               x.WholesalePrice,
-               x.VatPercent,
-               x.Status,
-               x.IsProductAsService,
-               x.ProductAs
+               x.BookingRate,
+               x.Status
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);

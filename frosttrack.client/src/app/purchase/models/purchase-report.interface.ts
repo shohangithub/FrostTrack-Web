@@ -43,7 +43,7 @@ export interface ProductReportResponse {
   defaultUnitId?: number | null;
   imageUrl?: string | null;
   purchaseRate?: number | null;
-  sellingRate?: number | null;
+  bookingRate?: number | null;
   wholesalePrice?: number | null;
   vatPercent?: number | null;
   isActive: boolean;

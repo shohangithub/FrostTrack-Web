@@ -7,15 +7,8 @@ public record ProductRequest(
     string? CustomBarcode,
     int CategoryId,
     int? DefaultUnitId,
-    bool IsRawMaterial,
-    bool IsFinishedGoods,
     string? Address,
     string? ImageUrl,
-    int? ReOrederLevel,
-    decimal? PurchaseRate,
-    decimal? SellingRate,
-    decimal? WholesalePrice,
-    decimal? VatPercent,
-    bool IsActive,
-    bool IsProductAsService
+    decimal? BookingRate,
+    bool IsActive
     );

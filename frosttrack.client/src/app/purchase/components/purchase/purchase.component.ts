@@ -177,7 +177,7 @@ export class PurchaseComponent implements OnInit {
       purchaseUnitId: [null, [Validators.required]],
       purchaseQuantity: [null, [Validators.required]],
       purchaseAmount: [null, [Validators.required]],
-      sellingRate: [null],
+      bookingRate: [null],
     });
   }
   initExistingFormData(data: IPurchaseResponse) {
@@ -230,7 +230,7 @@ export class PurchaseComponent implements OnInit {
             id: [detail.id],
             productId: [detail.productId, [Validators.required]],
             productName: [detail.product?.productName, [Validators.required]],
-            sellingRate: [detail.product?.sellingRate],
+            bookingRate: [detail.product?.bookingRate],
             purchaseId: [detail.purchaseId],
             purchaseUnitId: [detail.purchaseUnitId, [Validators.required]],
             purchaseRate: [detail.purchaseRate, [Validators.required]],
@@ -324,7 +324,7 @@ export class PurchaseComponent implements OnInit {
         childForm
           ?.get('purchaseQuantity')
           ?.setValue(existingProduct.purchaseQuantity);
-        childForm?.get('sellingRate')?.setValue(existingProduct.sellingRate);
+        childForm?.get('bookingRate')?.setValue(existingProduct.bookingRate);
         childForm
           ?.get('purchaseAmount')
           ?.setValue(existingProduct.purchaseAmount);
@@ -332,7 +332,7 @@ export class PurchaseComponent implements OnInit {
         childForm?.get('purchaseUnitId')?.setValue(product.defaultUnitId);
         childForm?.get('purchaseRate')?.setValue(product.purchaseRate);
         childForm?.get('purchaseQuantity')?.setValue(0);
-        childForm?.get('sellingRate')?.setValue(product.sellingRate);
+        childForm?.get('bookingRate')?.setValue(product.bookingRate);
       }
     }
   }
@@ -361,7 +361,7 @@ export class PurchaseComponent implements OnInit {
       existingProduct.purchaseRate = formData.purchaseRate;
       existingProduct.purchaseQuantity = formData.purchaseQuantity;
       existingProduct.purchaseAmount = formData.purchaseAmount;
-      existingProduct.sellingRate = formData.sellingRate;
+      existingProduct.bookingRate = formData.bookingRate;
       this.purchaseDetails.setValue(cardData);
     } else {
       const item = this.fb.group({
@@ -373,7 +373,7 @@ export class PurchaseComponent implements OnInit {
         purchaseRate: [formData.purchaseRate, [Validators.required]],
         purchaseQuantity: [formData.purchaseQuantity, [Validators.required]],
         purchaseAmount: [formData.purchaseAmount, [Validators.required]],
-        sellingRate: [formData.sellingRate],
+        bookingRate: [formData.bookingRate],
       });
       // Add the new form group to the FormArray
       this.purchaseDetails.push(item);
@@ -501,18 +501,10 @@ export class PurchaseComponent implements OnInit {
           defaultUnitId: result.defaultUnitId,
           unitName: result.unitName,
           imageUrl: result.imageUrl,
-          isRawMaterial: result.isRawMaterial,
-          isFinishedGoods: result.isFinishedGoods,
-          reOrederLevel: result.reOrederLevel,
-          purchaseRate: result.purchaseRate,
-          sellingRate: result.sellingRate,
-          wholesalePrice: result.wholesalePrice,
-          vatPercent: result.vatPercent,
-          isProductAsService: result.isProductAsService,
+          bookingRate: result.bookingRate,
           isActive: result.isActive,
           status: result.status,
           branchId: result.branchId,
-          productAs: result.productAs,
         };
         this.products = this.products.insertThenClone(obj);
       }

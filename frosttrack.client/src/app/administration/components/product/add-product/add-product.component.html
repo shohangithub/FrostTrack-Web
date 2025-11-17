@@ -119,6 +119,16 @@
           <small class="form-text text-danger"> Unit is required </small>
           }
         </div>
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+          <div class="form-group">
+            <label>Default Rate</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="bookingRate"
+            />
+          </div>
+        </div>
         <!-- <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Vat(%)</label>
@@ -157,7 +167,7 @@
             <input
               type="text"
               class="form-control form-control-sm"
-              formControlName="sellingRate"
+              formControlName="bookingRate"
             />
           </div>
         </div>
@@ -215,7 +225,7 @@
     </div>
 
     <div class="row">
-      <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 mb-2">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Product Code<span class="text-danger">*</span></label>
@@ -246,7 +256,7 @@
           }
         </div>
 
-        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <!-- <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Category </label>
             <div class="input-group input-group-select">
@@ -272,7 +282,7 @@
           register.get('productCategory')?.touched) {
           <small class="form-text text-danger"> Category is required </small>
           }
-        </div>
+        </div> -->
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Product Name</label>
@@ -319,6 +329,16 @@
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
+            <label>Default Rate</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="bookingRate"
+            />
+          </div>
+        </div>
+        <!-- <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+          <div class="form-group">
             <label>Vat(%)</label>
             <input
               type="text"
@@ -326,9 +346,9 @@
               formControlName="vatPercent"
             />
           </div>
-        </div>
+        </div> -->
       </div>
-      <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 mb-2">
+      <!-- <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 mb-2">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Re-Order Lavel</label>
@@ -355,7 +375,7 @@
             <input
               type="text"
               class="form-control form-control-sm"
-              formControlName="sellingRate"
+              formControlName="bookingRate"
             />
           </div>
         </div>
@@ -385,7 +405,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="modal-footer">

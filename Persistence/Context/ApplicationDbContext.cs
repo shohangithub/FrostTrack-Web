@@ -31,6 +31,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Purchase> Purchases { get; set; }
     public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
+    public DbSet<ProductReceive> ProductReceives { get; set; }
+    public DbSet<ProductReceiveDetail> ProductReceiveDetails { get; set; }
     public DbSet<SupplierPayment> SupplierPayments { get; set; }
     public DbSet<SupplierPaymentDetail> SupplierPaymentDetails { get; set; }
     public DbSet<Sales> Sales { get; set; }

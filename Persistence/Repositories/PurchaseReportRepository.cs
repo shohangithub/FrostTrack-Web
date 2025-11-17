@@ -51,7 +51,7 @@ public class PurchaseReportRepository : IPurchaseReportRepository
             g.First().Purchase.InvoiceNumber,
             g.Key.InvoiceDate,
             g.Sum(x => x.PurchaseDetail.PurchaseAmount),
-            g.First().Purchase.VatPercent,
+            0,
             g.First().Purchase.VatAmount,
             g.First().Purchase.DiscountPercent,
             g.First().Purchase.DiscountAmount,
@@ -81,14 +81,9 @@ public class PurchaseReportRepository : IPurchaseReportRepository
                     x.Product.CategoryId,
                     x.Product.DefaultUnitId,
                     x.Product.ImageUrl,
-                    x.Product.PurchaseRate,
-                    x.Product.SellingRate,
-                    x.Product.WholesalePrice,
-                    x.Product.VatPercent,
+                    x.Product.BookingRate,
                     x.Product.IsActive,
-                    x.Product.Status,
-                    x.Product.IsProductAsService,
-                    x.Product.ProductAs
+                    x.Product.Status
                 ),
                 new UnitConversionReportResponse(
                     x.UnitConversion.Id,

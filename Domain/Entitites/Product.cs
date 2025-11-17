@@ -11,21 +11,9 @@ public class Product : AuditableEntity<int>
     public int? DefaultUnitId { get; set; }
     public UnitConversion? DefaultUnit { get; set; }
     public string ImageUrl { get; set; } = string.Empty;
-    public required bool IsRawMaterial { get; set; }
-    public required bool IsFinishedGoods { get; set; }
-    public int? ReOrederLevel { get; set; }
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? PurchaseRate { get; set; }
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? SellingRate { get; set; }
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? WholesalePrice { get; set; }
-    [Column(TypeName = "decimal(5, 2)")]
-    public decimal? VatPercent { get; set; }
-    public required bool IsProductAsService { get; set; } = false;
-    [NotMapped]
-    public string ProductAs => IsProductAsService ? "Service" : "Product";
 
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? BookingRate { get; set; }
     public required bool IsActive { get; set; } = true;
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";

@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IPrintService, PrintService>();
         services.AddScoped<IPurchaseReportService, PurchaseReportService>();
+        services.AddScoped<IProductReceiveService, ProductReceiveService>();
 
         services.AddTransient<DefaultValueInjector>();
 

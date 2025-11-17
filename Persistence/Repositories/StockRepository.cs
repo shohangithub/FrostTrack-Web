@@ -263,5 +263,59 @@ public class StockRepository(ApplicationDbContext _context) : IStockRepository
         var result = await _context.SaveChangesAsync();
         return result > 0;
     }
+
+    public async Task<bool> ManageAddProductReceiveStock(ProductReceive request, CancellationToken cancellationToken)
+    {
+        List<int> productIds = request.ProductReceiveDetails.Select(x => x.ProductId).ToList() ?? new();
+        List<int> unitIds = request.ProductReceiveDetails.Select(x => x.ReceiveUnitId).ToList() ?? new();
+        var unitConversions = await _context.UnitConversions.Where(x => unitIds.Contains(x.Id)).ToListAsync();
+
+        var existingStocks = await _context.Stocks.Where(x => productIds.Contains(x.ProductId)).ToListAsync();
+        foreach (var stock in existingStocks)
+        {
+            var requestStock = request.ProductReceiveDetails.FirstOrDefault(x => productIds.Contains(x.ProductId));
+            if (requestStock == null) throw new Exception("Internal Server Error");
+            var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.ReceiveUnitId);
+            if (conversionUnit == null) throw new Exception("Internal Server Error");
+
+            var baseQuantity = (requestStock.ReceiveQuantity * conversionUnit.ConversionValue);
+            var bookingRate = requestStock.ReceiveAmount / (decimal)baseQuantity;
+            requestStock.BookingRate = bookingRate;
+
+            stock.StockQuantity += baseQuantity;
+            stock.LastPurchaseRate = bookingRate;
+            _context.Entry(stock).State = EntityState.Modified;
+        }
+
+        var newStocks = request.ProductReceiveDetails.Where(x => !existingStocks.Select(x => x.ProductId).Contains(x.ProductId)).ToList();
+        foreach (var stock in newStocks)
+        {
+            var requestStock = request.ProductReceiveDetails.FirstOrDefault(x => x.ProductId == stock.ProductId);
+            if (requestStock == null) throw new Exception("Internal Server Error");
+            var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.ReceiveUnitId);
+            if (conversionUnit == null) throw new Exception("Internal Server Error");
+
+            var baseQuantity = (requestStock.ReceiveQuantity * conversionUnit.ConversionValue);
+            var bookingRate = requestStock.ReceiveAmount / (decimal)baseQuantity;
+            requestStock.BookingRate = bookingRate;
+
+            var nStock = new Stock
+            {
+                BranchId = request.BranchId,
+                CreatedById = request.CreatedById,
+                CreatedTime = request.CreatedTime,
+                ProductId = stock.ProductId,
+                UnitConversionId = conversionUnit.Id,
+                StockQuantity = baseQuantity,
+                LastPurchaseRate = bookingRate,
+                TenantId = request.TenantId
+            };
+            _context.Entry(nStock).State = EntityState.Added;
+        }
+
+        await _context.ProductReceives.AddAsync(request);
+        var result = await _context.SaveChangesAsync();
+        return result > 0;
+    }
 }
 

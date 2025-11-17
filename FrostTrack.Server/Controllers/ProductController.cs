@@ -23,7 +23,7 @@ public class ProductController : ControllerBase
     [Route("get-list-without-service")]
     public async Task<IEnumerable<ProductListResponse>> GetProductsWithoutService(CancellationToken cancellationToken)
     {
-        Expression<Func<Product, bool>> predicate = x => x.IsActive && !x.IsProductAsService;
+        Expression<Func<Product, bool>> predicate = x => x.IsActive;
         return await _productService.ListAsync(predicate, cancellationToken);
     }
 

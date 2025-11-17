@@ -1,4 +1,4 @@
-import { IUnitConversionResponse } from "../../common/models/unit-conversion.interface";
+import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
 
 export interface IProductListResponse {
   id: number;
@@ -10,15 +10,7 @@ export interface IProductListResponse {
   defaultUnitId: number | null;
   unitName: string | null;
   imageUrl: string;
-  isRawMaterial: boolean;
-  isFinishedGoods: boolean;
-  reOrederLevel: number | null;
-  purchaseRate: number | null;
-  sellingRate: number | null;
-  wholesalePrice: number | null;
-  vatPercent: number | null;
-  isProductAsService: boolean;
-  productAs: string;
+  bookingRate: number | null;
   isActive: boolean;
   status: string;
   branchId: number | null;
@@ -40,15 +32,7 @@ export interface IProductResponse {
   defaultUnitId: number;
   unitName: string | null;
   imageUrl: string;
-  isRawMaterial: boolean;
-  isFinishedGoods: boolean;
-  reOrederLevel: number | null;
-  purchaseRate: number | null;
-  sellingRate: number | null;
-  wholesalePrice: number | null;
-  vatPercent: number | null;
-  isProductAsService: boolean;
-  productAs: string;
+  bookingRate: number | null;
   isActive: boolean;
   status: string;
   branchId: number | null;
@@ -61,15 +45,7 @@ export interface IProductRequest {
   categoryId: number;
   defaultUnitId: number | null;
   imageUrl: string;
-  isRawMaterial: boolean;
-  isFinishedGoods: boolean;
-  reOrederLevel: number | null;
-  purchaseRate: number | null;
-  sellingRate: number | null;
-  wholesalePrice: number | null;
-  vatPercent: number | null;
-  isProductAsService: boolean;
-  productAs: string;
+  bookingRate: number | null;
   isActive: boolean;
   status: string;
   branchId: number | null;

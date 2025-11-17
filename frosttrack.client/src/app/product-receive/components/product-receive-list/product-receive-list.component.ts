@@ -1,62 +1,53 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { Configuration } from '@config/configuration';
+import { MessageHub } from '@config/message-hub';
+import { DefaultPagination } from '@config/pagination';
+import { PaginationQuery } from '@core/models/pagination-query';
+import {
+  PaginationResult,
+  PagingResponse,
+} from '@core/models/pagination-result';
+import { LayoutService } from '@core/service/layout.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   DatatableComponent,
-  SelectionType,
   NgxDatatableModule,
+  SelectionType,
 } from '@swimlane/ngx-datatable';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrModule, ToastrService } from 'ngx-toastr';
-import Swal from 'sweetalert2';
-import { RouterLink } from '@angular/router';
-import { IProductListResponse } from '../../models/product.interface';
-import { CommonModule } from '@angular/common';
+import { IProductReceiveListResponse } from 'app/product-receive/models/product-receive.interface';
+import { ProductReceiveService } from 'app/product-receive/services/product-receive.service';
+import { SwalConfirm } from 'app/theme-config';
 import {
   ErrorResponse,
   formatErrorMessage,
 } from 'app/utils/server-error-handler';
-import { SwalConfirm } from 'app/theme-config';
+import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
-import {
-  PaginationResult,
-  PagingResponse,
-} from '../../../core/models/pagination-result';
-import { PaginationQuery } from '../../../core/models/pagination-query';
-import { ProductService } from 'app/administration/services/product.service';
-import { DefaultPagination } from '../../../config/pagination';
-import { MessageHub } from '../../../config/message-hub';
-import { ModalOption } from '../../../config/modal-option';
-import { AddProductComponent } from './add-product/add-product.component';
-import { Configuration } from '../../../config/configuration';
-import { GenerateSingleBarcodeComponent } from './generate-single-barcode/generate-single-barcode.component';
-import { LayoutService } from '@core/service/layout.service';
+import Swal from 'sweetalert2';
 
 @Component({
-  selector: 'app-product',
-  templateUrl: './product.component.html',
-  styleUrls: [],
+  selector: 'app-product-receive-list',
+  templateUrl: './product-receive-list.component.html',
   standalone: true,
-  imports: [
-    RouterLink,
-    NgxDatatableModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ToastrModule,
-    CommonModule,
-  ],
-  providers: [ProductService],
+  imports: [NgxDatatableModule, DatePipe],
 })
-export class ProductComponent implements OnInit {
+export class ProductReceiveListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+  @ViewChild('accordionContainer', { static: true })
+  accordionContainer!: ElementRef;
+
   rows = [];
+  expanded: any = {};
   scrollBarHorizontal = window.innerWidth < 1200;
-  data: IProductListResponse[] = [];
+  data: IProductReceiveListResponse[] = [];
   filteredData: any[] = [];
   loadingIndicator = true;
   isRowSelected = false;
   selectedOption!: string;
   reorderable = true;
-  selected: IProductListResponse[] = [];
+  selected: IProductReceiveListResponse[] = [];
   pagination: PaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
@@ -66,20 +57,20 @@ export class ProductComponent implements OnInit {
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
+
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private productService: ProductService,
+    private productReceiveService: ProductReceiveService,
+    private router: Router,
     private layoutService: LayoutService
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
     };
-    this.selection = SelectionType.checkbox;
     this.layoutService.loadCurrentRoute();
   }
 
-  // select record using check box
   onSelect({ selected }: { selected: any }) {
     this.selected.splice(0, this.selected.length);
     this.selected.push(...selected);
@@ -101,7 +92,7 @@ export class ProductComponent implements OnInit {
     }).then((result) => {
       if (result.value) {
         const ids = this.selected.map((x) => x.id);
-        this.productService.batchDelete(ids).subscribe({
+        this.productReceiveService.batchDelete(ids).subscribe({
           next: (response) => {
             if (response) {
               this.selected.forEach((row) => {
@@ -123,7 +114,6 @@ export class ProductComponent implements OnInit {
   ngOnInit() {
     this.fetchData();
 
-    //subject call change open text search
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
@@ -136,15 +126,14 @@ export class ProductComponent implements OnInit {
   }
 
   fetchData() {
-    this.productService.getWithPagination(this.pagination).subscribe({
-      next: (response: PaginationResult<IProductListResponse>) => {
+    this.productReceiveService.getWithPagination(this.pagination).subscribe({
+      next: (response: PaginationResult<IProductReceiveListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
         this.loadingIndicator = false;
       },
       error: () => {
         this.loadingIndicator = false;
-        // BaseService already handles error toasts via ErrorHandlerService
       },
     });
   }
@@ -154,7 +143,6 @@ export class ProductComponent implements OnInit {
     this.fetchData();
   }
 
-  //on sorting
   onSortring(event: any) {
     const sort = event.sorts[0];
     this.pagination.orderBy = sort.prop;
@@ -162,49 +150,10 @@ export class ProductComponent implements OnInit {
     this.fetchData();
   }
 
-  // add new record
-  addRow() {
-    const modalRef = this.modalService.open(
-      AddProductComponent,
-      ModalOption.lg
-    );
-    modalRef.result.then((response) => {
-      if (response?.success) {
-        this.fetchData();
-      }
-    });
-  }
-  // edit record
   editRow(row: any, rowIndex: number) {
-    const modalRef = this.modalService.open(
-      AddProductComponent,
-      ModalOption.lg
-    );
-    modalRef.componentInstance.isEditing = true;
-    modalRef.componentInstance.row = row;
-    modalRef.result.then((response) => {
-      if (response?.success) {
-        const result = response.data;
-        this.data = this.data.filter((value, key) => {
-          if (value.id == result.id) {
-            value.productCode = result.productCode;
-            value.productName = result.productName;
-            value.customBarcode = result.customBarcode;
-            value.categoryId = result.categoryId;
-            value.categoryName = result.categoryName;
-            value.defaultUnitId = result.defaultUnitId;
-            value.unitName = result.unitName;
-            value.imageUrl = result.imageUrl;
-            value.bookingRate = result.bookingRate;
-            value.isActive = result.isActive;
-            value.branchId = result.branchId;
-          }
-          return true;
-        });
-      }
-    });
+    this.router.navigate(['product-receive/edit', row.id]);
   }
-  // delete single row
+
   delete(row: any) {
     Swal.fire({
       title: MessageHub.DELETE_CONFIRM,
@@ -214,15 +163,15 @@ export class ProductComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.productService.remove(row.id).subscribe({
+        this.productReceiveService.remove(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
-              this.deleteRecordSuccess(1);
+              this.toastr.success(MessageHub.DELETE_ONE);
             }
           },
-          error: () => {
-            // BaseService already handles error toasts via ErrorHandlerService
+          error: (err: ErrorResponse) => {
+            this.toastr.error(formatErrorMessage(err));
           },
         });
       }
@@ -232,6 +181,7 @@ export class ProductComponent implements OnInit {
   private removeRecord(row: any) {
     this.data = this.arrayRemove(this.data, row.id);
   }
+
   private arrayRemove(array: any[], id: any) {
     return array.filter(function (element) {
       return element.id !== id;
@@ -243,20 +193,24 @@ export class ProductComponent implements OnInit {
     const val = event.target.value.toLowerCase();
     this.searchSubject.next(val);
   }
+
   deleteRecordSuccess(count: number) {
     this.toastr.success(count + ' Records Deleted Successfully', '');
   }
 
-  printBarcode(row: IProductListResponse) {
-    const modalRef = this.modalService.open(
-      GenerateSingleBarcodeComponent,
-      ModalOption.lg
-    );
-    modalRef.componentInstance.data = row;
-    modalRef.result.then((response) => {
-      if (response?.success) {
-        const result = response.data;
-      }
-    });
+  expandId: number = 0;
+  toggleExpandRow(row: any) {
+    if (this.expandId === row.id) this.table.rowDetail.collapseAllRows();
+    this.table.rowDetail.toggleExpandRow(row);
+    this.table.rowDetail.rowHeight =
+      100 + row.productReceiveDetails.length * 15;
+  }
+
+  onDetailToggle(event: any) {
+    console.log('Detail Toggled', event);
+  }
+
+  printInvoice(row: any) {
+    this.router.navigate(['/product-receive/invoice-print', row.id]);
   }
 }

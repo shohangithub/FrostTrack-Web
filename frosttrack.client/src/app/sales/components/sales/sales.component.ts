@@ -369,7 +369,7 @@ export class SalesComponent implements OnInit {
           ?.get('salesRate')
           ?.setValue(
             salesType == this.salesTypes.RETAIL
-              ? product.sellingRate
+              ? product.bookingRate
               : product.wholesalePrice
           );
         childForm?.get('salesQuantity')?.setValue(0);
@@ -603,18 +603,10 @@ export class SalesComponent implements OnInit {
           defaultUnitId: result.defaultUnitId,
           unitName: result.unitName,
           imageUrl: result.imageUrl,
-          isRawMaterial: result.isRawMaterial,
-          isFinishedGoods: result.isFinishedGoods,
-          reOrederLevel: result.reOrederLevel,
-          purchaseRate: result.purchaseRate,
-          sellingRate: result.sellingRate,
-          wholesalePrice: result.wholesalePrice,
-          vatPercent: result.vatPercent,
-          isProductAsService: result.isProductAsService,
+          bookingRate: result.bookingRate,
           isActive: result.isActive,
           status: result.status,
           branchId: result.branchId,
-          productAs: result.productAs,
           currentStock: null,
           lastPurchaseRate: null,
           stockUnit: null,
