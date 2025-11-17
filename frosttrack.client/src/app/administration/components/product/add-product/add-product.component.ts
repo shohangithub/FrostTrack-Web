@@ -122,7 +122,7 @@ export class AddProductComponent implements OnInit {
       productCode: ['', [Validators.required]],
       productName: ['', [Validators.required]],
       customBarcode: [''],
-      productCategory: [null, [Validators.required]],
+      productCategory: [1, [Validators.required]],
       defaultUnit: [null, [Validators.required]],
       imageUrl: [''],
       isRawMaterial: [false],
@@ -244,7 +244,7 @@ export class AddProductComponent implements OnInit {
     if (this.register.valid) {
       this.isSubmitted = true;
       const formData = { ...form.value };
-      formData.categoryId = formData.productCategory?.value;
+      formData.categoryId = 1; //formData.productCategory?.value;
       formData.defaultUnitId = formData.defaultUnit?.value;
       const payload: IProductRequest = { ...formData };
 

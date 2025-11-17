@@ -1,11 +1,13 @@
 <div class="modal-header">
-  <h4 class="modal-title fw-bold  font-17" id="modal-basic-title">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
     {{ isEditing ? "Update" : "Add" }} Product
   </h4>
-  <button type="button"
-          class="close"
-          aria-label="Close"
-          (click)="activeModal.close(false)">
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
     <span aria-hidden="true"><i class="material-icons">close</i></span>
   </button>
 </div>
@@ -13,29 +15,38 @@
 <div class="modal-body">
   @if(isLoading){
   <app-form-shimmer [height]="150"></app-form-shimmer>
-  }
-  @else{
-  @if (!isEditing){
+  } @else{ @if (!isEditing){
   <!-- Add Record Modal Window -->
-  <form class="register-form"
-        [formGroup]="register"
-        (ngSubmit)="add(register)">
-
+  <form class="register-form" [formGroup]="register" (ngSubmit)="add(register)">
     <div class="row">
-      <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 mb-2">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-
           <div class="form-group">
             <label>Product Code<span class="text-danger">*</span></label>
             <div class="input-group">
-
-              <input type="text"
-                     class="form-control form-control-sm"
-                     formControlName="productCode"
-                     readonly
-                     required>
-              <div class="input-group-append" style="cursor: pointer;" (click)="generateCode()">
-                <span class="input-group-text input-group-text-append" style="" id="basic-addon5"><i class="fas" [ngClass]="isGeneratingCode?'fa-spinner fa-spin':'fa-sync'"></i></span>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                formControlName="productCode"
+                readonly
+                required
+              />
+              <div
+                class="input-group-append"
+                style="cursor: pointer"
+                (click)="generateCode()"
+              >
+                <span
+                  class="input-group-text input-group-text-append"
+                  style=""
+                  id="basic-addon5"
+                  ><i
+                    class="fas"
+                    [ngClass]="
+                      isGeneratingCode ? 'fa-spinner fa-spin' : 'fa-sync'
+                    "
+                  ></i
+                ></span>
               </div>
             </div>
           </div>
@@ -46,7 +57,7 @@
           </small>
           }
         </div>
-        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <!-- <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Category </label>
             <div class="input-group input-group-select">
@@ -63,14 +74,16 @@
             Category is required
           </small>
           }
-        </div>
+        </div> -->
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Product Name</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   placeholder=""
-                   formControlName="productName" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder=""
+              formControlName="productName"
+            />
           </div>
           @if (!register.get('productName')?.valid &&
           register.get('productName')?.touched) {
@@ -83,110 +96,136 @@
           <div class="form-group">
             <label>Unit</label>
             <div class="input-group input-group-select">
-              <ng-select [items]="productUnits" bindLabel="text" formControlName="defaultUnit" [loading]="productUnitLoading">
+              <ng-select
+                [items]="productUnits"
+                bindLabel="text"
+                formControlName="defaultUnit"
+                [loading]="productUnitLoading"
+              >
               </ng-select>
               <div class="input-group-append">
-                <button class="btn btn-primary fw-bold font-20" type="button" (click)="addUnit()">+</button>
+                <button
+                  class="btn btn-primary fw-bold font-20"
+                  type="button"
+                  (click)="addUnit()"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
           @if (!register.get('defaultUnit')?.valid &&
           register.get('defaultUnit')?.touched) {
-          <small class="form-text text-danger">
-            Unit is required
-          </small>
+          <small class="form-text text-danger"> Unit is required </small>
           }
         </div>
-        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <!-- <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Vat(%)</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="vatPercent" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="vatPercent"
+            />
           </div>
-        </div>
+        </div> -->
       </div>
-      <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 mb-2">
+      <!-- <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 mb-2">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Re-Order Lavel</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="reOrederLevel" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="reOrederLevel"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Purchase Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="purchaseRate" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="purchaseRate"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Sales Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="sellingRate" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="sellingRate"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Whole Sales Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="wholesalePrice" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="wholesalePrice"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group mt-4">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" formControlName="isProductAsService" id="cb6" (ngModelChange)="onServiceChanges(register)">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="isProductAsService"
+                id="cb6"
+                (ngModelChange)="onServiceChanges(register)"
+              />
               <label class="form-check-label" for="cb6">
                 Use as a Service
               </label>
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="modal-footer">
-      <button type="submit"
-              class="btn btn-primary"
-              [disabled]="!register.valid || isSubmitted">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!register.valid || isSubmitted"
+      >
         Submit
       </button>
-      <button type="button"
-              class="btn btn-light"
-              (click)="activeModal.close(false)">
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
         Close
       </button>
     </div>
   </form>
-  }
-  @else {
+  } @else {
   <!-- Edit Record Modal Window -->
   <form [formGroup]="editForm" (ngSubmit)="edit(editForm)">
     <div class="input-field col s12 d-none">
-      <input formControlName="id"
-             class="form-control"
-             type="hidden" />
+      <input formControlName="id" class="form-control" type="hidden" />
     </div>
-
 
     <div class="row">
       <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 mb-2">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-
           <div class="form-group">
             <label>Product Code<span class="text-danger">*</span></label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="productCode"
-                   readonly
-                   required>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="productCode"
+              readonly
+              required
+            />
             <!--<div class="input-group">
 
               <input type="text"
@@ -211,27 +250,38 @@
           <div class="form-group">
             <label>Category </label>
             <div class="input-group input-group-select">
-              <ng-select [items]="productCategories" bindLabel="text" formControlName="productCategory" [loading]="productCatLoading">
+              <ng-select
+                [items]="productCategories"
+                bindLabel="text"
+                formControlName="productCategory"
+                [loading]="productCatLoading"
+              >
               </ng-select>
               <div class="input-group-append">
-                <button class="btn btn-primary fw-bold font-20" type="button" (click)="addCategory()">+</button>
+                <button
+                  class="btn btn-primary fw-bold font-20"
+                  type="button"
+                  (click)="addCategory()"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
           @if (!register.get('productCategory')?.valid &&
           register.get('productCategory')?.touched) {
-          <small class="form-text text-danger">
-            Category is required
-          </small>
+          <small class="form-text text-danger"> Category is required </small>
           }
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Product Name</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   placeholder=""
-                   formControlName="productName" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder=""
+              formControlName="productName"
+            />
           </div>
           @if (!register.get('productName')?.valid &&
           register.get('productName')?.touched) {
@@ -244,26 +294,37 @@
           <div class="form-group">
             <label>Unit</label>
             <div class="input-group input-group-select">
-              <ng-select [items]="productUnits" bindLabel="text" formControlName="defaultUnit" [loading]="productUnitLoading">
+              <ng-select
+                [items]="productUnits"
+                bindLabel="text"
+                formControlName="defaultUnit"
+                [loading]="productUnitLoading"
+              >
               </ng-select>
               <div class="input-group-append">
-                <button class="btn btn-primary fw-bold font-20" type="button" (click)="addUnit()">+</button>
+                <button
+                  class="btn btn-primary fw-bold font-20"
+                  type="button"
+                  (click)="addUnit()"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
           @if (!register.get('defaultUnit')?.valid &&
           register.get('defaultUnit')?.touched) {
-          <small class="form-text text-danger">
-            Unit is required
-          </small>
+          <small class="form-text text-danger"> Unit is required </small>
           }
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Vat(%)</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="vatPercent" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="vatPercent"
+            />
           </div>
         </div>
       </div>
@@ -271,39 +332,53 @@
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Re-Order Lavel</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="reOrederLevel" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="reOrederLevel"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Purchase Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="purchaseRate" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="purchaseRate"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Sales Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="sellingRate" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="sellingRate"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group">
             <label>Whole Sales Rate</label>
-            <input type="text"
-                   class="form-control form-control-sm"
-                   formControlName="wholesalePrice" />
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="wholesalePrice"
+            />
           </div>
         </div>
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="form-group mt-4">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" formControlName="isProductAsService" id="cb6" (ngModelChange)="onServiceChanges(editForm)">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="isProductAsService"
+                id="cb6"
+                (ngModelChange)="onServiceChanges(editForm)"
+              />
               <label class="form-check-label" for="cb6">
                 Use as a Service
               </label>
@@ -314,18 +389,21 @@
     </div>
 
     <div class="modal-footer">
-      <button type="submit"
-              class="btn btn-primary"
-              [disabled]="!editForm.valid || !editForm.dirty || isSubmitted">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!editForm.valid || !editForm.dirty || isSubmitted"
+      >
         Save
       </button>
-      <button type="button"
-              class="btn btn-light"
-              (click)="activeModal.close(false)">
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
         Close
       </button>
     </div>
   </form>
-  }
-  }
+  } }
 </div>

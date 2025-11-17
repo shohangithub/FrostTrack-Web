@@ -601,15 +601,21 @@ public class ApplicationDbContextInitializer
 
         #region SET PRODUCTS
         var categoryId = _context.ProductCategories.Where(x => x.CategoryName == "General").Select(x => x.Id).FirstOrDefault();
-        var unitConversionId = _context.UnitConversions.Where(x => x.UnitName == "Piece").Select(x => x.Id).FirstOrDefault();
+        var unitConversionId = _context.UnitConversions.Where(x => x.UnitName == "kg").Select(x => x.Id).FirstOrDefault();
 
         if (!_context.Products.Any())
         {
             var products = new List<Product>
             {
+
+// খেজুর (ডেগলেট নূর)
+// খেজুর (মাজাফাতি)
+// খেজুর (খুদরি)
+// খেজুর (সায়ার)
+
                 new Product
                 {
-                    ProductName = "Sample Product 1",
+                    ProductName = "খেজুর (আজওয়া)",
                     ProductCode = "P-00001",
                     CategoryId = categoryId,
                     BranchId = branchId,
@@ -625,7 +631,7 @@ public class ApplicationDbContextInitializer
                 },
                 new Product
                 {
-                    ProductName = "Sample Product 2",
+                    ProductName = "খেজুর (মেডজুল)",
                     ProductCode = "P-00002",
                     CategoryId = categoryId,
                     BranchId = branchId,
@@ -641,7 +647,7 @@ public class ApplicationDbContextInitializer
                 },
                 new Product
                 {
-                    ProductName = "Sample Product 3",
+                    ProductName = "খেজুর (মাবরুম)",
                     ProductCode = "P-00003",
                     CategoryId = categoryId,
                     BranchId = branchId,
@@ -657,7 +663,7 @@ public class ApplicationDbContextInitializer
                 },
                 new Product
                 {
-                    ProductName = "Sample Product 4",
+                    ProductName = "খেজুর (সুক্কারি)",
                     ProductCode = "P-00004",
                     CategoryId = categoryId,
                     BranchId = branchId,
@@ -673,7 +679,7 @@ public class ApplicationDbContextInitializer
                 },
                 new Product
                 {
-                    ProductName = "Sample Product 5",
+                    ProductName = "খেজুর (সাফাওয়ি)",
                     ProductCode = "P-00005",
                     CategoryId = categoryId,
                     BranchId = branchId,
@@ -686,7 +692,88 @@ public class ApplicationDbContextInitializer
                     CreatedById = userId,
                     IsActive = true,
                     TenantId = tenantId
-                }
+                },
+                new Product
+                {
+                    ProductName = "খেজুর (দাব্বাস)",
+                    ProductCode = "P-00006",
+                    CategoryId = categoryId,
+                    BranchId = branchId,
+                    DefaultUnitId = unitConversionId,
+                    PurchaseRate = 60.00m,
+                    SellingRate = 90.00m,
+                    IsRawMaterial = false,
+                    IsFinishedGoods = true,
+                    IsProductAsService = false,
+                    CreatedById = userId,
+                    IsActive = true,
+                    TenantId = tenantId
+                },
+                new Product
+                {
+                    ProductName = "খেজুর (বরই / পালম)",
+                    ProductCode = "P-00007",
+                    CategoryId = categoryId,
+                    BranchId = branchId,
+                    DefaultUnitId = unitConversionId,
+                    PurchaseRate = 70.00m,
+                    SellingRate = 100.00m,
+                    IsRawMaterial = false,
+                    IsFinishedGoods = true,
+                    IsProductAsService = false,
+                    CreatedById = userId,
+                    IsActive = true,
+                    TenantId = tenantId
+                },
+                new Product
+                {
+                    ProductName = "খেজুর (জাহেদি)",
+                    ProductCode = "P-00008",
+                    CategoryId = categoryId,
+                    BranchId = branchId,
+                    DefaultUnitId = unitConversionId,
+                    PurchaseRate = 90.00m,
+                    SellingRate = 130.00m,
+                    IsRawMaterial = false,
+                    IsFinishedGoods = true,
+                    IsProductAsService = false,
+                    CreatedById = userId,
+                    IsActive = true,
+                    TenantId = tenantId
+                },
+                new Product
+                {
+                    ProductName = "খেজুর (কালমি)",
+                    ProductCode = "P-00009",
+                    CategoryId = categoryId,
+                    BranchId = branchId,
+                    DefaultUnitId = unitConversionId,
+                    PurchaseRate = 110.00m,
+                    SellingRate = 160.00m,
+                    IsRawMaterial = false,
+                    IsFinishedGoods = true,
+                    IsProductAsService = false,
+                    CreatedById = userId,
+                    IsActive = true,
+                    TenantId = tenantId
+                },
+                new Product
+                {
+                    ProductName = "খেজুর (পিয়ারম)",
+                    ProductCode = "P-00010",
+                    CategoryId = categoryId,
+                    BranchId = branchId,
+                    DefaultUnitId = unitConversionId,
+                    PurchaseRate = 95.00m,
+                    SellingRate = 140.00m,
+                    IsRawMaterial = false,
+                    IsFinishedGoods = true,
+                    IsProductAsService = false,
+                    CreatedById = userId,
+                    IsActive = true,
+                    TenantId = tenantId
+                },
+
             };
 
             _context.Products.AddRange(products);
