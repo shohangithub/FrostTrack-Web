@@ -46,6 +46,13 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'product-delivery',
+        loadChildren: () =>
+          import('./product-delivery/product-delivery.routes').then(
+            (m) => m.PRODUCT_DELIVERY_ROUTE
+          ),
+      },
+      {
         path: 'supplier-payment',
         loadChildren: () =>
           import('./supplier-payment/supplier-payment.routes').then(

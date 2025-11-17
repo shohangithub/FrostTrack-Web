@@ -1,0 +1,247 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Product Delivery Records</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            (keyup)="filterDatatable($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            [hidden]="!isRowSelected"
+                            class="btn btn-icon icon-left btn-danger rounded-button"
+                            (click)="deleteSelected()"
+                          >
+                            <i class="material-icons">delete</i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ngx-datatable
+              #table
+              class="material"
+              [rows]="data"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="60"
+              [footerHeight]="80"
+              rowHeight="auto"
+              [externalPaging]="true"
+              [limit]="pagination.pageSize"
+              [offset]="pagination.pageIndex"
+              [count]="paging?.totalData ?? 0"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+              (page)="changePagination($event)"
+              (sort)="onSortring($event)"
+            >
+              <ngx-datatable-row-detail
+                #myDetailRow
+                (toggle)="onDetailToggle($event)"
+              >
+                <ng-template
+                  let-row="row"
+                  let-expanded="expanded"
+                  ngx-datatable-row-detail-template
+                >
+                  <div>
+                    <table
+                      class="table table-sm"
+                      style="padding: 0px; height: 100px"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col" class="text-center">SL</th>
+                          <th scope="col" class="text-center">Product</th>
+                          <th scope="col" class="text-center">Rate</th>
+                          <th scope="col" class="text-center">Quantity</th>
+                          <th scope="col" class="text-center">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of row.productDeliveryDetails; track item;
+                        let idx = $index) {
+                        <tr>
+                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
+                          <td class="text-center">{{ item.productName }}</td>
+                          <td class="text-center">{{ item.bookingRate }}</td>
+                          <td class="text-center">
+                            {{ item.deliveryQuantity }}
+                          </td>
+                          <td class="text-center">{{ item.deliveryAmount }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </ng-template>
+              </ngx-datatable-row-detail>
+
+              <ngx-datatable-column
+                [width]="50"
+                [resizeable]="false"
+                [sortable]="false"
+                [draggable]="false"
+                [canAutoResize]="false"
+              >
+                <ng-template
+                  let-row="row"
+                  let-expanded="expanded"
+                  ngx-datatable-cell-template
+                >
+                  <a
+                    href="javascript:void(0)"
+                    [class.datatable-icon-right]="!expanded"
+                    [class.datatable-icon-down]="expanded"
+                    title="Expand/Collapse Row"
+                    (click)="toggleExpandRow(row)"
+                  >
+                  </a>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Delivery Number"
+                prop="deliveryNumber"
+                [width]="120"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.deliveryNumber }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="Delivery Date"
+                prop="deliveryDate"
+                [width]="120"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.deliveryDate | date : "dd-MMM-yyyy" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Customer"
+                prop="customer.customerName"
+                [width]="200"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.customer?.customerName }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Sub Total"
+                prop="subtotal"
+                [width]="120"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.subtotal }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Vat" prop="vatAmount" [width]="100">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.vatAmount }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Discount"
+                prop="discountAmount"
+                [width]="100"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.discountAmount }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="Other Cost"
+                prop="otherCost"
+                [width]="120"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.otherCost }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="Total Amount"
+                prop="totalAmount"
+                [width]="150"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.totalAmount }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                name="Due"
+                [sortable]="false"
+                prop="paidAmount"
+                [width]="100"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.totalAmount - row.paidAmount }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column
+                [width]="150"
+                name="Actions"
+                [sortable]="false"
+              >
+                <ng-template
+                  let-value="value"
+                  let-row="row"
+                  let-rowIndex="rowIndex"
+                  ngx-datatable-cell-template
+                >
+                  <span>
+                    <button
+                      class="btn btn-tbl-info h-auto"
+                      (click)="printInvoice(row)"
+                    >
+                      <i class="fas fa-print"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="editRow(row)"
+                    >
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="delete(row)"
+                    >
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,140 @@
+<section class="main-content">
+  <div class="section-body">
+    @if (isLoading) {
+    <div class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    } @if (!isLoading && productDelivery) {
+    <div class="card">
+      <div class="card-header">
+        <h4>Product Delivery Details</h4>
+        <div class="card-header-action">
+          <button class="btn btn-primary" (click)="print()">
+            <i class="fas fa-print"></i> Print
+          </button>
+          <a routerLink="/product-delivery/list" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left"></i> Back to List
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p>
+              <strong>Delivery Number:</strong>
+              {{ productDelivery.deliveryNumber }}
+            </p>
+            <p>
+              <strong>Date:</strong>
+              {{ productDelivery.deliveryDate | date : "dd/MM/yyyy" }}
+            </p>
+            <p>
+              <strong>Customer:</strong>
+              {{ productDelivery.customer.customerName }}
+            </p>
+          </div>
+          <div class="col-md-6 text-end">
+            <p>
+              <strong>Branch:</strong> Branch #{{ productDelivery.branchId }}
+            </p>
+            @if (productDelivery.notes) {
+            <p><strong>Notes:</strong> {{ productDelivery.notes }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Unit</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (detail of productDelivery.productDeliveryDetails; track
+              detail.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td>{{ detail.product.productName }}</td>
+                <td>{{ detail.deliveryUnit.unitName || "N/A" }}</td>
+                <td>{{ detail.deliveryQuantity }}</td>
+                <td>{{ detail.bookingRate | number : "1.2-2" }}</td>
+                <td>{{ detail.deliveryAmount | number : "1.2-2" }}</td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-end"><strong>Subtotal:</strong></td>
+                <td>
+                  <strong>{{
+                    productDelivery.subtotal | number : "1.2-2"
+                  }}</strong>
+                </td>
+              </tr>
+              @if (productDelivery.vatAmount > 0) {
+              <tr>
+                <td colspan="5" class="text-end">VAT:</td>
+                <td>{{ productDelivery.vatAmount | number : "1.2-2" }}</td>
+              </tr>
+              } @if (productDelivery.discountAmount > 0) {
+              <tr>
+                <td colspan="5" class="text-end">
+                  Discount ({{ productDelivery.discountPercent }}%):
+                </td>
+                <td>
+                  -{{ productDelivery.discountAmount | number : "1.2-2" }}
+                </td>
+              </tr>
+              } @if (productDelivery.otherCost > 0) {
+              <tr>
+                <td colspan="5" class="text-end">Other Cost:</td>
+                <td>{{ productDelivery.otherCost | number : "1.2-2" }}</td>
+              </tr>
+              }
+              <tr>
+                <td colspan="5" class="text-end">
+                  <strong>Total Amount:</strong>
+                </td>
+                <td>
+                  <strong>{{
+                    productDelivery.totalAmount | number : "1.2-2"
+                  }}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="5" class="text-end">
+                  <strong>Paid Amount:</strong>
+                </td>
+                <td>
+                  <strong>{{
+                    productDelivery.paidAmount | number : "1.2-2"
+                  }}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="5" class="text-end">
+                  <strong>Due Amount:</strong>
+                </td>
+                <td>
+                  <strong>{{
+                    productDelivery.totalAmount - productDelivery.paidAmount
+                      | number : "1.2-2"
+                  }}</strong>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</section>
