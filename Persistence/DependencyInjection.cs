@@ -62,10 +62,10 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Damage, int>, Repository<Damage, int>>();
         services.AddScoped<IRepository<Asset, int>, Repository<Asset, int>>();
         services.AddScoped<IRepository<Employee, int>, Repository<Employee, int>>();
-        services.AddScoped<IRepository<Booking, long>, Repository<Booking, long>>();
-        services.AddScoped<IRepository<BookingDetail, long>, Repository<BookingDetail, long>>();
-        services.AddScoped<IRepository<ProductDelivery, long>, Repository<ProductDelivery, long>>();
-        services.AddScoped<IRepository<ProductDeliveryDetail, long>, Repository<ProductDeliveryDetail, long>>();
+        services.AddScoped<IRepository<Booking, Guid>, Repository<Booking, Guid>>();
+        services.AddScoped<IRepository<BookingDetail, Guid>, Repository<BookingDetail, Guid>>();
+        services.AddScoped<IRepository<Delivery, Guid>, Repository<Delivery, Guid>>();
+        services.AddScoped<IRepository<DeliveryDetail, Guid>, Repository<DeliveryDetail, Guid>>();
 
         services.AddScoped<IRepository<Bank, int>, Repository<Bank, int>>();
         services.AddScoped<IRepository<BankTransaction, long>, Repository<BankTransaction, long>>();
@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<IPrintSettingsRepository, PrintSettingsRepository>();
         services.AddScoped<IPurchaseReportRepository, PurchaseReportRepository>();
         services.AddScoped<IProductReceiveRepository, ProductReceiveRepository>();
+        services.AddScoped<IBookingRepository, BookingRepository>();
 
         // Register DefaultValueInjector for repositories that need it
         services.AddScoped<DefaultValueInjector>();

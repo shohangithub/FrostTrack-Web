@@ -14,7 +14,7 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import { ActivatedRoute } from '@angular/router';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { formatErrorMessage } from 'app/utils/server-error-handler';
 import { Subject } from 'rxjs';
 import { ProductReceiveService } from 'app/product-receive/services/product-receive.service';
@@ -50,7 +50,6 @@ import { UnitConversionService } from 'app/common/services/unit-conversion.servi
     ToastrModule,
     CommonModule,
     NgSelectModule,
-    JsonPipe,
   ],
   providers: [ProductReceiveService, AuthService],
 })

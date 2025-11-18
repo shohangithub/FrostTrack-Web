@@ -7,7 +7,7 @@ public class Sales : AuditableEntity<long>
     public required DateTime InvoiceDate { get; set; }
     public required string SalesType { get; set; }
     public required int CustomerId { get; set; }
-    public Customer Customer { get; set; }
+    public Customer? Customer { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal Subtotal { get; set; }
     public required float VatPercent { get; set; }
@@ -24,6 +24,6 @@ public class Sales : AuditableEntity<long>
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal PaidAmount { get; set; }
     public required int BranchId { get; set; }
-    public Branch Branch { get; set; }
+    public Branch? Branch { get; set; }
     public ICollection<SalesDetail> SalesDetails { get; set; } = [];
 }

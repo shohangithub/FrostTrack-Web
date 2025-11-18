@@ -2,9 +2,9 @@ namespace Application.Validators;
 
 internal class ProductReceiveValidator : AbstractValidator<ProductReceiveRequest>
 {
-    public ProductReceiveValidator(IRepository<Booking, long> repository, long id = 0, long branchId = 0)
+    public ProductReceiveValidator(IRepository<Booking, Guid> repository, Guid id = default, long branchId = 0)
     {
-        if (id != 0)
+        if (id != Guid.Empty)
         {
             RuleFor(cmd => cmd).MustAsync(async (name, cancellation) =>
             {

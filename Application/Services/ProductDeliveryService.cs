@@ -1,25 +1,28 @@
 namespace Application.Services;
 
-public class ProductDeliveryService : IProductDeliveryService
+public class DeliveryService : IDeliveryService
 {
-    private readonly IRepository<ProductDelivery, long> _repository;
-    private readonly IRepository<Booking, long> _bookingRepository;
-    private readonly IRepository<ProductDeliveryDetail, long> _detailRepository;
+    private readonly IRepository<Delivery, Guid> _repository;
+    private readonly IRepository<Booking, Guid> _bookingRepository;
+    private readonly IRepository<BookingDetail, Guid> _bookingDetailRepository;
+    private readonly IRepository<DeliveryDetail, Guid> _detailRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
     private readonly CurrentUser _currentUser;
 
-    public ProductDeliveryService(
-        IRepository<ProductDelivery, long> repository,
-        IRepository<Booking, long> bookingRepository,
-        IRepository<ProductDeliveryDetail, long> detailRepository,
+    public DeliveryService(
+        IRepository<Delivery, Guid> repository,
+        IRepository<Booking, Guid> bookingRepository,
+        IRepository<BookingDetail, Guid> bookingDetailRepository,
+        IRepository<DeliveryDetail, Guid> detailRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService)
     {
         _repository = repository;
         _bookingRepository = bookingRepository;
+        _bookingDetailRepository = bookingDetailRepository;
         _detailRepository = detailRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
@@ -27,29 +30,29 @@ public class ProductDeliveryService : IProductDeliveryService
         _currentUser = userContextService.GetCurrentUser();
     }
 
-    public async Task<ProductDeliveryResponse> CreateAsync(ProductDeliveryRequest request)
+    public async Task<DeliveryResponse> CreateAsync(DeliveryRequest request)
     {
         // Validate stock availability
         await ValidateStockAvailability(request);
 
-        var entity = request.Adapt<ProductDelivery>();
+        var entity = request.Adapt<Delivery>();
         entity.BranchId = _currentUser.BranchId;
-        _defaultValueInjector.InjectCreatingAudit<ProductDelivery, long>(entity);
+        _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
-        if (entity.ProductDeliveryDetails != null && entity.ProductDeliveryDetails.Any())
+        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
         {
-            _defaultValueInjector.InjectCreatingAudit<ProductDeliveryDetail, long>(entity.ProductDeliveryDetails.ToList());
+            _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(entity.DeliveryDetails.ToList());
         }
 
         await _repository.AddAsync(entity, CancellationToken.None);
 
-        return await GetByIdAsync((int)entity.Id);
+        return await GetByIdAsync(entity.Id);
     }
 
-    public async Task<ProductDeliveryResponse> UpdateAsync(int id, ProductDeliveryRequest request)
+    public async Task<DeliveryResponse> UpdateAsync(Guid id, DeliveryRequest request)
     {
         var existing = await _repository.Query()
-            .Include(x => x.ProductDeliveryDetails)
+            .Include(x => x.DeliveryDetails)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (existing == null)
@@ -59,24 +62,24 @@ public class ProductDeliveryService : IProductDeliveryService
         await ValidateStockAvailability(request, id);
 
         request.Adapt(existing);
-        _defaultValueInjector.InjectUpdatingAudit<ProductDelivery, long>(existing);
+        _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(existing);
 
         // Remove old details using DeletableQuery
-        await _detailRepository.DeletableQuery(x => x.ProductDeliveryId == id).ExecuteDeleteAsync();
+        await _detailRepository.DeletableQuery(x => x.DeliveryId == id).ExecuteDeleteAsync();
 
-        if (request.ProductDeliveryDetails != null && request.ProductDeliveryDetails.Any())
+        if (request.DeliveryDetails != null && request.DeliveryDetails.Any())
         {
-            existing.ProductDeliveryDetails = request.ProductDeliveryDetails.Select(d => new ProductDeliveryDetail
+            existing.DeliveryDetails = request.DeliveryDetails.Select(d => new DeliveryDetail
             {
-                ProductDeliveryId = existing.Id,
-                ProductId = d.ProductId,
+                DeliveryId = existing.Id,
+                BookingDetailId = d.BookingDetailId,
                 DeliveryUnitId = d.DeliveryUnitId,
                 DeliveryQuantity = d.DeliveryQuantity,
-                DeliveryRate = d.DeliveryRate,
                 BaseQuantity = d.BaseQuantity,
-                BaseRate = d.BaseRate
+                ChargeAmount = d.ChargeAmount,
+                AdjustmentValue = d.AdjustmentValue
             }).ToList();
-            _defaultValueInjector.InjectCreatingAudit<ProductDeliveryDetail, long>(existing.ProductDeliveryDetails.ToList());
+            _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(existing.DeliveryDetails.ToList());
         }
 
         await _repository.UpdateAsync(existing, CancellationToken.None);
@@ -84,41 +87,45 @@ public class ProductDeliveryService : IProductDeliveryService
         return await GetByIdAsync(id);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var result = await _repository.DeletableQuery(x => x.Id == id).ExecuteDeleteAsync();
         return result > 0;
     }
 
-    public async Task<bool> BatchDeleteAsync(int[] ids)
+    public async Task<bool> BatchDeleteAsync(Guid[] ids)
     {
-        var longIds = ids.Select(x => (long)x).ToList();
-        var result = await _repository.DeletableQuery(x => longIds.Contains(x.Id)).ExecuteDeleteAsync();
+        var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync();
         return result > 0;
     }
 
-    public async Task<ProductDeliveryResponse> GetByIdAsync(int id)
+    public async Task<DeliveryResponse> GetByIdAsync(Guid id)
     {
         var entity = await _repository.Query()
-            .Include(x => x.Customer)
-            .Include(x => x.ProductDeliveryDetails)
-                .ThenInclude(d => d.Product)
-            .Include(x => x.ProductDeliveryDetails)
+            .Include(x => x.Booking)
+                .ThenInclude(b => b!.Customer)
+            .Include(x => x.Branch)
+            .Include(x => x.DeliveryDetails)
+                .ThenInclude(d => d.BookingDetail)
+                    .ThenInclude(bd => bd!.Product)
+            .Include(x => x.DeliveryDetails)
                 .ThenInclude(d => d.DeliveryUnit)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (entity == null)
             throw new Exception("Product delivery not found");
 
-        return entity.Adapt<ProductDeliveryResponse>();
+        return entity.Adapt<DeliveryResponse>();
     }
 
-    public async Task<PaginationResult<ProductDeliveryListResponse>> GetWithPaginationAsync(PaginationQuery query)
+    public async Task<PaginationResult<DeliveryListResponse>> GetWithPaginationAsync(PaginationQuery query)
     {
         var queryable = _repository.Query()
-            .Include(x => x.Customer)
-            .Include(x => x.ProductDeliveryDetails)
-                .ThenInclude(d => d.Product)
+            .Include(x => x.Booking)
+                .ThenInclude(b => b!.Customer)
+            .Include(x => x.DeliveryDetails)
+                .ThenInclude(d => d.BookingDetail)
+                    .ThenInclude(bd => bd!.Product)
             .AsQueryable();
 
         // Apply search filter
@@ -126,20 +133,34 @@ public class ProductDeliveryService : IProductDeliveryService
         {
             queryable = queryable.Where(x =>
                 x.DeliveryNumber.Contains(query.OpenText) ||
-                x.Customer.CustomerName.Contains(query.OpenText));
+                (x.Booking != null && x.Booking.BookingNumber.Contains(query.OpenText)) ||
+                (x.Booking != null && x.Booking.Customer != null && x.Booking.Customer.CustomerName.Contains(query.OpenText)));
         }
 
         // Apply ordering
         queryable = ApplyOrdering(queryable, query.OrderBy, query.IsAscending);
 
-        var result = await PaginationResult<ProductDelivery>.CreateAsync(
+        var result = await PaginationResult<Delivery>.CreateAsync(
             queryable,
             query.PageIndex,
             query.PageSize);
 
-        var data = result.Data.Select(x => x.Adapt<ProductDeliveryListResponse>()).ToList();
+        var data = result.Data.Select(x => new DeliveryListResponse
+        {
+            Id = x.Id,
+            DeliveryNumber = x.DeliveryNumber,
+            DeliveryDate = x.DeliveryDate,
+            BookingId = x.BookingId,
+            BookingNumber = x.Booking?.BookingNumber ?? "",
+            CustomerId = x.Booking?.CustomerId ?? 0,
+            CustomerName = x.Booking?.Customer?.CustomerName ?? "",
+            ChargeAmount = x.ChargeAmount,
+            DiscountAmount = x.DiscountAmount,
+            PaidAmount = x.PaidAmount,
+            DeliveryDetails = new List<DeliveryDetailResponse>()
+        }).ToList();
 
-        return await PaginationResult<ProductDeliveryListResponse>.CreateAsync(
+        return await PaginationResult<DeliveryListResponse>.CreateAsync(
             data.AsQueryable(),
             query.PageIndex,
             query.PageSize);
@@ -166,51 +187,48 @@ public class ProductDeliveryService : IProductDeliveryService
                 .ThenInclude(bd => bd.BookingUnit)
             .ToListAsync();
 
-        // Get all deliveries for this customer
+        // Get all deliveries for bookings of this customer
+        var bookingIds = bookings.Select(b => b.Id).ToList();
         var deliveries = await _repository.Query()
-            .Where(d => d.CustomerId == customerId)
-            .Include(d => d.ProductDeliveryDetails)
+            .Where(d => bookingIds.Contains(d.BookingId))
+            .Include(d => d.DeliveryDetails)
             .ToListAsync();
 
-        // Calculate stock per product
-        var stockDictionary = new Dictionary<int, CustomerStockResponse>();
+        // Calculate stock per booking detail
+        var stockDictionary = new Dictionary<Guid, CustomerStockResponse>();
 
         foreach (var booking in bookings)
         {
             foreach (var detail in booking.BookingDetails)
             {
-                var key = detail.ProductId;
+                var key = detail.Id;
                 if (!stockDictionary.ContainsKey(key))
                 {
                     stockDictionary[key] = new CustomerStockResponse
                     {
                         CustomerId = customerId,
+                        BookingDetailId = detail.Id,
                         ProductId = detail.ProductId,
-                        ProductName = detail.Product.ProductName,
+                        ProductName = detail.Product?.ProductName ?? "",
                         UnitId = detail.BookingUnitId,
-                        UnitName = detail.BookingUnit.UnitName,
-                        AvailableStock = 0,
+                        UnitName = detail.BookingUnit?.UnitName ?? "",
+                        AvailableStock = (decimal)detail.BookingQuantity,
                         BookingRate = detail.BookingRate
                     };
                 }
-                stockDictionary[key] = stockDictionary[key] with
-                {
-                    AvailableStock = stockDictionary[key].AvailableStock + (decimal)detail.BookingQuantity,
-                    BookingRate = Math.Max(stockDictionary[key].BookingRate, detail.BookingRate)
-                };
             }
         }
 
-        // Subtract deliveries
+        // Subtract delivered quantities
         foreach (var delivery in deliveries)
         {
-            foreach (var detail in delivery.ProductDeliveryDetails)
+            foreach (var detail in delivery.DeliveryDetails)
             {
-                if (stockDictionary.ContainsKey(detail.ProductId))
+                if (stockDictionary.ContainsKey(detail.BookingDetailId))
                 {
-                    stockDictionary[detail.ProductId] = stockDictionary[detail.ProductId] with
+                    stockDictionary[detail.BookingDetailId] = stockDictionary[detail.BookingDetailId] with
                     {
-                        AvailableStock = stockDictionary[detail.ProductId].AvailableStock - (decimal)detail.DeliveryQuantity
+                        AvailableStock = stockDictionary[detail.BookingDetailId].AvailableStock - (decimal)detail.DeliveryQuantity
                     };
                 }
             }
@@ -222,16 +240,24 @@ public class ProductDeliveryService : IProductDeliveryService
             .ToList();
     }
 
-    private async Task ValidateStockAvailability(ProductDeliveryRequest request, int? existingDeliveryId = null)
+    private async Task ValidateStockAvailability(DeliveryRequest request, Guid? existingDeliveryId = null)
     {
-        var customerStock = await GetCustomerStockAsync(request.CustomerId);
+        // Get the booking to find customer
+        var booking = await _bookingRepository.Query()
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == request.BookingId);
 
-        foreach (var detail in request.ProductDeliveryDetails)
+        if (booking == null)
+            throw new Exception("Booking not found");
+
+        var customerStock = await GetCustomerStockAsync(booking.CustomerId);
+
+        foreach (var detail in request.DeliveryDetails)
         {
-            var stock = customerStock.FirstOrDefault(s => s.ProductId == detail.ProductId);
+            var stock = customerStock.FirstOrDefault(s => s.BookingDetailId == detail.BookingDetailId);
 
             if (stock == null)
-                throw new Exception($"Product not found in customer stock");
+                throw new Exception($"Booking detail not found in customer stock");
 
             var availableStock = stock.AvailableStock;
 
@@ -239,7 +265,7 @@ public class ProductDeliveryService : IProductDeliveryService
             if (existingDeliveryId.HasValue)
             {
                 var currentDetail = await _detailRepository.Query()
-                    .Where(x => x.ProductDeliveryId == existingDeliveryId.Value && x.ProductId == detail.ProductId)
+                    .Where(x => x.DeliveryId == existingDeliveryId.Value && x.BookingDetailId == detail.BookingDetailId)
                     .FirstOrDefaultAsync();
 
                 if (currentDetail != null)
@@ -265,9 +291,9 @@ public class ProductDeliveryService : IProductDeliveryService
         return $"{prefix}-{DateTime.Now.Year}-0001";
     }
 
-    private IQueryable<ProductDelivery> ApplyOrdering(IQueryable<ProductDelivery> queryable, string? orderBy, bool? isAscending)
+    private IQueryable<Delivery> ApplyOrdering(IQueryable<Delivery> queryable, string? orderBy, bool? isAscending)
     {
-        Expression<Func<ProductDelivery, object>> keySelector = orderBy?.ToLower() switch
+        Expression<Func<Delivery, object>> keySelector = orderBy?.ToLower() switch
         {
             "deliverynumber" => x => x.DeliveryNumber,
             "deliverydate" => x => x.DeliveryDate,

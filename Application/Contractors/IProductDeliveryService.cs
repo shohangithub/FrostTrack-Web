@@ -4,14 +4,14 @@ using Application.RequestDTO;
 
 namespace Application.Contractors;
 
-public interface IProductDeliveryService
+public interface IDeliveryService
 {
-    Task<ProductDeliveryResponse> CreateAsync(ProductDeliveryRequest request);
-    Task<ProductDeliveryResponse> UpdateAsync(int id, ProductDeliveryRequest request);
-    Task<bool> DeleteAsync(int id);
-    Task<bool> BatchDeleteAsync(int[] ids);
-    Task<ProductDeliveryResponse> GetByIdAsync(int id);
-    Task<PaginationResult<ProductDeliveryListResponse>> GetWithPaginationAsync(PaginationQuery query);
+    Task<DeliveryResponse> CreateAsync(DeliveryRequest request);
+    Task<DeliveryResponse> UpdateAsync(Guid id, DeliveryRequest request);
+    Task<bool> DeleteAsync(Guid id);
+    Task<bool> BatchDeleteAsync(Guid[] ids);
+    Task<DeliveryResponse> GetByIdAsync(Guid id);
+    Task<PaginationResult<DeliveryListResponse>> GetWithPaginationAsync(PaginationQuery query);
     Task<string> GenerateDeliveryNumberAsync();
     Task<List<CustomerStockResponse>> GetCustomerStockAsync(int customerId);
 }

@@ -86,69 +86,41 @@
                     <div class="row">
                       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                         <div class="form-group row">
-                          <label for="customer" class="col-sm-4 col-form-label"
-                            >Customer:</label
+                          <label for="booking" class="col-sm-4 col-form-label"
+                            >Booking:</label
                           >
                           <div class="col-sm-8">
-                            <div class="input-group input-group-select">
-                              <ng-select
-                                [items]="customers"
-                                bindLabel="customerName"
-                                formControlName="customer"
-                                [loading]="customerLoading"
-                                (ngModelChange)="onCustomerChange()"
-                              >
-                              </ng-select>
-                              <div class="input-group-append">
-                                <button
-                                  class="btn btn-primary fw-bold font-20"
-                                  type="button"
-                                  (click)="addCustomer()"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </div>
+                            <ng-select
+                              [items]="bookings"
+                              bindLabel="text"
+                              bindValue="value"
+                              formControlName="booking"
+                              [loading]="bookingLoading"
+                              (ngModelChange)="onBookingChange()"
+                            >
+                            </ng-select>
                           </div>
-                          @if (!register.get('customer')?.valid &&
-                          register.get('customer')?.touched) {
+                          @if (!register.get('booking')?.valid &&
+                          register.get('booking')?.touched) {
                           <small class="form-text text-danger">
-                            Customer is required
+                            Booking is required
                           </small>
                           }
-                        </div>
-                      </div>
-                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="form-group row">
-                          <label
-                            for="customerMobile"
-                            class="col-sm-4 col-form-label"
-                            >Mobile:</label
-                          >
-                          <div class="col-sm-8">
-                            <input
-                              type="text"
-                              class="form-control form-control-sm"
-                              id="customerMobile"
-                              [value]="register.get('customer')?.value?.['customerMobile']??''"
-                              readonly
-                            />
-                          </div>
                         </div>
                       </div>
                       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3">
                         <div class="form-group row">
                           <label
-                            for="customerAddress"
+                            for="bookingNumber"
                             class="col-sm-4 col-form-label"
-                            >Address:</label
+                            >Booking Number:</label
                           >
                           <div class="col-sm-8">
                             <input
                               type="text"
                               class="form-control form-control-sm"
-                              id="customerAddress"
-                              [value]="register.get('customer')?.value?.['address']??''"
+                              id="bookingNumber"
+                              [value]="register.get('booking')?.value?.['text']??''"
                               readonly
                             />
                           </div>
@@ -243,22 +215,22 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                           <div class="form-group row">
                             <label
-                              for="deliveryRate"
+                              for="chargeAmount"
                               class="col-sm-4 col-form-label"
-                              >Rate:</label
+                              >Charge Amount:</label
                             >
                             <div class="col-sm-8">
                               <input
                                 type="number"
                                 class="form-control form-control-sm"
-                                id="deliveryRate"
-                                formControlName="deliveryRate"
+                                id="chargeAmount"
+                                formControlName="chargeAmount"
                               />
                             </div>
-                            @if (!productForm.get('deliveryRate')?.valid &&
-                            productForm.get('deliveryRate')?.touched) {
+                            @if (!productForm.get('chargeAmount')?.valid &&
+                            productForm.get('chargeAmount')?.touched) {
                             <small class="form-text text-danger">
-                              Rate is required
+                              Charge Amount is required
                             </small>
                             }
                           </div>
@@ -318,18 +290,18 @@
                           <tr>
                             <th>Product Name</th>
                             <th>Unit</th>
-                            <th>Rate</th>
+                            <th>Charge Amount</th>
                             <th>Quantity</th>
                             <th>Action</th>
                           </tr>
                         </thead>
-                        <tbody formArrayName="productDeliveryDetails">
-                          @for (item of productDeliveryDetails.controls; track
-                          $index) {
+                        <tbody formArrayName="deliveryDetails">
+                          @for (item of deliveryDetails.controls; track $index)
+                          {
                           <tr [formGroupName]="$index">
                             <td>{{ item.get("productName")?.value }}</td>
                             <td>{{ item.get("deliveryUnitName")?.value }}</td>
-                            <td>{{ item.get("deliveryRate")?.value }}</td>
+                            <td>{{ item.get("chargeAmount")?.value }}</td>
                             <td>{{ item.get("deliveryQuantity")?.value }}</td>
                             <td>
                               <button

@@ -83,8 +83,8 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (item of row.productDeliveryDetails; track item;
-                        let idx = $index) {
+                        @for (item of row.deliveryDetails; track item; let idx =
+                        $index) {
                         <tr>
                           <th class="text-center" scope="row">{{ idx + 1 }}</th>
                           <td class="text-center">{{ item.productName }}</td>

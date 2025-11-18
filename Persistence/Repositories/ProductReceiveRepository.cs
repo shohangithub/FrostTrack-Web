@@ -15,7 +15,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
         _defaultValueInjector = defaultValueInjector;
     }
 
-    public async Task<Booking?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Bookings
             .Include(p => p.BookingDetails)
@@ -30,15 +30,14 @@ public class ProductReceiveRepository : IProductReceiveRepository
     public async Task<ProductReceiveResponse> ManageUpdate(ProductReceiveRequest request, Booking existingData, CancellationToken cancellationToken = default)
     {
         var quantityDictionary = new List<BookingDictionary>();
-        List<long> bookingDetailsIds = new();
+        List<Guid> bookingDetailsIds = new();
 
         foreach (var item in request.BookingDetails)
         {
-            if (item.Id == 0)
+            if (item.Id == Guid.Empty)
             {
                 var newDetail = item.Adapt<BookingDetail>();
-                newDetail.BookingDetailId = request.Id;
-                _defaultValueInjector.InjectCreatingAudit<BookingDetail, long>(newDetail);
+                _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(newDetail);
 
                 quantityDictionary.Add(new BookingDictionary(item.ProductId, item.BookingQuantity, item.BookingRate, item.BookingUnitId));
 
@@ -61,7 +60,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
                     eDetails.BaseQuantity = item.BaseQuantity;
                     eDetails.BaseRate = item.BaseRate;
 
-                    _defaultValueInjector.InjectUpdatingAudit<BookingDetail, long>(eDetails);
+                    _defaultValueInjector.InjectUpdatingAudit<BookingDetail, Guid>(eDetails);
                     _context.Entry(eDetails).State = EntityState.Modified;
                 }
                 else
@@ -74,7 +73,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
             }
         }
 
-        var deletedItems = existingData.BookingDetails.Where(x => x.Id != 0 && !bookingDetailsIds.Contains(x.Id));
+        var deletedItems = existingData.BookingDetails.Where(x => x.Id != Guid.Empty && !bookingDetailsIds.Contains(x.Id));
         foreach (var item in deletedItems)
         {
             quantityDictionary.Add(new BookingDictionary(item.ProductId, -item.BookingQuantity, item.BookingRate, item.BookingUnitId));
@@ -145,7 +144,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
         return response;
     }
 
-    public async Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existingData = await _context.Bookings
             .Include(x => x.BookingDetails)

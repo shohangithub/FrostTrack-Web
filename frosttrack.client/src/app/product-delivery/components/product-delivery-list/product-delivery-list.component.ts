@@ -16,8 +16,8 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
-import { IProductDeliveryListResponse } from 'app/product-delivery/models/product-delivery.interface';
-import { ProductDeliveryService } from 'app/product-delivery/services/product-delivery.service';
+import { IDeliveryListResponse } from 'app/product-delivery/models/product-delivery.interface';
+import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
 import { SwalConfirm } from 'app/theme-config';
 import {
   ErrorResponse,
@@ -33,7 +33,7 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [NgxDatatableModule, DatePipe],
 })
-export class ProductDeliveryListComponent implements OnInit {
+export class DeliveryListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   @ViewChild('accordionContainer', { static: true })
   accordionContainer!: ElementRef;
@@ -41,13 +41,13 @@ export class ProductDeliveryListComponent implements OnInit {
   rows = [];
   expanded: any = {};
   scrollBarHorizontal = window.innerWidth < 1200;
-  data: IProductDeliveryListResponse[] = [];
+  data: IDeliveryListResponse[] = [];
   filteredData: any[] = [];
   loadingIndicator = true;
   isRowSelected = false;
   selectedOption!: string;
   reorderable = true;
-  selected: IProductDeliveryListResponse[] = [];
+  selected: IDeliveryListResponse[] = [];
   pagination: PaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
@@ -61,7 +61,7 @@ export class ProductDeliveryListComponent implements OnInit {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private productDeliveryService: ProductDeliveryService,
+    private deliveryService: DeliveryService,
     private router: Router,
     private layoutService: LayoutService
   ) {
@@ -92,7 +92,7 @@ export class ProductDeliveryListComponent implements OnInit {
     }).then((result) => {
       if (result.value) {
         const ids = this.selected.map((x) => x.id);
-        this.productDeliveryService.batchDelete(ids).subscribe({
+        this.deliveryService.batchDelete(ids).subscribe({
           next: (response) => {
             if (response) {
               this.selected.forEach((row) => {
@@ -126,8 +126,8 @@ export class ProductDeliveryListComponent implements OnInit {
   }
 
   fetchData() {
-    this.productDeliveryService.getWithPagination(this.pagination).subscribe({
-      next: (response: PaginationResult<IProductDeliveryListResponse>) => {
+    this.deliveryService.getWithPagination(this.pagination).subscribe({
+      next: (response: PaginationResult<IDeliveryListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
         this.loadingIndicator = false;
@@ -163,7 +163,7 @@ export class ProductDeliveryListComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.productDeliveryService.remove(row.id).subscribe({
+        this.deliveryService.remove(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -202,8 +202,7 @@ export class ProductDeliveryListComponent implements OnInit {
   toggleExpandRow(row: any) {
     if (this.expandId === row.id) this.table.rowDetail.collapseAllRows();
     this.table.rowDetail.toggleExpandRow(row);
-    this.table.rowDetail.rowHeight =
-      100 + row.productDeliveryDetails.length * 15;
+    this.table.rowDetail.rowHeight = 100 + row.deliveryDetails.length * 15;
   }
 
   onDetailToggle(event: any) {

@@ -1,60 +1,82 @@
 import { IProductResponse } from '../../administration/models/product.interface';
 import { ICustomerResponse } from '../../common/models/customer.interface';
 import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
+import { IBookingResponse } from '../../booking/models/booking.interface';
 
-export interface IProductDeliveryRequest {
-  id: number;
+export interface IDeliveryRequest {
+  id: string;
   deliveryNumber: string;
   deliveryDate: Date;
-  customerId: number;
+  bookingId: string;
   branchId: number;
   notes?: string;
-  productDeliveryDetails: IProductDeliveryDetailRequest[];
+  chargeAmount: number;
+  adjustmentValue: number;
+  discountAmount: number;
+  paidAmount: number;
+  deliveryDetails: IDeliveryDetailRequest[];
 }
 
-export interface IProductDeliveryDetailRequest {
-  id: number;
-  productDeliveryId: number;
-  productId: number;
+export interface IDeliveryDetailRequest {
+  id: string;
+  deliveryId: string;
+  bookingDetailId: string;
   deliveryUnitId: number;
   deliveryQuantity: number;
-  deliveryRate: number;
   baseQuantity: number;
-  baseRate: number;
+  chargeAmount: number;
+  adjustmentValue: number;
 }
 
-export interface IProductDeliveryResponse {
-  id: number;
+export interface IDeliveryResponse {
+  id: string;
   deliveryNumber: string;
   deliveryDate: Date;
-  customerId: number;
-  customer: ICustomerResponse;
+  bookingId: string;
+  booking: IBookingResponse;
   branchId: number;
   notes?: string;
-  productDeliveryDetails: IProductDeliveryDetailResponse[];
+  chargeAmount: number;
+  adjustmentValue: number;
+  discountAmount: number;
+  paidAmount: number;
+  deliveryDetails: IDeliveryDetailResponse[];
 }
 
-export interface IProductDeliveryDetailResponse {
-  id: number;
-  productDeliveryId: number;
+export interface IDeliveryDetailResponse {
+  id: string;
+  bookingDetailId: string;
   productId: number;
-  product: IProductResponse;
+  productName: string;
   deliveryUnitId: number;
-  deliveryUnit: IUnitConversionResponse;
+  deliveryUnitName: string;
   deliveryQuantity: number;
-  deliveryRate: number;
   baseQuantity: number;
-  baseRate: number;
+  chargeAmount: number;
+  adjustmentValue: number;
+}
+
+export interface IDeliveryListResponse {
+  id: string;
+  deliveryNumber: string;
+  deliveryDate: Date;
+  bookingId: string;
+  bookingNumber: string;
+  customerId: number;
+  customerName: string;
+  chargeAmount: number;
+  discountAmount: number;
+  paidAmount: number;
+  deliveryDetails: IDeliveryDetailResponse[];
+}
+
+export interface ICustomerStockResponse {
+  customerId: number;
+  bookingDetailId: string;
+  productId: number;
+  productName: string;
+  unitId: number;
+  unitName: string;
   availableStock: number;
-}
-
-export interface IProductDeliveryListResponse {
-  id: number;
-  deliveryNumber: string;
-  deliveryDate: Date;
-  customerId: number;
-  customer: ICustomerResponse;
-  branchId: number;
-  notes?: string;
-  branch: any;
+  bookingRate: number;
 }

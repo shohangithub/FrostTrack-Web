@@ -17,23 +17,21 @@ import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { formatErrorMessage } from 'app/utils/server-error-handler';
 import { Subject } from 'rxjs';
-import { ProductDeliveryService } from 'app/product-delivery/services/product-delivery.service';
+import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
 import {
-  IProductDeliveryListResponse,
-  IProductDeliveryRequest,
-  IProductDeliveryResponse,
+  IDeliveryListResponse,
+  IDeliveryRequest,
+  IDeliveryResponse,
+  ICustomerStockResponse,
 } from 'app/product-delivery/models/product-delivery.interface';
 import { CodeResponse } from '@core/models/code-response';
 import { BranchService } from 'app/administration/services/branch.service';
 import { ILookup } from '@core/models/lookup';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CustomerService } from 'app/common/services/customer.service';
-import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
-import { ModalOption } from '../../../config/modal-option';
-import { AddCustomerComponent } from 'app/common/components/customer/add-customer/add-customer.component';
 import { UnitConversionService } from 'app/common/services/unit-conversion.service';
+import { BookingService } from 'app/booking/services/booking.service';
 
 @Component({
   selector: 'app-product-delivery',
@@ -47,19 +45,19 @@ import { UnitConversionService } from 'app/common/services/unit-conversion.servi
     CommonModule,
     NgSelectModule,
   ],
-  providers: [ProductDeliveryService, AuthService],
+  providers: [DeliveryService, AuthService, BookingService],
 })
-export class ProductDeliveryComponent implements OnInit {
+export class DeliveryComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   rows = [];
   scrollBarHorizontal = window.innerWidth < 1200;
-  data: IProductDeliveryListResponse[] = [];
+  data: IDeliveryListResponse[] = [];
   filteredData: any[] = [];
   loadingIndicator = true;
   isRowSelected = false;
   selectedOption!: string;
   reorderable = true;
-  selected: IProductDeliveryListResponse[] = [];
+  selected: IDeliveryListResponse[] = [];
   branchs: ILookup<number>[] = [];
   selectedBranch!: number;
 
@@ -72,18 +70,15 @@ export class ProductDeliveryComponent implements OnInit {
   isMainBranch: boolean = false;
   private branchSubject: Subject<number> = new Subject<number>();
 
-  customerStockProducts: any[] = [];
+  customerStockProducts: ICustomerStockResponse[] = [];
   productLoading = false;
-  customers: ICustomerListResponse[] = [];
-  customerLoading = false;
+  bookings: ILookup<string>[] = [];
+  bookingLoading = false;
   productUnits: ILookup<number>[] = [];
   productUnitLoading = false;
 
-  private editableProductId?: number;
-  private productSubject: Subject<number> = new Subject<number>();
-
-  private editableCustomerId?: number;
-  private customerSubject: Subject<number> = new Subject<number>();
+  private editableBookingId?: string;
+  private bookingSubject: Subject<string> = new Subject<string>();
 
   private editableProductUnitId?: number;
   private productUnitSubject: Subject<number> = new Subject<number>();
@@ -92,9 +87,9 @@ export class ProductDeliveryComponent implements OnInit {
     private fb: UntypedFormBuilder,
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private productDeliveryService: ProductDeliveryService,
+    private deliveryService: DeliveryService,
     private branchService: BranchService,
-    private customerService: CustomerService,
+    private bookingService: BookingService,
     private route: ActivatedRoute,
     private authService: AuthService,
     private layoutService: LayoutService,
@@ -110,7 +105,7 @@ export class ProductDeliveryComponent implements OnInit {
     this.getUserBranch();
     this.initFormData();
     this.fetchBranchLookup();
-    this.fetchCustomerLookup();
+    this.fetchBookingLookup();
     this.fetchProductUnitLookup();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.getExistingData(id);
@@ -122,18 +117,10 @@ export class ProductDeliveryComponent implements OnInit {
       }
     });
 
-    this.productSubject.subscribe((value: number) => {
-      this.productForm
-        .get('product')
-        ?.setValue(
-          this.customerStockProducts.find((x) => x.productId === value)
-        );
-    });
-
-    this.customerSubject.subscribe((value: number) => {
+    this.bookingSubject.subscribe((value: string) => {
       this.register
-        .get('customer')
-        ?.setValue(this.customers.find((x) => x.id === value));
+        .get('booking')
+        ?.setValue(this.bookings.find((x) => x.value === value));
     });
 
     this.productUnitSubject.subscribe((value: number) => {
@@ -150,71 +137,79 @@ export class ProductDeliveryComponent implements OnInit {
   initFormData() {
     this.initProductForm();
     this.register = this.fb.group({
-      id: [0],
+      id: ['00000000-0000-0000-0000-000000000000'],
       deliveryNumber: ['', [Validators.required]],
       branchId: [this.selectedBranch, [Validators.required]],
       deliveryDate: [new Date().systemFormat(), [Validators.required]],
-      customer: [null, [Validators.required]],
+      booking: [null, [Validators.required]],
       notes: [''],
-      productDeliveryDetails: this.fb.array([]),
+      chargeAmount: [0, [Validators.required]],
+      adjustmentValue: [0],
+      discountAmount: [0],
+      paidAmount: [0, [Validators.required]],
+      deliveryDetails: this.fb.array([]),
     });
     this.generateCode();
   }
 
   initProductForm() {
     this.productForm = this.fb.group({
-      id: [0],
-      productDeliveryId: [0],
+      id: ['00000000-0000-0000-0000-000000000000'],
+      deliveryId: ['00000000-0000-0000-0000-000000000000'],
       product: [null, [Validators.required]],
-      deliveryRate: [null, [Validators.required]],
+      chargeAmount: [0, [Validators.required]],
       deliveryUnit: [null, [Validators.required]],
       deliveryQuantity: [null, [Validators.required]],
       baseQuantity: [0],
-      baseRate: [0],
+      adjustmentValue: [0],
       availableStock: [{ value: 0, disabled: true }],
     });
   }
 
   getExistingData(id: any) {
     this.isLoading = true;
-    this.productDeliveryService.getById(id).subscribe({
-      next: (response: IProductDeliveryResponse) => {
+    this.deliveryService.getById(id).subscribe({
+      next: (response: IDeliveryResponse) => {
         this.register.setValue({
           id: response.id,
           deliveryNumber: response.deliveryNumber,
           branchId: response.branchId,
           deliveryDate: response.deliveryDate,
           notes: response.notes || '',
-          productDeliveryDetails: [],
-          customer:
-            this.customers.find((x) => x.id === response.customerId) || null,
+          chargeAmount: response.chargeAmount,
+          adjustmentValue: response.adjustmentValue,
+          discountAmount: response.discountAmount,
+          paidAmount: response.paidAmount,
+          deliveryDetails: [],
+          booking:
+            this.bookings.find((x) => x.value === response.bookingId) || null,
         });
 
-        for (const detail of response.productDeliveryDetails) {
+        for (const detail of response.deliveryDetails) {
           const item = this.fb.group({
             id: [detail.id],
+            bookingDetailId: [detail.bookingDetailId, [Validators.required]],
             productId: [detail.productId, [Validators.required]],
-            productName: [detail.product?.productName, [Validators.required]],
-            productDeliveryId: [detail.productDeliveryId],
+            productName: [detail.productName, [Validators.required]],
             deliveryUnitId: [detail.deliveryUnitId, [Validators.required]],
             deliveryUnitName: [
-              detail.deliveryUnit?.unitName || '',
+              detail.deliveryUnitName || '',
               [Validators.required],
             ],
-            deliveryRate: [detail.deliveryRate, [Validators.required]],
+            chargeAmount: [detail.chargeAmount, [Validators.required]],
             deliveryQuantity: [detail.deliveryQuantity, [Validators.required]],
             baseQuantity: [detail.baseQuantity],
-            baseRate: [detail.baseRate],
+            adjustmentValue: [detail.adjustmentValue],
           });
-          this.productDeliveryDetails.push(item);
+          this.deliveryDetails.push(item);
         }
 
-        this.editableCustomerId = response.customerId;
+        this.editableBookingId = response.bookingId;
         this.generatedCode = response.deliveryNumber;
 
-        // Load customer stock after setting customer
-        if (response.customerId) {
-          this.loadCustomerStock(response.customerId);
+        // Load customer stock after setting booking
+        if (response.booking?.customerId) {
+          this.loadCustomerStock(response.booking.customerId);
         }
 
         this.isLoading = false;
@@ -239,18 +234,18 @@ export class ProductDeliveryComponent implements OnInit {
     });
   }
 
-  fetchCustomerLookup() {
-    this.customerLoading = true;
-    this.customerService.getList().subscribe({
-      next: (response: ICustomerListResponse[]) => {
-        this.customers = response;
-        if (this.editableCustomerId) {
-          this.customerSubject.next(this.editableCustomerId);
+  fetchBookingLookup() {
+    this.bookingLoading = true;
+    this.bookingService.getLookup().subscribe({
+      next: (response: ILookup<string>[]) => {
+        this.bookings = response;
+        if (this.editableBookingId) {
+          this.bookingSubject.next(this.editableBookingId);
         }
-        this.customerLoading = false;
+        this.bookingLoading = false;
       },
       error: () => {
-        this.customerLoading = false;
+        this.bookingLoading = false;
       },
     });
   }
@@ -271,11 +266,11 @@ export class ProductDeliveryComponent implements OnInit {
     });
   }
 
-  onCustomerChange() {
-    const customer = this.register.get('customer')?.value;
-    if (customer && customer.id) {
-      this.loadCustomerStock(customer.id);
-      // Clear product selection when customer changes
+  onBookingChange() {
+    const booking = this.register.get('booking')?.value;
+    if (booking && booking.customerId) {
+      // Note: ILookup doesn't have customerId, we need the full booking object
+      // For now, we'll need to handle this differently
       this.productForm.reset();
       this.initProductForm();
     } else {
@@ -285,23 +280,21 @@ export class ProductDeliveryComponent implements OnInit {
 
   loadCustomerStock(customerId: number) {
     this.productLoading = true;
-    this.productDeliveryService
-      .getCustomerStockByCustomerId(customerId)
-      .subscribe({
-        next: (response: any[]) => {
-          this.customerStockProducts = response;
-          this.productLoading = false;
-        },
-        error: () => {
-          this.productLoading = false;
-          this.toastr.error('Failed to load customer stock');
-        },
-      });
+    this.deliveryService.getCustomerStockByCustomerId(customerId).subscribe({
+      next: (response: ICustomerStockResponse[]) => {
+        this.customerStockProducts = response;
+        this.productLoading = false;
+      },
+      error: () => {
+        this.productLoading = false;
+        this.toastr.error('Failed to load customer stock');
+      },
+    });
   }
 
   generateCode() {
     this.isGeneratingCode = true;
-    this.productDeliveryService.generateDeliveryNumber().subscribe({
+    this.deliveryService.generateDeliveryNumber().subscribe({
       next: (response: CodeResponse) => {
         this.generatedCode = response.code;
         this.register.get('deliveryNumber')?.setValue(response.code);
@@ -317,15 +310,15 @@ export class ProductDeliveryComponent implements OnInit {
     const childForm = this.productForm;
     const product = childForm?.get('product')?.value;
     if (product) {
-      const cardData: Array<any> = this.productDeliveryDetails.value;
+      const cardData: Array<any> = this.deliveryDetails.value;
       const existingProduct = cardData.find(
-        (x) => x.productId === product.productId
+        (x) => x.bookingDetailId === product.bookingDetailId
       );
 
       if (existingProduct) {
         childForm
-          ?.get('deliveryRate')
-          ?.setValue(existingProduct.deliveryRate || 0);
+          ?.get('chargeAmount')
+          ?.setValue(existingProduct.chargeAmount || 0);
         childForm
           ?.get('deliveryQuantity')
           ?.setValue(existingProduct.deliveryQuantity);
@@ -342,7 +335,7 @@ export class ProductDeliveryComponent implements OnInit {
           ?.setValue(
             this.productUnits.find((x) => x.value == product.unitId) || null
           );
-        childForm?.get('deliveryRate')?.setValue(product.deliveryRate || 0);
+        childForm?.get('chargeAmount')?.setValue(product.bookingRate || 0);
         childForm?.get('availableStock')?.setValue(product.availableStock || 0);
         childForm?.get('deliveryQuantity')?.setValue(0);
       }
@@ -360,8 +353,8 @@ export class ProductDeliveryComponent implements OnInit {
     }
   }
 
-  get productDeliveryDetails() {
-    return this.register.get('productDeliveryDetails') as FormArray;
+  get deliveryDetails() {
+    return this.register.get('deliveryDetails') as FormArray;
   }
 
   addToCart() {
@@ -371,9 +364,9 @@ export class ProductDeliveryComponent implements OnInit {
     }
 
     const formData = this.productForm.value;
-    const cardData: Array<any> = this.productDeliveryDetails.value;
+    const cardData: Array<any> = this.deliveryDetails.value;
     const existingProduct = cardData.find(
-      (x) => x.productId === formData.product.productId
+      (x) => x.bookingDetailId === formData.product.bookingDetailId
     );
 
     if (existingProduct) {
@@ -381,32 +374,35 @@ export class ProductDeliveryComponent implements OnInit {
         formData.deliveryUnit?.value || formData.deliveryUnit;
       existingProduct.deliveryUnitName =
         formData.deliveryUnit?.text || formData.deliveryUnit?.label || '';
-      existingProduct.deliveryRate = formData.deliveryRate;
+      existingProduct.chargeAmount = formData.chargeAmount;
       existingProduct.deliveryQuantity = formData.deliveryQuantity;
       existingProduct.baseQuantity = formData.baseQuantity;
-      existingProduct.baseRate = formData.baseRate;
-      this.productDeliveryDetails.setValue(cardData);
+      existingProduct.adjustmentValue = formData.adjustmentValue;
+      this.deliveryDetails.setValue(cardData);
     } else {
       const item = this.fb.group({
         id: [formData.id],
+        bookingDetailId: [
+          formData.product.bookingDetailId,
+          [Validators.required],
+        ],
         productId: [formData.product.productId, [Validators.required]],
         productName: [formData.product.productName, [Validators.required]],
-        productDeliveryId: [formData.productDeliveryId],
         deliveryUnitId: [formData.deliveryUnit.value, [Validators.required]],
         deliveryUnitName: [formData.deliveryUnit.label, [Validators.required]],
-        deliveryRate: [formData.deliveryRate, [Validators.required]],
+        chargeAmount: [formData.chargeAmount, [Validators.required]],
         deliveryQuantity: [formData.deliveryQuantity, [Validators.required]],
         baseQuantity: [formData.baseQuantity],
-        baseRate: [formData.baseRate],
+        adjustmentValue: [formData.adjustmentValue],
       });
-      this.productDeliveryDetails.push(item);
+      this.deliveryDetails.push(item);
     }
     this.productForm.reset();
     this.initProductForm();
   }
 
   removeFromCart(indx: number) {
-    this.productDeliveryDetails.removeAt(indx);
+    this.deliveryDetails.removeAt(indx);
   }
 
   delivery(form: UntypedFormGroup) {
@@ -415,15 +411,15 @@ export class ProductDeliveryComponent implements OnInit {
       return;
     }
 
-    if (this.productDeliveryDetails.length === 0) {
+    if (this.deliveryDetails.length === 0) {
       this.toastr.error('Please add at least one product');
       return;
     }
 
     this.isSubmitted = true;
     const formData = { ...form.value };
-    formData.customerId = formData.customer?.id;
-    const payload: IProductDeliveryRequest = { ...formData };
+    formData.bookingId = formData.booking?.value;
+    const payload: IDeliveryRequest = { ...formData };
 
     if (payload.deliveryNumber !== this.generatedCode) {
       this.toastr.error('Delivery number is mismatched !');
@@ -431,8 +427,8 @@ export class ProductDeliveryComponent implements OnInit {
       return;
     }
 
-    if (formData.id === 0) {
-      this.productDeliveryService.create(payload).subscribe({
+    if (formData.id === '00000000-0000-0000-0000-000000000000') {
+      this.deliveryService.create(payload).subscribe({
         next: () => {
           this.toastr.success('Product delivery created successfully');
           this.initFormData();
@@ -443,7 +439,7 @@ export class ProductDeliveryComponent implements OnInit {
         },
       });
     } else {
-      this.productDeliveryService.update(formData.id, payload).subscribe({
+      this.deliveryService.update(formData.id, payload).subscribe({
         next: () => {
           this.toastr.success('Product delivery updated successfully');
           this.isSubmitted = false;
@@ -453,31 +449,5 @@ export class ProductDeliveryComponent implements OnInit {
         },
       });
     }
-  }
-
-  addCustomer() {
-    const modalRef = this.modalService.open(
-      AddCustomerComponent,
-      ModalOption.lg
-    );
-    modalRef.result.then((response: any) => {
-      if (response?.success) {
-        const obj: ICustomerListResponse = {
-          id: response.data.id,
-          customerName: response.data.customerName,
-          customerCode: response.data.customerCode,
-          customerMobile: response.data.customerMobile,
-          customerEmail: response.data.customerEmail,
-          officePhone: response.data.officePhone,
-          address: response.data.address,
-          creditLimit: response.data.creditLimit,
-          openingBalance: response.data.openingBalance,
-          status: response.data.status,
-          previousDue: 0,
-          isSystemDefault: false,
-        };
-        this.customers = this.customers.insertThenClone(obj);
-      }
-    });
   }
 }

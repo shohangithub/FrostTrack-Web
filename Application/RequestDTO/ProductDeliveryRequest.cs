@@ -1,24 +1,28 @@
 namespace Application.RequestDTO;
 
-public record ProductDeliveryRequest
+public record DeliveryRequest
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; } = Guid.Empty;
     public string DeliveryNumber { get; init; } = string.Empty;
     public DateTime DeliveryDate { get; init; }
-    public int CustomerId { get; init; }
+    public Guid BookingId { get; init; }
     public int BranchId { get; init; }
     public string? Notes { get; init; }
-    public List<ProductDeliveryDetailRequest> ProductDeliveryDetails { get; init; } = new();
+    public decimal ChargeAmount { get; init; }
+    public decimal AdjustmentValue { get; init; }
+    public decimal DiscountAmount { get; init; }
+    public decimal PaidAmount { get; init; }
+    public List<DeliveryDetailRequest> DeliveryDetails { get; init; } = new();
 }
 
-public record ProductDeliveryDetailRequest
+public record DeliveryDetailRequest
 {
-    public int Id { get; init; }
-    public int ProductDeliveryId { get; init; }
-    public int ProductId { get; init; }
+    public Guid Id { get; init; } = Guid.Empty;
+    public Guid DeliveryId { get; init; } = Guid.Empty;
+    public Guid BookingDetailId { get; init; }
     public int DeliveryUnitId { get; init; }
     public float DeliveryQuantity { get; init; }
-    public decimal DeliveryRate { get; init; }
     public decimal BaseQuantity { get; init; }
-    public decimal BaseRate { get; init; }
+    public decimal ChargeAmount { get; init; }
+    public decimal AdjustmentValue { get; init; }
 }

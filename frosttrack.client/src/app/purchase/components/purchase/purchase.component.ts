@@ -14,7 +14,7 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
   ErrorResponse,
@@ -49,7 +49,6 @@ import { LayoutService } from '@core/service/layout.service';
   templateUrl: './purchase.component.html',
   standalone: true,
   imports: [
-    RouterLink,
     NgxDatatableModule,
     FormsModule,
     ReactiveFormsModule,

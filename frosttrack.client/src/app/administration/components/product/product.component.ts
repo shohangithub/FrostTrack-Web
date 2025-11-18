@@ -8,7 +8,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { RouterLink } from '@angular/router';
 import { IProductListResponse } from '../../models/product.interface';
 import { CommonModule } from '@angular/common';
 import {
@@ -37,7 +36,6 @@ import { LayoutService } from '@core/service/layout.service';
   styleUrls: [],
   standalone: true,
   imports: [
-    RouterLink,
     NgxDatatableModule,
     FormsModule,
     ReactiveFormsModule,

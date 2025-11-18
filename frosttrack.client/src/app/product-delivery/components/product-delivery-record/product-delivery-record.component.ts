@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ProductDeliveryService } from 'app/product-delivery/services/product-delivery.service';
-import { IProductDeliveryResponse } from 'app/product-delivery/models/product-delivery.interface';
+import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
+import { IDeliveryResponse } from 'app/product-delivery/models/product-delivery.interface';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -10,14 +10,14 @@ import { ToastrService } from 'ngx-toastr';
   templateUrl: './product-delivery-record.component.html',
   standalone: true,
   imports: [RouterLink, CommonModule],
-  providers: [ProductDeliveryService],
+  providers: [DeliveryService],
 })
-export class ProductDeliveryRecordComponent implements OnInit {
-  productDelivery: IProductDeliveryResponse | null = null;
+export class DeliveryRecordComponent implements OnInit {
+  delivery: IDeliveryResponse | null = null;
   isLoading = true;
 
   constructor(
-    private productDeliveryService: ProductDeliveryService,
+    private deliveryService: DeliveryService,
     private route: ActivatedRoute,
     private toastr: ToastrService
   ) {}
@@ -25,15 +25,15 @@ export class ProductDeliveryRecordComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.loadProductDelivery(Number(id));
+      this.loadDelivery(id);
     }
   }
 
-  loadProductDelivery(id: number) {
+  loadDelivery(id: string) {
     this.isLoading = true;
-    this.productDeliveryService.getById(id).subscribe({
+    this.deliveryService.getById(id).subscribe({
       next: (response) => {
-        this.productDelivery = response;
+        this.delivery = response;
         this.isLoading = false;
       },
       error: () => {

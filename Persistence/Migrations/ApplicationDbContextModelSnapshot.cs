@@ -415,12 +415,10 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entitites.Booking", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnOrder(0);
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
@@ -459,17 +457,15 @@ namespace Persistence.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Bookings", "product");
+                    b.ToTable("Booking", "product");
                 });
 
             modelBuilder.Entity("Domain.Entitites.BookingDetail", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnOrder(0);
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<decimal>("BaseQuantity")
                         .HasColumnType("decimal(18,2)");
@@ -477,11 +473,12 @@ namespace Persistence.Migrations
                     b.Property<decimal>("BaseRate")
                         .HasColumnType("decimal(10, 2)");
 
-                    b.Property<long>("BookingDetailId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("BillType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<long>("BookingId")
-                        .HasColumnType("bigint");
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<float>("BookingQuantity")
                         .HasColumnType("real");
@@ -518,7 +515,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("BookingDetails", "product");
+                    b.ToTable("BookingDetail", "product");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Branch", b =>
@@ -792,6 +789,119 @@ namespace Persistence.Migrations
                     b.HasIndex("UnitId");
 
                     b.ToTable("Damages", "product");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.Delivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnOrder(0);
+
+                    b.Property<decimal>("AdjustmentValue")
+                        .HasColumnType("decimal(5, 2)");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ChargeAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("DeliveryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeliveryNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("BranchId");
+
+                    b.ToTable("Delivery", "product");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.DeliveryDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnOrder(0);
+
+                    b.Property<decimal>("AdjustmentValue")
+                        .HasColumnType("decimal(5, 2)");
+
+                    b.Property<decimal>("BaseQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("BookingDetailId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ChargeAmount")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<Guid>("DeliveryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<float>("DeliveryQuantity")
+                        .HasColumnType("real");
+
+                    b.Property<int>("DeliveryUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingDetailId");
+
+                    b.HasIndex("DeliveryId");
+
+                    b.HasIndex("DeliveryUnitId");
+
+                    b.ToTable("DeliveryDetail", "product");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Employee", b =>
@@ -1241,111 +1351,6 @@ namespace Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("ProductCategories", "product");
-                });
-
-            modelBuilder.Entity("Domain.Entitites.ProductDelivery", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnOrder(0);
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CreatedById")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("DeliveryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DeliveryNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("LastUpdatedById")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("LastUpdatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BranchId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("ProductDeliveries", "product");
-                });
-
-            modelBuilder.Entity("Domain.Entitites.ProductDeliveryDetail", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnOrder(0);
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<decimal>("BaseQuantity")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("BaseRate")
-                        .HasColumnType("decimal(10, 2)");
-
-                    b.Property<int>("CreatedById")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime");
-
-                    b.Property<float>("DeliveryQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<decimal>("DeliveryRate")
-                        .HasColumnType("decimal(10, 2)");
-
-                    b.Property<int>("DeliveryUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("LastUpdatedById")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("LastUpdatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("ProductDeliveryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DeliveryUnitId");
-
-                    b.HasIndex("ProductDeliveryId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductDeliveryDetails", "product");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>
@@ -2217,8 +2222,7 @@ namespace Persistence.Migrations
                     b.HasOne("Domain.Entitites.Booking", "Booking")
                         .WithMany("BookingDetails")
                         .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entitites.UnitConversion", "BookingUnit")
                         .WithMany()
@@ -2274,6 +2278,52 @@ namespace Persistence.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("Domain.Entitites.Delivery", b =>
+                {
+                    b.HasOne("Domain.Entitites.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.DeliveryDetail", b =>
+                {
+                    b.HasOne("Domain.Entitites.BookingDetail", "BookingDetail")
+                        .WithMany()
+                        .HasForeignKey("BookingDetailId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.Delivery", "Delivery")
+                        .WithMany("DeliveryDetails")
+                        .HasForeignKey("DeliveryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.UnitConversion", "DeliveryUnit")
+                        .WithMany()
+                        .HasForeignKey("DeliveryUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BookingDetail");
+
+                    b.Navigation("Delivery");
+
+                    b.Navigation("DeliveryUnit");
+                });
+
             modelBuilder.Entity("Domain.Entitites.PrintSettings", b =>
                 {
                     b.HasOne("Domain.Entitites.Branch", "Branch")
@@ -2301,52 +2351,6 @@ namespace Persistence.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("DefaultUnit");
-                });
-
-            modelBuilder.Entity("Domain.Entitites.ProductDelivery", b =>
-                {
-                    b.HasOne("Domain.Entitites.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entitites.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("Domain.Entitites.ProductDeliveryDetail", b =>
-                {
-                    b.HasOne("Domain.Entitites.UnitConversion", "DeliveryUnit")
-                        .WithMany()
-                        .HasForeignKey("DeliveryUnitId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entitites.ProductDelivery", "ProductDelivery")
-                        .WithMany("ProductDeliveryDetails")
-                        .HasForeignKey("ProductDeliveryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entitites.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("DeliveryUnit");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("ProductDelivery");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>
@@ -2658,6 +2662,11 @@ namespace Persistence.Migrations
                     b.Navigation("Sales");
                 });
 
+            modelBuilder.Entity("Domain.Entitites.Delivery", b =>
+                {
+                    b.Navigation("DeliveryDetails");
+                });
+
             modelBuilder.Entity("Domain.Entitites.Organization", b =>
                 {
                     b.Navigation("Companies");
@@ -2676,11 +2685,6 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entitites.ProductCategory", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("Domain.Entitites.ProductDelivery", b =>
-                {
-                    b.Navigation("ProductDeliveryDetails");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Purchase", b =>

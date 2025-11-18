@@ -2,7 +2,7 @@ namespace Application.Services;
 
 public class ProductReceiveService : IProductReceiveService
 {
-    private readonly IRepository<Booking, long> _repository;
+    private readonly IRepository<Booking, Guid> _repository;
     private readonly IProductReceiveRepository _productReceiveRepository;
     private readonly IStockRepository _stockRepository;
     private readonly IRepository<Company, int> _companyRepository;
@@ -12,7 +12,7 @@ public class ProductReceiveService : IProductReceiveService
     private readonly CurrentUser _currentUser;
 
     public ProductReceiveService(
-        IRepository<Booking, long> repository,
+        IRepository<Booking, Guid> repository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService,
@@ -46,10 +46,10 @@ public class ProductReceiveService : IProductReceiveService
 
         var entity = request.Adapt<Booking>();
         entity.BranchId = _currentUser.BranchId;
-        _defaultValueInjector.InjectCreatingAudit<Booking, long>(entity);
+        _defaultValueInjector.InjectCreatingAudit<Booking, Guid>(entity);
         if (entity.BookingDetails != null && entity.BookingDetails.Any())
         {
-            _defaultValueInjector.InjectCreatingAudit<BookingDetail, long>(entity.BookingDetails.ToList());
+            _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(entity.BookingDetails.ToList());
         }
 
         var result = await _stockRepository.ManageAddProductReceiveStock(entity, cancellationToken);
@@ -58,18 +58,18 @@ public class ProductReceiveService : IProductReceiveService
         return response;
     }
 
-    public async Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _productReceiveRepository.DeleteAsync(id, cancellationToken);
     }
 
-    public async Task<bool> DeleteBatchAsync(List<long> ids, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default)
     {
         var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
         return result > 0;
     }
 
-    public async Task<ProductReceiveResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<ProductReceiveResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
             .Include(x => x.BookingDetails)
@@ -79,19 +79,19 @@ public class ProductReceiveService : IProductReceiveService
         return response;
     }
 
-    public async Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
             .Where(predicate)
-            .Select(x => new Lookup<long>(x.Id, x.BookingNumber))
+            .Select(x => new Lookup<Guid>(x.Id, x.BookingNumber))
             .ToListAsync();
         return result;
     }
 
-    public async Task<bool> IsExistsAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default)
         => await _repository.Query().AnyAsync(x => x.Id == id, cancellationToken);
 
-    public async Task<ProductReceiveResponse> UpdateAsync(long id, ProductReceiveRequest request, CancellationToken cancellationToken = default)
+    public async Task<ProductReceiveResponse> UpdateAsync(Guid id, ProductReceiveRequest request, CancellationToken cancellationToken = default)
     {
         ProductReceiveValidator validator = new(_repository, id);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
@@ -103,7 +103,7 @@ public class ProductReceiveService : IProductReceiveService
         existingData.BookingDate = request.BookingDate;
         existingData.Notes = request.Notes;
 
-        _defaultValueInjector.InjectUpdatingAudit<Booking, long>(existingData);
+        _defaultValueInjector.InjectUpdatingAudit<Booking, Guid>(existingData);
 
         var response = await _productReceiveRepository.ManageUpdate(request, existingData, cancellationToken);
 
@@ -118,15 +118,15 @@ public class ProductReceiveService : IProductReceiveService
                 x.BookingNumber,
                 x.BookingDate,
                 x.CustomerId,
-                x.Customer,
+                x.Customer!,
                 x.BranchId,
-                x.Branch,
+                x.Branch!,
                 x.Notes,
                 x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                     d.Id,
-                    d.BookingDetailId,
+                    d.Id,
                     d.ProductId,
-                    d.Product.ProductName,
+                    d.Product!.ProductName,
                     d.BookingUnitId,
                     "",
                     d.BookingQuantity,
@@ -145,7 +145,7 @@ public class ProductReceiveService : IProductReceiveService
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
             predicate = obj => obj.BookingNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower());
+                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower()));
         }
 
         Expression<Func<Booking, ProductReceiveListResponse>>? selector = x => new ProductReceiveListResponse(
@@ -153,15 +153,15 @@ public class ProductReceiveService : IProductReceiveService
             x.BookingNumber,
             x.BookingDate,
             x.CustomerId,
-            x.Customer,
+            x.Customer!,
             x.BranchId,
-            x.Branch,
+            x.Branch!,
             x.Notes,
             x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                 d.Id,
-                d.BookingDetailId,
+                d.Id,
                 d.ProductId,
-                d.Product.ProductName,
+                d.Product!.ProductName,
                 d.BookingUnitId,
                 "",
                 d.BookingQuantity,

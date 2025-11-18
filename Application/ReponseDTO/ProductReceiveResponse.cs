@@ -3,7 +3,7 @@ using Domain.Entitites;
 namespace Application.ReponseDTO;
 
 public record ProductReceiveResponse(
-        long Id,
+        Guid Id,
         string BookingNumber,
         DateTime BookingDate,
         int CustomerId,
@@ -14,8 +14,8 @@ public record ProductReceiveResponse(
     );
 
 public record ProductReceiveDetailResponse(
-       long Id,
-       long BookingDetailId,
+       Guid Id,
+       Guid BookingDetailId,
        int ProductId,
        ProductResponse? Product,
        int BookingUnitId,
@@ -27,8 +27,8 @@ public record ProductReceiveDetailResponse(
   );
 
 public record ProductReceiveDetailListResponse(
-       long Id,
-       long BookingDetailId,
+       Guid Id,
+       Guid BookingDetailId,
        int ProductId,
        string ProductName,
        int BookingUnitId,
@@ -40,7 +40,7 @@ public record ProductReceiveDetailListResponse(
   );
 
 public record ProductReceiveListResponse(
-        long Id,
+        Guid Id,
         string BookingNumber,
         DateTime BookingDate,
         int CustomerId,

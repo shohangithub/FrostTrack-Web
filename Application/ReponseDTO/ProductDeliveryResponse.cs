@@ -1,43 +1,55 @@
 namespace Application.ReponseDTO;
 
-public record ProductDeliveryResponse
+public record DeliveryResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string DeliveryNumber { get; init; } = string.Empty;
     public DateTime DeliveryDate { get; init; }
-    public int CustomerId { get; init; }
-    public CustomerResponse Customer { get; init; } = null!;
+    public Guid BookingId { get; init; }
+    public BookingResponse Booking { get; init; } = null!;
     public int BranchId { get; init; }
+    public BranchResponse Branch { get; init; } = null!;
     public string? Notes { get; init; }
-    public List<ProductDeliveryDetailResponse> ProductDeliveryDetails { get; init; } = new();
+    public decimal ChargeAmount { get; init; }
+    public decimal AdjustmentValue { get; init; }
+    public decimal DiscountAmount { get; init; }
+    public decimal PaidAmount { get; init; }
+    public List<DeliveryDetailResponse> DeliveryDetails { get; init; } = new();
 }
 
-public record ProductDeliveryListResponse
+public record DeliveryListResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string DeliveryNumber { get; init; } = string.Empty;
     public DateTime DeliveryDate { get; init; }
-    public CustomerResponse Customer { get; init; } = null!;
-    public List<ProductDeliveryDetailResponse> ProductDeliveryDetails { get; init; } = new();
+    public Guid BookingId { get; init; }
+    public string BookingNumber { get; init; } = string.Empty;
+    public int CustomerId { get; init; }
+    public string CustomerName { get; init; } = string.Empty;
+    public decimal ChargeAmount { get; init; }
+    public decimal DiscountAmount { get; init; }
+    public decimal PaidAmount { get; init; }
+    public List<DeliveryDetailResponse> DeliveryDetails { get; init; } = new();
 }
 
-public record ProductDeliveryDetailResponse
+public record DeliveryDetailResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
+    public Guid BookingDetailId { get; init; }
     public int ProductId { get; init; }
     public string ProductName { get; init; } = string.Empty;
-    public ProductResponse Product { get; init; } = null!;
     public int DeliveryUnitId { get; init; }
-    public UnitConversionResponse DeliveryUnit { get; init; } = null!;
+    public string DeliveryUnitName { get; init; } = string.Empty;
     public float DeliveryQuantity { get; init; }
-    public decimal DeliveryRate { get; init; }
     public decimal BaseQuantity { get; init; }
-    public decimal BaseRate { get; init; }
+    public decimal ChargeAmount { get; init; }
+    public decimal AdjustmentValue { get; init; }
 }
 
 public record CustomerStockResponse
 {
     public int CustomerId { get; init; }
+    public Guid BookingDetailId { get; init; }
     public int ProductId { get; init; }
     public string ProductName { get; init; } = string.Empty;
     public int UnitId { get; init; }

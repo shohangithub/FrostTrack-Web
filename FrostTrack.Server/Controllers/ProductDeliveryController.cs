@@ -10,52 +10,52 @@ namespace FrostTrack.Server.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class ProductDeliveryController : ControllerBase
+public class DeliveryController : ControllerBase
 {
-    private readonly IProductDeliveryService _service;
+    private readonly IDeliveryService _service;
 
-    public ProductDeliveryController(IProductDeliveryService service)
+    public DeliveryController(IDeliveryService service)
     {
         _service = service;
     }
 
     [HttpGet("get-with-pagination")]
-    public async Task<ActionResult<PaginationResult<ProductDeliveryListResponse>>> GetWithPagination([FromQuery] PaginationQuery query)
+    public async Task<ActionResult<PaginationResult<DeliveryListResponse>>> GetWithPagination([FromQuery] PaginationQuery query)
     {
         var result = await _service.GetWithPaginationAsync(query);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDeliveryResponse>> GetById(int id)
+    public async Task<ActionResult<DeliveryResponse>> GetById(Guid id)
     {
         var result = await _service.GetByIdAsync(id);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProductDeliveryResponse>> Create([FromBody] ProductDeliveryRequest request)
+    public async Task<ActionResult<DeliveryResponse>> Create([FromBody] DeliveryRequest request)
     {
         var result = await _service.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ProductDeliveryResponse>> Update(int id, [FromBody] ProductDeliveryRequest request)
+    public async Task<ActionResult<DeliveryResponse>> Update(Guid id, [FromBody] DeliveryRequest request)
     {
         var result = await _service.UpdateAsync(id, request);
         return Ok(result);
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<bool>> Delete(int id)
+    public async Task<ActionResult<bool>> Delete(Guid id)
     {
         var result = await _service.DeleteAsync(id);
         return Ok(result);
     }
 
     [HttpPost("DeleteBatch")]
-    public async Task<ActionResult<bool>> BatchDelete([FromBody] int[] ids)
+    public async Task<ActionResult<bool>> BatchDelete([FromBody] Guid[] ids)
     {
         var result = await _service.BatchDeleteAsync(ids);
         return Ok(result);

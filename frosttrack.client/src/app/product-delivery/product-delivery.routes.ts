@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
-import { ProductDeliveryComponent } from './components/product-delivery/product-delivery.component';
-import { ProductDeliveryListComponent } from './components/product-delivery-list/product-delivery-list.component';
-import { ProductDeliveryRecordComponent } from './components/product-delivery-record/product-delivery-record.component';
+import { DeliveryComponent } from './components/product-delivery/product-delivery.component';
+import { DeliveryListComponent } from './components/product-delivery-list/product-delivery-list.component';
+import { DeliveryRecordComponent } from './components/product-delivery-record/product-delivery-record.component';
 
 export const PRODUCT_DELIVERY_ROUTE: Route[] = [
   {
@@ -11,22 +11,22 @@ export const PRODUCT_DELIVERY_ROUTE: Route[] = [
   },
   {
     path: 'list',
-    component: ProductDeliveryListComponent,
+    component: DeliveryListComponent,
     data: { title: 'Product Delivery List' },
   },
   {
     path: 'add',
-    component: ProductDeliveryComponent,
+    component: DeliveryComponent,
     data: { title: 'Add Product Delivery' },
   },
   {
     path: 'edit/:id',
-    component: ProductDeliveryComponent,
+    component: DeliveryComponent,
     data: { title: 'Edit Product Delivery' },
   },
   {
     path: 'record/:id',
-    component: ProductDeliveryRecordComponent,
+    component: DeliveryRecordComponent,
     data: { title: 'Product Delivery Record' },
   },
 ];

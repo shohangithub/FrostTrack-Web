@@ -9,6 +9,6 @@ public class ProductCategory : AuditableEntity<int>
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";
 
-    
+
     public ICollection<Product> Products { get; set; } = [];
 }

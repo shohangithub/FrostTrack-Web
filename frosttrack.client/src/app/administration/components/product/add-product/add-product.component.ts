@@ -34,7 +34,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
   templateUrl: './add-product.component.html',
   standalone: true,
   imports: [
-    RouterLink,
     NgxDatatableModule,
     FormsModule,
     ReactiveFormsModule,

@@ -46,6 +46,11 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'booking',
+        loadChildren: () =>
+          import('./booking/booking.routes').then((m) => m.BOOKING_ROUTE),
+      },
+      {
         path: 'product-delivery',
         loadChildren: () =>
           import('./product-delivery/product-delivery.routes').then(

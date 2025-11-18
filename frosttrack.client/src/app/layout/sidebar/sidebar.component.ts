@@ -1,4 +1,9 @@
-import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  Router,
+  NavigationEnd,
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
 import { DOCUMENT, NgClass } from '@angular/common';
 import {
   Component,
@@ -56,7 +61,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
   }
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   windowResizecall() {
     if (window.innerWidth < 1025) {
       this.renderer.removeClass(this.document.body, 'side-closed');

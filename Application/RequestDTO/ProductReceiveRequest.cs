@@ -1,7 +1,7 @@
 namespace Application.RequestDTO;
 
 public record ProductReceiveRequest(
-        long Id,
+        Guid Id,
         string BookingNumber,
         DateTime BookingDate,
         int CustomerId,
@@ -11,8 +11,8 @@ public record ProductReceiveRequest(
    );
 
 public record ProductReceiveDetailRequest(
-       long Id,
-       long BookingDetailId,
+       Guid Id,
+       Guid BookingDetailId,
        int ProductId,
        int BookingUnitId,
        float BookingQuantity,

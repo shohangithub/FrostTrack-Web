@@ -33,8 +33,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<BookingDetail> BookingDetails { get; set; }
-    public DbSet<ProductDelivery> ProductDeliveries { get; set; }
-    public DbSet<ProductDeliveryDetail> ProductDeliveryDetails { get; set; }
+    public DbSet<Delivery> Deliveries { get; set; }
+    public DbSet<DeliveryDetail> DeliveryDetails { get; set; }
     public DbSet<SupplierPayment> SupplierPayments { get; set; }
     public DbSet<SupplierPaymentDetail> SupplierPaymentDetails { get; set; }
     public DbSet<Sales> Sales { get; set; }

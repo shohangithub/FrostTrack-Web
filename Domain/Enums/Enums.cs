@@ -19,6 +19,16 @@ public static class RoleNames
 }
 
 
+public static class BillTypes
+{
+    public const string Hourly = "HOURLY";
+    public const string Daily = "DAILY";
+    public const string Weekly = "WEEKLY";
+    public const string Monthly = "MONTHLY";
+    public const string Yearly = "YEARLY";
+}
+
+
 
 
 public enum ECustomerType

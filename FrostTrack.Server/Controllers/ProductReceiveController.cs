@@ -20,7 +20,7 @@ public class ProductReceiveController : ControllerBase
 
     [HttpGet]
     [Route("Lookup")]
-    public async Task<IEnumerable<Lookup<long>>> GetLookup(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Lookup<Guid>>> GetLookup(CancellationToken cancellationToken)
     {
         Expression<Func<Booking, bool>> predicate = x => true;
         return await _productReceiveService.GetLookup(predicate, cancellationToken);
@@ -34,7 +34,7 @@ public class ProductReceiveController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductReceiveResponse>> GetProductReceive(long id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProductReceiveResponse>> GetProductReceive(Guid id, CancellationToken cancellationToken)
     {
         var productReceive = await _productReceiveService.GetByIdAsync(id, cancellationToken);
         if (productReceive == null)
@@ -46,7 +46,7 @@ public class ProductReceiveController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ProductReceiveResponse>> PutProductReceive(long id, ProductReceiveRequest productReceive)
+    public async Task<ActionResult<ProductReceiveResponse>> PutProductReceive(Guid id, ProductReceiveRequest productReceive)
     {
         var response = await _productReceiveService.UpdateAsync(id, productReceive);
         return response;
@@ -59,19 +59,19 @@ public class ProductReceiveController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async ValueTask<bool> DeleteProductReceive(long id, CancellationToken cancellationToken)
+    public async ValueTask<bool> DeleteProductReceive(Guid id, CancellationToken cancellationToken)
     {
         return await _productReceiveService.DeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
-    public async Task<ActionResult<bool>> DeleteBatch([FromBody] List<long> ids, CancellationToken cancellationToken)
+    public async Task<ActionResult<bool>> DeleteBatch([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
         return await _productReceiveService.DeleteBatchAsync(ids, cancellationToken);
     }
 
     [HttpGet("IsProductReceiveExists")]
-    public async ValueTask<bool> IsProductReceiveExists([FromQuery] long id, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsProductReceiveExists([FromQuery] Guid id, CancellationToken cancellationToken)
     {
         var response = await _productReceiveService.IsExistsAsync(id, cancellationToken);
         return response;

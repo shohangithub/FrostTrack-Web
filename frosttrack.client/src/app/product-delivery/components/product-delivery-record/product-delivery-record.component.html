@@ -6,7 +6,7 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    } @if (!isLoading && productDelivery) {
+    } @if (!isLoading && delivery) {
     <div class="card">
       <div class="card-header">
         <h4>Product Delivery Details</h4>
@@ -24,23 +24,25 @@
           <div class="col-md-6">
             <p>
               <strong>Delivery Number:</strong>
-              {{ productDelivery.deliveryNumber }}
+              {{ delivery.deliveryNumber }}
             </p>
             <p>
               <strong>Date:</strong>
-              {{ productDelivery.deliveryDate | date : "dd/MM/yyyy" }}
+              {{ delivery.deliveryDate | date : "dd/MM/yyyy" }}
             </p>
             <p>
               <strong>Customer:</strong>
-              {{ productDelivery.customer.customerName }}
+              {{ delivery.booking.customer.customerName }}
+            </p>
+            <p>
+              <strong>Booking Number:</strong>
+              {{ delivery.booking.bookingNumber }}
             </p>
           </div>
           <div class="col-md-6 text-end">
-            <p>
-              <strong>Branch:</strong> Branch #{{ productDelivery.branchId }}
-            </p>
-            @if (productDelivery.notes) {
-            <p><strong>Notes:</strong> {{ productDelivery.notes }}</p>
+            <p><strong>Branch:</strong> Branch #{{ delivery.branchId }}</p>
+            @if (delivery.notes) {
+            <p><strong>Notes:</strong> {{ delivery.notes }}</p>
             }
           </div>
         </div>
@@ -53,18 +55,18 @@
                 <th>Product</th>
                 <th>Unit</th>
                 <th>Quantity</th>
-                <th>Rate</th>
+                <th>Charge Amount</th>
               </tr>
             </thead>
             <tbody>
-              @for (detail of productDelivery.productDeliveryDetails; track
-              detail.id; let i = $index) {
+              @for (detail of delivery.deliveryDetails; track detail.id; let i =
+              $index) {
               <tr>
                 <td>{{ i + 1 }}</td>
-                <td>{{ detail.product.productName }}</td>
-                <td>{{ detail.deliveryUnit.unitName || "N/A" }}</td>
+                <td>{{ detail.productName }}</td>
+                <td>{{ detail.deliveryUnitName || "N/A" }}</td>
                 <td>{{ detail.deliveryQuantity }}</td>
-                <td>{{ detail.deliveryRate | number : "1.2-2" }}</td>
+                <td>{{ detail.chargeAmount | number : "1.2-2" }}</td>
               </tr>
               }
             </tbody>

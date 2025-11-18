@@ -1,0 +1,393 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="register"
+        (ngSubmit)="purchase(register)"
+      >
+        <div class="row mt-2">
+          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+            <div class="card mb-3">
+              <span class="card-label">Booking Information</span>
+              <div class="card-body-narrow">
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="bookingNumber" class="col-sm-4 col-form-label"
+                        >Booking Number:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="bookingNumber"
+                          formControlName="bookingNumber"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="form-group row">
+                    <label for="branch" class="col-sm-4 col-form-label"
+                      >Receive for:</label
+                    >
+                    <div class="col-sm-8">
+                      <select
+                        class="form-select form-control-sm"
+                        formControlName="branchId"
+                        required
+                        [disabled]="true"
+                      >
+                        <option value="" selected disabled>
+                          Please select
+                        </option>
+                        @for (option of branchs; track option) {
+                        <option [value]="option.value">
+                          {{ option.text }}
+                        </option>
+                        }
+                      </select>
+                      @if (!register.get('branchId')?.valid &&
+                      register.get('branchId')?.touched) {
+                      <small class="form-text text-danger">
+                        Branch is required
+                      </small>
+                      }
+                    </div>
+                  </div>
+                </div> -->
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="bookingDate" class="col-sm-4 col-form-label"
+                        >Date:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="bookingDate"
+                          formControlName="bookingDate"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                <div class="card mb-2">
+                  <span class="card-label">Customer Information</span>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group row">
+                          <label for="customer" class="col-sm-4 col-form-label"
+                            >Customer:</label
+                          >
+                          <div class="col-sm-8">
+                            <div class="input-group input-group-select">
+                              <ng-select
+                                [items]="customers"
+                                bindLabel="customerName"
+                                formControlName="customer"
+                                [loading]="customerLoading"
+                              >
+                              </ng-select>
+                              <div class="input-group-append">
+                                <button
+                                  class="btn btn-primary fw-bold font-20"
+                                  type="button"
+                                  (click)="addCustomer()"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          @if (!register.get('customer')?.valid &&
+                          register.get('customer')?.touched) {
+                          <small class="form-text text-danger">
+                            Customer is required
+                          </small>
+                          }
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group row">
+                          <label
+                            for="customerMobile"
+                            class="col-sm-4 col-form-label"
+                            >Mobile:</label
+                          >
+                          <div class="col-sm-8">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="customerMobile"
+                              [value]="register.get('customer')?.value?.['customerMobile']??''"
+                              readonly
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3">
+                        <div class="form-group row">
+                          <label
+                            for="customerAddress"
+                            class="col-sm-4 col-form-label"
+                            >Address:</label
+                          >
+                          <div class="col-sm-8">
+                            <textarea
+                              type="text"
+                              class="form-control"
+                              id="customerAddress"
+                              style="height: 90px !important"
+                              [value]="register.get('customer')?.value?.['address']??''"
+                              readonly
+                            ></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-7 col-md-7 col-sm-7 col-xs-12">
+                <form
+                  class="product-form"
+                  [formGroup]="productForm"
+                  (ngSubmit)="addToCart()"
+                >
+                  <div class="card mb-2">
+                    <span class="card-label">Product Information</span>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label for="product" class="col-sm-3 col-form-label"
+                              >Product:</label
+                            >
+                            <div class="col-sm-9">
+                              <div class="input-group input-group-select">
+                                <ng-select
+                                  [items]="products"
+                                  bindLabel="productName"
+                                  formControlName="product"
+                                  [loading]="productLoading"
+                                  (change)="setProductDetails()"
+                                >
+                                </ng-select>
+                                <div class="input-group-append">
+                                  <button
+                                    class="btn btn-primary fw-bold font-20"
+                                    type="button"
+                                    (click)="addProduct()"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            @if (!productForm.get('product')?.valid &&
+                            productForm.get('product')?.touched) {
+                            <small class="form-text text-danger text-end">
+                              Product is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="receiveUnit"
+                              class="col-sm-3 col-form-label"
+                              >Unit:</label
+                            >
+                            <div class="col-sm-9">
+                              <div class="input-group input-group-select">
+                                <ng-select
+                                  [items]="productUnits"
+                                  bindLabel="text"
+                                  formControlName="receiveUnit"
+                                  [loading]="productUnitLoading"
+                                >
+                                </ng-select>
+                                <div class="input-group-append">
+                                  <button
+                                    class="btn btn-primary fw-bold font-20"
+                                    type="button"
+                                    (click)="addUnit()"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            @if (!productForm.get('receiveUnit')?.valid &&
+                            productForm.get('receiveUnit')?.touched) {
+                            <small class="form-text text-danger">
+                              Unit is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="bookingRate"
+                              class="col-sm-3 col-form-label"
+                              >Rate:</label
+                            >
+                            <div class="col-sm-4">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="bookingRate"
+                                formControlName="bookingRate"
+                              />
+                            </div>
+                            <label
+                              for="bookingQuantity"
+                              class="col-sm-2 col-form-label"
+                              >Qty</label
+                            >
+                            <div class="col-sm-3">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="bookingQuantity"
+                                formControlName="bookingQuantity"
+                              />
+                            </div>
+                            @if ((!productForm.get('bookingRate')?.valid &&
+                            productForm.get('bookingRate')?.touched)
+                            ||(!productForm.get('bookingQuantity')?.valid &&
+                            productForm.get('bookingQuantity')?.touched) ) {
+                            <small class="form-text text-danger text-end">
+                              Rate & quantity is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div
+                          class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
+                        >
+                          <button
+                            type="button"
+                            class="btn btn-warning px-3 py-0 mx-1"
+                            [disabled]="!productForm.dirty"
+                            (click)="productForm.reset()"
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="submit"
+                            class="btn btn-primary px-2 py-0"
+                            [disabled]="!productForm.valid"
+                          >
+                            Add to cart
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="card mt-0">
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th scope="col" class="text-center">SL</th>
+                          <th scope="col" class="text-center">Product</th>
+                          <th scope="col" class="text-center">Rate</th>
+                          <th scope="col" class="text-center">Unit</th>
+                          <th scope="col" class="text-center">Quantity</th>
+                          <th scope="col" class="text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of register.get('BookingDetails')?.value;
+                        track row; let idx = $index) {
+                        <tr>
+                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
+                          <td class="text-center">{{ row.productName }}</td>
+                          <td class="text-center">{{ row.bookingRate }}</td>
+                          <td class="text-center">{{ row.bookingUnitName }}</td>
+                          <td class="text-center">
+                            {{ row.bookingQuantity }}
+                          </td>
+                          <td class="text-center">
+                            <a
+                              data-toggle="tooltip"
+                              title=""
+                              data-original-title="Delete"
+                              (click)="removeFromCart(idx)"
+                            >
+                              <i class="far fa-trash-alt m-1"></i>
+                            </a>
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+            <div class="card">
+              <span class="card-label">Additional Information</span>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="form-group">
+                      <label for="notes" class="col-form-label">Notes:</label>
+                      <textarea
+                        class="form-control form-control-sm"
+                        id="notes"
+                        formControlName="notes"
+                        rows="4"
+                      ></textarea>
+                    </div>
+                  </div>
+                  <div
+                    class="col-lg-12 col-md-12 col-sm-12 col-xs-12 mt-3 text-end"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-primary mx-2"
+                      [disabled]="
+                        register.invalid ||
+                        register.get('BookingDetails')?.value?.length === 0 ||
+                        isSubmitted
+                      "
+                    >
+                      {{ isSubmitted ? "Processing..." : "Complete Booking" }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-light"
+                      (click)="initFormData()"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
