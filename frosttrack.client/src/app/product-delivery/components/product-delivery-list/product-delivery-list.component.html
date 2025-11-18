@@ -77,9 +77,9 @@
                         <tr>
                           <th scope="col" class="text-center">SL</th>
                           <th scope="col" class="text-center">Product</th>
+                          <th scope="col" class="text-center">Unit</th>
                           <th scope="col" class="text-center">Rate</th>
                           <th scope="col" class="text-center">Quantity</th>
-                          <th scope="col" class="text-center">Total</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -88,11 +88,13 @@
                         <tr>
                           <th class="text-center" scope="row">{{ idx + 1 }}</th>
                           <td class="text-center">{{ item.productName }}</td>
-                          <td class="text-center">{{ item.bookingRate }}</td>
+                          <td class="text-center">
+                            {{ item.deliveryUnit?.unitName }}
+                          </td>
+                          <td class="text-center">{{ item.deliveryRate }}</td>
                           <td class="text-center">
                             {{ item.deliveryQuantity }}
                           </td>
-                          <td class="text-center">{{ item.deliveryAmount }}</td>
                         </tr>
                         }
                       </tbody>
@@ -154,57 +156,21 @@
               </ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Sub Total"
-                prop="subtotal"
-                [width]="120"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.subtotal }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Vat" prop="vatAmount" [width]="100">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.vatAmount }}
-                </ng-template>
-              </ngx-datatable-column>
-
-              <ngx-datatable-column
-                name="Discount"
-                prop="discountAmount"
-                [width]="100"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.discountAmount }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Other Cost"
-                prop="otherCost"
-                [width]="120"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.otherCost }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Total Amount"
-                prop="totalAmount"
+                name="Branch"
+                prop="branch.branchName"
                 [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.totalAmount }}
+                  {{ row.branch?.branchName }}
                 </ng-template>
               </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Due"
-                [sortable]="false"
-                prop="paidAmount"
-                [width]="100"
-              >
+
+              <ngx-datatable-column name="Notes" prop="notes" [width]="200">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.totalAmount - row.paidAmount }}
+                  {{ row.notes }}
                 </ng-template>
               </ngx-datatable-column>
+
               <ngx-datatable-column
                 [width]="150"
                 name="Actions"

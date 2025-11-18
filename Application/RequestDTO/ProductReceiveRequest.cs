@@ -2,28 +2,21 @@ namespace Application.RequestDTO;
 
 public record ProductReceiveRequest(
         long Id,
-        string ReceiveNumber,
-        DateTime ReceiveDate,
+        string BookingNumber,
+        DateTime BookingDate,
         int CustomerId,
-        decimal Subtotal,
-        float VatPercent,
-        decimal VatAmount,
-        float DiscountPercent,
-        decimal DiscountAmount,
-        decimal OtherCost,
-        decimal TotalAmount,
-        decimal PaidAmount,
         int BranchId,
         string? Notes,
-        ICollection<ProductReceiveDetailRequest> ProductReceiveDetails
+        ICollection<ProductReceiveDetailRequest> BookingDetails
    );
 
 public record ProductReceiveDetailRequest(
        long Id,
-       int ProductReceiveId,
+       long BookingDetailId,
        int ProductId,
-       int ReceiveUnitId,
+       int BookingUnitId,
+       float BookingQuantity,
        decimal BookingRate,
-       float ReceiveQuantity,
-       decimal ReceiveAmount
+       decimal BaseQuantity,
+       decimal BaseRate
   );

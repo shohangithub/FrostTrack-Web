@@ -3,7 +3,7 @@ namespace Application.Services;
 public class ProductDeliveryService : IProductDeliveryService
 {
     private readonly IRepository<ProductDelivery, long> _repository;
-    private readonly IRepository<ProductReceive, long> _productReceiveRepository;
+    private readonly IRepository<Booking, long> _bookingRepository;
     private readonly IRepository<ProductDeliveryDetail, long> _detailRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
@@ -12,14 +12,14 @@ public class ProductDeliveryService : IProductDeliveryService
 
     public ProductDeliveryService(
         IRepository<ProductDelivery, long> repository,
-        IRepository<ProductReceive, long> productReceiveRepository,
+        IRepository<Booking, long> bookingRepository,
         IRepository<ProductDeliveryDetail, long> detailRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService)
     {
         _repository = repository;
-        _productReceiveRepository = productReceiveRepository;
+        _bookingRepository = bookingRepository;
         _detailRepository = detailRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
@@ -38,10 +38,7 @@ public class ProductDeliveryService : IProductDeliveryService
 
         if (entity.ProductDeliveryDetails != null && entity.ProductDeliveryDetails.Any())
         {
-            foreach (var detail in entity.ProductDeliveryDetails)
-            {
-                detail.CreatedTime = DateTime.Now;
-            }
+            _defaultValueInjector.InjectCreatingAudit<ProductDeliveryDetail, long>(entity.ProductDeliveryDetails.ToList());
         }
 
         await _repository.AddAsync(entity, CancellationToken.None);
@@ -75,10 +72,11 @@ public class ProductDeliveryService : IProductDeliveryService
                 ProductId = d.ProductId,
                 DeliveryUnitId = d.DeliveryUnitId,
                 DeliveryQuantity = d.DeliveryQuantity,
-                BookingRate = d.BookingRate,
-                DeliveryAmount = d.DeliveryAmount,
-                CreatedTime = DateTime.Now
+                DeliveryRate = d.DeliveryRate,
+                BaseQuantity = d.BaseQuantity,
+                BaseRate = d.BaseRate
             }).ToList();
+            _defaultValueInjector.InjectCreatingAudit<ProductDeliveryDetail, long>(existing.ProductDeliveryDetails.ToList());
         }
 
         await _repository.UpdateAsync(existing, CancellationToken.None);
@@ -159,13 +157,13 @@ public class ProductDeliveryService : IProductDeliveryService
 
     public async Task<List<CustomerStockResponse>> GetCustomerStockAsync(int customerId)
     {
-        // Get all receives for this customer with product details
-        var receives = await _productReceiveRepository.Query()
-            .Where(pr => pr.CustomerId == customerId)
-            .Include(pr => pr.ProductReceiveDetails)
-                .ThenInclude(prd => prd.Product)
-            .Include(pr => pr.ProductReceiveDetails)
-                .ThenInclude(prd => prd.ReceiveUnit)
+        // Get all bookings for this customer with product details
+        var bookings = await _bookingRepository.Query()
+            .Where(b => b.CustomerId == customerId)
+            .Include(b => b.BookingDetails)
+                .ThenInclude(bd => bd.Product)
+            .Include(b => b.BookingDetails)
+                .ThenInclude(bd => bd.BookingUnit)
             .ToListAsync();
 
         // Get all deliveries for this customer
@@ -177,9 +175,9 @@ public class ProductDeliveryService : IProductDeliveryService
         // Calculate stock per product
         var stockDictionary = new Dictionary<int, CustomerStockResponse>();
 
-        foreach (var receive in receives)
+        foreach (var booking in bookings)
         {
-            foreach (var detail in receive.ProductReceiveDetails)
+            foreach (var detail in booking.BookingDetails)
             {
                 var key = detail.ProductId;
                 if (!stockDictionary.ContainsKey(key))
@@ -189,16 +187,16 @@ public class ProductDeliveryService : IProductDeliveryService
                         CustomerId = customerId,
                         ProductId = detail.ProductId,
                         ProductName = detail.Product.ProductName,
-                        UnitId = detail.ReceiveUnitId,
-                        UnitName = detail.ReceiveUnit.UnitName,
+                        UnitId = detail.BookingUnitId,
+                        UnitName = detail.BookingUnit.UnitName,
                         AvailableStock = 0,
                         BookingRate = detail.BookingRate
                     };
                 }
                 stockDictionary[key] = stockDictionary[key] with
                 {
-                    AvailableStock = stockDictionary[key].AvailableStock + (decimal)detail.ReceiveQuantity,
-                    BookingRate = Math.Max(stockDictionary[key].BookingRate, (decimal)detail.BookingRate)
+                    AvailableStock = stockDictionary[key].AvailableStock + (decimal)detail.BookingQuantity,
+                    BookingRate = Math.Max(stockDictionary[key].BookingRate, detail.BookingRate)
                 };
             }
         }
@@ -212,7 +210,7 @@ public class ProductDeliveryService : IProductDeliveryService
                 {
                     stockDictionary[detail.ProductId] = stockDictionary[detail.ProductId] with
                     {
-                        AvailableStock = stockDictionary[detail.ProductId].AvailableStock - detail.DeliveryQuantity
+                        AvailableStock = stockDictionary[detail.ProductId].AvailableStock - (decimal)detail.DeliveryQuantity
                     };
                 }
             }
@@ -245,10 +243,10 @@ public class ProductDeliveryService : IProductDeliveryService
                     .FirstOrDefaultAsync();
 
                 if (currentDetail != null)
-                    availableStock += currentDetail.DeliveryQuantity;
+                    availableStock += (decimal)currentDetail.DeliveryQuantity;
             }
 
-            if (detail.DeliveryQuantity > availableStock)
+            if ((decimal)detail.DeliveryQuantity > availableStock)
                 throw new Exception($"Insufficient stock for product. Available: {availableStock}");
         }
     }
@@ -273,7 +271,6 @@ public class ProductDeliveryService : IProductDeliveryService
         {
             "deliverynumber" => x => x.DeliveryNumber,
             "deliverydate" => x => x.DeliveryDate,
-            "totalamount" => x => x.TotalAmount,
             _ => x => x.Id
         };
 

@@ -15,80 +15,80 @@ public class ProductReceiveRepository : IProductReceiveRepository
         _defaultValueInjector = defaultValueInjector;
     }
 
-    public async Task<ProductReceive?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Booking?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
-        return await _context.ProductReceives
-            .Include(p => p.ProductReceiveDetails)
+        return await _context.Bookings
+            .Include(p => p.BookingDetails)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
-    public IQueryable<ProductReceive> Query()
+    public IQueryable<Booking> Query()
     {
-        return _context.ProductReceives.Include(x => x.ProductReceiveDetails).AsNoTracking();
+        return _context.Bookings.Include(x => x.BookingDetails).AsNoTracking();
     }
 
-    public async Task<ProductReceiveResponse> ManageUpdate(ProductReceiveRequest request, ProductReceive existingData, CancellationToken cancellationToken = default)
+    public async Task<ProductReceiveResponse> ManageUpdate(ProductReceiveRequest request, Booking existingData, CancellationToken cancellationToken = default)
     {
-        var quantityDictionary = new List<ProductReceiveDictionary>();
-        List<long> receiveDetailsIds = new();
+        var quantityDictionary = new List<BookingDictionary>();
+        List<long> bookingDetailsIds = new();
 
-        foreach (var item in request.ProductReceiveDetails)
+        foreach (var item in request.BookingDetails)
         {
             if (item.Id == 0)
             {
-                var newDetail = item.Adapt<ProductReceiveDetail>();
-                newDetail.ProductReceiveId = request.Id;
-                _defaultValueInjector.InjectCreatingAudit<ProductReceiveDetail, long>(newDetail);
+                var newDetail = item.Adapt<BookingDetail>();
+                newDetail.BookingDetailId = request.Id;
+                _defaultValueInjector.InjectCreatingAudit<BookingDetail, long>(newDetail);
 
-                quantityDictionary.Add(new ProductReceiveDictionary(item.ProductId, item.ReceiveQuantity, item.BookingRate, item.ReceiveUnitId));
+                quantityDictionary.Add(new BookingDictionary(item.ProductId, item.BookingQuantity, item.BookingRate, item.BookingUnitId));
 
-                existingData.ProductReceiveDetails.Add(newDetail);
+                existingData.BookingDetails.Add(newDetail);
                 _context.Entry(newDetail).State = EntityState.Added;
             }
             else
             {
-                var eDetails = existingData.ProductReceiveDetails.FirstOrDefault(x => x.Id == item.Id);
-                if (eDetails == null) throw new Exception("Receive item mismatched!");
+                var eDetails = existingData.BookingDetails.FirstOrDefault(x => x.Id == item.Id);
+                if (eDetails == null) throw new Exception("Booking item mismatched!");
 
-                if (item.ReceiveQuantity != eDetails.ReceiveQuantity
-                    || item.ReceiveAmount != eDetails.ReceiveAmount
-                    || item.ReceiveUnitId != eDetails.ReceiveUnitId)
+                if (item.BookingQuantity != eDetails.BookingQuantity
+                    || item.BookingUnitId != eDetails.BookingUnitId)
                 {
-                    quantityDictionary.Add(new ProductReceiveDictionary(item.ProductId, item.ReceiveQuantity - eDetails.ReceiveQuantity, item.BookingRate, item.ReceiveUnitId));
+                    quantityDictionary.Add(new BookingDictionary(item.ProductId, item.BookingQuantity - eDetails.BookingQuantity, item.BookingRate, item.BookingUnitId));
 
-                    eDetails.ReceiveAmount = item.ReceiveAmount;
-                    eDetails.ReceiveQuantity = item.ReceiveQuantity;
+                    eDetails.BookingQuantity = item.BookingQuantity;
                     eDetails.BookingRate = item.BookingRate;
-                    eDetails.ReceiveUnitId = item.ReceiveUnitId;
+                    eDetails.BookingUnitId = item.BookingUnitId;
+                    eDetails.BaseQuantity = item.BaseQuantity;
+                    eDetails.BaseRate = item.BaseRate;
 
-                    _defaultValueInjector.InjectUpdatingAudit<ProductReceiveDetail, long>(eDetails);
+                    _defaultValueInjector.InjectUpdatingAudit<BookingDetail, long>(eDetails);
                     _context.Entry(eDetails).State = EntityState.Modified;
                 }
                 else
                 {
-                    quantityDictionary.Add(new ProductReceiveDictionary(item.ProductId, item.ReceiveQuantity - eDetails.ReceiveQuantity, item.BookingRate, item.ReceiveUnitId));
+                    quantityDictionary.Add(new BookingDictionary(item.ProductId, item.BookingQuantity - eDetails.BookingQuantity, item.BookingRate, item.BookingUnitId));
                     _context.Entry(eDetails).State = EntityState.Unchanged;
                 }
 
-                receiveDetailsIds.Add(item.Id);
+                bookingDetailsIds.Add(item.Id);
             }
         }
 
-        var deletedItems = existingData.ProductReceiveDetails.Where(x => x.Id != 0 && !receiveDetailsIds.Contains(x.Id));
+        var deletedItems = existingData.BookingDetails.Where(x => x.Id != 0 && !bookingDetailsIds.Contains(x.Id));
         foreach (var item in deletedItems)
         {
-            quantityDictionary.Add(new ProductReceiveDictionary(item.ProductId, -item.ReceiveQuantity, item.BookingRate, item.ReceiveUnitId));
+            quantityDictionary.Add(new BookingDictionary(item.ProductId, -item.BookingQuantity, item.BookingRate, item.BookingUnitId));
             _context.Entry(item).State = EntityState.Deleted;
         }
 
         #region FOR STOCK OPERATION
 
         var unitConversions = await _context.UnitConversions
-            .Where(x => existingData.ProductReceiveDetails.Select(x => x.ReceiveUnitId).Contains(x.Id))
+            .Where(x => existingData.BookingDetails.Select(x => x.BookingUnitId).Contains(x.Id))
             .ToListAsync(cancellationToken);
 
         var existingStocks = await _context.Stocks
-            .Where(x => existingData.ProductReceiveDetails.Select(x => x.ProductId).Contains(x.ProductId))
+            .Where(x => existingData.BookingDetails.Select(x => x.ProductId).Contains(x.ProductId))
             .ToListAsync(cancellationToken);
 
         foreach (var stock in existingStocks)
@@ -98,7 +98,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
 
             if (requestStock.Quantity != 0)
             {
-                var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.ReceiveUnitId);
+                var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.BookingUnitId);
                 if (conversionUnit == null) throw new Exception("Internal Server Error");
 
                 var baseQuantity = (requestStock.Quantity * conversionUnit.ConversionValue);
@@ -109,7 +109,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
             }
         }
 
-        var newStocks = request.ProductReceiveDetails
+        var newStocks = request.BookingDetails
             .Where(x => !existingStocks.Select(x => x.ProductId).Contains(x.ProductId))
             .ToList();
 
@@ -118,7 +118,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
             var requestStock = quantityDictionary.FirstOrDefault(x => x.ProductId == stock.ProductId);
             if (requestStock == null) throw new Exception("Internal Server Error");
 
-            var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.ReceiveUnitId);
+            var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.BookingUnitId);
             if (conversionUnit == null) throw new Exception("Internal Server Error");
 
             var baseQuantity = (requestStock.Quantity * conversionUnit.ConversionValue);
@@ -147,25 +147,25 @@ public class ProductReceiveRepository : IProductReceiveRepository
 
     public async Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default)
     {
-        var existingData = await _context.ProductReceives
-            .Include(x => x.ProductReceiveDetails)
+        var existingData = await _context.Bookings
+            .Include(x => x.BookingDetails)
             .AsNoTracking()
             .Where(x => x.Id == id)
             .FirstOrDefaultAsync();
 
-        if (existingData == null) throw new ArgumentNullException("Receive record not found!");
+        if (existingData == null) throw new ArgumentNullException("Booking record not found!");
 
-        var quantityDictionary = new List<ProductReceiveDictionary>();
-        foreach (var item in existingData.ProductReceiveDetails)
+        var quantityDictionary = new List<BookingDictionary>();
+        foreach (var item in existingData.BookingDetails)
         {
-            quantityDictionary.Add(new ProductReceiveDictionary(item.ProductId, -item.ReceiveQuantity, item.BookingRate, item.ReceiveUnitId));
+            quantityDictionary.Add(new BookingDictionary(item.ProductId, -item.BookingQuantity, item.BookingRate, item.BookingUnitId));
             _context.Entry(item).State = EntityState.Deleted;
         }
 
         #region FOR STOCK OPERATION
 
         var unitConversions = await _context.UnitConversions
-            .Where(x => quantityDictionary.Select(x => x.ReceiveUnitId).Contains(x.Id))
+            .Where(x => quantityDictionary.Select(x => x.BookingUnitId).Contains(x.Id))
             .ToListAsync();
 
         var existingStocks = await _context.Stocks
@@ -179,7 +179,7 @@ public class ProductReceiveRepository : IProductReceiveRepository
 
             if (requestStock.Quantity != 0)
             {
-                var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.ReceiveUnitId);
+                var conversionUnit = unitConversions.FirstOrDefault(x => x.Id == requestStock.BookingUnitId);
                 if (conversionUnit == null) throw new Exception("Internal Server Error");
 
                 var baseQuantity = (requestStock.Quantity * conversionUnit.ConversionValue);
@@ -200,4 +200,4 @@ public class ProductReceiveRepository : IProductReceiveRepository
     }
 }
 
-public record ProductReceiveDictionary(int ProductId, float Quantity, decimal BookingRate, int ReceiveUnitId);
+public record BookingDictionary(int ProductId, float Quantity, decimal BookingRate, int BookingUnitId);

@@ -7,13 +7,6 @@ export interface IProductDeliveryRequest {
   deliveryNumber: string;
   deliveryDate: Date;
   customerId: number;
-  subtotal: number;
-  vatAmount: number;
-  discountPercent: number;
-  discountAmount: number;
-  otherCost: number;
-  totalAmount: number;
-  paidAmount: number;
   branchId: number;
   notes?: string;
   productDeliveryDetails: IProductDeliveryDetailRequest[];
@@ -25,8 +18,9 @@ export interface IProductDeliveryDetailRequest {
   productId: number;
   deliveryUnitId: number;
   deliveryQuantity: number;
-  bookingRate: number;
-  deliveryAmount: number;
+  deliveryRate: number;
+  baseQuantity: number;
+  baseRate: number;
 }
 
 export interface IProductDeliveryResponse {
@@ -35,13 +29,6 @@ export interface IProductDeliveryResponse {
   deliveryDate: Date;
   customerId: number;
   customer: ICustomerResponse;
-  subtotal: number;
-  vatAmount: number;
-  discountPercent: number;
-  discountAmount: number;
-  otherCost: number;
-  totalAmount: number;
-  paidAmount: number;
   branchId: number;
   notes?: string;
   productDeliveryDetails: IProductDeliveryDetailResponse[];
@@ -54,9 +41,10 @@ export interface IProductDeliveryDetailResponse {
   product: IProductResponse;
   deliveryUnitId: number;
   deliveryUnit: IUnitConversionResponse;
-  bookingRate: number;
   deliveryQuantity: number;
-  deliveryAmount: number;
+  deliveryRate: number;
+  baseQuantity: number;
+  baseRate: number;
   availableStock: number;
 }
 
@@ -66,13 +54,6 @@ export interface IProductDeliveryListResponse {
   deliveryDate: Date;
   customerId: number;
   customer: ICustomerResponse;
-  subtotal: number;
-  vatAmount: number;
-  discountPercent: number;
-  discountAmount: number;
-  otherCost: number;
-  totalAmount: number;
-  paidAmount: number;
   branchId: number;
   notes?: string;
   branch: any;

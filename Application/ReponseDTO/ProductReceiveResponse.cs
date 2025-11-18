@@ -4,62 +4,49 @@ namespace Application.ReponseDTO;
 
 public record ProductReceiveResponse(
         long Id,
-        string ReceiveNumber,
-        DateTime ReceiveDate,
+        string BookingNumber,
+        DateTime BookingDate,
         int CustomerId,
         Customer Customer,
-        decimal Subtotal,
-        decimal VatAmount,
-        float DiscountPercent,
-        decimal DiscountAmount,
-        decimal OtherCost,
-        decimal TotalAmount,
-        decimal PaidAmount,
         int BranchId,
         string? Notes,
-        ICollection<ProductReceiveDetailResponse> ProductReceiveDetails
+        ICollection<ProductReceiveDetailResponse> BookingDetails
     );
 
 public record ProductReceiveDetailResponse(
        long Id,
-       long ProductReceiveId,
+       long BookingDetailId,
        int ProductId,
        ProductResponse? Product,
-       int ReceiveUnitId,
-       UnitConversionResponse? ReceiveUnit,
+       int BookingUnitId,
+       UnitConversionResponse? BookingUnit,
+       float BookingQuantity,
        decimal BookingRate,
-       float ReceiveQuantity,
-       decimal ReceiveAmount
+       decimal BaseQuantity,
+       decimal BaseRate
   );
 
 public record ProductReceiveDetailListResponse(
        long Id,
-       long ProductReceiveId,
+       long BookingDetailId,
        int ProductId,
        string ProductName,
-       int ReceiveUnitId,
+       int BookingUnitId,
        string UnitName,
+       float BookingQuantity,
        decimal BookingRate,
-       float ReceiveQuantity,
-       decimal ReceiveAmount
+       decimal BaseQuantity,
+       decimal BaseRate
   );
 
 public record ProductReceiveListResponse(
         long Id,
-        string ReceiveNumber,
-        DateTime ReceiveDate,
+        string BookingNumber,
+        DateTime BookingDate,
         int CustomerId,
         Customer Customer,
-        decimal Subtotal,
-        float VatPercent,
-        decimal VatAmount,
-        float DiscountPercent,
-        decimal DiscountAmount,
-        decimal OtherCost,
-        decimal TotalAmount,
-        decimal PaidAmount,
         int BranchId,
         Branch Branch,
         string? Notes,
-        IEnumerable<ProductReceiveDetailListResponse> ProductReceiveDetails
+        IEnumerable<ProductReceiveDetailListResponse> BookingDetails
     );

@@ -12,6 +12,6 @@ public interface IProductReceiveService
     Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default);
     Task<bool> DeleteBatchAsync(List<long> ids, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(long id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<ProductReceive, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default);
     Task<string> GenerateReceiveNumber(CancellationToken cancellationToken = default);
 }

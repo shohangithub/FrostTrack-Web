@@ -2,7 +2,7 @@ namespace Application.Services;
 
 public class ProductReceiveService : IProductReceiveService
 {
-    private readonly IRepository<ProductReceive, long> _repository;
+    private readonly IRepository<Booking, long> _repository;
     private readonly IProductReceiveRepository _productReceiveRepository;
     private readonly IStockRepository _stockRepository;
     private readonly IRepository<Company, int> _companyRepository;
@@ -12,7 +12,7 @@ public class ProductReceiveService : IProductReceiveService
     private readonly CurrentUser _currentUser;
 
     public ProductReceiveService(
-        IRepository<ProductReceive, long> repository,
+        IRepository<Booking, long> repository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService,
@@ -44,12 +44,12 @@ public class ProductReceiveService : IProductReceiveService
             await validator.ValidateAndThrowAsync(request, cancellationToken);
         }
 
-        var entity = request.Adapt<ProductReceive>();
+        var entity = request.Adapt<Booking>();
         entity.BranchId = _currentUser.BranchId;
-        _defaultValueInjector.InjectCreatingAudit<ProductReceive, long>(entity);
-        if (entity.ProductReceiveDetails != null && entity.ProductReceiveDetails.Any())
+        _defaultValueInjector.InjectCreatingAudit<Booking, long>(entity);
+        if (entity.BookingDetails != null && entity.BookingDetails.Any())
         {
-            _defaultValueInjector.InjectCreatingAudit<ProductReceiveDetail, long>(entity.ProductReceiveDetails.ToList());
+            _defaultValueInjector.InjectCreatingAudit<BookingDetail, long>(entity.BookingDetails.ToList());
         }
 
         var result = await _stockRepository.ManageAddProductReceiveStock(entity, cancellationToken);
@@ -72,18 +72,18 @@ public class ProductReceiveService : IProductReceiveService
     public async Task<ProductReceiveResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
-            .Include(x => x.ProductReceiveDetails)
+            .Include(x => x.BookingDetails)
             .ThenInclude(x => x.Product)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         var response = result is not null ? result.Adapt<ProductReceiveResponse>() : null;
         return response;
     }
 
-    public async Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<ProductReceive, bool>> predicate, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
             .Where(predicate)
-            .Select(x => new Lookup<long>(x.Id, x.ReceiveNumber))
+            .Select(x => new Lookup<long>(x.Id, x.BookingNumber))
             .ToListAsync();
         return result;
     }
@@ -97,21 +97,13 @@ public class ProductReceiveService : IProductReceiveService
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var existingData = await _productReceiveRepository.GetByIdAsync(id, cancellationToken);
-        if (existingData == null) throw new Exception("Receive record not found!");
+        if (existingData == null) throw new Exception("Booking record not found!");
 
         existingData.BranchId = _currentUser.BranchId;
-        existingData.DiscountAmount = request.DiscountAmount;
-        existingData.DiscountPercent = request.DiscountPercent;
-        existingData.TotalAmount = request.TotalAmount;
-        existingData.ReceiveDate = request.ReceiveDate;
-        existingData.OtherCost = request.OtherCost;
-        existingData.PaidAmount = request.PaidAmount;
-        existingData.Subtotal = request.Subtotal;
-        existingData.VatAmount = request.VatAmount;
-        existingData.VatPercent = request.VatPercent;
+        existingData.BookingDate = request.BookingDate;
         existingData.Notes = request.Notes;
 
-        _defaultValueInjector.InjectUpdatingAudit<ProductReceive, long>(existingData);
+        _defaultValueInjector.InjectUpdatingAudit<Booking, long>(existingData);
 
         var response = await _productReceiveRepository.ManageUpdate(request, existingData, cancellationToken);
 
@@ -123,31 +115,24 @@ public class ProductReceiveService : IProductReceiveService
         var response = await _repository.Query()
            .Select(x => new ProductReceiveListResponse(
                 x.Id,
-                x.ReceiveNumber,
-                x.ReceiveDate,
+                x.BookingNumber,
+                x.BookingDate,
                 x.CustomerId,
                 x.Customer,
-                x.Subtotal,
-                x.VatPercent,
-                x.VatAmount,
-                x.DiscountPercent,
-                x.DiscountAmount,
-                x.OtherCost,
-                x.TotalAmount,
-                x.PaidAmount,
                 x.BranchId,
                 x.Branch,
                 x.Notes,
-                x.ProductReceiveDetails.Select(d => new ProductReceiveDetailListResponse(
+                x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                     d.Id,
-                    d.ProductReceiveId,
+                    d.BookingDetailId,
                     d.ProductId,
                     d.Product.ProductName,
-                    d.ReceiveUnitId,
+                    d.BookingUnitId,
                     "",
+                    d.BookingQuantity,
                     d.BookingRate,
-                    d.ReceiveQuantity,
-                    d.ReceiveAmount))
+                    d.BaseQuantity,
+                    d.BaseRate))
                ))
            .ToListAsync(cancellationToken);
         return response;
@@ -155,42 +140,34 @@ public class ProductReceiveService : IProductReceiveService
 
     public async Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<ProductReceive, bool>>? predicate = null;
+        Expression<Func<Booking, bool>>? predicate = null;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.ReceiveNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.TotalAmount.ToString().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => obj.BookingNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower());
         }
 
-        Expression<Func<ProductReceive, ProductReceiveListResponse>>? selector = x => new ProductReceiveListResponse(
+        Expression<Func<Booking, ProductReceiveListResponse>>? selector = x => new ProductReceiveListResponse(
             x.Id,
-            x.ReceiveNumber,
-            x.ReceiveDate,
+            x.BookingNumber,
+            x.BookingDate,
             x.CustomerId,
             x.Customer,
-            x.Subtotal,
-            x.VatPercent,
-            x.VatAmount,
-            x.DiscountPercent,
-            x.DiscountAmount,
-            x.OtherCost,
-            x.TotalAmount,
-            x.PaidAmount,
             x.BranchId,
             x.Branch,
             x.Notes,
-            x.ProductReceiveDetails.Select(d => new ProductReceiveDetailListResponse(
+            x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                 d.Id,
-                d.ProductReceiveId,
+                d.BookingDetailId,
                 d.ProductId,
                 d.Product.ProductName,
-                d.ReceiveUnitId,
+                d.BookingUnitId,
                 "",
+                d.BookingQuantity,
                 d.BookingRate,
-                d.ReceiveQuantity,
-                d.ReceiveAmount))
+                d.BaseQuantity,
+                d.BaseRate))
             );
 
         var query = _productReceiveRepository.Query();
@@ -209,43 +186,43 @@ public class ProductReceiveService : IProductReceiveService
         if (dependOn == ECodeGeneration.Branch)
         {
             var code = long.Parse((await _repository.Query()
-                .Where(x => x.BranchId == _currentUser.BranchId && x.ReceiveDate.Month == currentDate.Month)
-                .OrderByDescending(x => x.ReceiveNumber)
-                .Select(x => x.ReceiveNumber)
+                .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
+                .OrderByDescending(x => x.BookingNumber)
+                .Select(x => x.BookingNumber)
                 .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
 
             var range = code / 10;
 
             if (range == 0)
-                return $"R{dateString}0000{code}";
+                return $"B{dateString}0000{code}";
             else if (range <= 9)
-                return $"R{dateString}000{code}";
+                return $"B{dateString}000{code}";
             else if (range <= 99)
-                return $"R{dateString}00{code}";
+                return $"B{dateString}00{code}";
             else if (range <= 999)
-                return $"R{dateString}0{code}";
+                return $"B{dateString}0{code}";
             else
-                return $"R{dateString}{code}";
+                return $"B{dateString}{code}";
         }
         else
         {
             var code = long.Parse((await _repository.Query()
-                .OrderByDescending(x => x.ReceiveNumber)
-                .Select(x => x.ReceiveNumber)
+                .OrderByDescending(x => x.BookingNumber)
+                .Select(x => x.BookingNumber)
                 .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
 
             var range = code / 10;
 
             if (range == 0)
-                return $"R{dateString}0000{code}";
+                return $"B{dateString}0000{code}";
             else if (range <= 9)
-                return $"R{dateString}000{code}";
+                return $"B{dateString}000{code}";
             else if (range <= 99)
-                return $"R{dateString}00{code}";
+                return $"B{dateString}00{code}";
             else if (range <= 999)
-                return $"R{dateString}0{code}";
+                return $"B{dateString}0{code}";
             else
-                return $"R{dateString}{code}";
+                return $"B{dateString}{code}";
         }
     }
 }

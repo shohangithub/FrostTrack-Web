@@ -62,7 +62,8 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Damage, int>, Repository<Damage, int>>();
         services.AddScoped<IRepository<Asset, int>, Repository<Asset, int>>();
         services.AddScoped<IRepository<Employee, int>, Repository<Employee, int>>();
-        services.AddScoped<IRepository<ProductReceive, long>, Repository<ProductReceive, long>>();
+        services.AddScoped<IRepository<Booking, long>, Repository<Booking, long>>();
+        services.AddScoped<IRepository<BookingDetail, long>, Repository<BookingDetail, long>>();
         services.AddScoped<IRepository<ProductDelivery, long>, Repository<ProductDelivery, long>>();
         services.AddScoped<IRepository<ProductDeliveryDetail, long>, Repository<ProductDeliveryDetail, long>>();
 

@@ -155,15 +155,7 @@ export class ProductDeliveryComponent implements OnInit {
       branchId: [this.selectedBranch, [Validators.required]],
       deliveryDate: [new Date().systemFormat(), [Validators.required]],
       customer: [null, [Validators.required]],
-      subtotal: [0, [Validators.required]],
-      vatAmount: [0],
-      discountPercent: [0],
-      discountAmount: [0],
-      otherCost: [0],
-      totalAmount: [0, [Validators.required]],
-      paidAmount: [0],
-      dueAmount: [0],
-      prevDueAmount: [0],
+      notes: [''],
       productDeliveryDetails: this.fb.array([]),
     });
     this.generateCode();
@@ -174,10 +166,11 @@ export class ProductDeliveryComponent implements OnInit {
       id: [0],
       productDeliveryId: [0],
       product: [null, [Validators.required]],
-      bookingRate: [null, [Validators.required]],
+      deliveryRate: [null, [Validators.required]],
       deliveryUnit: [null, [Validators.required]],
       deliveryQuantity: [null, [Validators.required]],
-      deliveryAmount: [null, [Validators.required]],
+      baseQuantity: [0],
+      baseRate: [0],
       availableStock: [{ value: 0, disabled: true }],
     });
   }
@@ -191,15 +184,7 @@ export class ProductDeliveryComponent implements OnInit {
           deliveryNumber: response.deliveryNumber,
           branchId: response.branchId,
           deliveryDate: response.deliveryDate,
-          subtotal: response.subtotal,
-          vatAmount: response.vatAmount,
-          discountPercent: response.discountPercent,
-          discountAmount: response.discountAmount,
-          otherCost: response.otherCost,
-          totalAmount: response.totalAmount,
-          paidAmount: response.paidAmount,
-          dueAmount: response.totalAmount - response.paidAmount,
-          prevDueAmount: 0,
+          notes: response.notes || '',
           productDeliveryDetails: [],
           customer:
             this.customers.find((x) => x.id === response.customerId) || null,
@@ -216,9 +201,10 @@ export class ProductDeliveryComponent implements OnInit {
               detail.deliveryUnit?.unitName || '',
               [Validators.required],
             ],
-            bookingRate: [detail.bookingRate, [Validators.required]],
+            deliveryRate: [detail.deliveryRate, [Validators.required]],
             deliveryQuantity: [detail.deliveryQuantity, [Validators.required]],
-            deliveryAmount: [detail.deliveryAmount, [Validators.required]],
+            baseQuantity: [detail.baseQuantity],
+            baseRate: [detail.baseRate],
           });
           this.productDeliveryDetails.push(item);
         }
@@ -338,14 +324,11 @@ export class ProductDeliveryComponent implements OnInit {
 
       if (existingProduct) {
         childForm
-          ?.get('bookingRate')
-          ?.setValue(existingProduct.bookingRate || 0);
+          ?.get('deliveryRate')
+          ?.setValue(existingProduct.deliveryRate || 0);
         childForm
           ?.get('deliveryQuantity')
           ?.setValue(existingProduct.deliveryQuantity);
-        childForm
-          ?.get('deliveryAmount')
-          ?.setValue(existingProduct.deliveryAmount);
         childForm
           ?.get('deliveryUnit')
           ?.setValue(
@@ -359,26 +342,22 @@ export class ProductDeliveryComponent implements OnInit {
           ?.setValue(
             this.productUnits.find((x) => x.value == product.unitId) || null
           );
-        childForm?.get('bookingRate')?.setValue(product.bookingRate || 0);
+        childForm?.get('deliveryRate')?.setValue(product.deliveryRate || 0);
         childForm?.get('availableStock')?.setValue(product.availableStock || 0);
         childForm?.get('deliveryQuantity')?.setValue(0);
       }
     }
   }
 
-  setDeliveryAmount() {
+  validateDeliveryQuantity() {
     const child = this.productForm;
     const quantity = child?.get('deliveryQuantity')?.value || 0;
-    const rate = child?.get('bookingRate')?.value || 0;
     const availableStock = child?.get('availableStock')?.value || 0;
 
     if (quantity > availableStock) {
       this.toastr.warning(`Only ${availableStock} units available in stock`);
       child?.get('deliveryQuantity')?.setValue(availableStock);
-      return;
     }
-
-    child?.get('deliveryAmount')?.setValue(quantity * rate);
   }
 
   get productDeliveryDetails() {
@@ -402,9 +381,10 @@ export class ProductDeliveryComponent implements OnInit {
         formData.deliveryUnit?.value || formData.deliveryUnit;
       existingProduct.deliveryUnitName =
         formData.deliveryUnit?.text || formData.deliveryUnit?.label || '';
-      existingProduct.bookingRate = formData.bookingRate;
+      existingProduct.deliveryRate = formData.deliveryRate;
       existingProduct.deliveryQuantity = formData.deliveryQuantity;
-      existingProduct.deliveryAmount = formData.deliveryAmount;
+      existingProduct.baseQuantity = formData.baseQuantity;
+      existingProduct.baseRate = formData.baseRate;
       this.productDeliveryDetails.setValue(cardData);
     } else {
       const item = this.fb.group({
@@ -414,48 +394,19 @@ export class ProductDeliveryComponent implements OnInit {
         productDeliveryId: [formData.productDeliveryId],
         deliveryUnitId: [formData.deliveryUnit.value, [Validators.required]],
         deliveryUnitName: [formData.deliveryUnit.label, [Validators.required]],
-        bookingRate: [formData.bookingRate, [Validators.required]],
+        deliveryRate: [formData.deliveryRate, [Validators.required]],
         deliveryQuantity: [formData.deliveryQuantity, [Validators.required]],
-        deliveryAmount: [formData.deliveryAmount, [Validators.required]],
+        baseQuantity: [formData.baseQuantity],
+        baseRate: [formData.baseRate],
       });
       this.productDeliveryDetails.push(item);
     }
     this.productForm.reset();
     this.initProductForm();
-    this.calculateSubTotal();
   }
 
   removeFromCart(indx: number) {
     this.productDeliveryDetails.removeAt(indx);
-    this.calculateSubTotal();
-  }
-
-  calculateSubTotal() {
-    const cart: any[] = this.productDeliveryDetails?.value;
-    if (cart) {
-      const subTotal = cart?.reduce(
-        (sum, current) => sum + current.deliveryAmount,
-        0
-      );
-      this.register.get('subtotal')?.setValue(subTotal);
-      this.setDeliveryTotal();
-    }
-  }
-
-  setDeliveryTotal() {
-    let subtotal: number = parseFloat(this.register.get('subtotal')?.value);
-    let vatAmount: number = parseFloat(this.register.get('vatAmount')?.value);
-    let discountAmount: number = parseFloat(
-      this.register.get('discountAmount')?.value
-    );
-    let otherCost: number = parseFloat(this.register.get('otherCost')?.value);
-    subtotal = isNaN(subtotal) ? 0 : subtotal;
-    vatAmount = isNaN(vatAmount) ? 0 : vatAmount;
-    discountAmount = isNaN(discountAmount) ? 0 : discountAmount;
-    otherCost = isNaN(otherCost) ? 0 : otherCost;
-    this.register
-      .get('totalAmount')
-      ?.setValue(subtotal + vatAmount + otherCost - discountAmount);
   }
 
   delivery(form: UntypedFormGroup) {

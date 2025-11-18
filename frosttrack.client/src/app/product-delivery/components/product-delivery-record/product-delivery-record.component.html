@@ -54,7 +54,6 @@
                 <th>Unit</th>
                 <th>Quantity</th>
                 <th>Rate</th>
-                <th>Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -65,72 +64,10 @@
                 <td>{{ detail.product.productName }}</td>
                 <td>{{ detail.deliveryUnit.unitName || "N/A" }}</td>
                 <td>{{ detail.deliveryQuantity }}</td>
-                <td>{{ detail.bookingRate | number : "1.2-2" }}</td>
-                <td>{{ detail.deliveryAmount | number : "1.2-2" }}</td>
+                <td>{{ detail.deliveryRate | number : "1.2-2" }}</td>
               </tr>
               }
             </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="5" class="text-end"><strong>Subtotal:</strong></td>
-                <td>
-                  <strong>{{
-                    productDelivery.subtotal | number : "1.2-2"
-                  }}</strong>
-                </td>
-              </tr>
-              @if (productDelivery.vatAmount > 0) {
-              <tr>
-                <td colspan="5" class="text-end">VAT:</td>
-                <td>{{ productDelivery.vatAmount | number : "1.2-2" }}</td>
-              </tr>
-              } @if (productDelivery.discountAmount > 0) {
-              <tr>
-                <td colspan="5" class="text-end">
-                  Discount ({{ productDelivery.discountPercent }}%):
-                </td>
-                <td>
-                  -{{ productDelivery.discountAmount | number : "1.2-2" }}
-                </td>
-              </tr>
-              } @if (productDelivery.otherCost > 0) {
-              <tr>
-                <td colspan="5" class="text-end">Other Cost:</td>
-                <td>{{ productDelivery.otherCost | number : "1.2-2" }}</td>
-              </tr>
-              }
-              <tr>
-                <td colspan="5" class="text-end">
-                  <strong>Total Amount:</strong>
-                </td>
-                <td>
-                  <strong>{{
-                    productDelivery.totalAmount | number : "1.2-2"
-                  }}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="5" class="text-end">
-                  <strong>Paid Amount:</strong>
-                </td>
-                <td>
-                  <strong>{{
-                    productDelivery.paidAmount | number : "1.2-2"
-                  }}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="5" class="text-end">
-                  <strong>Due Amount:</strong>
-                </td>
-                <td>
-                  <strong>{{
-                    productDelivery.totalAmount - productDelivery.paidAmount
-                      | number : "1.2-2"
-                  }}</strong>
-                </td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>

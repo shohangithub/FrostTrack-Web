@@ -22,7 +22,7 @@ public class ProductReceiveController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<long>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<ProductReceive, bool>> predicate = x => true;
+        Expression<Func<Booking, bool>> predicate = x => true;
         return await _productReceiveService.GetLookup(predicate, cancellationToken);
     }
 

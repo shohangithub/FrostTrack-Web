@@ -10,5 +10,5 @@ public interface IStockRepository
     Task<bool> ManageAddDamageStock(Damage entity, CancellationToken cancellationToken);
     Task<bool> ManageDeleteDamageStock(Damage entity, CancellationToken cancellationToken);
     Task<bool> ManageBatchDeleteDamageStock(List<Damage> entities, CancellationToken cancellationToken);
-    Task<bool> ManageAddProductReceiveStock(ProductReceive entity, CancellationToken cancellationToken);
+    Task<bool> ManageAddProductReceiveStock(Booking entity, CancellationToken cancellationToken);
 }
