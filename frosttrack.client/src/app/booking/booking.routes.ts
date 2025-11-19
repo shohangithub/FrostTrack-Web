@@ -35,7 +35,7 @@ export const BOOKING_ROUTE: Route[] = [
       ),
   },
   {
-    path: 'invoice-print/:id',
+    path: 'invoice-print',
     loadComponent: () =>
       import(
         './components/booking-invoice-print/booking-invoice-print.component'

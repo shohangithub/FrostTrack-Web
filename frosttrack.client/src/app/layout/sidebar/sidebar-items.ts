@@ -422,6 +422,17 @@ export const ROUTES: RouteInfo[] = [
         badgeClass: '',
         submenu: [],
       },
+      {
+        path: '/booking/invoice-print',
+        title: 'Invoice Print',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
     ],
   },
   {
