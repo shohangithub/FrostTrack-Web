@@ -38,6 +38,7 @@ import { AddProductComponent } from 'app/administration/components/product/add-p
 import { AddCustomerComponent } from 'app/common/components/customer/add-customer/add-customer.component';
 import { AddBaseUnitComponent } from 'app/common/components/base-unit/add-base-unit/add-base-unit.component';
 import { UnitConversionService } from 'app/common/services/unit-conversion.service';
+import { BILL_TYPES } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-booking',
@@ -83,13 +84,7 @@ export class BookingComponent implements OnInit {
   customerLoading = false;
   productUnits: ILookup<number>[] = [];
   productUnitLoading = false;
-  billTypes = [
-    { label: 'Hourly', value: 'HOURLY' },
-    { label: 'Daily', value: 'DAILY' },
-    { label: 'Weekly', value: 'WEEKLY' },
-    { label: 'Monthly', value: 'MONTHLY' },
-    { label: 'Yearly', value: 'YEARLY' },
-  ];
+  billTypes = BILL_TYPES;
 
   private editableProductId?: number;
   private productSubject: Subject<number> = new Subject<number>();
@@ -173,8 +168,7 @@ export class BookingComponent implements OnInit {
       notes: [''],
       BookingDetails: this.fb.array([]),
     });
-
-    this.generateCode();
+    if (!this.isEditing) this.generateCode();
   }
 
   initProductForm() {
@@ -224,7 +218,6 @@ export class BookingComponent implements OnInit {
           });
           this.BookingDetails.push(item);
         }
-
         this.editableCustomerId = response.customerId;
         this.generatedCode = response.bookingNumber;
         this.isLoading = false;

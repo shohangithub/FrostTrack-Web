@@ -24,6 +24,14 @@ export const SALES_TYPES = {
   WHOLESALE: 'WHOLESALE',
 };
 
+export const BILL_TYPES = [
+  // { label: 'Hourly', value: 'HOURLY' },
+  // { label: 'Daily', value: 'DAILY' },
+  // { label: 'Weekly', value: 'WEEKLY' },
+  { label: 'Monthly', value: 'MONTHLY' },
+  // { label: 'Yearly', value: 'YEARLY' },
+];
+
 export const DEFAULT_CURRENCY_LIST = [
   { id: 'BDT', value: 'Bangladeshi Taka', symbol: '৳' },
   { id: 'USD', value: 'US Dollar', symbol: '$' },
