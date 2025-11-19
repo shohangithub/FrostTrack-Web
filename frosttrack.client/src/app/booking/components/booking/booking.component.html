@@ -6,8 +6,8 @@
         [formGroup]="register"
         (ngSubmit)="purchase(register)"
       >
-        <div class="row mt-2">
-          <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+        <div class="container mt-2">
+          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
             <div class="card mb-3">
               <span class="card-label">Booking Information</span>
               <div class="card-body-narrow">
@@ -18,13 +18,35 @@
                         >Booking Number:</label
                       >
                       <div class="col-sm-8">
-                        <input
-                          type="text"
-                          class="form-control form-control-sm"
-                          id="bookingNumber"
-                          formControlName="bookingNumber"
-                          readonly
-                        />
+                        <div class="input-group">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            id="bookingNumber"
+                            formControlName="bookingNumber"
+                            readonly
+                          />
+                          @if(!isEditing){
+                          <div
+                            class="input-group-append"
+                            style="cursor: pointer"
+                            (click)="generateCode()"
+                          >
+                            <span
+                              class="input-group-text input-group-text-append"
+                              id="basic-addon5"
+                              ><i
+                                class="fas"
+                                [ngClass]="
+                                  isGeneratingCode
+                                    ? 'fa-spinner fa-spin'
+                                    : 'fa-sync'
+                                "
+                              ></i
+                            ></span>
+                          </div>
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -146,9 +168,24 @@
                               type="text"
                               class="form-control"
                               id="customerAddress"
-                              style="height: 90px !important"
+                              style="height: 50px !important"
                               [value]="register.get('customer')?.value?.['address']??''"
                               readonly
+                            ></textarea>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3">
+                        <div class="form-group row">
+                          <label for="notes" class="col-sm-4 col-form-label"
+                            >Notes:</label
+                          >
+                          <div class="col-sm-8">
+                            <textarea
+                              class="form-control form-control-sm"
+                              id="notes"
+                              formControlName="notes"
+                              rows="4"
                             ></textarea>
                           </div>
                         </div>
@@ -204,7 +241,7 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                           <div class="form-group row">
                             <label
-                              for="receiveUnit"
+                              for="bookingUnit"
                               class="col-sm-3 col-form-label"
                               >Unit:</label
                             >
@@ -213,7 +250,7 @@
                                 <ng-select
                                   [items]="productUnits"
                                   bindLabel="text"
-                                  formControlName="receiveUnit"
+                                  formControlName="bookingUnit"
                                   [loading]="productUnitLoading"
                                 >
                                 </ng-select>
@@ -228,10 +265,34 @@
                                 </div>
                               </div>
                             </div>
-                            @if (!productForm.get('receiveUnit')?.valid &&
-                            productForm.get('receiveUnit')?.touched) {
+                            @if (!productForm.get('bookingUnit')?.valid &&
+                            productForm.get('bookingUnit')?.touched) {
                             <small class="form-text text-danger">
                               Unit is required
+                            </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label
+                              for="billType"
+                              class="col-sm-3 col-form-label"
+                              >Bill Type:</label
+                            >
+                            <div class="col-sm-9">
+                              <ng-select
+                                [items]="billTypes"
+                                bindLabel="label"
+                                bindValue="value"
+                                formControlName="billType"
+                              >
+                              </ng-select>
+                            </div>
+                            @if (!productForm.get('billType')?.valid &&
+                            productForm.get('billType')?.touched) {
+                            <small class="form-text text-danger">
+                              Bill type is required
                             </small>
                             }
                           </div>
@@ -274,6 +335,23 @@
                             }
                           </div>
                         </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label fw-bold"
+                              >Total:</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="text"
+                                class="form-control form-control-sm bg-light fw-bold"
+                                [value]="
+                                  getCalculatedAmount() | number : '1.2-2'
+                                "
+                                readonly
+                              />
+                            </div>
+                          </div>
+                        </div>
                         <div
                           class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
                         >
@@ -303,48 +381,125 @@
               <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                 <div class="card mt-0">
                   <div class="card-body">
-                    <table class="table table-sm">
-                      <thead>
-                        <tr>
-                          <th scope="col" class="text-center">SL</th>
-                          <th scope="col" class="text-center">Product</th>
-                          <th scope="col" class="text-center">Rate</th>
-                          <th scope="col" class="text-center">Unit</th>
-                          <th scope="col" class="text-center">Quantity</th>
-                          <th scope="col" class="text-center">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (row of register.get('BookingDetails')?.value;
-                        track row; let idx = $index) {
-                        <tr>
-                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
-                          <td class="text-center">{{ row.productName }}</td>
-                          <td class="text-center">{{ row.bookingRate }}</td>
-                          <td class="text-center">{{ row.bookingUnitName }}</td>
-                          <td class="text-center">
-                            {{ row.bookingQuantity }}
-                          </td>
-                          <td class="text-center">
-                            <a
-                              data-toggle="tooltip"
-                              title=""
-                              data-original-title="Delete"
-                              (click)="removeFromCart(idx)"
-                            >
-                              <i class="far fa-trash-alt m-1"></i>
-                            </a>
-                          </td>
-                        </tr>
-                        }
-                      </tbody>
-                    </table>
+                    <div class="row">
+                      <div
+                        class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
+                      >
+                        <table class="table table-sm">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="text-center">SL</th>
+                              <th scope="col" class="text-center">Product</th>
+                              <th scope="col" class="text-center">Rate</th>
+                              <th scope="col" class="text-center">Unit</th>
+                              <th scope="col" class="text-center">Bill Type</th>
+                              <th scope="col" class="text-center">Quantity</th>
+                              <th scope="col" class="text-center">Total</th>
+                              <th scope="col" class="text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of register.get('BookingDetails')?.value;
+                            track row; let idx = $index) {
+                            <tr>
+                              <th class="text-center" scope="row">
+                                {{ idx + 1 }}
+                              </th>
+                              <td class="text-center">{{ row.productName }}</td>
+                              <td class="text-center">{{ row.bookingRate }}</td>
+                              <td class="text-center">
+                                {{ row.bookingUnitName }}
+                              </td>
+                              <td class="text-center">{{ row.billType }}</td>
+                              <td class="text-center">
+                                {{ row.bookingQuantity }}
+                              </td>
+                              <td class="text-center">
+                                {{
+                                  row.bookingQuantity * row.bookingRate
+                                    | number : "1.2-2"
+                                }}
+                              </td>
+
+                              <td class="text-center">
+                                <a
+                                  data-toggle="tooltip"
+                                  title=""
+                                  data-original-title="Delete"
+                                  (click)="removeFromCart(idx)"
+                                >
+                                  <i class="far fa-trash-alt m-1"></i>
+                                </a>
+                              </td>
+                            </tr>
+                            }
+                          </tbody>
+                          <tfoot>
+                            <tr class="table-active">
+                              <th colspan="5" class="text-center fw-bold">
+                                Total:
+                              </th>
+                              <th class="text-center fw-bold">
+                                {{ getTotalQuantity() | number : "1.2-2" }}
+                              </th>
+                              <th class="text-center fw-bold">
+                                {{ getTotalAmount() | number : "1.2-2" }}
+                              </th>
+                              <th></th>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <!-- <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="form-group">
+                      <label for="notes" class="col-form-label">Notes:</label>
+                      <textarea
+                        class="form-control form-control-sm"
+                        id="notes"
+                        formControlName="notes"
+                        rows="4"
+                      ></textarea>
+                    </div>
+                  </div> -->
+                      <div
+                        class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2"
+                      >
+                        @if(!isEditing){
+                        <button
+                          type="button"
+                          class="btn btn-light"
+                          (click)="initFormData()"
+                        >
+                          Clear</button
+                        >}
+                        <button
+                          type="submit"
+                          class="btn btn-primary mx-2"
+                          [disabled]="
+                            register.invalid ||
+                            register.get('BookingDetails')?.value?.length ===
+                              0 ||
+                            isSubmitted
+                          "
+                        >
+                          {{
+                            isSubmitted
+                              ? "Processing..."
+                              : isEditing
+                              ? "Update Booking"
+                              : "Complete Booking"
+                          }}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+          <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
             <div class="card">
               <span class="card-label">Additional Information</span>
               <div class="card-body">
@@ -385,7 +540,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
       </form>
     </div>

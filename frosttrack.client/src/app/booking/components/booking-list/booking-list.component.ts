@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
@@ -9,6 +9,7 @@ import {
   PaginationResult,
   PagingResponse,
 } from '@core/models/pagination-result';
+import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@swimlane/ngx-datatable';
 import { IBookingListResponse } from 'app/booking/models/booking.interface';
 import { BookingService } from 'app/booking/services/booking.service';
+import { ROLES } from 'app/common/data/settings-data';
 import { SwalConfirm } from 'app/theme-config';
 import {
   ErrorResponse,
@@ -31,7 +33,7 @@ import Swal from 'sweetalert2';
   selector: 'app-booking-list',
   templateUrl: './booking-list.component.html',
   standalone: true,
-  imports: [NgxDatatableModule, DatePipe],
+  imports: [NgxDatatableModule, DatePipe, DecimalPipe],
 })
 export class BookingListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
@@ -57,18 +59,32 @@ export class BookingListComponent implements OnInit {
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
+  currentUser: any;
+  canEdit: boolean = false;
+  canDelete: boolean = false;
 
   constructor(
     private modalService: NgbModal,
-    private toastr: ToastrService,
-    private BookingService: BookingService,
     private router: Router,
-    private layoutService: LayoutService
+    private toastr: ToastrService,
+    private authService: AuthService,
+    private layoutService: LayoutService,
+    private bookingService: BookingService
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
     };
     this.layoutService.loadCurrentRoute();
+    this.setPermissions();
+  }
+
+  private setPermissions() {
+    // Example permission setting logic
+    const roles = this.authService.getUserRoles();
+    if (roles.includes(ROLES.SUPERADMIN) || roles.includes(ROLES.ADMIN)) {
+      this.canEdit = true;
+      this.canDelete = true;
+    }
   }
 
   onSelect({ selected }: { selected: any }) {
@@ -92,7 +108,7 @@ export class BookingListComponent implements OnInit {
     }).then((result) => {
       if (result.value) {
         const ids = this.selected.map((x) => x.id);
-        this.BookingService.batchDelete(ids).subscribe({
+        this.bookingService.batchDelete(ids).subscribe({
           next: (response) => {
             if (response) {
               this.selected.forEach((row) => {
@@ -126,7 +142,7 @@ export class BookingListComponent implements OnInit {
   }
 
   fetchData() {
-    this.BookingService.getWithPagination(this.pagination).subscribe({
+    this.bookingService.getWithPagination(this.pagination).subscribe({
       next: (response: PaginationResult<IBookingListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -150,7 +166,7 @@ export class BookingListComponent implements OnInit {
     this.fetchData();
   }
 
-  editRow(row: any, rowIndex: number) {
+  editRow(row: any) {
     this.router.navigate(['booking/edit', row.id]);
   }
 
@@ -163,7 +179,7 @@ export class BookingListComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.BookingService.remove(row.id).subscribe({
+        this.bookingService.remove(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -202,12 +218,26 @@ export class BookingListComponent implements OnInit {
   toggleExpandRow(row: any) {
     if (this.expandId === row.id) this.table.rowDetail.collapseAllRows();
     this.table.rowDetail.toggleExpandRow(row);
-    this.table.rowDetail.rowHeight =
-      100 + row.BookingDetails.length * 15;
+    this.table.rowDetail.rowHeight = 110 + row.bookingDetails.length * 15;
   }
 
   onDetailToggle(event: any) {
     console.log('Detail Toggled', event);
+  }
+
+  getRowTotalQuantity(bookingDetails: any[]): number {
+    return bookingDetails.reduce(
+      (sum, item) => sum + (item.bookingQuantity || 0),
+      0
+    );
+  }
+
+  getRowTotalAmount(bookingDetails: any[]): number {
+    return bookingDetails.reduce(
+      (sum, item) =>
+        sum + (item.bookingQuantity || 0) * (item.bookingRate || 0),
+      0
+    );
   }
 
   printInvoice(row: any) {

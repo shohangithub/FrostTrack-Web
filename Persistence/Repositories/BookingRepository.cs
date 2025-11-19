@@ -34,18 +34,104 @@ public class BookingRepository : IBookingRepository
             .AsNoTracking();
     }
 
-    public async Task<BookingResponse> ManageUpdate(BookingRequest request, Booking existingData, CancellationToken cancellationToken = default)
-    {
-        List<Guid> bookingDetailsIds = new();
+    // public async Task<BookingResponse> ManageUpdate(BookingRequest request, Booking existingData, CancellationToken cancellationToken = default)
+    // {
+    //     List<Guid> bookingDetailsIds = new();
 
+    //     foreach (var item in request.BookingDetails)
+    //     {
+    //         if (item.Id == Guid.Empty)
+    //         {
+    //             var newDetail = item.Adapt<BookingDetail>();
+    //             newDetail.BillType = BillTypes.Monthly; // Set default BillType
+
+    //             // Calculate BaseQuantity and BaseRate from unit conversion
+    //             var unitConversion = await _context.UnitConversions
+    //                 .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
+
+    //             if (unitConversion != null)
+    //             {
+    //                 newDetail.BaseQuantity = (decimal)(item.BookingQuantity * unitConversion.ConversionValue);
+    //                 newDetail.BaseRate = item.BookingRate / (decimal)unitConversion.ConversionValue;
+    //             }
+    //             else
+    //             {
+    //                 newDetail.BaseQuantity = (decimal)item.BookingQuantity;
+    //                 newDetail.BaseRate = item.BookingRate;
+    //             }
+
+    //             _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(newDetail);
+
+    //             existingData.BookingDetails.Add(newDetail);
+    //             _context.Entry(newDetail).State = EntityState.Added;
+    //         }
+    //         else
+    //         {
+    //             var eDetails = existingData.BookingDetails.FirstOrDefault(x => x.Id == item.Id);
+    //             if (eDetails == null) throw new Exception("Booking item mismatched!");
+
+    //             eDetails.ProductId = item.ProductId;
+    //             eDetails.BookingQuantity = item.BookingQuantity;
+    //             eDetails.BookingRate = item.BookingRate;
+    //             eDetails.BookingUnitId = item.BookingUnitId;
+
+    //             // Calculate BaseQuantity and BaseRate from unit conversion
+    //             var unitConversion = await _context.UnitConversions
+    //                 .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
+
+    //             if (unitConversion != null)
+    //             {
+    //                 eDetails.BaseQuantity = (decimal)(item.BookingQuantity * unitConversion.ConversionValue);
+    //                 eDetails.BaseRate = item.BookingRate / (decimal)unitConversion.ConversionValue;
+    //             }
+    //             else
+    //             {
+    //                 eDetails.BaseQuantity = (decimal)item.BookingQuantity;
+    //                 eDetails.BaseRate = item.BookingRate;
+    //             }
+
+    //             _defaultValueInjector.InjectUpdatingAudit<BookingDetail, Guid>(eDetails);
+    //             _context.Entry(eDetails).State = EntityState.Modified;
+
+    //             bookingDetailsIds.Add(item.Id);
+    //         }
+    //     }
+
+    //     var deletedItems = existingData.BookingDetails.Where(x => x.Id != Guid.Empty && !bookingDetailsIds.Contains(x.Id));
+    //     foreach (var item in deletedItems)
+    //     {
+    //         _context.Entry(item).State = EntityState.Deleted;
+    //     }
+
+    //     _context.Entry(existingData).State = EntityState.Modified;
+
+    //     var result = await _context.SaveChangesAsync(cancellationToken);
+    //     var response = existingData.Adapt<BookingResponse>();
+
+    //     return response;
+    // }
+
+
+    public async Task<BookingResponse> ManageUpdate(
+        BookingRequest request,
+        Booking existingData,
+        CancellationToken cancellationToken = default)
+    {
+        // TRACK request item IDs
+        var incomingIds = request.BookingDetails
+            .Where(x => x.Id != Guid.Empty)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        // PROCESS ADD + UPDATE
         foreach (var item in request.BookingDetails)
         {
+            // ------------ ADD NEW ------------
             if (item.Id == Guid.Empty)
             {
                 var newDetail = item.Adapt<BookingDetail>();
-                newDetail.BillType = BillTypes.Monthly; // Set default BillType
+                newDetail.BillType = BillTypes.Monthly;
 
-                // Calculate BaseQuantity and BaseRate from unit conversion
                 var unitConversion = await _context.UnitConversions
                     .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
 
@@ -62,53 +148,48 @@ public class BookingRepository : IBookingRepository
 
                 _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(newDetail);
 
-                existingData.BookingDetails.Add(newDetail);
-                _context.Entry(newDetail).State = EntityState.Added;
+                existingData.BookingDetails.Add(newDetail);   // EF auto-adds
+                continue;
+            }
+
+            // ------------ UPDATE EXISTING ------------
+            var eDetails = existingData.BookingDetails.FirstOrDefault(x => x.Id == item.Id);
+            if (eDetails == null)
+                throw new Exception("Booking item mismatched!");
+
+            eDetails.ProductId = item.ProductId;
+            eDetails.BookingQuantity = item.BookingQuantity;
+            eDetails.BookingRate = item.BookingRate;
+            eDetails.BookingUnitId = item.BookingUnitId;
+
+            var unitConv = await _context.UnitConversions
+                .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
+
+            if (unitConv != null)
+            {
+                eDetails.BaseQuantity = (decimal)(item.BookingQuantity * unitConv.ConversionValue);
+                eDetails.BaseRate = item.BookingRate / (decimal)unitConv.ConversionValue;
             }
             else
             {
-                var eDetails = existingData.BookingDetails.FirstOrDefault(x => x.Id == item.Id);
-                if (eDetails == null) throw new Exception("Booking item mismatched!");
-
-                eDetails.ProductId = item.ProductId;
-                eDetails.BookingQuantity = item.BookingQuantity;
-                eDetails.BookingRate = item.BookingRate;
-                eDetails.BookingUnitId = item.BookingUnitId;
-
-                // Calculate BaseQuantity and BaseRate from unit conversion
-                var unitConversion = await _context.UnitConversions
-                    .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
-
-                if (unitConversion != null)
-                {
-                    eDetails.BaseQuantity = (decimal)(item.BookingQuantity * unitConversion.ConversionValue);
-                    eDetails.BaseRate = item.BookingRate / (decimal)unitConversion.ConversionValue;
-                }
-                else
-                {
-                    eDetails.BaseQuantity = (decimal)item.BookingQuantity;
-                    eDetails.BaseRate = item.BookingRate;
-                }
-
-                _defaultValueInjector.InjectUpdatingAudit<BookingDetail, Guid>(eDetails);
-                _context.Entry(eDetails).State = EntityState.Modified;
-
-                bookingDetailsIds.Add(item.Id);
+                eDetails.BaseQuantity = (decimal)item.BookingQuantity;
+                eDetails.BaseRate = item.BookingRate;
             }
+
+            _defaultValueInjector.InjectUpdatingAudit<BookingDetail, Guid>(eDetails);
         }
 
-        var deletedItems = existingData.BookingDetails.Where(x => x.Id != Guid.Empty && !bookingDetailsIds.Contains(x.Id));
-        foreach (var item in deletedItems)
-        {
-            _context.Entry(item).State = EntityState.Deleted;
-        }
+        // ------------ DELETE REMOVED ITEMS ------------
+        var toDelete = existingData.BookingDetails
+            .Where(x => x.Id != Guid.Empty && !incomingIds.Contains(x.Id))
+            .ToList();
 
-        _context.Entry(existingData).State = EntityState.Modified;
+        foreach (var d in toDelete)
+            existingData.BookingDetails.Remove(d);  // EF auto-deletes
 
-        var result = await _context.SaveChangesAsync(cancellationToken);
-        var response = existingData.Adapt<BookingResponse>();
+        await _context.SaveChangesAsync(cancellationToken);
 
-        return response;
+        return existingData.Adapt<BookingResponse>();
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)

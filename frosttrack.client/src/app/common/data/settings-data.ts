@@ -11,6 +11,14 @@ export const SYSTEM_ROLES = [
   { id: 'STANDARD', value: 'Standard' },
 ];
 
+export const ROLES = {
+  SUPERADMIN: 'SUPERADMIN',
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  SELLER: 'SELLER',
+  STANDARD: 'STANDARD',
+};
+
 export const SALES_TYPES = {
   RETAIL: 'RETAIL',
   WHOLESALE: 'WHOLESALE',

@@ -217,17 +217,15 @@ public class BookingService : IBookingService
                 .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
                 .OrderByDescending(x => x.BookingNumber)
                 .Select(x => x.BookingNumber)
-                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
+                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 6) ?? "0") + 1;
 
-            var range = code / 10;
-
-            if (range == 0)
+            if (code < 10)
                 return $"BK{dateString}0000{code}";
-            else if (range <= 9)
+            else if (code < 100)
                 return $"BK{dateString}000{code}";
-            else if (range <= 99)
+            else if (code < 1000)
                 return $"BK{dateString}00{code}";
-            else if (range <= 999)
+            else if (code < 10000)
                 return $"BK{dateString}0{code}";
             else
                 return $"BK{dateString}{code}";
@@ -237,17 +235,15 @@ public class BookingService : IBookingService
             var code = long.Parse((await _repository.Query()
                 .OrderByDescending(x => x.BookingNumber)
                 .Select(x => x.BookingNumber)
-                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
+                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 6) ?? "0") + 1;
 
-            var range = code / 10;
-
-            if (range == 0)
+            if (code < 10)
                 return $"BK{dateString}0000{code}";
-            else if (range <= 9)
+            else if (code < 100)
                 return $"BK{dateString}000{code}";
-            else if (range <= 99)
+            else if (code < 1000)
                 return $"BK{dateString}00{code}";
-            else if (range <= 999)
+            else if (code < 10000)
                 return $"BK{dateString}0{code}";
             else
                 return $"BK{dateString}{code}";

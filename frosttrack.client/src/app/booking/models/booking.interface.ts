@@ -68,6 +68,7 @@ export interface IBookingDetailListResponse {
   productId: number;
   productName: string;
   bookingUnitId: number;
+  bookingUnitName: string;
   unitName: string;
   bookingQuantity: number;
   billType: string;

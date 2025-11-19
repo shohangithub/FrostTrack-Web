@@ -71,6 +71,7 @@ export class BookingComponent implements OnInit {
   productForm!: UntypedFormGroup;
   isLoading = false;
   isSubmitted = false;
+  isEditing = false;
   private generatedCode: string = '';
   isGeneratingCode = false;
   isMainBranch: boolean = false;
@@ -82,6 +83,13 @@ export class BookingComponent implements OnInit {
   customerLoading = false;
   productUnits: ILookup<number>[] = [];
   productUnitLoading = false;
+  billTypes = [
+    { label: 'Hourly', value: 'HOURLY' },
+    { label: 'Daily', value: 'DAILY' },
+    { label: 'Weekly', value: 'WEEKLY' },
+    { label: 'Monthly', value: 'MONTHLY' },
+    { label: 'Yearly', value: 'YEARLY' },
+  ];
 
   private editableProductId?: number;
   private productSubject: Subject<number> = new Subject<number>();
@@ -165,6 +173,7 @@ export class BookingComponent implements OnInit {
       notes: [''],
       BookingDetails: this.fb.array([]),
     });
+
     this.generateCode();
   }
 
@@ -175,19 +184,22 @@ export class BookingComponent implements OnInit {
       product: [null, [Validators.required]],
       bookingRate: [null, [Validators.required]],
       bookingUnit: [null, [Validators.required]],
+      billType: ['MONTHLY', [Validators.required]],
       bookingQuantity: [null, [Validators.required]],
     });
   }
 
   getExistingData(id: any) {
     this.isLoading = true;
+    this.isEditing = true;
     this.BookingService.getById(id).subscribe({
       next: (response: IBookingResponse) => {
         this.register.setValue({
           id: response.id,
           bookingNumber: response.bookingNumber,
           branchId: response.branchId,
-          bookingDate: response.bookingDate,
+          bookingDate: new Date(response.bookingDate).systemFormat(),
+          notes: response.notes || '',
           BookingDetails: [],
           customer:
             this.customers.find((x) => x.id === response.customerId) || null,
@@ -200,6 +212,11 @@ export class BookingComponent implements OnInit {
             productName: [detail.product?.productName, [Validators.required]],
             bookingId: [detail.bookingId],
             bookingUnitId: [detail.bookingUnitId, [Validators.required]],
+            bookingUnitName: [
+              detail.bookingUnit?.unitName || 'N/A',
+              [Validators.required],
+            ],
+            billType: [detail.billType, [Validators.required]],
             bookingRate: [detail.bookingRate, [Validators.required]],
             bookingQuantity: [detail.bookingQuantity, [Validators.required]],
             baseQuantity: [detail.baseQuantity],
@@ -285,7 +302,9 @@ export class BookingComponent implements OnInit {
     this.BookingService.generateBookingNumber().subscribe({
       next: (response: CodeResponse) => {
         this.generatedCode = response.code;
-        this.register.get('bookingNumber')?.setValue(response.code);
+        if (!this.isEditing) {
+          this.register.get('bookingNumber')?.setValue(response.code);
+        }
         this.isGeneratingCode = false;
       },
       error: () => {
@@ -314,6 +333,9 @@ export class BookingComponent implements OnInit {
               (x) => x.value == existingProduct.bookingUnitId
             ) || null
           );
+        childForm
+          ?.get('billType')
+          ?.setValue(existingProduct.billType || 'MONTHLY');
       } else {
         childForm
           ?.get('bookingUnit')
@@ -322,9 +344,33 @@ export class BookingComponent implements OnInit {
               null
           );
         childForm?.get('bookingRate')?.setValue(product.bookingRate || 0);
-        childForm?.get('bookingQuantity')?.setValue(0);
+        childForm?.get('bookingQuantity')?.setValue(null);
+        childForm?.get('billType')?.setValue('MONTHLY');
       }
     }
+  }
+
+  getCalculatedAmount(): number {
+    const rate = this.productForm?.get('bookingRate')?.value || 0;
+    const quantity = this.productForm?.get('bookingQuantity')?.value || 0;
+    return rate * quantity;
+  }
+
+  getTotalQuantity(): number {
+    const items = this.BookingDetails.value || [];
+    return items.reduce(
+      (sum: number, item: any) => sum + (item.bookingQuantity || 0),
+      0
+    );
+  }
+
+  getTotalAmount(): number {
+    const items = this.BookingDetails.value || [];
+    return items.reduce(
+      (sum: number, item: any) =>
+        sum + (item.bookingQuantity || 0) * (item.bookingRate || 0),
+      0
+    );
   }
 
   get BookingDetails() {
@@ -341,9 +387,10 @@ export class BookingComponent implements OnInit {
       existingProduct.bookingUnitId =
         formData.bookingUnit?.value || formData.bookingUnit;
       existingProduct.bookingUnitName =
-        formData.bookingUnit?.label || formData.bookingUnit;
+        formData.bookingUnit?.text || formData.bookingUnit;
       existingProduct.bookingRate = formData.bookingRate;
       existingProduct.bookingQuantity = formData.bookingQuantity;
+      existingProduct.billType = formData.billType;
       this.BookingDetails.setValue(cardData);
     } else {
       const item = this.fb.group({
@@ -352,7 +399,8 @@ export class BookingComponent implements OnInit {
         productName: [formData.product.productName, [Validators.required]],
         bookingId: [formData.bookingId],
         bookingUnitId: [formData.bookingUnit.value, [Validators.required]],
-        bookingUnitName: [formData.bookingUnit.label, [Validators.required]],
+        bookingUnitName: [formData.bookingUnit.text, [Validators.required]],
+        billType: [formData.billType, [Validators.required]],
         bookingRate: [formData.bookingRate, [Validators.required]],
         bookingQuantity: [formData.bookingQuantity, [Validators.required]],
       });

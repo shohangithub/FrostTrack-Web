@@ -77,25 +77,57 @@
                         <tr>
                           <th scope="col" class="text-center">SL</th>
                           <th scope="col" class="text-center">Product</th>
+                          <th scope="col" class="text-center">Unit</th>
+                          <th scope="col" class="text-center">Bill Type</th>
                           <th scope="col" class="text-center">Rate</th>
                           <th scope="col" class="text-center">Quantity</th>
                           <th scope="col" class="text-center">Total</th>
                         </tr>
                       </thead>
                       <tbody>
-                        @for (item of row.BookingDetails; track item; let
-                        idx = $index) {
+                        @for (item of row.bookingDetails; track item; let idx =
+                        $index) {
                         <tr>
                           <th class="text-center" scope="row">{{ idx + 1 }}</th>
                           <td class="text-center">{{ item.productName }}</td>
+                          <td class="text-center">
+                            {{ item.bookingUnitName || "N/A" }}
+                          </td>
+                          <td class="text-center">
+                            {{ item.billType || "N/A" }}
+                          </td>
                           <td class="text-center">{{ item.bookingRate }}</td>
                           <td class="text-center">
-                            {{ item.receiveQuantity }}
+                            {{ item.bookingQuantity }}
                           </td>
-                          <td class="text-center">{{ item.receiveAmount }}</td>
+                          <td class="text-center">
+                            {{
+                              item.bookingQuantity * item.bookingRate
+                                | number : "1.2-2"
+                            }}
+                          </td>
                         </tr>
                         }
                       </tbody>
+                      <tfoot>
+                        <tr class="table-active">
+                          <th colspan="5" class="text-center fw-bold">
+                            Total:
+                          </th>
+                          <th class="text-center fw-bold">
+                            {{
+                              getRowTotalQuantity(row.bookingDetails)
+                                | number : "1.2-2"
+                            }}
+                          </th>
+                          <th class="text-center fw-bold">
+                            {{
+                              getRowTotalAmount(row.bookingDetails)
+                                | number : "1.2-2"
+                            }}
+                          </th>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </ng-template>
@@ -125,21 +157,21 @@
               </ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Receive Number"
-                prop="receiveNumber"
-                [width]="120"
+                name="Booking Number"
+                prop="bookingNumber"
+                [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.receiveNumber }}
+                  {{ row.bookingNumber }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
-                name="Receive Date"
-                prop="receiveDate"
-                [width]="120"
+                name="Booking Date"
+                prop="bookingDate"
+                [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.receiveDate | date : "dd-MMM-yyyy" }}
+                  {{ row.bookingDate | date : "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -153,56 +185,19 @@
                 </ng-template>
               </ngx-datatable-column>
 
-              <ngx-datatable-column
-                name="Sub Total"
-                prop="subtotal"
-                [width]="120"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.subtotal }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Vat" prop="vatAmount" [width]="100">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.vatAmount }}
-                </ng-template>
-              </ngx-datatable-column>
-
-              <ngx-datatable-column
-                name="Discount"
-                prop="discountAmount"
-                [width]="100"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.discountAmount }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Other Cost"
-                prop="otherCost"
-                [width]="120"
-              >
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.otherCost }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Total Amount"
-                prop="totalAmount"
+              <!-- <ngx-datatable-column
+                name="Branch"
+                prop="branch.branchName"
                 [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.totalAmount }}
+                  {{ row.branch?.branchName || "N/A" }}
                 </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column
-                name="Due"
-                [sortable]="false"
-                prop="paidAmount"
-                [width]="100"
-              >
+              </ngx-datatable-column> -->
+
+              <ngx-datatable-column name="Notes" prop="notes" [width]="300">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.totalAmount - row.paidAmount }}
+                  {{ row.notes || "-" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
@@ -216,25 +211,28 @@
                   let-rowIndex="rowIndex"
                   ngx-datatable-cell-template
                 >
-                  <span>
+                  <span class="text-center">
                     <button
                       class="btn btn-tbl-info h-auto"
                       (click)="printInvoice(row)"
                     >
                       <i class="fas fa-print"></i>
                     </button>
+                    @if(canEdit) {
                     <button
                       class="btn btn-tbl-edit h-auto"
-                      (click)="editRow(row, rowIndex)"
+                      (click)="editRow(row)"
                     >
                       <i class="fas fa-pen"></i>
                     </button>
+                    } @if(canDelete) {
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>
+                    }
                   </span>
                 </ng-template>
               </ngx-datatable-column>

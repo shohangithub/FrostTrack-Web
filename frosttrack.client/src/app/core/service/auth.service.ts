@@ -35,7 +35,6 @@ export class AuthService {
     this.setBranchId();
   }
 
-
   public get currentUserValue(): TokenResponse {
     return this.currentUserSubject.value;
   }
@@ -87,7 +86,7 @@ export class AuthService {
     this.currentUserSubject.next(this.currentUserValue);
     return of({ success: false });
   }
-  
+
   get getCurrentSelectedBranch$() {
     return this.selectedBranchId.asObservable();
   }
@@ -112,7 +111,24 @@ export class AuthService {
     if (tokenObj) {
       if (tokenObj?.token) {
         const decodedToken = helper.decodeToken(tokenObj?.token);
-        this.selectedBranchId.next(decodedToken.BranchId)
+        this.selectedBranchId.next(decodedToken.BranchId);
+      }
+    }
+  }
+  getUserRoles() {
+    const helper = new JwtHelperService();
+    const tokenObj = this.currentUserSubject.value;
+    if (tokenObj) {
+      if (tokenObj?.token) {
+        const decodedToken = helper.decodeToken(tokenObj?.token);
+        return (
+          decodedToken['role'] ||
+          decodedToken['roles'] ||
+          decodedToken[
+            'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+          ] ||
+          null
+        );
       }
     }
   }
