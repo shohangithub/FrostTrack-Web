@@ -93,195 +93,138 @@
                   class="invoice-container"
                 >
                   <!-- Report Header Component -->
-                  <app-report-header></app-report-header>
+                  <app-report-invoice-header
+                    [InvoiceNumber]="bookingInvoice.bookingNumber"
+                  ></app-report-invoice-header>
 
                   <!-- Barcode Section -->
-                  <!-- <div class="barcode-section">
-                    <svg
-                      [id]="'barcode-' + bookingInvoice.bookingNumber"
-                      class="barcode"
-                    ></svg>
-                    <div class="booking-number">
-                      {{ bookingInvoice.bookingNumber }}
-                    </div>
+                  <!-- <div class="barcode-section" *ngIf="bookingInvoice">
+                    <app-barcode
+                      [value]="bookingInvoice.bookingNumber"
+                      [format]="'CODE128'"
+                      [width]="2"
+                      [height]="50"
+                      [displayValue]="false"
+                      [showText]="true"
+                    ></app-barcode>
                   </div> -->
 
-                  <!-- Booking Invoice Title -->
-                  <div class="invoice-title-section">
-                    <h4 class="text-center">Booking Invoice</h4>
+                  <!-- Booking Number and Date Section -->
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">পণ্যের মালিকানার নাম :</td>
+                        <td class="info-value">
+                          {{ bookingInvoice.customer?.customerName || "" }}
+                        </td>
+                        <td class="info-label">জমাদানের তারিখ :</td>
+                        <td class="info-value">
+                          {{
+                            bookingInvoice?.bookingDate | date : "dd/MM/yyyy"
+                          }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">মোবাইল/ফোন</td>
+                        <td class="info-value">
+                          {{ bookingInvoice.customer?.customerMobile || "" }}
+                        </td>
+                        <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ :</td>
+                        <td class="info-value">
+                          {{ getLastDeliveryDate() | date : "dd/MM/yyyy" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">প্রতিষ্ঠান/ঠিকানা :</td>
+                        <td class="info-value" colspan="3">
+                          {{ bookingInvoice.customer?.address || "" }}
+                        </td>
+                      </tr>
+                    </table>
                   </div>
 
-                  <!-- Invoice Details -->
-                  <div class="invoice-details">
-                    <div class="supplier-details">
-                      <p>
-                        <strong>Customer Name:</strong>
-                        {{ bookingInvoice.customer?.customerName || "N/A" }}
-                      </p>
-                      <p>
-                        <strong>Customer Mobile:</strong>
-                        {{ bookingInvoice.customer?.customerMobile || "N/A" }}
-                      </p>
-                      <p>
-                        <strong>Customer Address:</strong>
-                        {{ bookingInvoice.customer?.address || "N/A" }}
-                      </p>
-                    </div>
-                    <div class="purchase-details">
-                      <p class="mb-1">
-                        <strong>Booking Date:</strong>
-                        {{
-                          bookingInvoice?.bookingDate
-                            | date : "dd-MM-yyyy h:mm a"
-                        }}
-                      </p>
-                      <p class="mb-1">
-                        <strong>Branch:</strong>
-                        {{ bookingInvoice.branch?.name || "N/A" }}
-                      </p>
-                      <p class="mb-1"><strong>Booked by:</strong> Admin</p>
-                      <p class="mb-1"><strong>Saved by:</strong> Admin</p>
-                    </div>
-                  </div>
-
-                  <!-- Invoice Items Table -->
-                  <div class="invoice-items">
-                    <table>
+                  <!-- সংরক্ষিত পণ্যের বিবরণ (Stored Product Details) -->
+                  <div class="section-title">সংরক্ষিত পণ্যের বিবরণ</div>
+                  <div class="stored-products-section">
+                    <table class="products-table">
                       <thead>
                         <tr>
-                          <th class="text-center">Sl.</th>
-                          <th class="text-center">Product Name</th>
-                          <th class="text-center" style="width: 60px">Unit</th>
-                          <th class="text-center" style="width: 80px">
-                            Bill Type
-                          </th>
-                          <th class="text-center" style="width: 60px">
-                            Quantity
-                          </th>
-                          <th class="text-center" style="width: 60px">Rate</th>
-                          <th class="text-center" style="width: 80px">
-                            Amount
-                          </th>
-                          <th class="text-center" style="width: 70px">
-                            Base Qty
-                          </th>
-                          <th class="text-center" style="width: 70px">
-                            Delivery Qty
-                          </th>
+                          <th>পণ্যের নাম/খাত</th>
+                          <th>গ্রহণকৃত একক</th>
+                          <th>সংখ্যা</th>
+                          <th>পরিমাণ (কেজি)</th>
+                          <th>ভাড়ার হার<br />(প্রতি মাস)</th>
+                          <th>মোট ভাড়া</th>
                         </tr>
                       </thead>
-                      <tbody class="table-body">
+                      <tbody>
                         <tr
                           *ngFor="
                             let item of bookingInvoice?.bookingDetails;
                             let i = index
                           "
                         >
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>
-                            <div>
-                              <strong>{{
-                                item.product?.productName || "N/A"
-                              }}</strong>
-                            </div>
-                            <div class="text-muted small">
-                              Code: {{ item.product?.productCode || "N/A" }}
-                            </div>
+                          <td>{{ item.product?.productName || "" }}</td>
+                          <td class="text-center">
+                            {{ item.bookingUnit?.unitName || "" }}
                           </td>
                           <td class="text-center">
-                            {{
-                              item.bookingUnit?.unitName ||
-                                item.bookingUnit?.unitName ||
-                                "PCS"
-                            }}
+                            {{ item.bookingQuantity | number : "1.0-0" }}
                           </td>
                           <td class="text-center">
-                            {{ item.billType || "N/A" }}
+                            {{ item.baseQuantity | number : "1.2-2" }}
                           </td>
-                          <td class="text-center">
-                            {{ item.bookingQuantity | number : "1.2-2" }}
-                          </td>
+                          <!-- <td class="text-center">
+                            {{ item.bookingQuantity | number : "1.0-0" }}
+                          </td> -->
                           <td class="text-center">
                             {{ item.bookingRate | number : "1.2-2" }}
                           </td>
-                          <td class="text-end">
+                          <td class="text-center">
                             {{
                               item.bookingQuantity * item.bookingRate
                                 | number : "1.2-2"
                             }}
                           </td>
-                          <td class="text-center">
-                            {{ item.baseQuantity | number : "1.2-2" }}
-                          </td>
-                          <td class="text-center">0.00</td>
-                        </tr>
-
-                        <!-- Total Row -->
-                        <tr class="table-light">
-                          <td colspan="4" class="text-end">
-                            <strong>Total</strong>
-                          </td>
-                          <td class="text-center">
-                            <strong>{{
-                              getTotalQuantity() | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                          <td></td>
-                          <td class="text-end">
-                            <strong>{{
-                              getTotalAmount() | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                          <td colspan="2"></td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <!-- Invoice Summary -->
-                  <div class="invoice-summary">
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="payment-info">
-                          <p><strong>Notes:</strong></p>
-                          <p>{{ bookingInvoice.notes || "-" }}</p>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="total-summary">
-                          <table>
-                            <tr>
-                              <td><strong>Total Quantity:</strong></td>
-                              <td style="text-align: right">
-                                {{ getTotalQuantity() | number : "1.2-2" }}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td
-                                colspan="2"
-                                style="
-                                  border-bottom: 1px solid rgb(204, 204, 204);
-                                "
-                              ></td>
-                            </tr>
-                            <tr>
-                              <td><strong>Total Amount:</strong></td>
-                              <td style="text-align: right">
-                                {{ getTotalAmount() | number : "1.2-2" }}
-                              </td>
-                            </tr>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
+                  <!-- ডেলিভারী পণ্যের বিবরণ (Delivery Product Details) -->
+                  <div class="section-title">ডেলিভারী পণ্যের বিবরণ</div>
+                  <div class="delivery-section">
+                    <table class="delivery-table">
+                      <thead>
+                        <tr>
+                          <th>তারিখ</th>
+                          <th>সংখ্যা</th>
+                          <th>আদায়কৃত ভাড়া</th>
+                          <th>বিস্তারিত কর্তৃপক্ষীয় দস্তখত</th>
+                          <th>অবশিষ্ট পণ্য</th>
+                          <th>ডেলিভারীর সময়</th>
+                          <th>স্বাক্ষর</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- Empty rows for delivery records -->
+                        <tr *ngFor="let row of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]">
+                          <td style="height: 40px"></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
-                  <!-- Amount in Words -->
-                  <div class="amount-words">
-                    <p class="mb-2">
-                      <strong>In Word:</strong>
-                      {{ convertToWords(getTotalAmount()) }}
-                    </p>
+                  <!-- Footer Note -->
+                  <div class="footer-note">
+                    (বিশেষ দ্রষ্টব্য: অপর পৃষ্ঠায় দস্তখত করিয়া রশিদটি বুঝিয়া
+                    নিবেন।)
                   </div>
 
                   <!-- Report Footer Component -->

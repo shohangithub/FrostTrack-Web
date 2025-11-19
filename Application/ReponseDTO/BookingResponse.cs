@@ -25,7 +25,8 @@ public record BookingDetailResponse(
        string BillType,
        decimal BookingRate,
        decimal BaseQuantity,
-       decimal BaseRate
+       decimal BaseRate,
+       DateTime LastDeliveryDate
   );
 
 public record BookingDetailListResponse(
@@ -39,7 +40,8 @@ public record BookingDetailListResponse(
        string BillType,
        decimal BookingRate,
        decimal BaseQuantity,
-       decimal BaseRate
+       decimal BaseRate,
+       DateTime LastDeliveryDate
   );
 
 public record BookingListResponse(

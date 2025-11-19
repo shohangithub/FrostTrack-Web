@@ -67,6 +67,9 @@ public class BookingService : IBookingService
                     detail.BaseQuantity = (decimal)detail.BookingQuantity;
                     detail.BaseRate = detail.BookingRate;
                 }
+
+                // Calculate LastDeliveryDate based on BillType
+                detail.LastDeliveryDate = CalculateLastDeliveryDate(entity.BookingDate, detail.BillType);
             }
             _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(entity.BookingDetails.ToList());
         }
@@ -95,6 +98,7 @@ public class BookingService : IBookingService
             .ThenInclude(x => x.Product)
             .Include(x => x.BookingDetails)
             .ThenInclude(x => x.BookingUnit)
+            .ThenInclude(x => x.BaseUnit)
             .Include(x => x.Customer)
             .Include(x => x.Branch)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -159,7 +163,8 @@ public class BookingService : IBookingService
                     d.BillType,
                     d.BookingRate,
                     d.BaseQuantity,
-                    d.BaseRate))
+                    d.BaseRate,
+                    d.LastDeliveryDate))
                ))
            .ToListAsync(cancellationToken);
         return response;
@@ -195,12 +200,26 @@ public class BookingService : IBookingService
                 d.BillType,
                 d.BookingRate,
                 d.BaseQuantity,
-                d.BaseRate))
+                d.BaseRate,
+                d.LastDeliveryDate))
             );
 
         var query = _bookingRepository.Query();
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
+    }
+
+    private DateTime CalculateLastDeliveryDate(DateTime bookingDate, string billType)
+    {
+        return billType switch
+        {
+            BillTypes.Hourly => bookingDate.AddHours(1),
+            BillTypes.Daily => bookingDate.AddDays(1),
+            BillTypes.Weekly => bookingDate.AddDays(7),
+            BillTypes.Monthly => bookingDate.AddMonths(1),
+            BillTypes.Yearly => bookingDate.AddYears(1),
+            _ => bookingDate.AddMonths(1) // Default to monthly
+        };
     }
 
     public async Task<string> GenerateBookingNumber(CancellationToken cancellationToken = default)

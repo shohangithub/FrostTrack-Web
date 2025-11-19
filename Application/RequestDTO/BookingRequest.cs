@@ -18,5 +18,6 @@ public record BookingDetailRequest(
        float BookingQuantity,
        decimal BookingRate,
        decimal BaseQuantity,
-       decimal BaseRate
+       decimal BaseRate,
+       DateTime? LastDeliveryDate
   );

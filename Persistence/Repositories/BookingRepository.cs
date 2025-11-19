@@ -146,6 +146,9 @@ public class BookingRepository : IBookingRepository
                     newDetail.BaseRate = item.BookingRate;
                 }
 
+                // Calculate LastDeliveryDate based on BillType
+                newDetail.LastDeliveryDate = CalculateLastDeliveryDate(existingData.BookingDate, newDetail.BillType);
+
                 _defaultValueInjector.InjectCreatingAudit<BookingDetail, Guid>(newDetail);
 
                 existingData.BookingDetails.Add(newDetail);   // EF auto-adds
@@ -176,6 +179,9 @@ public class BookingRepository : IBookingRepository
                 eDetails.BaseRate = item.BookingRate;
             }
 
+            // Recalculate LastDeliveryDate based on BillType
+            eDetails.LastDeliveryDate = CalculateLastDeliveryDate(existingData.BookingDate, eDetails.BillType);
+
             _defaultValueInjector.InjectUpdatingAudit<BookingDetail, Guid>(eDetails);
         }
 
@@ -190,6 +196,19 @@ public class BookingRepository : IBookingRepository
         await _context.SaveChangesAsync(cancellationToken);
 
         return existingData.Adapt<BookingResponse>();
+    }
+
+    private DateTime CalculateLastDeliveryDate(DateTime bookingDate, string billType)
+    {
+        return billType switch
+        {
+            BillTypes.Hourly => bookingDate.AddHours(1),
+            BillTypes.Daily => bookingDate.AddDays(1),
+            BillTypes.Weekly => bookingDate.AddDays(7),
+            BillTypes.Monthly => bookingDate.AddMonths(1),
+            BillTypes.Yearly => bookingDate.AddYears(1),
+            _ => bookingDate.AddMonths(1) // Default to monthly
+        };
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)

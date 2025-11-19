@@ -1,0 +1,43 @@
+<!-- Invoice Header -->
+<div class="invoice-header align-items-center">
+  <div class="company-logo">
+    <img
+      src="assets/images/user.png"
+      alt="Company Logo"
+      class="img-fluid"
+      style="max-height: 60px"
+    />
+  </div>
+  <div class="company-info">
+    <div class="text-center mb-4">
+      <h4 class="company-name">সিলেট কোড স্টোরেজ এন্ড আইস কোম্পানী লিমিটেড</h4>
+      <p class="company-address mb-1">
+        <!-- {{ companyInfo.address }} -->
+        বিসিক, শিল্পনগরী, গোটাটিকর, সিলেট।
+      </p>
+      <p class="company-contact mb-1">
+        ফোনঃ ০১৭১৬ ৭৩৬৬৮২, সুপারভাইজারঃ ০১৭৩৪ ৯৭৩৪৭৪
+      </p>
+    </div>
+  </div>
+  <!-- Company Information -->
+
+  <div class="invoice-info">
+    <div class="invoice-meta">
+      <!-- Barcode Section -->
+      @if (InvoiceNumber) {
+      <div class="barcode-section">
+        <app-barcode
+          [value]="InvoiceNumber"
+          [format]="'CODE128'"
+          [width]="2"
+          [height]="50"
+          [displayValue]="false"
+          [showText]="true"
+        ></app-barcode>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+<!-- End of Invoice Header -->

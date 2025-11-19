@@ -1,6 +1,6 @@
 import { DatePipe, CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgxPrintModule } from 'ngx-print';
 import { BookingService } from '../../services/booking.service';
 import { IBookingResponse } from '../../models/booking.interface';
@@ -15,11 +15,8 @@ import {
 import { ILookup } from '@core/models/lookup';
 import { Subject } from 'rxjs';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ReportHeaderComponent } from '@shared/components/reports/report-header.component/report-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
-
-declare const JsBarcode: any;
-
+import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 @Component({
   selector: 'app-booking-invoice-print',
   templateUrl: './booking-invoice-print.component.html',
@@ -29,10 +26,9 @@ declare const JsBarcode: any;
     NgxPrintModule,
     DatePipe,
     CommonModule,
-    RouterLink,
     NgSelectModule,
     ReactiveFormsModule,
-    ReportHeaderComponent,
+    ReportInvoiceHeaderComponent,
     ReportFooterComponent,
   ],
 })
@@ -96,10 +92,6 @@ export class BookingInvoicePrintComponent implements OnInit {
       next: (response: IBookingResponse) => {
         this.bookingInvoice = response;
         this.loadingIndicator = false;
-
-        setTimeout(() => {
-          this.generateBarcode();
-        }, 100);
       },
       error: (error) => {
         console.error('Failed to load booking data:', error);
@@ -107,38 +99,6 @@ export class BookingInvoicePrintComponent implements OnInit {
         this.toastr.error('Failed to load booking data');
       },
     });
-  }
-
-  generateBarcode(): void {
-    if (typeof JsBarcode === 'undefined') {
-      const script = document.createElement('script');
-      script.src =
-        'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
-      script.onload = () => {
-        this.renderBarcode();
-      };
-      document.head.appendChild(script);
-    } else {
-      this.renderBarcode();
-    }
-  }
-
-  renderBarcode(): void {
-    const barcodeElement = document.querySelector(
-      '[id^="barcode-"]'
-    ) as SVGElement;
-    if (
-      barcodeElement &&
-      this.bookingInvoice &&
-      typeof JsBarcode !== 'undefined'
-    ) {
-      JsBarcode(barcodeElement, this.bookingInvoice.bookingNumber, {
-        format: 'CODE128',
-        width: 2,
-        height: 50,
-        displayValue: false,
-      });
-    }
   }
 
   printInvoice(): void {
@@ -167,6 +127,17 @@ export class BookingInvoicePrintComponent implements OnInit {
       (total, detail) => total + detail.bookingQuantity * detail.bookingRate,
       0
     );
+  }
+
+  getLastDeliveryDate(): Date | null {
+    if (!this.bookingInvoice?.bookingDetails?.length) {
+      return null;
+    }
+    // Return the LastDeliveryDate from the first booking detail
+    // All details should have the same LastDeliveryDate based on the booking date
+    const lastDeliveryDate =
+      this.bookingInvoice.bookingDetails[0].lastDeliveryDate;
+    return lastDeliveryDate ? new Date(lastDeliveryDate) : null;
   }
 
   convertToWords(amount: number): string {

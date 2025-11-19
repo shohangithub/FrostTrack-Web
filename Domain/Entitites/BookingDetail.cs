@@ -16,4 +16,7 @@ public class BookingDetail : AuditableEntity<Guid>
     public required decimal BaseQuantity { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal BaseRate { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime LastDeliveryDate { get; set; }
 }

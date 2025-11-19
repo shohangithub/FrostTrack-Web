@@ -22,6 +22,7 @@ export interface IBookingDetailRequest {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  lastDeliveryDate?: string;
 }
 
 export interface IBookingResponse {
@@ -48,6 +49,7 @@ export interface IBookingDetailResponse {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  lastDeliveryDate?: string;
 }
 
 export interface IBookingListResponse {
@@ -75,4 +77,5 @@ export interface IBookingDetailListResponse {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  lastDeliveryDate?: string;
 }
