@@ -175,5 +175,56 @@ namespace FrostTrack.Server.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Generate booking invoice HTML
+        /// </summary>
+        /// <param name="bookingId">The booking ID</param>
+        /// <returns>HTML content for the booking invoice</returns>
+        [HttpGet("booking-invoice/{bookingId}")]
+        public async Task<ActionResult<string>> GenerateBookingInvoiceHtml(Guid bookingId)
+        {
+            try
+            {
+                var bookingData = await _printService.GetBookingInvoiceDataAsync(bookingId);
+
+                var branchId = 1;
+                var printSettings = await _printService.GetPrintSettingsByBranchAsync(branchId);
+
+                var html = await _printService.GenerateBookingInvoiceHtmlAsync(bookingData, printSettings);
+                return Ok(html);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get booking invoice data for preview
+        /// </summary>
+        /// <param name="bookingId">The booking ID</param>
+        /// <returns>Booking invoice data</returns>
+        [HttpGet("booking-data/{bookingId}")]
+        public async Task<ActionResult<BookingInvoiceData>> GetBookingInvoiceData(Guid bookingId)
+        {
+            try
+            {
+                var data = await _printService.GetBookingInvoiceDataAsync(bookingId);
+                return Ok(data);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -1,0 +1,79 @@
+.invoice-print-container {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 16px;
+        color: #666;
+    }
+}
+
+.print-actions {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    button {
+        min-width: 120px;
+
+        i {
+            margin-right: 5px;
+        }
+    }
+}
+
+.invoice-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 210mm;
+    margin: 0 auto;
+
+    ::ng-deep {
+        .invoice-container {
+            margin: 0;
+            padding: 0;
+        }
+    }
+}
+
+@media print {
+    .invoice-print-container {
+        background-color: white;
+        padding: 0;
+    }
+
+    .print-actions {
+        display: none !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .invoice-content {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+    }
+}

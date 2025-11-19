@@ -1,0 +1,21 @@
+<div class="invoice-print-container">
+  @if (isLoading) {
+  <div class="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <p>Loading invoice...</p>
+  </div>
+  } @else {
+  <div class="print-actions no-print">
+    <button class="btn btn-primary" (click)="print()">
+      <i class="fas fa-print"></i> Print
+    </button>
+    <button class="btn btn-secondary ms-2" (click)="close()">
+      <i class="fas fa-times"></i> Close
+    </button>
+  </div>
+
+  <div class="invoice-content" [innerHTML]="invoiceHtml"></div>
+  }
+</div>

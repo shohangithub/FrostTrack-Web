@@ -47,5 +47,20 @@ namespace Persistence.Repositories
                 .Include(p => p.Branch)
                 .FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken);
         }
+
+        public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Bookings
+                .Include(b => b.Customer)
+                .Include(b => b.Branch)
+                .Include(b => b.BookingDetails)
+                    .ThenInclude(bd => bd.Product)
+                .Include(b => b.BookingDetails)
+                    .ThenInclude(bd => bd.BookingUnit)
+                        .ThenInclude(bu => bu!.BaseUnit)
+                .Include(b => b.BookingDetails)
+                    .ThenInclude(bd => bd.BookingUnit)
+                .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+        }
     }
 }
