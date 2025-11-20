@@ -839,7 +839,7 @@ public class ApplicationDbContextInitializer
         new Stock
         {
             ProductId = _context.Products.Select(p => p.Id).ToArray()[0],
-            UnitConversionId = unitConversionId,
+            UnitId = unitConversionId,
             StockQuantity = 100,
             LastPurchaseRate = 50.00m,
             BranchId = branchId,
@@ -849,7 +849,7 @@ public class ApplicationDbContextInitializer
         new Stock
         {
             ProductId = _context.Products.Select(p => p.Id).ToArray()[1],
-            UnitConversionId = _unitConversionId,
+            UnitId = _unitConversionId,
             StockQuantity = 250,
             LastPurchaseRate = 20.50m,
             BranchId = _branchId,
@@ -859,7 +859,7 @@ public class ApplicationDbContextInitializer
         new Stock
         {
             ProductId = _context.Products.Select(p => p.Id).ToArray()[2],
-            UnitConversionId = _unitConversionId,
+            UnitId = _unitConversionId,
             StockQuantity = 75,
             LastPurchaseRate = 15.75m,
             BranchId = _branchId,
@@ -869,7 +869,7 @@ public class ApplicationDbContextInitializer
         new Stock
         {
             ProductId = _context.Products.Select(p => p.Id).ToArray()[3],
-            UnitConversionId = _unitConversionId,
+            UnitId = _unitConversionId,
             StockQuantity = 500,
             LastPurchaseRate = 5.25m,
             BranchId = _branchId,
@@ -879,7 +879,7 @@ public class ApplicationDbContextInitializer
         new Stock
         {
             ProductId = _context.Products.Select(p => p.Id).ToArray()[4],
-            UnitConversionId = _unitConversionId,
+            UnitId = _unitConversionId,
             StockQuantity = 300,
             LastPurchaseRate = 32.00m,
             BranchId = _branchId,

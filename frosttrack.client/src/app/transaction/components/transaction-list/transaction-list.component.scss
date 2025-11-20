@@ -1,0 +1,52 @@
+.main-content {
+    padding: 20px;
+}
+
+.card-label {
+    display: block;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.ngxTableHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.table-search-area {
+    flex: 1;
+}
+
+.search-field {
+    width: 100%;
+    padding: 8px 12px 8px 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    color: #666;
+}
+
+.rounded-button {
+    border-radius: 20px;
+    padding: 8px 20px;
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+.badge {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}

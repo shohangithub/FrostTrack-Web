@@ -6,9 +6,9 @@ public class Damage : AuditableEntity<int>
     public required string DamageNumber { get; set; }
     public required DateTime DamageDate { get; set; }
     public required int ProductId { get; set; }
-    public Product Product { get; set; }
+    public Product? Product { get; set; }
     public required int UnitId { get; set; }
-    public UnitConversion Unit { get; set; }
+    public UnitConversion? Unit { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal Quantity { get; set; }
     [Column(TypeName = "decimal(10, 2)")]

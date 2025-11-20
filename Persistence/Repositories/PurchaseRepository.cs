@@ -125,7 +125,7 @@ public class PurchaseRepository : IPurchaseRepository
             {
                 BranchId = request.BranchId,
                 ProductId = stock.ProductId,
-                UnitConversionId = conversionUnit.Id,
+                UnitId = conversionUnit.Id,
                 StockQuantity = baseQuantity,
                 LastPurchaseRate = requestStock.purchaseRate,
             };

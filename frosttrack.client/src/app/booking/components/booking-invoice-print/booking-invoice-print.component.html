@@ -115,19 +115,17 @@
                       <tr>
                         <td class="info-label">পণ্যের মালিকানার নাম :</td>
                         <td class="info-value">
-                          {{ bookingInvoice.customer?.customerName || "" }}
+                          {{ bookingInvoice.customer.customerName || "" }}
                         </td>
                         <td class="info-label">জমাদানের তারিখ :</td>
                         <td class="info-value">
-                          {{
-                            bookingInvoice?.bookingDate | date : "dd/MM/yyyy"
-                          }}
+                          {{ bookingInvoice.bookingDate | date : "dd/MM/yyyy" }}
                         </td>
                       </tr>
                       <tr>
                         <td class="info-label">মোবাইল/ফোন</td>
                         <td class="info-value">
-                          {{ bookingInvoice.customer?.customerMobile || "" }}
+                          {{ bookingInvoice.customer.customerMobile || "" }}
                         </td>
                         <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ :</td>
                         <td class="info-value">
@@ -137,7 +135,7 @@
                       <tr>
                         <td class="info-label">প্রতিষ্ঠান/ঠিকানা :</td>
                         <td class="info-value" colspan="3">
-                          {{ bookingInvoice.customer?.address || "" }}
+                          {{ bookingInvoice.customer.address || "" }}
                         </td>
                       </tr>
                     </table>
@@ -160,13 +158,13 @@
                       <tbody>
                         <tr
                           *ngFor="
-                            let item of bookingInvoice?.bookingDetails;
+                            let item of bookingInvoice.bookingDetails;
                             let i = index
                           "
                         >
-                          <td>{{ item.product?.productName || "" }}</td>
+                          <td>{{ item.product.productName || "" }}</td>
                           <td class="text-center">
-                            {{ item.bookingUnit?.unitName || "" }}
+                            {{ item.bookingUnit.unitName || "" }}
                           </td>
                           <td class="text-center">
                             {{ item.bookingQuantity | number : "1.0-0" }}

@@ -4,11 +4,11 @@
 public class PurchaseDetail : AuditableEntity<long>
 {
     public long PurchaseId { get; set; }
-    public Purchase Purchase { get; set; }
+    public Purchase? Purchase { get; set; }
     public required int ProductId { get; set; }
-    public Product Product { get; set; }
+    public Product? Product { get; set; }
     public int PurchaseUnitId { get; set; }
-    public UnitConversion PurchaseUnit { get; set; }
+    public UnitConversion? PurchaseUnit { get; set; }
     public required float PurchaseQuantity { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal PurchaseRate { get; set; }

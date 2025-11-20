@@ -1,0 +1,209 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Transaction Records</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            (keyup)="filterDatatable($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            [hidden]="!isRowSelected"
+                            class="btn btn-icon icon-left btn-danger rounded-button"
+                            (click)="deleteSelected()"
+                          >
+                            <i class="material-icons">delete</i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-6 text-end">
+                <button
+                  class="btn btn-primary rounded-button"
+                  [routerLink]="['/transaction/new']"
+                >
+                  <i class="material-icons">add</i> New Transaction
+                </button>
+              </div>
+            </div>
+
+            <ngx-datatable
+              #table
+              class="material"
+              [rows]="data"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="60"
+              [footerHeight]="80"
+              rowHeight="auto"
+              [externalPaging]="true"
+              [limit]="pagination.pageSize"
+              [offset]="pagination.pageIndex"
+              [count]="paging?.totalData ?? 0"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+              (page)="changePagination($event)"
+              (sort)="onSortring($event)"
+            >
+              <ngx-datatable-column
+                name="Transaction Code"
+                prop="transactionCode"
+                [flexGrow]="1"
+              ></ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Type"
+                prop="transactionType"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.transactionType }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Flow"
+                prop="transactionFlow"
+                [flexGrow]="0.8"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span
+                    class="badge"
+                    [ngClass]="{
+                      'bg-success': row.transactionFlow === 'IN',
+                      'bg-danger': row.transactionFlow === 'OUT'
+                    }"
+                  >
+                    {{ row.transactionFlow }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Date"
+                prop="transactionDate"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Net Amount"
+                prop="netAmount"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.netAmount | number : "1.2-2" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Payment Method"
+                prop="paymentMethod"
+                [flexGrow]="1"
+              ></ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Status"
+                prop="isDeleted"
+                [flexGrow]="0.8"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  @if (row.isDeleted) {
+                  <span class="badge bg-danger">Deleted</span>
+                  } @else if (row.isArchived) {
+                  <span class="badge bg-warning">Archived</span>
+                  } @else {
+                  <span class="badge bg-success">Active</span>
+                  }
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Actions"
+                [sortable]="false"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div class="btn-group" role="group">
+                    @if (!row.isDeleted) {
+                    <button
+                      class="btn btn-sm btn-primary"
+                      (click)="editRow(row)"
+                      title="Edit"
+                    >
+                      <i class="material-icons">edit</i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="softDeleteRow(row)"
+                      title="Soft Delete"
+                    >
+                      <i class="material-icons">delete_outline</i>
+                    </button>
+                    @if (!row.isArchived) {
+                    <button
+                      class="btn btn-sm btn-info"
+                      (click)="archiveRow(row)"
+                      title="Archive"
+                    >
+                      <i class="material-icons">archive</i>
+                    </button>
+                    } @else {
+                    <button
+                      class="btn btn-sm btn-secondary"
+                      (click)="unarchiveRow(row)"
+                      title="Unarchive"
+                    >
+                      <i class="material-icons">unarchive</i>
+                    </button>
+                    } } @else {
+                    <button
+                      class="btn btn-sm btn-success"
+                      (click)="restoreRow(row)"
+                      title="Restore"
+                    >
+                      <i class="material-icons">restore</i>
+                    </button>
+                    }
+                    <button
+                      class="btn btn-sm btn-danger"
+                      (click)="delete(row)"
+                      title="Permanent Delete"
+                    >
+                      <i class="material-icons">delete_forever</i>
+                    </button>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

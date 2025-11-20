@@ -1,453 +1,438 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import {
-  DatatableComponent,
-  NgxDatatableModule,
-} from '@swimlane/ngx-datatable';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   FormArray,
-  FormsModule,
+  FormBuilder,
+  FormGroup,
   ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   Validators,
+  FormsModule,
 } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrModule, ToastrService } from 'ngx-toastr';
-import { ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { formatErrorMessage } from 'app/utils/server-error-handler';
-import { Subject } from 'rxjs';
-import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
-import {
-  IDeliveryListResponse,
-  IDeliveryRequest,
-  IDeliveryResponse,
-  ICustomerStockResponse,
-} from 'app/product-delivery/models/product-delivery.interface';
-import { CodeResponse } from '@core/models/code-response';
-import { BranchService } from 'app/administration/services/branch.service';
-import { ILookup } from '@core/models/lookup';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { AuthService } from '@core/service/auth.service';
-import { LayoutService } from '@core/service/layout.service';
-import { UnitConversionService } from 'app/common/services/unit-conversion.service';
-import { BookingService } from 'app/booking/services/booking.service';
+import { ToastrService } from 'ngx-toastr';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DeliveryService } from 'app/delivery/services/delivery.service';
+import {
+  IBookingForDeliveryResponse,
+  IDeliveryRequest,
+} from 'app/delivery/models/delivery.interface';
+import Swal from 'sweetalert2';
+import { MessageHub } from '@config/message-hub';
+import { SwalConfirm } from 'app/theme-config';
 
 @Component({
-  selector: 'app-product-delivery',
-  templateUrl: './product-delivery.component.html',
+  selector: 'app-delivery',
   standalone: true,
-  imports: [
-    NgxDatatableModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ToastrModule,
-    CommonModule,
-    NgSelectModule,
-  ],
-  providers: [DeliveryService, AuthService, BookingService],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  templateUrl: './product-delivery.component.html',
 })
 export class DeliveryComponent implements OnInit {
-  @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
-  rows = [];
-  scrollBarHorizontal = window.innerWidth < 1200;
-  data: IDeliveryListResponse[] = [];
-  filteredData: any[] = [];
-  loadingIndicator = true;
-  isRowSelected = false;
-  selectedOption!: string;
-  reorderable = true;
-  selected: IDeliveryListResponse[] = [];
-  branchs: ILookup<number>[] = [];
-  selectedBranch!: number;
-
-  register!: UntypedFormGroup;
-  productForm!: UntypedFormGroup;
-  isLoading = false;
-  isSubmitted = false;
-  private generatedCode: string = '';
-  isGeneratingCode = false;
-  isMainBranch: boolean = false;
-  private branchSubject: Subject<number> = new Subject<number>();
-
-  customerStockProducts: ICustomerStockResponse[] = [];
-  productLoading = false;
-  bookings: ILookup<string>[] = [];
+  deliveryForm!: FormGroup;
+  bookingData: IBookingForDeliveryResponse | null = null;
+  bookings: { value: string; text: string }[] = [];
   bookingLoading = false;
-  productUnits: ILookup<number>[] = [];
-  productUnitLoading = false;
+  isLoading = false;
+  isSubmitting = false;
+  deliveryNumber = '';
 
-  private editableBookingId?: string;
-  private bookingSubject: Subject<string> = new Subject<string>();
-
-  private editableProductUnitId?: number;
-  private productUnitSubject: Subject<number> = new Subject<number>();
+  paymentMethods = [
+    { value: 'CASH', label: 'Cash' },
+    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+    { value: 'CHEQUE', label: 'Cheque' },
+    { value: 'MOBILE_BANKING', label: 'Mobile Banking' },
+  ];
 
   constructor(
-    private fb: UntypedFormBuilder,
-    private modalService: NgbModal,
-    private toastr: ToastrService,
+    private fb: FormBuilder,
     private deliveryService: DeliveryService,
-    private branchService: BranchService,
-    private bookingService: BookingService,
-    private route: ActivatedRoute,
-    private authService: AuthService,
-    private layoutService: LayoutService,
-    private unitConversionService: UnitConversionService
-  ) {
-    window.onresize = () => {
-      this.scrollBarHorizontal = window.innerWidth < 1200;
-    };
-    this.layoutService.loadCurrentRoute();
-  }
+    private toastr: ToastrService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
-    this.getUserBranch();
-    this.initFormData();
-    this.fetchBranchLookup();
-    this.fetchBookingLookup();
-    this.fetchProductUnitLookup();
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.getExistingData(id);
+    this.initForm();
+    this.generateDeliveryNumber();
+    this.loadBookingLookup();
 
-    this.branchSubject.subscribe((value: number) => {
-      if (value === 1) {
-        this.isMainBranch = true;
-        this.register.get('branchId')?.setValue(value);
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.loadExistingDelivery(id);
+    }
+  }
+
+  initForm() {
+    this.deliveryForm = this.fb.group({
+      deliveryNumber: ['', Validators.required],
+      deliveryDate: [
+        new Date().toISOString().split('T')[0],
+        Validators.required,
+      ],
+      bookingId: ['', Validators.required],
+      notes: [''],
+      chargeAmount: [0, [Validators.required, Validators.min(0)]],
+      totalPreviousPayments: [0], // Track previous payments
+      remainingBalance: [0], // Balance after deducting previous payments
+      deliveryDetails: this.fb.array([]),
+      // Transaction fields
+      createTransaction: [false],
+      transactionAmount: [
+        null,
+        [
+          Validators.min(0),
+          Validators.max(
+            this.deliveryForm?.get('remainingBalance')?.value || 0
+          ),
+        ],
+      ],
+      paymentMethod: ['CASH'],
+      transactionNotes: [''],
+    });
+
+    // Watch for booking changes
+    this.deliveryForm.get('bookingId')?.valueChanges.subscribe((bookingId) => {
+      if (bookingId) {
+        this.onBookingChange(bookingId);
       }
     });
-
-    this.bookingSubject.subscribe((value: string) => {
-      this.register
-        .get('booking')
-        ?.setValue(this.bookings.find((x) => x.value === value));
-    });
-
-    this.productUnitSubject.subscribe((value: number) => {
-      this.productForm
-        .get('deliveryUnit')
-        ?.setValue(this.productUnits.find((x) => x.value == value));
-    });
   }
 
-  getUserBranch() {
-    this.selectedBranch = this.authService.currentBranchId;
+  get deliveryDetails(): FormArray {
+    return this.deliveryForm.get('deliveryDetails') as FormArray;
   }
 
-  initFormData() {
-    this.initProductForm();
-    this.register = this.fb.group({
-      id: ['00000000-0000-0000-0000-000000000000'],
-      deliveryNumber: ['', [Validators.required]],
-      branchId: [this.selectedBranch, [Validators.required]],
-      deliveryDate: [new Date().systemFormat(), [Validators.required]],
-      booking: [null, [Validators.required]],
-      notes: [''],
-      chargeAmount: [0, [Validators.required]],
-      adjustmentValue: [0],
-      discountAmount: [0],
-      paidAmount: [0, [Validators.required]],
-      deliveryDetails: this.fb.array([]),
-    });
-    this.generateCode();
-  }
-
-  initProductForm() {
-    this.productForm = this.fb.group({
-      id: ['00000000-0000-0000-0000-000000000000'],
-      deliveryId: ['00000000-0000-0000-0000-000000000000'],
-      product: [null, [Validators.required]],
-      chargeAmount: [0, [Validators.required]],
-      deliveryUnit: [null, [Validators.required]],
-      deliveryQuantity: [null, [Validators.required]],
-      baseQuantity: [0],
-      adjustmentValue: [0],
-      availableStock: [{ value: 0, disabled: true }],
+  generateDeliveryNumber() {
+    this.deliveryService.getDeliveryNumber().subscribe({
+      next: (response) => {
+        this.deliveryNumber = response.code;
+        this.deliveryForm.patchValue({ deliveryNumber: response.code });
+      },
+      error: () => {
+        this.toastr.error('Failed to generate delivery number');
+      },
     });
   }
 
-  getExistingData(id: any) {
+  loadBookingLookup() {
+    this.bookingLoading = true;
+    this.deliveryService.getBookingLookup().subscribe({
+      next: (bookings) => {
+        this.bookings = bookings;
+        this.bookingLoading = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to load bookings');
+        this.bookingLoading = false;
+      },
+    });
+  }
+
+  onBookingChange(bookingId: string) {
+    if (!bookingId) return;
+
+    const selectedBooking = this.bookings.find((b) => b.value === bookingId);
+    if (!selectedBooking) return;
+
     this.isLoading = true;
-    this.deliveryService.getById(id).subscribe({
-      next: (response: IDeliveryResponse) => {
-        this.register.setValue({
-          id: response.id,
-          deliveryNumber: response.deliveryNumber,
-          branchId: response.branchId,
-          deliveryDate: response.deliveryDate,
-          notes: response.notes || '',
-          chargeAmount: response.chargeAmount,
-          adjustmentValue: response.adjustmentValue,
-          discountAmount: response.discountAmount,
-          paidAmount: response.paidAmount,
-          deliveryDetails: [],
-          booking:
-            this.bookings.find((x) => x.value === response.bookingId) || null,
-        });
+    this.deliveryService.getBookingForDelivery(selectedBooking.text).subscribe({
+      next: (booking) => {
+        this.bookingData = booking;
+        this.populateDeliveryDetails(booking);
 
-        for (const detail of response.deliveryDetails) {
-          const item = this.fb.group({
-            id: [detail.id],
-            bookingDetailId: [detail.bookingDetailId, [Validators.required]],
-            productId: [detail.productId, [Validators.required]],
-            productName: [detail.productName, [Validators.required]],
-            deliveryUnitId: [detail.deliveryUnitId, [Validators.required]],
-            deliveryUnitName: [
-              detail.deliveryUnitName || '',
-              [Validators.required],
-            ],
-            chargeAmount: [detail.chargeAmount, [Validators.required]],
-            deliveryQuantity: [detail.deliveryQuantity, [Validators.required]],
-            baseQuantity: [detail.baseQuantity],
-            adjustmentValue: [detail.adjustmentValue],
-          });
-          this.deliveryDetails.push(item);
-        }
-
-        this.editableBookingId = response.bookingId;
-        this.generatedCode = response.deliveryNumber;
-
-        // Load customer stock after setting booking
-        if (response.booking?.customerId) {
-          this.loadCustomerStock(response.booking.customerId);
-        }
+        // Fetch previous payments for this booking
+        this.fetchPreviousPayments(bookingId);
 
         this.isLoading = false;
       },
       error: (err) => {
-        this.toastr.error(formatErrorMessage(err));
+        this.isLoading = false;
+        this.toastr.error(err.error?.message || 'Booking not found');
+      },
+    });
+  }
+
+  fetchPreviousPayments(bookingId: string) {
+    this.deliveryService.getBookingPreviousPayments(bookingId).subscribe({
+      next: (totalPaid) => {
+        this.deliveryForm.patchValue(
+          { totalPreviousPayments: totalPaid },
+          { emitEvent: false }
+        );
+        // Recalculate after updating previous payments
+        this.calculateTotalCharge();
+      },
+      error: () => {
+        // If fetching fails, default to 0
+        this.deliveryForm.patchValue(
+          { totalPreviousPayments: 0 },
+          { emitEvent: false }
+        );
+        this.calculateTotalCharge();
+      },
+    });
+  }
+
+  populateDeliveryDetails(booking: IBookingForDeliveryResponse) {
+    this.deliveryDetails.clear();
+
+    booking.bookingDetails.forEach((detail) => {
+      if (detail.remainingQuantity > 0) {
+        const detailForm = this.fb.group({
+          bookingDetailId: [detail.id, Validators.required],
+          productId: [detail.productId],
+          productName: [detail.productName],
+          bookingUnitId: [detail.bookingUnitId],
+          bookingQuantity: [detail.bookingQuantity],
+          totalDeliveredQuantity: [detail.totalDeliveredQuantity],
+          remainingQuantity: [detail.remainingQuantity],
+          totalCharge: [detail.totalCharge],
+          deliveryUnitId: [detail.bookingUnitId, Validators.required],
+          deliveryQuantity: [
+            null,
+            [Validators.min(0), Validators.max(detail.remainingQuantity)],
+          ], // No required, allow 0
+          baseQuantity: [0],
+          chargeAmount: [0, [Validators.min(0)]],
+          availableUnits: [detail.availableUnits],
+        });
+
+        // // Watch for unit or quantity changes to calculate base quantity and charge
+        // detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
+        //   this.calculateBaseQuantity(detailForm);
+        //   this.calculateItemCharge(detailForm);
+        //   this.calculateTotalCharge();
+        // });
+
+        // detailForm.get('deliveryUnitId')?.valueChanges.subscribe(() => {
+        //   this.calculateBaseQuantity(detailForm);
+        // });
+
+        this.deliveryDetails.push(detailForm);
+      }
+    });
+  }
+
+  calculateBaseQuantity(detailForm: FormGroup) {
+    const quantity = detailForm.get('deliveryQuantity')?.value || 0;
+    const unitId = detailForm.get('deliveryUnitId')?.value;
+    const units = detailForm.get('availableUnits')?.value || [];
+
+    const selectedUnit = units.find((u: any) => u.id === unitId);
+    if (selectedUnit) {
+      const baseQty = quantity * selectedUnit.conversionRate;
+      detailForm.patchValue({ baseQuantity: baseQty }, { emitEvent: false });
+    }
+  }
+
+  // calculateItemCharge(detailForm: FormGroup) {
+  //   // const quantity = detailForm.get('deliveryQuantity')?.value || 0;
+  //   // const chargePerUnit = detailForm.get('chargePerUnit')?.value || 0;
+  //   // const totalCharge = quantity * chargePerUnit;
+  //   const totalCharge = detailForm.get('totalCharge')?.value || 0;
+  //   detailForm.patchValue({ chargeAmount: totalCharge }, { emitEvent: false });
+  // }
+
+  calculateTotalCharge() {
+    let total = 0;
+    this.deliveryDetails.controls.forEach((control) => {
+      const charge = control.get('totalCharge')?.value || 0;
+      total += charge;
+    });
+
+    this.deliveryForm.patchValue({ chargeAmount: total }, { emitEvent: false });
+
+    // Calculate remaining balance: total - previous payments
+    const previousPayments =
+      this.deliveryForm.get('totalPreviousPayments')?.value || 0;
+    const remainingBalance = total - previousPayments;
+
+    this.deliveryForm.patchValue(
+      { remainingBalance: remainingBalance },
+      { emitEvent: false }
+    );
+
+    // Update transaction amount with remaining balance if transaction is enabled
+    if (this.deliveryForm.get('createTransaction')?.value) {
+      this.deliveryForm.patchValue(
+        { transactionAmount: remainingBalance > 0 ? remainingBalance : 0 },
+        { emitEvent: false }
+      );
+    }
+  }
+
+  validateQuantity(index: number) {
+    const detail = this.deliveryDetails.at(index);
+    const deliveryQty = detail.get('deliveryQuantity')?.value || 0;
+    const remainingQty = detail.get('remainingQuantity')?.value || 0;
+
+    if (deliveryQty > remainingQty) {
+      this.toastr.warning(
+        `Delivery quantity cannot exceed remaining quantity (${remainingQty})`
+      );
+      detail.patchValue({ deliveryQuantity: remainingQty });
+    }
+  }
+
+  onSubmit() {
+    // Validate form - only check booking is selected
+    if (!this.deliveryForm.get('bookingId')?.value) {
+      this.toastr.error('Please select a booking');
+      return;
+    }
+
+    if (this.deliveryDetails.length === 0) {
+      this.toastr.error('No items available for delivery');
+      return;
+    }
+
+    // Check if at least one item has quantity > 0
+    const hasDeliveryQuantity = this.deliveryDetails.controls.some(
+      (control) => {
+        const deliveryQty = control.get('deliveryQuantity')?.value || 0;
+        return deliveryQty > 0;
+      }
+    );
+
+    if (!hasDeliveryQuantity) {
+      this.toastr.error('Please enter delivery quantity for at least one item');
+      return;
+    }
+
+    // Check if all remaining quantities will be zero (full delivery completed)
+    const allRemainingWillBeZero = this.deliveryDetails.controls
+      .filter((control) => (control.get('deliveryQuantity')?.value || 0) > 0)
+      .every((control) => {
+        const deliveryQty = control.get('deliveryQuantity')?.value || 0;
+        const remainingQty = control.get('remainingQuantity')?.value || 0;
+        return remainingQty - deliveryQty === 0;
+      });
+
+    // Validate quantities (skip items with zero delivery qty)
+    let hasInvalidQty = false;
+    this.deliveryDetails.controls.forEach((control, index) => {
+      const qty = control.get('deliveryQuantity')?.value || 0;
+      const remainingQty = control.get('remainingQuantity')?.value || 0;
+
+      if (qty > 0 && qty > remainingQty) {
+        hasInvalidQty = true;
+        this.toastr.error(
+          `Item ${
+            index + 1
+          }: Delivery quantity cannot exceed remaining quantity (${remainingQty})`
+        );
+      }
+    });
+
+    if (hasInvalidQty) return;
+    // If all remaining quantities will be zero and no payment, show confirmation
+    const formData = this.deliveryForm.value;
+    const isShowConfirm =
+      allRemainingWillBeZero &&
+      !this.deliveryForm.get('createTransaction')?.value;
+
+    if (isShowConfirm) {
+      Swal.fire({
+        title: 'Confirmation',
+        text: 'This delivery will complete all remaining quantities without collecting payment. Are you sure?',
+        showCancelButton: true,
+        confirmButtonColor: SwalConfirm.confirmButtonColor,
+        cancelButtonColor: SwalConfirm.cancelButtonColor,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+      }).then((result) => {
+        if (result.value) {
+          this.submitDelivery(formData);
+        }
+      });
+    } else {
+      this.submitDelivery(formData);
+    }
+  }
+
+  submitDelivery(formData: any) {
+    this.isSubmitting = true;
+    // Prepare payload (filter out zero quantity items)
+    const payload: IDeliveryRequest = {
+      deliveryNumber: formData.deliveryNumber,
+      deliveryDate: formData.deliveryDate,
+      bookingId: formData.bookingId,
+      notes: formData.notes,
+      chargeAmount: formData.chargeAmount,
+      adjustmentValue: 0, // Always 0 as per requirement
+      deliveryDetails: formData.deliveryDetails
+        .filter((d: any) => (d.deliveryQuantity || 0) > 0) // Only include items with qty > 0
+        .map((d: any) => ({
+          bookingDetailId: d.bookingDetailId,
+          deliveryUnitId: d.deliveryUnitId,
+          deliveryQuantity: d.deliveryQuantity,
+          baseQuantity: d.baseQuantity,
+          chargeAmount: d.chargeAmount,
+          adjustmentValue: 0,
+        })),
+      createTransaction: formData.createTransaction,
+      transactionAmount: formData.createTransaction
+        ? formData.transactionAmount
+        : undefined,
+      paymentMethod: formData.createTransaction
+        ? formData.paymentMethod
+        : undefined,
+      transactionNotes: formData.createTransaction
+        ? formData.transactionNotes
+        : undefined,
+    };
+
+    const id = this.route.snapshot.paramMap.get('id');
+    const action = id
+      ? this.deliveryService.update(id, payload)
+      : this.deliveryService.create(payload);
+
+    action.subscribe({
+      next: () => {
+        this.toastr.success(
+          `Delivery ${id ? 'updated' : 'created'} successfully`
+        );
+        this.router.navigate(['/product-delivery/list']);
+      },
+      error: (err) => {
+        this.toastr.error(err.error?.message || 'Failed to save delivery');
+        this.isSubmitting = false;
+      },
+    });
+  }
+
+  loadExistingDelivery(id: string) {
+    // Implementation for loading existing delivery for edit
+    this.isLoading = true;
+    this.deliveryService.getById(id).subscribe({
+      next: (delivery) => {
+        // Load and populate form
+        this.deliveryForm.patchValue({
+          deliveryNumber: delivery.deliveryNumber,
+          deliveryDate: delivery.deliveryDate,
+          bookingId: delivery.bookingId,
+          notes: delivery.notes,
+          chargeAmount: delivery.chargeAmount,
+        });
+
+        // Load booking details
+        if (delivery.bookingId) {
+          this.deliveryForm.patchValue({ bookingId: delivery.bookingId });
+          this.onBookingChange(delivery.bookingId);
+        }
+
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to load delivery');
         this.isLoading = false;
       },
     });
   }
 
-  fetchBranchLookup() {
-    this.branchService.getLookup().subscribe({
-      next: (response: ILookup<number>[]) => {
-        this.branchs = response;
-        this.branchSubject.next(this.selectedBranch);
-        this.loadingIndicator = false;
-      },
-      error: () => {
-        this.loadingIndicator = false;
-      },
-    });
-  }
-
-  fetchBookingLookup() {
-    this.bookingLoading = true;
-    this.bookingService.getLookup().subscribe({
-      next: (response: ILookup<string>[]) => {
-        this.bookings = response;
-        if (this.editableBookingId) {
-          this.bookingSubject.next(this.editableBookingId);
-        }
-        this.bookingLoading = false;
-      },
-      error: () => {
-        this.bookingLoading = false;
-      },
-    });
-  }
-
-  fetchProductUnitLookup() {
-    this.productUnitLoading = true;
-    this.unitConversionService.getLookup().subscribe({
-      next: (response: ILookup<number>[]) => {
-        this.productUnits = response;
-        if (this.editableProductUnitId) {
-          this.productUnitSubject.next(this.editableProductUnitId);
-        }
-        this.productUnitLoading = false;
-      },
-      error: () => {
-        this.productUnitLoading = false;
-      },
-    });
-  }
-
-  onBookingChange() {
-    const booking = this.register.get('booking')?.value;
-    if (booking && booking.customerId) {
-      // Note: ILookup doesn't have customerId, we need the full booking object
-      // For now, we'll need to handle this differently
-      this.productForm.reset();
-      this.initProductForm();
-    } else {
-      this.customerStockProducts = [];
-    }
-  }
-
-  loadCustomerStock(customerId: number) {
-    this.productLoading = true;
-    this.deliveryService.getCustomerStockByCustomerId(customerId).subscribe({
-      next: (response: ICustomerStockResponse[]) => {
-        this.customerStockProducts = response;
-        this.productLoading = false;
-      },
-      error: () => {
-        this.productLoading = false;
-        this.toastr.error('Failed to load customer stock');
-      },
-    });
-  }
-
-  generateCode() {
-    this.isGeneratingCode = true;
-    this.deliveryService.generateDeliveryNumber().subscribe({
-      next: (response: CodeResponse) => {
-        this.generatedCode = response.code;
-        this.register.get('deliveryNumber')?.setValue(response.code);
-        this.isGeneratingCode = false;
-      },
-      error: () => {
-        this.isGeneratingCode = false;
-      },
-    });
-  }
-
-  setProductDetails() {
-    const childForm = this.productForm;
-    const product = childForm?.get('product')?.value;
-    if (product) {
-      const cardData: Array<any> = this.deliveryDetails.value;
-      const existingProduct = cardData.find(
-        (x) => x.bookingDetailId === product.bookingDetailId
-      );
-
-      if (existingProduct) {
-        childForm
-          ?.get('chargeAmount')
-          ?.setValue(existingProduct.chargeAmount || 0);
-        childForm
-          ?.get('deliveryQuantity')
-          ?.setValue(existingProduct.deliveryQuantity);
-        childForm
-          ?.get('deliveryUnit')
-          ?.setValue(
-            this.productUnits.find(
-              (x) => x.value == existingProduct.deliveryUnitId
-            ) || null
-          );
-      } else {
-        childForm
-          ?.get('deliveryUnit')
-          ?.setValue(
-            this.productUnits.find((x) => x.value == product.unitId) || null
-          );
-        childForm?.get('chargeAmount')?.setValue(product.bookingRate || 0);
-        childForm?.get('availableStock')?.setValue(product.availableStock || 0);
-        childForm?.get('deliveryQuantity')?.setValue(0);
-      }
-    }
-  }
-
-  validateDeliveryQuantity() {
-    const child = this.productForm;
-    const quantity = child?.get('deliveryQuantity')?.value || 0;
-    const availableStock = child?.get('availableStock')?.value || 0;
-
-    if (quantity > availableStock) {
-      this.toastr.warning(`Only ${availableStock} units available in stock`);
-      child?.get('deliveryQuantity')?.setValue(availableStock);
-    }
-  }
-
-  get deliveryDetails() {
-    return this.register.get('deliveryDetails') as FormArray;
-  }
-
-  addToCart() {
-    if (!this.productForm.valid) {
-      this.toastr.error('Please fill all required fields');
-      return;
-    }
-
-    const formData = this.productForm.value;
-    const cardData: Array<any> = this.deliveryDetails.value;
-    const existingProduct = cardData.find(
-      (x) => x.bookingDetailId === formData.product.bookingDetailId
-    );
-
-    if (existingProduct) {
-      existingProduct.deliveryUnitId =
-        formData.deliveryUnit?.value || formData.deliveryUnit;
-      existingProduct.deliveryUnitName =
-        formData.deliveryUnit?.text || formData.deliveryUnit?.label || '';
-      existingProduct.chargeAmount = formData.chargeAmount;
-      existingProduct.deliveryQuantity = formData.deliveryQuantity;
-      existingProduct.baseQuantity = formData.baseQuantity;
-      existingProduct.adjustmentValue = formData.adjustmentValue;
-      this.deliveryDetails.setValue(cardData);
-    } else {
-      const item = this.fb.group({
-        id: [formData.id],
-        bookingDetailId: [
-          formData.product.bookingDetailId,
-          [Validators.required],
-        ],
-        productId: [formData.product.productId, [Validators.required]],
-        productName: [formData.product.productName, [Validators.required]],
-        deliveryUnitId: [formData.deliveryUnit.value, [Validators.required]],
-        deliveryUnitName: [formData.deliveryUnit.label, [Validators.required]],
-        chargeAmount: [formData.chargeAmount, [Validators.required]],
-        deliveryQuantity: [formData.deliveryQuantity, [Validators.required]],
-        baseQuantity: [formData.baseQuantity],
-        adjustmentValue: [formData.adjustmentValue],
-      });
-      this.deliveryDetails.push(item);
-    }
-    this.productForm.reset();
-    this.initProductForm();
-  }
-
-  removeFromCart(indx: number) {
-    this.deliveryDetails.removeAt(indx);
-  }
-
-  delivery(form: UntypedFormGroup) {
-    if (!this.register.valid) {
-      this.toastr.error('Please fill all required fields');
-      return;
-    }
-
-    if (this.deliveryDetails.length === 0) {
-      this.toastr.error('Please add at least one product');
-      return;
-    }
-
-    this.isSubmitted = true;
-    const formData = { ...form.value };
-    formData.bookingId = formData.booking?.value;
-    const payload: IDeliveryRequest = { ...formData };
-
-    if (payload.deliveryNumber !== this.generatedCode) {
-      this.toastr.error('Delivery number is mismatched !');
-      this.isSubmitted = false;
-      return;
-    }
-
-    if (formData.id === '00000000-0000-0000-0000-000000000000') {
-      this.deliveryService.create(payload).subscribe({
-        next: () => {
-          this.toastr.success('Product delivery created successfully');
-          this.initFormData();
-          this.isSubmitted = false;
-        },
-        error: () => {
-          this.isSubmitted = false;
-        },
-      });
-    } else {
-      this.deliveryService.update(formData.id, payload).subscribe({
-        next: () => {
-          this.toastr.success('Product delivery updated successfully');
-          this.isSubmitted = false;
-        },
-        error: () => {
-          this.isSubmitted = false;
-        },
-      });
-    }
+  reset() {
+    this.bookingData = null;
+    this.initForm();
+    this.generateDeliveryNumber();
+    this.loadBookingLookup();
   }
 }

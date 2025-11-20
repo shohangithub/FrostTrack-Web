@@ -69,6 +69,7 @@ public static class DependencyInjection
 
         services.AddScoped<IRepository<Bank, int>, Repository<Bank, int>>();
         services.AddScoped<IRepository<BankTransaction, long>, Repository<BankTransaction, long>>();
+        services.AddScoped<IRepository<Transaction, Guid>, Repository<Transaction, Guid>>();
 
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ISalesRepository, SalesRepository>();

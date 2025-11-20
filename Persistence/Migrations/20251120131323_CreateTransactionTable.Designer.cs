@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Context;
 
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120131323_CreateTransactionTable")]
+    partial class CreateTransactionTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -804,12 +807,6 @@ namespace Persistence.Migrations
                     b.Property<decimal>("AdjustmentValue")
                         .HasColumnType("decimal(5, 2)");
 
-                    b.Property<DateTime?>("ArchivedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ArchivedById")
-                        .HasColumnType("int");
-
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
 
@@ -825,12 +822,6 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DeletedById")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("datetime2");
 
@@ -838,11 +829,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
@@ -852,6 +840,9 @@ namespace Persistence.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -1799,10 +1790,7 @@ namespace Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("UnitConversionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UnitId")
+                    b.Property<int>("UnitConversionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -2069,12 +2057,6 @@ namespace Persistence.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime?>("ArchivedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ArchivedById")
-                        .HasColumnType("int");
-
                     b.Property<string>("AttachmentPath")
                         .HasColumnType("nvarchar(max)");
 
@@ -2102,12 +2084,6 @@ namespace Persistence.Migrations
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DeletedById")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -2122,12 +2098,6 @@ namespace Persistence.Migrations
                     b.Property<string>("EntityName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
@@ -2658,7 +2628,8 @@ namespace Persistence.Migrations
                     b.HasOne("Domain.Entitites.UnitConversion", "UnitConversion")
                         .WithMany()
                         .HasForeignKey("UnitConversionId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Product");
 
@@ -2852,7 +2823,8 @@ namespace Persistence.Migrations
 
                     b.Navigation("SalesDetails");
 
-                    b.Navigation("Stock");
+                    b.Navigation("Stock")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entitites.ProductCategory", b =>

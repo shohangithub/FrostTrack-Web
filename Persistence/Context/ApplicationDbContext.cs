@@ -56,6 +56,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<PaymentMethod> PaymentMethods { get; set; }
     public DbSet<PrintSettings> PrintSettings { get; set; }
+    public DbSet<Transaction> Transactions { get; set; }
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
 
@@ -365,6 +366,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                   .HasForeignKey(x => x.BranchId)
                   .IsRequired(false)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.ToTable("Transactions", "finance");
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+
+            entity.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.DiscountAmount).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.AdjustmentValue).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.NetAmount).HasColumnType("decimal(18,2)");
         });
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

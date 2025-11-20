@@ -102,7 +102,7 @@ public class SaleReturnRepository : ISaleReturnRepository
     {
         foreach (var item in quantityDictionaries)
         {
-            var stock = await _context.Stocks.FirstOrDefaultAsync(x => x.ProductId == item.ProductId && x.UnitConversionId == item.UnitId, cancellationToken);
+            var stock = await _context.Stocks.FirstOrDefaultAsync(x => x.ProductId == item.ProductId && x.UnitId == item.UnitId, cancellationToken);
             if (stock != null)
             {
                 // For returns, we need to add back to stock

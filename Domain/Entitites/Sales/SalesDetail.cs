@@ -4,11 +4,11 @@
 public class SalesDetail : AuditableEntity<long>
 {
     public long SalesId { get; set; }
-    public Sales Sales { get; set; }
+    public Sales? Sales { get; set; }
     public required int ProductId { get; set; }
-    public Product Product { get; set; }
+    public Product? Product { get; set; }
     public int SalesUnitId { get; set; }
-    public UnitConversion SalesUnit { get; set; }
+    public UnitConversion? SalesUnit { get; set; }
     public required float SalesQuantity { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal SalesRate { get; set; }

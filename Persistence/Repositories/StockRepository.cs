@@ -48,7 +48,7 @@ public class StockRepository(ApplicationDbContext _context) : IStockRepository
                 CreatedById = request.CreatedById,
                 CreatedTime = request.CreatedTime,
                 ProductId = stock.ProductId,
-                UnitConversionId = conversionUnit.Id,
+                UnitId = conversionUnit.Id,
                 StockQuantity = baseQuantity,
                 LastPurchaseRate = purchaseRate,
                 TenantId = request.TenantId
@@ -303,7 +303,7 @@ public class StockRepository(ApplicationDbContext _context) : IStockRepository
                 CreatedById = request.CreatedById,
                 CreatedTime = request.CreatedTime,
                 ProductId = stock.ProductId,
-                UnitConversionId = conversionUnit.Id,
+                UnitId = conversionUnit.Id,
                 StockQuantity = baseQuantity,
                 LastPurchaseRate = bookingRate,
                 TenantId = request.TenantId

@@ -70,6 +70,13 @@ export const APP_ROUTE: Route[] = [
           import('./sales/sales.routes').then((m) => m.SALES_ROUTE),
       },
       {
+        path: 'transaction',
+        loadChildren: () =>
+          import('./transaction/transaction.routes').then(
+            (m) => m.transactionRoutes
+          ),
+      },
+      {
         path: 'advance-table',
         loadChildren: () =>
           import('./advance-table/advance-table.routes').then(

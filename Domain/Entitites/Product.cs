@@ -22,5 +22,5 @@ public class Product : AuditableEntity<int>
 
     public ICollection<PurchaseDetail> PurchaseDetails { get; set; } = [];
     public ICollection<SalesDetail> SalesDetails { get; set; } = [];
-    public Stock Stock { get; set; }
+    public Stock? Stock { get; set; }
 }

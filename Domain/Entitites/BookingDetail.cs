@@ -19,4 +19,5 @@ public class BookingDetail : AuditableEntity<Guid>
 
     [Column(TypeName = "datetime")]
     public DateTime LastDeliveryDate { get; set; }
+    public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

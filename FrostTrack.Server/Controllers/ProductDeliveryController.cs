@@ -20,7 +20,7 @@ public class DeliveryController : ControllerBase
     }
 
     [HttpGet("get-with-pagination")]
-    public async Task<ActionResult<PaginationResult<DeliveryListResponse>>> GetWithPagination([FromQuery] PaginationQuery query)
+    public async Task<ActionResult<PaginationResult<DeliveryResponse>>> GetWithPagination([FromQuery] PaginationQuery query)
     {
         var result = await _service.GetWithPaginationAsync(query);
         return Ok(result);
@@ -34,14 +34,14 @@ public class DeliveryController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<DeliveryResponse>> Create([FromBody] DeliveryRequest request)
+    public async Task<ActionResult<DeliveryResponse>> Create([FromBody] CreateDeliveryRequest request)
     {
         var result = await _service.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<DeliveryResponse>> Update(Guid id, [FromBody] DeliveryRequest request)
+    public async Task<ActionResult<DeliveryResponse>> Update(Guid id, [FromBody] UpdateDeliveryRequest request)
     {
         var result = await _service.UpdateAsync(id, request);
         return Ok(result);
@@ -68,10 +68,31 @@ public class DeliveryController : ControllerBase
         return Ok(new CodeResponse { Code = number });
     }
 
-    [HttpGet("customer-stock/{customerId}")]
-    public async Task<ActionResult<List<CustomerStockResponse>>> GetCustomerStock(int customerId)
+    [HttpGet("booking/{bookingNumber}")]
+    public async Task<ActionResult<BookingForDeliveryResponse>> GetBookingForDelivery(string bookingNumber)
     {
-        var result = await _service.GetCustomerStockAsync(customerId);
+        var result = await _service.GetBookingForDeliveryAsync(bookingNumber);
+        return Ok(result);
+    }
+
+    [HttpGet("remaining-quantities/{bookingId}")]
+    public async Task<ActionResult<List<RemainingQuantityResponse>>> GetRemainingQuantities(Guid bookingId)
+    {
+        var result = await _service.GetRemainingQuantitiesAsync(bookingId);
+        return Ok(result);
+    }
+
+    [HttpGet("booking-lookup")]
+    public async Task<ActionResult<IEnumerable<Lookup<Guid>>>> GetBookingLookup()
+    {
+        var result = await _service.GetBookingLookupAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("booking-previous-payments/{bookingId}")]
+    public async Task<ActionResult<decimal>> GetBookingPreviousPayments(Guid bookingId)
+    {
+        var result = await _service.GetBookingPreviousPaymentsAsync(bookingId);
         return Ok(result);
     }
 }

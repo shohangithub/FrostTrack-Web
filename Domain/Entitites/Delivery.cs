@@ -20,11 +20,20 @@ public class Delivery : AuditableEntity<Guid>
     public required decimal AdjustmentValue { get; set; }
 
 
-    [Column(TypeName = "decimal(10, 2)")]
-    public required decimal DiscountAmount { get; set; } = 0;
+    // [Column(TypeName = "decimal(10, 2)")]
+    // public required decimal DiscountAmount { get; set; } = 0;
 
-    [Column(TypeName = "decimal(10, 2)")]
-    public required decimal PaidAmount { get; set; } = 0;
+    // [Column(TypeName = "decimal(10, 2)")]
+    // public required decimal PaidAmount { get; set; } = 0;
+
+    // Soft delete and archive
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+    public int? DeletedById { get; set; }
+
+    public bool IsArchived { get; set; } = false;
+    public DateTime? ArchivedAt { get; set; }
+    public int? ArchivedById { get; set; }
 
     public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

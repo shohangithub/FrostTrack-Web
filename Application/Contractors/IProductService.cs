@@ -4,7 +4,7 @@ namespace Application.Contractors;
 
 public interface IProductService
 {
-    Task<IEnumerable<ProductListResponse>> ListAsync(Expression<Func<Product, bool>> predicate = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ProductListResponse>> ListAsync(Expression<Func<Product, bool>>? predicate = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<ProductLisWithStockResponse>> ListwithStockAsync(CancellationToken cancellationToken = default);
     Task<PaginationResult<ProductListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<ProductResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);

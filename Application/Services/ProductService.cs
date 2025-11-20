@@ -109,9 +109,15 @@ public class ProductService : IProductService
         return response;
     }
 
-    public async Task<IEnumerable<ProductListResponse>> ListAsync(Expression<Func<Product, bool>> predicate = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProductListResponse>> ListAsync(Expression<Func<Product, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
-        var response = await _repository.Query().Where(predicate)
+        var query = _repository.Query();
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        var response = await query
            .Select(x => new ProductListResponse(
                x.Id,
                x.ProductName,
