@@ -35,28 +35,24 @@
   </div>
 
   <ul class="navbar-nav navbar-right">
-    <li class="navbar-branch mt-1">
-      <form class="branch-form"
-      [formGroup]="branchForm">
-        <select class="form-select form-control-sm"
-                formControlName="branchId">
-          <option value="" selected>
-            Select Branch
-          </option>
+    <!-- <li class="navbar-branch mt-1">
+      <form class="branch-form" [formGroup]="branchForm">
+        <select class="form-select form-control-sm" formControlName="branchId">
+          <option value="" selected>Select Branch</option>
           @for (option of branchs; track option) {
           <option [value]="option.value">
             {{ option.text }}
           </option>
           }
         </select>
-        </form>
-    </li>
+      </form>
+    </li> -->
     <li>
       <a class="nav-link nav-link-lg collapse-btn" (click)="callFullscreen()">
         <i-feather name="maximize"></i-feather>
       </a>
     </li>
-    <li class="dropdown dropdown-list-toggle" ngbDropdown>
+    <!-- <li class="dropdown dropdown-list-toggle" ngbDropdown>
       <a
         data-toggle="dropdown"
         class="nav-link nav-link-lg lang-toggle remove-caret"
@@ -287,7 +283,7 @@
           ></a>
         </div>
       </div>
-    </li>
+    </li> -->
     <li ngbDropdown>
       <a
         ngbDropdownToggle
@@ -304,8 +300,8 @@
         ngbDropdownMenu
         class="dropdown-menu dropdown-menu-right header-dropdown pullDown"
       >
-        <div class="dropdown-title">Hello Sarah..</div>
-        <a routerLink="/extra-pages/profile" class="dropdown-item has-icon">
+        <div class="dropdown-title">Hello User..</div>
+        <!-- <a routerLink="/extra-pages/profile" class="dropdown-item has-icon">
           <i class="far fa-user"></i> Profile
         </a>
         <a routerLink="/email/inbox" class="dropdown-item has-icon">
@@ -315,7 +311,7 @@
         <a href="" onClick="return false;" class="dropdown-item has-icon">
           <i class="fas fa-cog"></i>
           Settings
-        </a>
+        </a> -->
         <div class="dropdown-divider"></div>
         <a
           href="javascript:void(0);"
