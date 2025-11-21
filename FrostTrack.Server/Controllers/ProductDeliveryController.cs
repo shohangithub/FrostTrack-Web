@@ -95,4 +95,18 @@ public class DeliveryController : ControllerBase
         var result = await _service.GetBookingPreviousPaymentsAsync(bookingId);
         return Ok(result);
     }
+
+    [HttpGet("delivery-lookup")]
+    public async Task<ActionResult<IEnumerable<Lookup<Guid>>>> GetDeliveryLookup()
+    {
+        var result = await _service.GetDeliveryLookupAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("invoice/{id}")]
+    public async Task<ActionResult<DeliveryInvoiceResponse>> GetInvoiceById(Guid id)
+    {
+        var result = await _service.GetInvoiceByIdAsync(id);
+        return Ok(result);
+    }
 }

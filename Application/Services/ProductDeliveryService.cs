@@ -39,7 +39,7 @@ public class DeliveryService : IDeliveryService
         _currentUser = userContextService.GetCurrentUser();
     }
 
-    public async Task<DeliveryResponse> CreateAsync(CreateDeliveryRequest request)
+    public async Task<DeliveryResponse> CreateAsync(CreateDeliveryRequest request, CancellationToken cancellationToken = default)
     {
         // Validate stock availability
         await ValidateStockAvailability(request);
@@ -48,9 +48,32 @@ public class DeliveryService : IDeliveryService
         entity.BranchId = _currentUser.BranchId;
         _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
+
         if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
         {
-            _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(entity.DeliveryDetails.ToList());
+
+            // var bookingDetails = await _bookingDetailRepository.Query()
+            //     .Where(bd => entity.DeliveryDetails.Select(dd => dd.BookingDetailId).Contains(bd.Id))
+            //     .ToListAsync(cancellationToken);
+
+            foreach (var detail in entity.DeliveryDetails)
+            {
+                // Calculate BaseQuantity and BaseRate from unit conversion
+                var unitConversion = await _unitConversionRepository.Query()
+                    .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId, cancellationToken);
+
+                if (unitConversion != null)
+                {
+                    detail.BaseQuantity = (decimal)(detail.DeliveryQuantity * unitConversion.ConversionValue);
+                }
+                else
+                {
+                    detail.BaseQuantity = (decimal)detail.DeliveryQuantity;
+                }
+
+
+                _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(entity.DeliveryDetails.ToList());
+            }
         }
 
         await _repository.AddAsync(entity, CancellationToken.None);
@@ -96,7 +119,7 @@ public class DeliveryService : IDeliveryService
         return await GetByIdAsync(entity.Id);
     }
 
-    public async Task<DeliveryResponse> UpdateAsync(Guid id, UpdateDeliveryRequest request)
+    public async Task<DeliveryResponse> UpdateAsync(Guid id, UpdateDeliveryRequest request, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.Query()
             .Include(x => x.DeliveryDetails)
@@ -150,7 +173,6 @@ public class DeliveryService : IDeliveryService
     {
         var entity = await _repository.Query()
             .Include(x => x.Booking)
-                .ThenInclude(b => b!.Customer)
             .Include(x => x.Branch)
             .Include(x => x.DeliveryDetails)
                 .ThenInclude(d => d.BookingDetail)
@@ -537,5 +559,111 @@ public class DeliveryService : IDeliveryService
             .SumAsync(t => t.Amount);
 
         return totalPaid;
+    }
+
+    public async Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync()
+    {
+        return await _repository.Query()
+            .Where(d => d.TenantId == _tenantId)
+            .OrderByDescending(d => d.CreatedTime)
+            .Select(d => new Lookup<Guid>(d.Id, d.DeliveryNumber))
+            .ToListAsync();
+    }
+
+    public async Task<DeliveryInvoiceResponse> GetInvoiceByIdAsync(Guid id)
+    {
+        var entity = await _repository.Query()
+            .Include(x => x.Booking)
+                .ThenInclude(b => b!.Customer)
+            .Include(x => x.Booking)
+                .ThenInclude(b => b!.BookingDetails)
+                    .ThenInclude(bd => bd.Product)
+            .Include(x => x.Branch)
+            .Include(x => x.DeliveryDetails)
+                .ThenInclude(d => d.BookingDetail)
+                    .ThenInclude(bd => bd!.Product)
+            .Include(x => x.DeliveryDetails)
+                .ThenInclude(d => d.DeliveryUnit)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (entity == null)
+            throw new Exception("Product delivery not found");
+
+        var response = new DeliveryInvoiceResponse
+        {
+            Id = entity.Id,
+            DeliveryNumber = entity.DeliveryNumber,
+            DeliveryDate = entity.DeliveryDate,
+            BookingId = entity.BookingId,
+            BookingNumber = entity.Booking?.BookingNumber ?? "",
+            BranchId = entity.BranchId,
+            BranchName = entity.Branch?.Name,
+            Notes = entity.Notes,
+            ChargeAmount = entity.ChargeAmount,
+            AdjustmentValue = entity.AdjustmentValue
+        };
+
+        // Map Customer Information
+        if (entity.Booking?.Customer != null)
+        {
+            response.Customer = new CustomerBasicInfo
+            {
+                CustomerId = entity.Booking.Customer.Id,
+                CustomerName = entity.Booking.Customer.CustomerName,
+                CustomerMobile = entity.Booking.Customer.CustomerMobile,
+                Address = entity.Booking.Customer.Address
+            };
+        }
+
+        // Map Booking Information
+        if (entity.Booking != null)
+        {
+            // Calculate total booking amount
+            var totalBookingAmount = entity.Booking.BookingDetails?.Sum(bd => bd.BookingRate * (decimal)bd.BookingQuantity) ?? 0;
+
+            // Calculate last delivery date from booking details
+            var lastDeliveryDate = entity.Booking.BookingDetails?.FirstOrDefault()?.LastDeliveryDate ?? entity.Booking.BookingDate.AddDays(30);
+
+            response.Booking = new BookingInvoiceInfo
+            {
+                BookingId = entity.BookingId,
+                BookingNumber = entity.Booking.BookingNumber,
+                BookingDate = entity.Booking.BookingDate,
+                LastDeliveryDate = lastDeliveryDate,
+                TotalBookingAmount = totalBookingAmount
+            };
+
+            response.TotalBookingAmount = totalBookingAmount;
+        }
+
+        // Map Delivery Details with booking rate
+        response.DeliveryDetails = entity.DeliveryDetails.Select(d => new DeliveryInvoiceDetailResponse
+        {
+            Id = d.Id,
+            ProductId = d.BookingDetail?.ProductId ?? 0,
+            ProductName = d.BookingDetail?.Product?.ProductName ?? "",
+            DeliveryUnitId = d.DeliveryUnitId,
+            DeliveryUnitName = d.DeliveryUnit?.UnitName ?? "",
+            DeliveryQuantity = d.DeliveryQuantity,
+            BaseQuantity = d.BaseQuantity,
+            ChargeAmount = d.ChargeAmount,
+            BookingRate = d.BookingDetail?.BookingRate ?? 0
+        }).ToList();
+
+        // Calculate Total Paid Amount (from all transactions for this booking)
+        response.TotalPaidAmount = await GetBookingPreviousPaymentsAsync(entity.BookingId);
+
+        // Calculate Extra Charge (total charge amount from all deliveries for this booking)
+        var allDeliveries = await _repository.Query()
+            .Where(d => d.BookingId == entity.BookingId)
+            .ToListAsync();
+
+        var totalDeliveryCharges = allDeliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
+        response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
+
+        // Calculate Due Amount
+        response.DueAmount = (response.TotalBookingAmount + response.ExtraCharge) - response.TotalPaidAmount;
+
+        return response;
     }
 }

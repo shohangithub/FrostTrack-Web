@@ -19,7 +19,25 @@ public class DeliveryResponse
     public bool IsArchived { get; set; }
     public DateTime? ArchivedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    public CustomerBasicInfo? Customer { get; set; }
+    public BookingBasicInfo? Booking { get; set; }
     public List<DeliveryDetailResponse> DeliveryDetails { get; set; } = [];
+}
+
+public class CustomerBasicInfo
+{
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerMobile { get; set; }
+    public string? Address { get; set; }
+}
+
+public class BookingBasicInfo
+{
+    public Guid BookingId { get; set; }
+    public string BookingNumber { get; set; } = string.Empty;
+    public DateTime BookingDate { get; set; }
+    public DateTime LastDeliveryDate { get; set; }
 }
 
 public class DeliveryDetailResponse

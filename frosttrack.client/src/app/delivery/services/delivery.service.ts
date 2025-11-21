@@ -8,6 +8,7 @@ import {
   IDeliveryRequest,
   IDeliveryResponse,
   IBookingForDeliveryResponse,
+  IDeliveryInvoiceResponse,
 } from '../models/delivery.interface';
 
 @Injectable({
@@ -80,6 +81,18 @@ export class DeliveryService {
   getBookingPreviousPayments(bookingId: string): Observable<number> {
     return this.http.get<number>(
       `${this.apiUrl}/booking-previous-payments/${bookingId}`
+    );
+  }
+
+  getDeliveryLookup(): Observable<{ value: string; text: string }[]> {
+    return this.http.get<{ value: string; text: string }[]>(
+      `${this.apiUrl}/delivery-lookup`
+    );
+  }
+
+  getInvoiceById(id: string): Observable<IDeliveryInvoiceResponse> {
+    return this.http.get<IDeliveryInvoiceResponse>(
+      `${this.apiUrl}/invoice/${id}`
     );
   }
 }

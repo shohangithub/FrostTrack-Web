@@ -240,6 +240,6 @@ export class DeliveryListComponent implements OnInit {
   }
 
   printInvoice(row: any) {
-    this.router.navigate(['/product-delivery/record', row.id]);
+    this.router.navigate(['/product-delivery/invoice-print', row.id]);
   }
 }
