@@ -83,4 +83,16 @@ public class BookingController : ControllerBase
         var response = await _bookingService.GenerateBookingNumber(cancellationToken);
         return new CodeResponse(response);
     }
+
+    [HttpGet("invoice-with-delivery/{id}")]
+    public async Task<ActionResult<BookingInvoiceWithDeliveryResponse>> GetInvoiceWithDelivery(Guid id, CancellationToken cancellationToken)
+    {
+        var invoice = await _bookingService.GetInvoiceWithDeliveryAsync(id, cancellationToken);
+        if (invoice == null)
+        {
+            return NotFound();
+        }
+
+        return invoice;
+    }
 }

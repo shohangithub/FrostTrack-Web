@@ -60,4 +60,8 @@ export class BookingService extends BaseService {
   generateBookingNumber(): Observable<CodeResponse> {
     return this.get<CodeResponse>(this.path + '/generate-booking-number');
   }
+
+  getInvoiceWithDelivery(id: string): Observable<any> {
+    return this.get<any>(this.path + `/invoice-with-delivery/${id}`);
+  }
 }

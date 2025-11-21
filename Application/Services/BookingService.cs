@@ -6,6 +6,8 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepository;
     private readonly IRepository<Company, int> _companyRepository;
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
+    private readonly IRepository<Delivery, Guid> _deliveryRepository;
+    private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -18,7 +20,9 @@ public class BookingService : IBookingService
         IUserContextService userContextService,
         IRepository<Company, int> companyRepository,
         IRepository<UnitConversion, int> unitConversionRepository,
-        IBookingRepository bookingRepository)
+        IBookingRepository bookingRepository,
+        IRepository<Delivery, Guid> deliveryRepository,
+        IRepository<Transaction, Guid> transactionRepository)
     {
         _repository = repository;
         _defaultValueInjector = defaultValueInjector;
@@ -28,6 +32,8 @@ public class BookingService : IBookingService
         _companyRepository = companyRepository;
         _unitConversionRepository = unitConversionRepository;
         _bookingRepository = bookingRepository;
+        _deliveryRepository = deliveryRepository;
+        _transactionRepository = transactionRepository;
     }
 
     public async Task<BookingResponse> AddAsync(BookingRequest request, CancellationToken cancellationToken = default)
@@ -267,5 +273,85 @@ public class BookingService : IBookingService
             else
                 return $"BK{dateString}{code}";
         }
+    }
+
+    public async Task<BookingInvoiceWithDeliveryResponse?> GetInvoiceWithDeliveryAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var booking = await _repository.Query()
+            .Include(x => x.Customer)
+            .Include(x => x.Branch)
+            .Include(x => x.BookingDetails)
+                .ThenInclude(bd => bd.Product)
+            .Include(x => x.BookingDetails)
+                .ThenInclude(bd => bd.BookingUnit)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (booking == null)
+            return null;
+
+        var response = new BookingInvoiceWithDeliveryResponse
+        {
+            Id = booking.Id,
+            BookingNumber = booking.BookingNumber,
+            BookingDate = booking.BookingDate,
+            CustomerId = booking.CustomerId,
+            Customer = booking.Customer,
+            BranchId = booking.BranchId,
+            Branch = booking.Branch,
+            Notes = booking.Notes,
+            BookingDetails = booking.BookingDetails.Select(bd => new BookingDetailWithDeliveryResponse
+            {
+                Id = bd.Id,
+                BookingId = booking.Id,
+                ProductId = bd.ProductId,
+                Product = bd.Product?.Adapt<ProductResponse>(),
+                BookingUnitId = bd.BookingUnitId,
+                BookingUnit = bd.BookingUnit?.Adapt<UnitConversionResponse>(),
+                BookingQuantity = bd.BookingQuantity,
+                BillType = bd.BillType,
+                BookingRate = bd.BookingRate,
+                BaseQuantity = bd.BaseQuantity,
+                BaseRate = bd.BaseRate,
+                LastDeliveryDate = bd.LastDeliveryDate
+            }).ToList()
+        };
+
+        // Get all transactions for this booking
+        var transactions = await _transactionRepository.Query()
+            .Where(t => t.BookingId == id && (t.TransactionType == TransactionTypes.BILL_COLLECTION || t.TransactionType == TransactionTypes.ADJUSTMENT) && t.TransactionFlow == "IN")
+            .ToListAsync(cancellationToken);
+
+        // Get all deliveries for this booking
+        var deliveries = await _deliveryRepository.Query()
+            .Where(d => d.BookingId == id && d.TenantId == _tenantId)
+            .Include(d => d.DeliveryDetails)
+                .ThenInclude(dd => dd.BookingDetail)
+                    .ThenInclude(bd => bd!.Product)
+            .Include(d => d.DeliveryDetails)
+                .ThenInclude(dd => dd.DeliveryUnit)
+            .OrderBy(d => d.DeliveryDate)
+            .ToListAsync(cancellationToken);
+
+        response.Deliveries = deliveries.Select(d => new DeliveryInfoResponse
+        {
+            Id = d.Id,
+            DeliveryNumber = d.DeliveryNumber,
+            DeliveryDate = d.DeliveryDate,
+            ChargeAmount = transactions.FirstOrDefault(t => t.EntityId == d.Id.ToString() && t.EntityName == "Delivery")?.Amount ?? 0,
+            AdjustmentValue = d.AdjustmentValue,
+            DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
+            {
+                Id = dd.Id,
+                ProductId = dd.BookingDetail?.ProductId ?? 0,
+                ProductName = dd.BookingDetail?.Product?.ProductName ?? "",
+                DeliveryUnitId = dd.DeliveryUnitId,
+                DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
+                DeliveryQuantity = dd.DeliveryQuantity,
+                BaseQuantity = dd.BaseQuantity,
+                ChargeAmount = dd.ChargeAmount
+            }).ToList()
+        }).ToList();
+
+        return response;
     }
 }

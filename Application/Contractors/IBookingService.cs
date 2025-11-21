@@ -14,4 +14,5 @@ public interface IBookingService
     Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default);
     Task<string> GenerateBookingNumber(CancellationToken cancellationToken = default);
+    Task<BookingInvoiceWithDeliveryResponse?> GetInvoiceWithDeliveryAsync(Guid id, CancellationToken cancellationToken = default);
 }

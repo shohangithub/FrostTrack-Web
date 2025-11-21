@@ -79,3 +79,36 @@ export interface IBookingDetailListResponse {
   baseRate: number;
   lastDeliveryDate?: string;
 }
+
+export interface IBookingInvoiceWithDeliveryResponse {
+  id: string;
+  bookingNumber: string;
+  bookingDate: string;
+  customerId: number;
+  customer: ICustomerListResponse;
+  branchId: number;
+  branch: IBranchListResponse;
+  notes?: string;
+  bookingDetails: IBookingDetailResponse[];
+  deliveries: IDeliveryInfoResponse[];
+}
+
+export interface IDeliveryInfoResponse {
+  id: string;
+  deliveryNumber: string;
+  deliveryDate: string;
+  chargeAmount: number;
+  adjustmentValue: number;
+  deliveryDetails: IDeliveryDetailInfoResponse[];
+}
+
+export interface IDeliveryDetailInfoResponse {
+  id: string;
+  productId: number;
+  productName: string;
+  deliveryUnitId: number;
+  deliveryUnitName: string;
+  deliveryQuantity: number;
+  baseQuantity: number;
+  chargeAmount: number;
+}

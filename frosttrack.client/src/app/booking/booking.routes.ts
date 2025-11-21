@@ -41,4 +41,11 @@ export const BOOKING_ROUTE: Route[] = [
         './components/booking-invoice-print/booking-invoice-print.component'
       ).then((m) => m.BookingInvoicePrintComponent),
   },
+  {
+    path: 'invoice-with-delivery-print',
+    loadComponent: () =>
+      import(
+        './components/booking-invoice-with-delivery-print/booking-invoice-with-delivery-print.component'
+      ).then((m) => m.BookingInvoiceWithDeliveryPrintComponent),
+  },
 ];
