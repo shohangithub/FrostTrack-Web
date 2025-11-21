@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
@@ -9,6 +9,7 @@ import {
   PaginationResult,
   PagingResponse,
 } from '@core/models/pagination-result';
+import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {
@@ -16,6 +17,7 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
+import { ROLES } from 'app/common/data/settings-data';
 import { IDeliveryListResponse } from 'app/product-delivery/models/product-delivery.interface';
 import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
 import { SwalConfirm } from 'app/theme-config';
@@ -31,7 +33,7 @@ import Swal from 'sweetalert2';
   selector: 'app-product-delivery-list',
   templateUrl: './product-delivery-list.component.html',
   standalone: true,
-  imports: [NgxDatatableModule, DatePipe],
+  imports: [NgxDatatableModule, DatePipe, DecimalPipe],
 })
 export class DeliveryListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
@@ -57,10 +59,14 @@ export class DeliveryListComponent implements OnInit {
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
+  currentUser: any;
+  canEdit: boolean = false;
+  canDelete: boolean = false;
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
+    private authService: AuthService,
     private deliveryService: DeliveryService,
     private router: Router,
     private layoutService: LayoutService
@@ -69,6 +75,15 @@ export class DeliveryListComponent implements OnInit {
       this.scrollBarHorizontal = window.innerWidth < 1200;
     };
     this.layoutService.loadCurrentRoute();
+    this.setPermissions();
+  }
+
+  private setPermissions() {
+    const roles = this.authService.getUserRoles();
+    if (roles.includes(ROLES.SUPERADMIN) || roles.includes(ROLES.ADMIN)) {
+      this.canEdit = true;
+      this.canDelete = true;
+    }
   }
 
   onSelect({ selected }: { selected: any }) {
@@ -128,6 +143,7 @@ export class DeliveryListComponent implements OnInit {
   fetchData() {
     this.deliveryService.getWithPagination(this.pagination).subscribe({
       next: (response: PaginationResult<IDeliveryListResponse>) => {
+        debugger;
         this.data = response.data;
         this.paging = response.paging;
         this.loadingIndicator = false;
@@ -202,11 +218,25 @@ export class DeliveryListComponent implements OnInit {
   toggleExpandRow(row: any) {
     if (this.expandId === row.id) this.table.rowDetail.collapseAllRows();
     this.table.rowDetail.toggleExpandRow(row);
-    this.table.rowDetail.rowHeight = 100 + row.deliveryDetails.length * 15;
+    this.table.rowDetail.rowHeight = 110 + row.deliveryDetails.length * 15;
   }
 
   onDetailToggle(event: any) {
     console.log('Detail Toggled', event);
+  }
+
+  getRowTotalQuantity(deliveryDetails: any[]): number {
+    return deliveryDetails.reduce(
+      (sum, item) => sum + (item.deliveryQuantity || 0),
+      0
+    );
+  }
+
+  getRowTotalAmount(deliveryDetails: any[]): number {
+    return deliveryDetails.reduce(
+      (sum, item) => sum + (item.chargeAmount || 0),
+      0
+    );
   }
 
   printInvoice(row: any) {

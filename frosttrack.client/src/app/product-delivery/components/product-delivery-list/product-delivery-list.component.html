@@ -78,8 +78,8 @@
                           <th scope="col" class="text-center">SL</th>
                           <th scope="col" class="text-center">Product</th>
                           <th scope="col" class="text-center">Unit</th>
-                          <th scope="col" class="text-center">Rate</th>
                           <th scope="col" class="text-center">Quantity</th>
+                          <!-- <th scope="col" class="text-center">Charge Amount</th> -->
                         </tr>
                       </thead>
                       <tbody>
@@ -89,15 +89,36 @@
                           <th class="text-center" scope="row">{{ idx + 1 }}</th>
                           <td class="text-center">{{ item.productName }}</td>
                           <td class="text-center">
-                            {{ item.deliveryUnit?.unitName }}
+                            {{ item.deliveryUnitName || "N/A" }}
                           </td>
-                          <td class="text-center">{{ item.deliveryRate }}</td>
                           <td class="text-center">
-                            {{ item.deliveryQuantity }}
+                            {{ item.deliveryQuantity | number : "1.2-2" }}
                           </td>
+                          <!-- <td class="text-center">
+                            {{ item.chargeAmount | number : "1.2-2" }}
+                          </td> -->
                         </tr>
                         }
                       </tbody>
+                      <tfoot>
+                        <tr class="table-active">
+                          <th colspan="3" class="text-center fw-bold">
+                            Total:
+                          </th>
+                          <th class="text-center fw-bold">
+                            {{
+                              getRowTotalQuantity(row.deliveryDetails)
+                                | number : "1.2-2"
+                            }}
+                          </th>
+                          <!-- <th class="text-center fw-bold">
+                            {{
+                              getRowTotalAmount(row.deliveryDetails)
+                                | number : "1.2-2"
+                            }}
+                          </th> -->
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </ng-template>
@@ -129,7 +150,7 @@
               <ngx-datatable-column
                 name="Delivery Number"
                 prop="deliveryNumber"
-                [width]="120"
+                [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{ row.deliveryNumber }}
@@ -138,7 +159,7 @@
               <ngx-datatable-column
                 name="Delivery Date"
                 prop="deliveryDate"
-                [width]="120"
+                [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{ row.deliveryDate | date : "dd-MMM-yyyy" }}
@@ -146,28 +167,32 @@
               </ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Customer"
-                prop="customer.customerName"
-                [width]="200"
+                name="Booking Number"
+                prop="bookingNumber"
+                [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.customer?.customerName }}
+                  {{ row.bookingNumber || "N/A" }}
                 </ng-template>
               </ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Branch"
-                prop="branch.branchName"
-                [width]="150"
+                name="Customer"
+                prop="customerName"
+                [width]="200"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.branch?.branchName }}
+                  {{ row.customerName || "N/A" }}
                 </ng-template>
               </ngx-datatable-column>
 
-              <ngx-datatable-column name="Notes" prop="notes" [width]="200">
+              <ngx-datatable-column
+                name="Charge Amount"
+                prop="chargeAmount"
+                [width]="150"
+              >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.notes }}
+                  {{ row.chargeAmount | number : "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -182,25 +207,28 @@
                   let-rowIndex="rowIndex"
                   ngx-datatable-cell-template
                 >
-                  <span>
+                  <span class="text-center">
                     <button
                       class="btn btn-tbl-info h-auto"
                       (click)="printInvoice(row)"
                     >
                       <i class="fas fa-print"></i>
                     </button>
+                    @if(canEdit) {
                     <button
                       class="btn btn-tbl-edit h-auto"
                       (click)="editRow(row)"
                     >
                       <i class="fas fa-pen"></i>
                     </button>
+                    } @if(canDelete) {
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>
+                    }
                   </span>
                 </ng-template>
               </ngx-datatable-column>

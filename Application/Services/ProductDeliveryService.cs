@@ -167,42 +167,34 @@ public class DeliveryService : IDeliveryService
 
     public async Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(PaginationQuery query)
     {
-        var queryable = _repository.Query()
-            .Include(x => x.Booking)
-                .ThenInclude(b => b!.Customer)
-            .Include(x => x.DeliveryDetails)
-                .ThenInclude(d => d.BookingDetail)
-                    .ThenInclude(bd => bd!.Product)
-            .AsQueryable();
+        var baseQuery = _repository.Query().AsQueryable();
 
-        // Apply search filter
+        // Filtering
         if (!string.IsNullOrEmpty(query.OpenText))
         {
-            queryable = queryable.Where(x =>
-                x.DeliveryNumber.Contains(query.OpenText) ||
-                (x.Booking != null && x.Booking.BookingNumber.Contains(query.OpenText)) ||
-                (x.Booking != null && x.Booking.Customer != null && x.Booking.Customer.CustomerName.Contains(query.OpenText)));
+            var text = query.OpenText;
+            baseQuery = baseQuery.Where(x =>
+                x.DeliveryNumber.Contains(text) ||
+                x.Booking!.BookingNumber.Contains(text) ||
+                x.Booking!.Customer!.CustomerName.Contains(text)
+            );
         }
 
-        // Apply ordering
-        queryable = ApplyOrdering(queryable, query.OrderBy, query.IsAscending);
+        // Ordering
+        baseQuery = ApplyOrdering(baseQuery, query.OrderBy, query.IsAscending);
 
-        var result = await PaginationResult<Delivery>.CreateAsync(
-            queryable,
-            query.PageIndex,
-            query.PageSize);
-
-        var data = result.Data.Select(x => new DeliveryResponse
+        // Projection WITHOUT Includes (optimized)
+        var projectedQuery = baseQuery.Select(x => new DeliveryResponse
         {
             Id = x.Id,
             DeliveryNumber = x.DeliveryNumber,
             DeliveryDate = x.DeliveryDate,
             BookingId = x.BookingId,
-            BookingNumber = x.Booking?.BookingNumber ?? "",
-            CustomerId = x.Booking?.CustomerId ?? 0,
-            CustomerName = x.Booking?.Customer?.CustomerName ?? "",
+            BookingNumber = x.Booking.BookingNumber,
+            CustomerId = x.Booking.CustomerId,
+            CustomerName = x.Booking.Customer.CustomerName,
             BranchId = x.BranchId,
-            BranchName = x.Branch != null ? x.Branch.Name : "",
+            BranchName = x.Branch.Name,
             ChargeAmount = x.ChargeAmount,
             AdjustmentValue = x.AdjustmentValue,
             IsDeleted = x.IsDeleted,
@@ -210,14 +202,29 @@ public class DeliveryService : IDeliveryService
             IsArchived = x.IsArchived,
             ArchivedAt = x.ArchivedAt,
             CreatedAt = x.CreatedTime,
-            DeliveryDetails = []
-        }).ToList();
+
+            DeliveryDetails = x.DeliveryDetails.Select(d => new DeliveryDetailResponse
+            {
+                Id = d.Id,
+                DeliveryId = d.DeliveryId,
+                BookingDetailId = d.BookingDetailId,
+                ProductId = d.BookingDetail.ProductId,
+                ProductName = d.BookingDetail.Product.ProductName,
+                DeliveryUnitId = d.DeliveryUnitId,
+                DeliveryUnitName = d.DeliveryUnit.UnitName,
+                DeliveryQuantity = d.DeliveryQuantity,
+                BaseQuantity = d.BaseQuantity,
+                ChargeAmount = d.ChargeAmount,
+                AdjustmentValue = d.AdjustmentValue
+            }).ToList()
+        });
 
         return await PaginationResult<DeliveryResponse>.CreateAsync(
-            data.AsQueryable(),
+            projectedQuery,
             query.PageIndex,
             query.PageSize);
     }
+
 
     public async Task<string> GenerateDeliveryNumberAsync()
     {
