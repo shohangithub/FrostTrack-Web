@@ -39,6 +39,8 @@ export class BookingInvoicePrintComponent implements OnInit {
   loadingIndicator = true;
   isBookingLoading = false;
   bookingId: string = '';
+  backUrl: string | null = null;
+  isPrintFromRoute = false;
   criteriaForm: UntypedFormGroup = this.fb.group({
     bookingId: [null, [Validators.required]],
   });
@@ -63,6 +65,16 @@ export class BookingInvoicePrintComponent implements OnInit {
         .get('bookingId')
         ?.setValue(this.bookingList.find((x) => x.value == value));
     });
+
+    // Check if delivery ID is passed via route params
+    const id = this.route.snapshot.paramMap.get('id');
+    const backurl = this.route.snapshot.paramMap.get('backurl') ?? 'list';
+    if (id) {
+      this.bookingId = id;
+      this.backUrl = backurl;
+      this.isPrintFromRoute = true;
+      this.loadBookingData();
+    }
   }
 
   fetchBookingLookup() {
@@ -105,8 +117,15 @@ export class BookingInvoicePrintComponent implements OnInit {
     window.print();
   }
 
+  onAfterPrint(): void {
+    console.log('Print dialog closed (user printed or canceled)');
+    if (this.isPrintFromRoute) {
+      this.router.navigate([`/booking/${this.backUrl}` || '/booking/list']);
+    }
+  }
+
   goBack(): void {
-    this.router.navigate(['/booking/list']);
+    this.router.navigate([`/booking/${this.backUrl}` || '/booking/list']);
   }
 
   downloadPDF(): void {

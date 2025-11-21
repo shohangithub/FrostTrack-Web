@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { formatErrorMessage } from 'app/utils/server-error-handler';
 import { Subject } from 'rxjs';
@@ -94,6 +94,7 @@ export class BookingComponent implements OnInit {
 
   private editableProductUnitId?: number;
   private productUnitSubject: Subject<number> = new Subject<number>();
+  private printAfterSave: boolean = false;
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -104,6 +105,7 @@ export class BookingComponent implements OnInit {
     private productService: ProductService,
     private customerService: CustomerService,
     private route: ActivatedRoute,
+    private router: Router,
     private authService: AuthService,
     private layoutService: LayoutService,
     private unitConversionService: UnitConversionService
@@ -421,27 +423,51 @@ export class BookingComponent implements OnInit {
       }
       if (formData.id === '00000000-0000-0000-0000-000000000000') {
         this.BookingService.create(payload).subscribe({
-          next: () => {
+          next: (response) => {
             this.toastr.success('Booking created successfully');
-            this.initFormData();
+            if (this.printAfterSave && response?.id) {
+              this.router.navigate([
+                '/booking/invoice-print',
+                response.id,
+                'add',
+              ]);
+            } else {
+              this.initFormData();
+            }
             this.isSubmitted = false;
+            this.printAfterSave = false;
           },
           error: () => {
             this.isSubmitted = false;
+            this.printAfterSave = false;
           },
         });
       } else {
         this.BookingService.update(formData.id, payload).subscribe({
-          next: () => {
+          next: (response) => {
             this.toastr.success('Booking updated successfully');
+            if (this.printAfterSave && response?.id) {
+              this.router.navigate([
+                '/booking/invoice-print',
+                response.id,
+                'add',
+              ]);
+            }
             this.isSubmitted = false;
+            this.printAfterSave = false;
           },
           error: () => {
             this.isSubmitted = false;
+            this.printAfterSave = false;
           },
         });
       }
     }
+  }
+
+  purchaseAndPrint(form: UntypedFormGroup) {
+    this.printAfterSave = true;
+    this.purchase(form);
   }
 
   addProduct() {

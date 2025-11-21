@@ -241,6 +241,6 @@ export class BookingListComponent implements OnInit {
   }
 
   printInvoice(row: any) {
-    this.router.navigate(['/booking/invoice-print', row.id]);
+    this.router.navigate(['/booking/invoice-print', row.id, 'list']);
   }
 }

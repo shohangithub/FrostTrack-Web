@@ -488,8 +488,27 @@
                             isSubmitted
                               ? "Processing..."
                               : isEditing
-                              ? "Update Booking"
-                              : "Complete Booking"
+                              ? "Update"
+                              : "Save"
+                          }}
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-success mx-2"
+                          [disabled]="
+                            register.invalid ||
+                            register.get('BookingDetails')?.value?.length ===
+                              0 ||
+                            isSubmitted
+                          "
+                          (click)="purchaseAndPrint(register)"
+                        >
+                          {{
+                            isSubmitted
+                              ? "Processing..."
+                              : isEditing
+                              ? "Update & Print"
+                              : "Save & Print"
                           }}
                         </button>
                       </div>
