@@ -9,6 +9,7 @@ import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
 })
 export class ReportInvoiceHeaderComponent implements OnInit {
   @Input() InvoiceNumber: string = '';
+  @Input() Title: string = '';
   constructor() {}
 
   ngOnInit() {}
