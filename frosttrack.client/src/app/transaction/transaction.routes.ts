@@ -13,4 +13,18 @@ export const transactionRoutes: Route[] = [
         (m) => m.TransactionListComponent
       ),
   },
+  {
+    path: 'add',
+    loadComponent: () =>
+      import('./components/transaction/transaction.component').then(
+        (m) => m.TransactionComponent
+      ),
+  },
+  {
+    path: 'edit/:id',
+    loadComponent: () =>
+      import('./components/transaction/transaction.component').then(
+        (m) => m.TransactionComponent
+      ),
+  },
 ];

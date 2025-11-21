@@ -405,7 +405,7 @@ export const ROUTES: RouteInfo[] = [
     path: 'booking',
     title: 'Booking',
     iconType: 'feather',
-    icon: 'book',
+    icon: 'shopping-cart',
     class: 'menu-toggle',
     groupTitle: false,
     badge: '',

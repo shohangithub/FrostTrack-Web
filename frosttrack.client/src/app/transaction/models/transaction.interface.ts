@@ -44,55 +44,62 @@ export enum ExpenseCategory {
 export interface ITransactionListResponse {
   id: string;
   transactionCode: string;
-  transactionType: TransactionType;
-  transactionFlow: TransactionFlow;
-  transactionDate: Date;
-  amount: number;
-  discountAmount: number;
-  adjustmentValue: number;
+  transactionDate: Date | string;
+  transactionType: string;
+  transactionFlow: string;
+  branchId: number;
+  branchName: string;
+  customerId?: number | null;
+  customerName?: string | null;
   netAmount: number;
-  paymentMethod: PaymentMethod;
-  category?: ExpenseCategory;
-  entityName?: string;
-  entityId?: string;
-  customerId?: string;
-  customerName?: string;
-  supplierId?: string;
-  supplierName?: string;
-  bankId?: string;
-  bankName?: string;
-  bankTransactionId?: string;
-  description?: string;
-  notes?: string;
-  isDeleted: boolean;
-  deletedAt?: Date;
-  isArchived: boolean;
-  archivedAt?: Date;
-  createdAt: Date;
-  createdBy?: string;
+  paymentMethod: string;
+  category?: string | null;
+  description: string;
+  vendorName?: string | null;
 }
 
 export interface ITransactionRequest {
+  id?: string;
   transactionCode: string;
   transactionType: TransactionType;
   transactionFlow: TransactionFlow;
-  transactionDate: Date;
+  transactionDate: Date | string;
+  branchId: number;
   amount: number;
-  discountAmount: number;
-  adjustmentValue: number;
-  paymentMethod: PaymentMethod;
-  category?: ExpenseCategory;
+  note?: string;
+  // Optional fields with defaults
   entityName?: string;
   entityId?: string;
-  customerId?: string;
-  supplierId?: string;
-  bankId?: string;
-  bankTransactionId?: string;
+  customerId?: number | null;
+  bookingId?: string | null;
+  discountAmount?: number;
+  adjustmentValue?: number;
+  paymentMethod?: PaymentMethod | string;
+  paymentReference?: string;
+  category?: ExpenseCategory | string;
+  subCategory?: string;
   description?: string;
-  notes?: string;
+  vendorName?: string;
+  vendorContact?: string;
+  billingPeriodStart?: Date | null;
+  billingPeriodEnd?: Date | null;
+  attachmentPath?: string;
 }
 
 export interface ITransactionDetailResponse extends ITransactionListResponse {
+  amount: number;
+  discountAmount: number;
+  adjustmentValue: number;
+  note?: string | null;
+  entityName?: string;
+  entityId?: string;
+  bookingId?: string | null;
+  paymentReference?: string | null;
+  subCategory?: string | null;
+  vendorContact?: string | null;
+  billingPeriodStart?: Date | null;
+  billingPeriodEnd?: Date | null;
+  attachmentPath?: string | null;
   updatedAt?: Date;
   updatedBy?: string;
   deletedBy?: string;

@@ -13,6 +13,7 @@ import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
 import {
   DatatableComponent,
+  SelectionType,
   NgxDatatableModule,
 } from '@swimlane/ngx-datatable';
 import { ITransactionListResponse } from '../../models/transaction.interface';
@@ -30,7 +31,6 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-transaction-list',
   templateUrl: './transaction-list.component.html',
-  styleUrls: ['./transaction-list.component.scss'],
   standalone: true,
   imports: [
     NgxDatatableModule,
@@ -59,6 +59,7 @@ export class TransactionListComponent implements OnInit {
   canEdit: boolean = false;
   canDelete: boolean = false;
   searchSubject = new Subject<any>();
+  selection = SelectionType.checkbox;
 
   constructor(
     private router: Router,
@@ -147,11 +148,10 @@ export class TransactionListComponent implements OnInit {
       if (result.value) {
         this.transactionService.softDelete(row.id).subscribe({
           next: () => {
-            this.toastr.success('Transaction soft deleted successfully');
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }
@@ -169,11 +169,10 @@ export class TransactionListComponent implements OnInit {
       if (result.value) {
         this.transactionService.restore(row.id).subscribe({
           next: () => {
-            this.toastr.success('Transaction restored successfully');
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }
@@ -191,11 +190,10 @@ export class TransactionListComponent implements OnInit {
       if (result.value) {
         this.transactionService.archive(row.id).subscribe({
           next: () => {
-            this.toastr.success('Transaction archived successfully');
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }
@@ -213,11 +211,10 @@ export class TransactionListComponent implements OnInit {
       if (result.value) {
         this.transactionService.unarchive(row.id).subscribe({
           next: () => {
-            this.toastr.success('Transaction unarchived successfully');
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }
@@ -235,11 +232,10 @@ export class TransactionListComponent implements OnInit {
       if (result.value) {
         this.transactionService.remove(row.id).subscribe({
           next: () => {
-            this.toastr.success(MessageHub.DELETE_ONE);
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }
@@ -258,15 +254,12 @@ export class TransactionListComponent implements OnInit {
         const ids = this.selected.map((x) => x.id);
         this.transactionService.batchDelete(ids).subscribe({
           next: () => {
-            this.toastr.success(
-              `${this.selected.length} Records Deleted Successfully`
-            );
             this.selected = [];
             this.isRowSelected = false;
             this.fetchData();
           },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
+          error: () => {
+            // BaseService already handles error toasts via ErrorHandlerService
           },
         });
       }

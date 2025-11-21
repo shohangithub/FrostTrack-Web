@@ -28,6 +28,40 @@ public class TransactionService : ITransactionService
 
         var entity = request.Adapt<Transaction>();
         entity.BranchId = _currentUser.BranchId;
+
+        // Set default PaymentMethod to CASH if not provided
+        if (string.IsNullOrEmpty(entity.PaymentMethod))
+        {
+            entity.PaymentMethod = PaymentMethods.CASH;
+        }
+
+        // Set default EntityName if not provided
+        if (string.IsNullOrEmpty(entity.EntityName))
+        {
+            entity.EntityName = "GENERAL";
+        }
+
+        // Set default EntityId if not provided
+        if (string.IsNullOrEmpty(entity.EntityId))
+        {
+            entity.EntityId = "00000000-0000-0000-0000-000000000000";
+        }
+
+        // Set default Description if empty
+        if (string.IsNullOrEmpty(entity.Description))
+        {
+            entity.Description = $"{entity.TransactionType} - {entity.TransactionFlow}";
+        }
+
+        // Make amount negative for OUT transactions
+        if (entity.TransactionFlow == TransactionFlows.OUT && entity.Amount > 0)
+        {
+            entity.Amount = -entity.Amount;
+        }
+
+        // Calculate NetAmount
+        entity.NetAmount = entity.Amount - entity.DiscountAmount + entity.AdjustmentValue;
+
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
 
         await _repository.AddAsync(entity, cancellationToken);
@@ -84,6 +118,22 @@ public class TransactionService : ITransactionService
 
         request.Adapt(entity);
         entity.BranchId = _currentUser.BranchId;
+
+        // Set default PaymentMethod to CASH if not provided
+        if (string.IsNullOrEmpty(entity.PaymentMethod))
+        {
+            entity.PaymentMethod = PaymentMethods.CASH;
+        }
+
+        // Make amount negative for OUT transactions
+        if (entity.TransactionFlow == TransactionFlows.OUT && entity.Amount > 0)
+        {
+            entity.Amount = -entity.Amount;
+        }
+
+        // Calculate NetAmount
+        entity.NetAmount = entity.Amount - entity.DiscountAmount + entity.AdjustmentValue;
+
         _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);
 
         await _repository.UpdateAsync(entity, cancellationToken);
@@ -156,15 +206,25 @@ public class TransactionService : ITransactionService
     public async Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default)
     {
         var currentDate = DateTime.Now;
-        var year = currentDate.Year.ToString()?.Remove(0, 2);
-        var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
+        var year = currentDate.Year.ToString().Substring(2, 2);
+        var month = currentDate.Month.ToString("D2");
         var dateString = $"{year}{month}";
 
-        var code = long.Parse((await _repository.Query()
-            .Where(x => x.TransactionDate.Month == currentDate.Month)
+        var lastTransaction = await _repository.Query()
+            .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
             .OrderByDescending(x => x.TransactionCode)
             .Select(x => x.TransactionCode)
-            .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 6) ?? "0") + 1;
+            .FirstOrDefaultAsync(cancellationToken);
+
+        long code = 1;
+        if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
+        {
+            var lastCodePart = lastTransaction.Substring(6);
+            if (long.TryParse(lastCodePart, out long lastCode))
+            {
+                code = lastCode + 1;
+            }
+        }
 
         if (code < 10)
             return $"TC{dateString}0000{code}";

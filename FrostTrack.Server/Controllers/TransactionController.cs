@@ -28,47 +28,45 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransactionResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _service.GetByIdAsync(id, cancellationToken);
         if (result == null)
             return NotFound();
-        return Ok(result);
+        return result;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] TransactionRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransactionResponse>> Create([FromBody] TransactionRequest request, CancellationToken cancellationToken)
     {
         var result = await _service.AddAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] TransactionRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransactionResponse>> Update(Guid id, [FromBody] TransactionRequest request, CancellationToken cancellationToken)
     {
         var result = await _service.UpdateAsync(id, request, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<bool>> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _service.DeleteAsync(id, cancellationToken);
-        return Ok(result);
+        return await _service.DeleteAsync(id, cancellationToken);
     }
 
-    [HttpDelete("batch")]
-    public async Task<IActionResult> DeleteBatch([FromBody] List<Guid> ids, CancellationToken cancellationToken)
+    [HttpPost("DeleteBatch")]
+    public async Task<ActionResult<bool>> DeleteBatch([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
-        var result = await _service.DeleteBatchAsync(ids, cancellationToken);
-        return Ok(result);
+        return await _service.DeleteBatchAsync(ids, cancellationToken);
     }
 
     [HttpGet("generate-code")]
-    public async Task<IActionResult> GenerateCode(CancellationToken cancellationToken)
+    public async Task<ActionResult<CodeResponse>> GenerateCode(CancellationToken cancellationToken)
     {
-        var result = await _service.GenerateTransactionCode(cancellationToken);
-        return Ok(result);
+        var code = await _service.GenerateTransactionCode(cancellationToken);
+        return new CodeResponse(code);
     }
 
     [HttpGet("lookup")]
