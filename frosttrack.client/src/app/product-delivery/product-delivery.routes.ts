@@ -2,7 +2,7 @@ import { Route } from '@angular/router';
 import { DeliveryComponent } from './components/product-delivery/product-delivery.component';
 import { DeliveryListComponent } from './components/product-delivery-list/product-delivery-list.component';
 import { DeliveryRecordComponent } from './components/product-delivery-record/product-delivery-record.component';
-import { DeliveryInvoicePrintComponent } from '../delivery/components/delivery-invoice-print/delivery-invoice-print.component';
+import { DeliveryInvoicePrintComponent } from './components/delivery-invoice-print/delivery-invoice-print.component';
 
 export const PRODUCT_DELIVERY_ROUTE: Route[] = [
   {

@@ -2,8 +2,8 @@ import { DatePipe, CommonModule, DecimalPipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgxPrintModule } from 'ngx-print';
-import { DeliveryService } from '../../services/delivery.service';
-import { IDeliveryInvoiceResponse } from '../../models/delivery.interface';
+import { DeliveryService } from '../../../delivery/services/delivery.service';
+import { IDeliveryInvoiceResponse } from '../../../delivery/models/delivery.interface';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import {
