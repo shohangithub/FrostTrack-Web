@@ -1,0 +1,340 @@
+/*
+=====================================================================
+Transaction Report Component Styles - Matching Delivery Invoice Format
+=====================================================================
+Professional report styling matching the delivery invoice pattern
+=====================================================================
+*/
+
+$font-size: 11px;
+
+.no-print {
+    margin: auto;
+    max-width: 210mm;
+}
+
+.print-section-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    margin: auto;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.invoice-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white;
+    page-break-after: always;
+    font-size: $font-size;
+    color: #000;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.invoice-card {
+    width: 210mm;
+    min-height: 297mm;
+    border: none;
+    box-shadow: none;
+}
+
+// Report Info Box Section
+.booking-info-box {
+    margin-bottom: 15px;
+    border: 2px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        tr {
+            td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                vertical-align: middle;
+                color: #000;
+            }
+
+            .info-label {
+                font-weight: bold;
+                width: 25%;
+                background-color: #f9f9f9;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .info-value {
+                width: 25%;
+            }
+        }
+    }
+}
+
+// Section Titles
+.section-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin: 15px 0 8px 0;
+    text-align: center;
+    text-decoration: underline;
+    color: #000;
+}
+
+// Products Section (for transaction details)
+.stored-products-section {
+    margin-bottom: 15px;
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        th {
+            border: 1px solid #000 !important;
+            padding: 6px 8px;
+            font-size: $font-size;
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            color: #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        td {
+            border: 1px solid #000 !important;
+            padding: 6px 8px;
+            font-size: $font-size;
+            text-align: left;
+            vertical-align: middle;
+            color: #000;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .flow-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+
+            &.flow-in {
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            &.flow-out {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+        }
+
+        tfoot .total-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+}
+
+// Notes Section
+.notes-section {
+    clear: both;
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #000;
+    background-color: #f9f9f9;
+    font-size: $font-size;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+// Signature Section
+.signature-section {
+    clear: both;
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    page-break-inside: avoid;
+
+    .signature-box {
+        width: 45%;
+        text-align: center;
+
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin-bottom: 8px;
+            height: 60px;
+        }
+
+        .signature-label {
+            font-weight: bold;
+            font-size: $font-size;
+            margin-bottom: 3px;
+        }
+
+        .signature-sublabel {
+            font-size: 10px;
+            font-style: italic;
+            color: #666;
+        }
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .invoice-container {
+        box-shadow: none;
+        font-size: $font-size !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        page-break-after: always;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 10mm;
+    }
+
+    .print-section-container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        width: 210mm;
+    }
+
+    .invoice-card {
+        border: none;
+        box-shadow: none;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    // Ensure all text and borders render properly
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    // Force font consistency for all elements
+    .booking-info-box,
+    .section-title,
+    .stored-products-section,
+    .notes-section,
+    .signature-section,
+    table,
+    th,
+    td {
+        font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+        color: #000 !important;
+    }
+
+    // Report info box borders
+    .booking-info-box {
+        border: 2px solid #000 !important;
+        page-break-inside: avoid;
+    }
+
+    // Ensure all table borders print correctly
+    table {
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    th,
+    td {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+        page-break-inside: avoid;
+    }
+
+    // Background colors - ensure they print
+    .info-label,
+    .notes-section {
+        background-color: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    th,
+    .total-row {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    // Section titles
+    .section-title {
+        font-weight: bold !important;
+        font-size: 12px !important;
+        color: #000 !important;
+        text-align: center !important;
+        text-decoration: underline !important;
+        page-break-after: avoid;
+    }
+
+    // Flow badges
+    .flow-badge {
+        &.flow-in {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border: 1px solid #c3e6cb !important;
+        }
+
+        &.flow-out {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb !important;
+        }
+    }
+
+    // Signature section
+    .signature-section {
+        page-break-inside: avoid;
+
+        .signature-sublabel {
+            color: #666 !important;
+        }
+    }
+}

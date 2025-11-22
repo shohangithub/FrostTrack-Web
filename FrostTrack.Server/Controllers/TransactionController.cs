@@ -14,9 +14,36 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string? transactionType,
+        [FromQuery] string? transactionFlow,
+        CancellationToken cancellationToken)
     {
         var result = await _service.ListAsync(cancellationToken);
+
+        // Apply filters if provided
+        if (startDate.HasValue)
+        {
+            result = result.Where(t => t.TransactionDate >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            result = result.Where(t => t.TransactionDate <= endDate.Value);
+        }
+
+        if (!string.IsNullOrEmpty(transactionType))
+        {
+            result = result.Where(t => t.TransactionType == transactionType);
+        }
+
+        if (!string.IsNullOrEmpty(transactionFlow))
+        {
+            result = result.Where(t => t.TransactionFlow == transactionFlow);
+        }
+
         return Ok(result);
     }
 

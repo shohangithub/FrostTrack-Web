@@ -135,4 +135,18 @@ export class TransactionService extends BaseService {
       'Load Transaction Lookup'
     );
   }
+
+  getTransactionReport(
+    startDate: Date,
+    endDate: Date
+  ): Observable<ITransactionListResponse[]> {
+    const params = new URLSearchParams({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+    return this.get<ITransactionListResponse[]>(
+      `${this.path}?${params.toString()}`,
+      'Load Transaction Report'
+    );
+  }
 }

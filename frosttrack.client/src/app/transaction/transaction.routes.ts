@@ -41,4 +41,11 @@ export const transactionRoutes: Route[] = [
         './components/transaction-receipt-print/transaction-receipt-print.component'
       ).then((m) => m.TransactionReceiptPrintComponent),
   },
+  {
+    path: 'report',
+    loadComponent: () =>
+      import(
+        './components/transaction-report/transaction-report.component'
+      ).then((m) => m.TransactionReportComponent),
+  },
 ];
