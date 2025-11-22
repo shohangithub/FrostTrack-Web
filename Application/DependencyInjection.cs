@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IDeliveryService, DeliveryService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IBillCollectionService, BillCollectionService>();
 
         services.AddTransient<DefaultValueInjector>();
 

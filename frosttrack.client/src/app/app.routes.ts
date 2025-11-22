@@ -77,6 +77,13 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'bill-collection',
+        loadChildren: () =>
+          import('./bill-collection/bill-collection.routes').then(
+            (m) => m.billCollectionRoutes
+          ),
+      },
+      {
         path: 'advance-table',
         loadChildren: () =>
           import('./advance-table/advance-table.routes').then(

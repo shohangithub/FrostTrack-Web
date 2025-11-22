@@ -1,0 +1,188 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Bill Collection Records</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            (keyup)="onSearch($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            class="btn btn-icon icon-left btn-primary rounded-button"
+                            (click)="add()"
+                          >
+                            <i class="material-icons">add</i>
+                          </button>
+                          @if (canDelete && isRowSelected) {
+                          <button
+                            class="btn btn-icon icon-left btn-danger rounded-button"
+                            (click)="deleteMultiple()"
+                          >
+                            <i class="material-icons">delete</i>
+                          </button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ngx-datatable
+              #table
+              class="material"
+              [rows]="data"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="60"
+              [footerHeight]="80"
+              rowHeight="auto"
+              [externalPaging]="true"
+              [limit]="pagination.pageSize"
+              [count]="paging?.totalData ?? 0"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+              [selected]="selected"
+              [selectionType]="selection"
+              (select)="onSelect($event)"
+              (page)="setPage($event)"
+              (sort)="onSort($event)"
+            >
+              <ngx-datatable-column
+                [width]="70"
+                [sortable]="false"
+                [draggable]="false"
+                [resizeable]="false"
+                [canAutoResize]="false"
+                [headerCheckboxable]="true"
+                [checkboxable]="true"
+              >
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Transaction Code"
+                prop="transactionCode"
+                [flexGrow]="1.2"
+              ></ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Date"
+                prop="transactionDate"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Customer"
+                prop="customerName"
+                [flexGrow]="1.5"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.customerName || "N/A" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Amount"
+                prop="netAmount"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-success fw-bold">
+                    {{ row.netAmount | number : "1.2-2" }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Payment Method"
+                prop="paymentMethod"
+                [flexGrow]="1.2"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ getPaymentMethodLabel(row.paymentMethod) }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Description"
+                prop="description"
+                [flexGrow]="2"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <small>{{ row.description || "" }}</small>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Actions"
+                [sortable]="false"
+                [flexGrow]="1.2"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span>
+                    @if (canEdit) {
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="edit(row.id)"
+                      title="Edit"
+                    >
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    }
+                    <button
+                      class="btn btn-tbl-info h-auto"
+                      (click)="print(row.id)"
+                      title="Print Receipt"
+                    >
+                      <i class="fas fa-print"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-secondary h-auto"
+                      (click)="view(row.id)"
+                      title="View"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    @if (canDelete) {
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="delete(row.id)"
+                      title="Delete"
+                    >
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                    }
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
