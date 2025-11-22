@@ -627,7 +627,7 @@ export const ROUTES: RouteInfo[] = [
   },
   {
     path: 'transaction',
-    title: 'Finance',
+    title: 'Cash Register',
     iconType: 'feather',
     icon: 'dollar-sign',
     class: 'menu-toggle',
