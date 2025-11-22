@@ -28,6 +28,7 @@ export class TransactionComponent implements OnInit {
   isGeneratingCode = false;
   selectedBranch!: number;
   private generatedCode: string = '';
+  private savedTransactionId: string = '';
 
   // Transaction Types with Pascal Case labels
   transactionTypes = [
@@ -154,9 +155,58 @@ export class TransactionComponent implements OnInit {
       : this.transactionService.create(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (response) => {
         // BaseService already handles success toasts via ErrorHandlerService
+        this.savedTransactionId = response.id;
         this.router.navigate(['/transaction/list']);
+      },
+      error: () => {
+        // BaseService already handles error toasts via ErrorHandlerService
+        this.isSubmitted = false;
+      },
+    });
+  }
+
+  onSaveAndPrint(): void {
+    if (this.transactionForm.invalid) {
+      this.transactionForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.transactionForm.value;
+
+    // Validate transaction code matches generated code
+    if (formValue.transactionCode !== this.generatedCode) {
+      this.toastr.error('Transaction code mismatch!');
+      return;
+    }
+
+    this.isSubmitted = true;
+
+    const payload = {
+      ...formValue,
+      paymentMethod: 'CASH', // Default to CASH
+      entityName: 'GENERAL',
+      entityId: '00000000-0000-0000-0000-000000000000',
+      description: `${this.getTransactionTypeLabel(
+        formValue.transactionType
+      )} - ${this.getTransactionFlowLabel(formValue.transactionFlow)}`,
+      discountAmount: 0,
+      adjustmentValue: 0,
+    };
+
+    const request$ = this.isEditing
+      ? this.transactionService.update(formValue.id, payload)
+      : this.transactionService.create(payload);
+
+    request$.subscribe({
+      next: (response) => {
+        // BaseService already handles success toasts via ErrorHandlerService
+        this.router.navigate([
+          '/transaction/receipt-print',
+          response.id,
+          'list',
+        ]);
       },
       error: () => {
         // BaseService already handles error toasts via ErrorHandlerService

@@ -1,0 +1,253 @@
+<section class="main-content">
+  <div class="section-body">
+    @if(!isPrintFromRoute) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Transaction Money Receipt</span>
+          <div class="p-10 mt-2">
+            <form
+              class="product-form"
+              [formGroup]="criteriaForm"
+              (ngSubmit)="getTransactionData()"
+            >
+              <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <label for="transaction" class="col-sm-3 col-form-label"
+                      >Find Transaction:</label
+                    >
+                    <div class="col-sm-9">
+                      <div class="input-group input-group-select">
+                        <ng-select
+                          [items]="transactionList"
+                          bindLabel="text"
+                          bindValue="value"
+                          placeholder="Select Transaction"
+                          formControlName="transactionId"
+                          [loading]="isTransactionLoading"
+                          (change)="getTransactionData()"
+                        >
+                        </ng-select>
+                        <div class="input-group-append">
+                          <button
+                            type="submit"
+                            class="btn btn-primary px-2"
+                            [disabled]="!criteriaForm.valid"
+                          >
+                            Show Receipt
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    @if (!criteriaForm.get('transactionId')?.valid &&
+                    criteriaForm.get('transactionId')?.touched) {
+                    <small class="form-text text-danger text-end">
+                      Transaction is required
+                    </small>
+                    }
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card" *ngIf="transactionReceipt">
+          <!-- Action Buttons (No Print) -->
+          <div class="card-header no-print">
+            <h4>Transaction Money Receipt</h4>
+            <div class="card-header-action">
+              <button type="button" class="btn btn-primary" (click)="print()">
+                <i class="fas fa-print"></i> Print
+              </button>
+              @if(isPrintFromRoute) {
+              <button
+                type="button"
+                class="btn btn-secondary ms-2"
+                (click)="goBack()"
+              >
+                <i class="fas fa-arrow-left"></i> Back to List
+              </button>
+              }
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Receipt Print Area -->
+            <div id="print-section" class="receipt-container">
+              <!-- Report Header Component -->
+              <app-report-invoice-header
+                [Title]="'Money Receipt'"
+                [InvoiceNumber]="transactionReceipt.transactionCode"
+              ></app-report-invoice-header>
+
+              <!-- Receipt Details Section -->
+              <div class="receipt-info">
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <p>
+                      <strong>Receipt No:</strong>
+                      {{ transactionReceipt.transactionCode }}
+                    </p>
+                    <p>
+                      <strong>Date:</strong>
+                      {{
+                        transactionReceipt.transactionDate | date : "dd/MM/yyyy"
+                      }}
+                    </p>
+                    <p>
+                      <strong>Type:</strong>
+                      {{
+                        getTransactionTypeLabel(
+                          transactionReceipt.transactionType
+                        )
+                      }}
+                    </p>
+                  </div>
+                  <div class="col-md-6">
+                    @if(transactionReceipt.customerName) {
+                    <p>
+                      <strong>Received From:</strong>
+                      {{ transactionReceipt.customerName }}
+                    </p>
+                    } @if(transactionReceipt.vendorName) {
+                    <p>
+                      <strong>Paid To:</strong>
+                      {{ transactionReceipt.vendorName }}
+                    </p>
+                    }
+                    <p>
+                      <strong>Payment:</strong>
+                      {{
+                        getPaymentMethodLabel(transactionReceipt.paymentMethod)
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Amount Details Section -->
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th class="text-end">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{{ transactionReceipt.description }}</td>
+                      <td class="text-end">
+                        {{
+                          Math.abs(transactionReceipt.netAmount)
+                            | number : "1.2-2"
+                        }}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td class="text-end"><strong>Total Amount:</strong></td>
+                      <td class="text-end">
+                        <strong>{{
+                          Math.abs(transactionReceipt.netAmount)
+                            | number : "1.2-2"
+                        }}</strong>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <!-- Amount in Words -->
+              <div class="amount-words">
+                <strong>Amount in Words:</strong>
+                {{ convertToWords(Math.abs(transactionReceipt.netAmount)) }}
+              </div>
+
+              <!-- Additional Details -->
+              @if(transactionReceipt.note) {
+              <div class="mt-3">
+                <p><strong>Notes:</strong> {{ transactionReceipt.note }}</p>
+              </div>
+              }
+
+              <!-- Payment Reference -->
+              @if(transactionReceipt.paymentReference) {
+              <div class="mt-2">
+                <p>
+                  <strong>Payment Reference:</strong>
+                  {{ transactionReceipt.paymentReference }}
+                </p>
+              </div>
+              }
+
+              <!-- Transaction Status -->
+              <div class="text-center mt-4 mb-4">
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'badge-success':
+                      transactionReceipt.transactionFlow === 'IN',
+                    'badge-danger': transactionReceipt.transactionFlow === 'OUT'
+                  }"
+                >
+                  {{
+                    transactionReceipt.transactionFlow === "IN"
+                      ? "Money Received"
+                      : "Money Paid"
+                  }}
+                </span>
+              </div>
+
+              <!-- Signature Section -->
+              <div class="signature-row">
+                <div class="signature-item">
+                  <div class="signature-line"></div>
+                  <div class="signature-label">Authorized Signature</div>
+                </div>
+                <div class="signature-item">
+                  <div class="signature-line"></div>
+                  <div class="signature-label">
+                    {{
+                      transactionReceipt.transactionFlow === "IN"
+                        ? "Received By"
+                        : "Paid By"
+                    }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Footer Component -->
+              <app-report-footer></app-report-footer>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          @if(!loadingIndicator && !transactionReceipt) {
+          <div class="row">
+            <div class="col-12 text-center">
+              <div class="alert alert-warning">
+                <h5>Transaction Not Found</h5>
+                <p>The requested transaction could not be found.</p>
+                @if(isPrintFromRoute) {
+                <button class="btn btn-primary" (click)="goBack()">
+                  <i class="fas fa-arrow-left me-1"></i>Go Back to Transaction
+                  List
+                </button>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

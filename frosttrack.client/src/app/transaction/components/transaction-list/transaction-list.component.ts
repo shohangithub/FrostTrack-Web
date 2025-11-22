@@ -137,6 +137,10 @@ export class TransactionListComponent implements OnInit {
     this.router.navigate(['transaction/edit', row.id]);
   }
 
+  printReceipt(row: ITransactionListResponse) {
+    this.router.navigate(['transaction/receipt-print', row.id, 'list']);
+  }
+
   softDeleteRow(row: ITransactionListResponse) {
     Swal.fire({
       title: 'Are you sure you want to soft delete this transaction?',

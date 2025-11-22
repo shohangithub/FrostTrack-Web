@@ -1,0 +1,138 @@
+// Print-specific styles
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .signature-row {
+        page-break-inside: avoid;
+    }
+}
+
+// Receipt Container
+.receipt-container {
+    padding: 20px;
+    background: white;
+    max-width: 210mm;
+    margin: 0 auto;
+}
+
+// Receipt Info
+.receipt-info {
+    margin: 20px 0;
+
+    p {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    strong {
+        color: #495057;
+        font-weight: 600;
+    }
+}
+
+// Amount in Words
+.amount-words {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
+
+    strong {
+        color: #212529;
+        display: block;
+        margin-bottom: 5px;
+    }
+}
+
+// Badge styles
+.badge {
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 20px;
+
+    &.badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    &.badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+}
+
+// Signature Section
+.signature-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    margin-bottom: 30px;
+    gap: 40px;
+}
+
+.signature-item {
+    flex: 1;
+    text-align: center;
+}
+
+.signature-line {
+    border-top: 1px solid #212529;
+    margin-bottom: 8px;
+    min-width: 200px;
+}
+
+.signature-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+// Card header action
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h4 {
+        margin: 0;
+    }
+
+    .card-header-action {
+        display: flex;
+        gap: 10px;
+    }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+    .receipt-container {
+        padding: 10px;
+    }
+
+    .signature-row {
+        flex-direction: column;
+        gap: 40px;
+    }
+}
+
+// Print color adjustment
+@media print {
+    .badge {
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

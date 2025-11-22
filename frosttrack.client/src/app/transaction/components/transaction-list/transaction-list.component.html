@@ -169,12 +169,21 @@
                     <button
                       class="btn btn-tbl-edit h-auto"
                       (click)="editRow(row)"
+                      title="Edit"
                     >
                       <i class="fas fa-pen"></i>
                     </button>
                     <button
+                      class="btn btn-tbl-info h-auto"
+                      (click)="printReceipt(row)"
+                      title="Print Receipt"
+                    >
+                      <i class="fas fa-print"></i>
+                    </button>
+                    <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="softDeleteRow(row)"
+                      title="Delete"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>

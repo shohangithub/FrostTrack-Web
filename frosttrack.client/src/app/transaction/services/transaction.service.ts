@@ -10,6 +10,7 @@ import {
   ITransactionRequest,
 } from '../models/transaction.interface';
 import { CodeResponse } from '@core/models/code-response';
+import { ILookup } from '@core/models/lookup';
 import { BaseService } from '@core/service/base.service';
 import { ErrorHandlerService } from '@core/service/error-handler.service';
 import { getApiEndpoint } from 'app/utils/api-builder';
@@ -125,6 +126,13 @@ export class TransactionService extends BaseService {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
       'Transaction Code Generation'
+    );
+  }
+
+  getLookup(): Observable<ILookup<string>[]> {
+    return this.get<ILookup<string>[]>(
+      this.path + '/lookup',
+      'Load Transaction Lookup'
     );
   }
 }

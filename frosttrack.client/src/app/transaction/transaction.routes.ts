@@ -27,4 +27,18 @@ export const transactionRoutes: Route[] = [
         (m) => m.TransactionComponent
       ),
   },
+  {
+    path: 'receipt-print',
+    loadComponent: () =>
+      import(
+        './components/transaction-receipt-print/transaction-receipt-print.component'
+      ).then((m) => m.TransactionReceiptPrintComponent),
+  },
+  {
+    path: 'receipt-print/:id/:backurl',
+    loadComponent: () =>
+      import(
+        './components/transaction-receipt-print/transaction-receipt-print.component'
+      ).then((m) => m.TransactionReceiptPrintComponent),
+  },
 ];
