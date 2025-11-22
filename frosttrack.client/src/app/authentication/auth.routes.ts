@@ -1,10 +1,10 @@
-import { Route } from "@angular/router";
-import { SigninComponent } from "./signin/signin.component";
-import { SignupComponent } from "./signup/signup.component";
-import { Page404Component } from "./page404/page404.component";
-import { Page500Component } from "./page500/page500.component";
-import { ForgotComponent } from "./forgot/forgot.component";
-import { ResetComponent } from "./reset/reset.component";
+import { Route } from '@angular/router';
+import { SigninComponent } from './signin/signin.component';
+import { SignupComponent } from './signup/signup.component';
+import { Page404Component } from './page404/page404.component';
+import { Page500Component } from './page500/page500.component';
+import { ForgotComponent } from './forgot/forgot.component';
+import { ResetComponent } from './reset/reset.component';
 export const AUTH_ROUTE: Route[] = [
   {
     path: '',
@@ -15,10 +15,10 @@ export const AUTH_ROUTE: Route[] = [
     path: 'signin',
     component: SigninComponent,
   },
-  {
-    path: 'signup',
-    component: SignupComponent,
-  },
+  // {
+  //   path: 'signup',
+  //   component: SignupComponent,
+  // },
   {
     path: 'forgot',
     component: ForgotComponent,
@@ -34,5 +34,5 @@ export const AUTH_ROUTE: Route[] = [
   {
     path: 'page500',
     component: Page500Component,
-  }
+  },
 ];
