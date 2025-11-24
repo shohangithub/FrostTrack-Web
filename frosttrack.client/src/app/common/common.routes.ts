@@ -12,6 +12,7 @@ import { DamageComponent } from './components/damage/damage.component';
 import { AssetComponent } from './components/asset/asset.component';
 import { EmployeeComponent } from './components/employee/employee.component';
 import { PaymentMethodComponent } from './components/payment-method/payment-method.component';
+import { BankTransactionReportComponent } from './components/bank-transaction-report/bank-transaction-report.component';
 
 export const COMMON_ROUTE: Route[] = [
   {
@@ -43,26 +44,30 @@ export const COMMON_ROUTE: Route[] = [
   //   path: 'supplier',
   //   component: SupplierComponent,
   // },
-  // {
-  //   path: 'bank',
-  //   component: BankComponent,
-  // },
-  // {
-  //   path: 'bank-transaction',
-  //   component: BankTransactionComponent,
-  // },
-  // {
-  //   path: 'payment-method',
-  //   component: PaymentMethodComponent,
-  // },
+  {
+    path: 'bank',
+    component: BankComponent,
+  },
+  {
+    path: 'bank-transaction',
+    component: BankTransactionComponent,
+  },
+  {
+    path: 'bank-transaction-report',
+    component: BankTransactionReportComponent,
+  },
+  {
+    path: 'payment-method',
+    component: PaymentMethodComponent,
+  },
   // {
   //   path: 'damage',
   //   component: DamageComponent,
   // },
-  // {
-  //   path: 'asset',
-  //   component: AssetComponent,
-  // },
+  {
+    path: 'asset',
+    component: AssetComponent,
+  },
   {
     path: 'employee',
     component: EmployeeComponent,

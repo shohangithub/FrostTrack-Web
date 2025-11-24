@@ -1,0 +1,345 @@
+/*
+=====================================================================
+Bank Transaction Report Component Styles - Matching Transaction Report Format
+=====================================================================
+Professional report styling matching the transaction report pattern
+=====================================================================
+*/
+
+$font-size: 11px;
+
+.no-print {
+    margin: auto;
+    max-width: 210mm;
+}
+
+.print-section-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    margin: auto;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.invoice-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white;
+    page-break-after: always;
+    font-size: $font-size;
+    color: #000;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.invoice-card {
+    border: none;
+    box-shadow: none;
+}
+
+/* Report Information Box */
+.booking-info-box {
+    margin: 10px 0;
+    padding: 8px;
+    border: 1px solid #000;
+    background-color: #f8f9fa;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: $font-size;
+}
+
+.info-table td {
+    padding: 3px 8px;
+    vertical-align: middle;
+}
+
+.info-label {
+    font-weight: bold;
+    width: 20%;
+    color: #000;
+}
+
+.info-value {
+    width: 30%;
+    color: #000;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 12px 0 8px 0;
+    padding: 4px 0;
+    border-bottom: 2px solid #000;
+    text-transform: uppercase;
+    color: #000;
+}
+
+/* Transaction Table */
+.stored-products-section {
+    margin: 10px 0;
+}
+
+.products-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: $font-size;
+    color: #000;
+}
+
+.products-table thead {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+.products-table th,
+.products-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: left;
+}
+
+.products-table th {
+    font-weight: bold;
+    text-align: center;
+    background-color: #dee2e6;
+}
+
+.products-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.products-table .text-center {
+    text-align: center;
+}
+
+.products-table .text-end {
+    text-align: right;
+}
+
+/* Type Badges */
+.type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.type-deposit {
+    background-color: #28a745;
+    color: #ffffff;
+    border: 1px solid #1e7e34;
+}
+
+.type-withdrawal {
+    background-color: #dc3545;
+    color: #ffffff;
+    border: 1px solid #bd2130;
+}
+
+.type-other {
+    background-color: #17a2b8;
+    color: #ffffff;
+    border: 1px solid #117a8b;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-completed {
+    background-color: #28a745;
+    color: #ffffff;
+    border: 1px solid #1e7e34;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #212529;
+    border: 1px solid #d39e00;
+}
+
+.status-cancelled {
+    background-color: #6c757d;
+    color: #ffffff;
+    border: 1px solid #545b62;
+}
+
+/* Summary and Total Rows */
+.summary-row td {
+    font-weight: bold;
+    background-color: #f8f9fa !important;
+    border-top: 2px solid #000 !important;
+}
+
+.total-row td {
+    font-weight: bold;
+    background-color: #e9ecef !important;
+    border-top: 2px solid #000 !important;
+    border-bottom: 2px solid #000 !important;
+}
+
+/* Signature Section */
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+}
+
+.signature-box {
+    width: 45%;
+    text-align: center;
+}
+
+.signature-line {
+    border-top: 1px solid #000;
+    margin-bottom: 5px;
+    margin-top: 40px;
+}
+
+.signature-label {
+    font-weight: bold;
+    font-size: $font-size;
+    margin-top: 5px;
+}
+
+.signature-sublabel {
+    font-size: 10px;
+    color: #666;
+}
+
+/* No Data Message */
+.no-data-message {
+    text-align: center;
+    padding: 30px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.no-data-message p {
+    margin: 0;
+    color: #666;
+    font-size: $font-size;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-section-container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+    }
+
+    .invoice-container {
+        padding: 10mm;
+        page-break-inside: avoid;
+    }
+
+    .products-table {
+        page-break-inside: auto;
+    }
+
+    .products-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .products-table thead {
+        display: table-header-group;
+    }
+
+    .products-table tfoot {
+        display: table-footer-group;
+    }
+
+    /* Ensure badges print with colors */
+    .type-badge,
+    .status-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Form Controls */
+.form-control {
+    font-size: 14px;
+    padding: 6px 12px;
+    height: 38px;
+}
+
+input[type="date"].form-control {
+    height: 38px;
+    line-height: 1.5;
+}
+
+.ng-select {
+    font-size: 14px;
+}
+
+.ng-select .ng-select-container {
+    min-height: 38px;
+}
+
+/* Button Styles */
+.btn {
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-height: 38px;
+}
+
+.btn i {
+    font-size: 14px;
+}
+
+/* Alert Styles */
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.alert-info h5 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.alert-info p {
+    margin-bottom: 0;
+}

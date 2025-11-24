@@ -74,30 +74,34 @@
                           >Transaction Number
                           <span class="text-danger">*</span></label
                         >
-                        <div class="input-group">
-                          <input
-                            type="text"
-                            class="form-control form-control-sm"
-                            placeholder="Transaction Number"
-                            formControlName="transactionNumber"
-                            readonly
-                            required
-                          />
-                          <div
-                            class="input-group-append"
-                            style="cursor: pointer"
-                            (click)="generateCode()"
-                          >
-                            <span class="input-group-text">
-                              <i
-                                class="fas"
-                                [ngClass]="
-                                  isGeneratingCode
-                                    ? 'fa-spinner fa-spin'
-                                    : 'fa-sync'
-                                "
-                              ></i>
-                            </span>
+                        <div class="form-group">
+                          <div class="input-group mb-3">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              placeholder="Transaction Number"
+                              formControlName="transactionNumber"
+                              readonly
+                              required
+                            />
+                            <div
+                              class="input-group-append"
+                              style="cursor: pointer"
+                              (click)="generateCode()"
+                            >
+                              <span
+                                class="input-group-text input-group-text-append"
+                                id="basic-addon5"
+                                ><i
+                                  class="fas"
+                                  [ngClass]="
+                                    isGeneratingCode
+                                      ? 'fa-spinner fa-spin'
+                                      : 'fa-sync'
+                                  "
+                                ></i
+                              ></span>
+                            </div>
                           </div>
                         </div>
                         @if (!currentForm.get('transactionNumber')?.valid &&

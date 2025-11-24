@@ -1,0 +1,384 @@
+<section class="main-content">
+  <div class="section-body">
+    <!-- Filter Section -->
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Bank Transaction Report</span>
+          <div class="p-10 mt-2">
+            <form
+              class="product-form"
+              [formGroup]="reportForm"
+              (ngSubmit)="onSubmit()"
+            >
+              <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="startDate" class="col-sm-12 col-form-label"
+                      >Start Date <span class="text-danger">*</span></label
+                    >
+                    <div class="col-sm-12">
+                      <input
+                        type="date"
+                        id="startDate"
+                        class="form-control"
+                        formControlName="startDate"
+                        [class.is-invalid]="
+                          reportForm.get('startDate')?.invalid &&
+                          reportForm.get('startDate')?.touched
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="endDate" class="col-sm-12 col-form-label"
+                      >End Date <span class="text-danger">*</span></label
+                    >
+                    <div class="col-sm-12">
+                      <input
+                        type="date"
+                        id="endDate"
+                        class="form-control"
+                        formControlName="endDate"
+                        [class.is-invalid]="
+                          reportForm.get('endDate')?.invalid &&
+                          reportForm.get('endDate')?.touched
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label
+                      for="transactionType"
+                      class="col-sm-12 col-form-label"
+                      >Transaction Type</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="transactionType"
+                        [items]="transactionTypeOptions"
+                        bindLabel="text"
+                        bindValue="value"
+                        placeholder="Select Type"
+                        formControlName="transactionType"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="status" class="col-sm-12 col-form-label"
+                      >Status</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="status"
+                        [items]="statusOptions"
+                        bindLabel="text"
+                        bindValue="value"
+                        placeholder="Select Status"
+                        formControlName="status"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <div class="col-sm-12 text-end">
+                      <button
+                        type="submit"
+                        class="btn btn-primary px-2"
+                        [disabled]="isLoading || reportForm.invalid"
+                      >
+                        @if(isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                          role="status"
+                        ></span>
+                        } Show Report
+                      </button>
+                      @if(showReport) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-2 px-2"
+                        (click)="resetReport()"
+                      >
+                        Clear
+                      </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Display Section -->
+    @if(showReport && !isLoading) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <!-- Action Buttons (No Print) -->
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="Transaction Report"
+                  printSectionId="print-section-id"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="print-section-id" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <!-- Report Print Area -->
+                <div class="invoice-container">
+                  <!-- Report Header Component -->
+                  <app-report-invoice-header
+                    [Title]="'Bank Transaction Report'"
+                    [InvoiceNumber]="''"
+                  ></app-report-invoice-header>
+
+                  <!-- Report Information Section -->
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">Report Period:</td>
+                        <td class="info-value">
+                          {{
+                            reportForm.get("startDate")?.value
+                              | date : "dd/MM/yyyy"
+                          }}
+                          -
+                          {{
+                            reportForm.get("endDate")?.value
+                              | date : "dd/MM/yyyy"
+                          }}
+                        </td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">
+                          {{ today | date : "dd/MM/yyyy HH:mm" }}
+                        </td>
+                      </tr>
+                      @if(reportForm.get('transactionType')?.value) {
+                      <tr>
+                        <td class="info-label">Transaction Type:</td>
+                        <td class="info-value">
+                          {{
+                            getTransactionTypeLabel(
+                              reportForm.get("transactionType")?.value
+                            )
+                          }}
+                        </td>
+                        <td class="info-label">Status Filter:</td>
+                        <td class="info-value">
+                          @if(reportForm.get('status')?.value) {
+                          {{ getStatusLabel(reportForm.get("status")?.value) }}
+                          } @else { All Status }
+                        </td>
+                      </tr>
+                      } @else {
+                      <tr>
+                        <td class="info-label">Transaction Type:</td>
+                        <td class="info-value">All Types</td>
+                        <td class="info-label">Status Filter:</td>
+                        <td class="info-value">
+                          @if(reportForm.get('status')?.value) {
+                          {{ getStatusLabel(reportForm.get("status")?.value) }}
+                          } @else { All Status }
+                        </td>
+                      </tr>
+                      }
+                      <tr>
+                        <td class="info-label">Total Transactions:</td>
+                        <td class="info-value">{{ transactions.length }}</td>
+                        <td class="info-label">Net Amount:</td>
+                        <td class="info-value">
+                          {{ netAmount | number : "1.2-2" }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Transaction Details Section -->
+                  <div class="section-title">Bank Transaction Details</div>
+                  @if(transactions.length > 0) {
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>SL.</th>
+                          <th>Date</th>
+                          <th>Trans. No.</th>
+                          <th>Bank</th>
+                          <th>Type</th>
+                          <th>Description</th>
+                          <th>Reference</th>
+                          <th>Status</th>
+                          <th>Amount</th>
+                          <th>Balance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="
+                            let transaction of transactions;
+                            let i = index
+                          "
+                        >
+                          <td class="text-center">{{ i + 1 }}</td>
+                          <td class="text-center">
+                            {{
+                              transaction.transactionDate | date : "dd/MM/yyyy"
+                            }}
+                          </td>
+                          <td>{{ transaction.transactionNumber }}</td>
+                          <td>{{ transaction.bankName }}</td>
+                          <td>
+                            <span
+                              [class]="
+                                'type-badge ' +
+                                getTypeBadgeClass(transaction.transactionType)
+                              "
+                            >
+                              {{
+                                getTransactionTypeLabel(
+                                  transaction.transactionType
+                                )
+                              }}
+                            </span>
+                          </td>
+                          <td>{{ transaction.description || "-" }}</td>
+                          <td>{{ transaction.reference || "-" }}</td>
+                          <td class="text-center">
+                            <span
+                              [class]="
+                                'status-badge ' +
+                                getStatusBadgeClass(transaction.status)
+                              "
+                            >
+                              {{ getStatusLabel(transaction.status) }}
+                            </span>
+                          </td>
+                          <td class="text-end">
+                            {{ transaction.amount | number : "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            {{ transaction.balanceAfter | number : "1.2-2" }}
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="summary-row">
+                          <td colspan="8" class="text-end">
+                            <strong>Total Deposits:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              totalDeposit | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                          <td></td>
+                        </tr>
+                        <tr class="summary-row">
+                          <td colspan="8" class="text-end">
+                            <strong>Total Withdrawals:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              totalWithdrawal | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                          <td></td>
+                        </tr>
+                        <tr class="total-row">
+                          <td colspan="8" class="text-end">
+                            <strong>Net Amount:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{ netAmount | number : "1.2-2" }}</strong>
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">
+                    <p>No bank transactions found for the selected criteria.</p>
+                  </div>
+                  }
+
+                  <!-- Signature Section -->
+                  <div class="signature-section">
+                    <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-label">Prepared By</div>
+                      <div class="signature-sublabel">(System Admin)</div>
+                    </div>
+                    <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-label">Authorized By</div>
+                      <div class="signature-sublabel">(Management)</div>
+                    </div>
+                  </div>
+
+                  <!-- Report Footer Component -->
+                  <app-report-footer></app-report-footer>
+                </div>
+                <!-- End Report Print Area -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          @if(transactions.length === 0 && showReport && !isLoading) {
+          <div class="row">
+            <div class="col-12 text-center">
+              <div class="alert alert-info">
+                <h5>No Data Found</h5>
+                <p>No bank transactions found for the selected criteria.</p>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Loading State -->
+    @if(isLoading) {
+    <div class="row">
+      <div class="col-12 text-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading bank transaction report...</p>
+      </div>
+    </div>
+    }
+  </div>
+</section>
