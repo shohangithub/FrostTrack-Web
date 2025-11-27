@@ -1,0 +1,13 @@
+using Application.ReponseDTO;
+
+namespace Application.Contractors;
+
+public interface ISalaryPaymentService
+{
+    Task<IEnumerable<EmployeeForSalaryResponse>> GetEmployeesForPaymentAsync(CancellationToken cancellationToken = default);
+    Task<SalaryPaymentResponse> CreateSalaryPaymentAsync(RequestDTO.SalaryPaymentRequest request, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SalaryPaymentListResponse>> GetSalaryPaymentListAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<SalaryPaymentListResponse>> GetPaymentHistoryAsync(int? employeeId, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default);
+    Task<MonthlyPaymentSummaryResponse> GetMonthlyPaymentReportAsync(int month, int year, CancellationToken cancellationToken = default);
+    Task<SalaryPaymentResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+}

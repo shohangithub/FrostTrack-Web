@@ -1,0 +1,167 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Salary Payment Records</span>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search by employee, code, or period"
+                            type="text"
+                            class="browser-default search-field"
+                            (keyup)="onSearch($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left">
+                        <div class="tbl-btn-style">
+                          <button
+                            class="btn btn-icon icon-left btn-primary rounded-button"
+                            (click)="add()"
+                            title="Add New Payment"
+                          >
+                            <i class="material-icons">add</i>
+                          </button>
+                          <button
+                            class="btn btn-icon icon-left btn-success rounded-button"
+                            (click)="exportToExcel()"
+                            title="Export to Excel"
+                          >
+                            <i class="material-icons">download</i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ngx-datatable
+              #table
+              class="material"
+              [rows]="filteredData"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="60"
+              [footerHeight]="80"
+              rowHeight="auto"
+              [limit]="pageSize"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+              [selected]="selected"
+              [selectionType]="selection"
+              (select)="onSelect($event)"
+            >
+              <ngx-datatable-column
+                [width]="70"
+                [sortable]="false"
+                [draggable]="false"
+                [resizeable]="false"
+                [canAutoResize]="false"
+                [headerCheckboxable]="true"
+                [checkboxable]="true"
+              >
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Employee Code"
+                prop="employeeCode"
+                [flexGrow]="1"
+              ></ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Employee Name"
+                prop="employeeName"
+                [flexGrow]="1.5"
+              ></ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Period"
+                prop="period"
+                [flexGrow]="0.8"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="badge bg-info">{{ row.period }}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Payment Date"
+                prop="paymentDate"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.paymentDate | date : "dd/MM/yyyy" }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Basic Salary"
+                prop="basicSalary"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-primary">
+                    {{ row.basicSalary | number : "1.2-2" }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Net Amount"
+                prop="netAmount"
+                [flexGrow]="1"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-success fw-bold">
+                    {{ row.netAmount | number : "1.2-2" }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Payment Method"
+                prop="paymentMethod"
+                [flexGrow]="1.2"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ getPaymentMethodLabel(row.paymentMethod) }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column
+                name="Actions"
+                [sortable]="false"
+                [flexGrow]="0.8"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span>
+                    <button
+                      class="btn btn-tbl-secondary h-auto"
+                      (click)="view(row.id)"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

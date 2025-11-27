@@ -1,0 +1,263 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="salaryForm"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="container mt-2">
+          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <!-- Salary Payment Form Card -->
+            <div class="card mb-3">
+              <span class="card-label">Salary Payment Form</span>
+              <div class="card-body-narrow">
+                <!-- Employee & Period Selection -->
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="employeeId" class="col-sm-4 col-form-label">
+                        Employee: <span class="text-danger">*</span>
+                      </label>
+                      <div class="col-sm-8">
+                        <ng-select
+                          [items]="employees"
+                          bindLabel="name"
+                          bindValue="id"
+                          formControlName="employeeId"
+                          placeholder="Select Employee"
+                          (change)="onEmployeeChange($event)"
+                          [clearable]="false"
+                          class="form-control-sm"
+                        >
+                          <ng-template ng-option-tmp let-item="item">
+                            <div>
+                              <strong>{{ item.name }}</strong> ({{ item.code }})
+                              <br />
+                              <small class="text-muted">
+                                {{ item.designation }} - Salary:
+                                {{ item.salary | number : "1.2-2" }}
+                              </small>
+                            </div>
+                          </ng-template>
+                        </ng-select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                    <div class="form-group row">
+                      <label for="month" class="col-sm-4 col-form-label">
+                        Month: <span class="text-danger">*</span>
+                      </label>
+                      <div class="col-sm-8">
+                        <ng-select
+                          [items]="months"
+                          bindLabel="text"
+                          bindValue="value"
+                          formControlName="month"
+                          placeholder="Month"
+                          [clearable]="false"
+                          class="form-control-sm"
+                        ></ng-select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                    <div class="form-group row">
+                      <label for="year" class="col-sm-4 col-form-label">
+                        Year: <span class="text-danger">*</span>
+                      </label>
+                      <div class="col-sm-8">
+                        <ng-select
+                          [items]="years"
+                          formControlName="year"
+                          placeholder="Year"
+                          [clearable]="false"
+                          class="form-control-sm"
+                        ></ng-select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row mt-2">
+                  <div class="col-12">
+                    <div class="alert alert-info mb-2">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <strong>Code:</strong>
+                          {{ selectedEmployee?.code || "" }}
+                        </div>
+                        <div class="col-md-3">
+                          <strong>Designation:</strong>
+                          {{ selectedEmployee?.designation || "" }}
+                        </div>
+                        <div class="col-md-3">
+                          <strong>Monthly Salary:</strong>
+                          {{ selectedEmployee?.salary | number : "1.2-2" }}
+                        </div>
+                        <div class="col-md-3">
+                          <strong>Last Payment:</strong>
+                          {{
+                            selectedEmployee?.lastPaymentDate
+                              | date : "dd MMM yyyy"
+                          }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <hr class="my-3" />
+
+                <!-- Salary Details -->
+                <div class="row">
+                  <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="basicSalary" class="col-sm-4 col-form-label">
+                        Basic Salary: <span class="text-danger">*</span>
+                      </label>
+                      <div class="col-sm-8">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          formControlName="basicSalary"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="bonus" class="col-sm-4 col-form-label">
+                        Bonus:
+                      </label>
+                      <div class="col-sm-8">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          formControlName="bonus"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="deduction" class="col-sm-4 col-form-label">
+                        Deduction:
+                      </label>
+                      <div class="col-sm-8">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          formControlName="deduction"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="netAmount" class="col-sm-4 col-form-label">
+                        Net Amount:
+                      </label>
+                      <div class="col-sm-8">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm bg-light"
+                          formControlName="netAmount"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <!-- Payment Information -->
+                <div class="row">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label
+                        for="paymentMethod"
+                        class="col-sm-4 col-form-label"
+                      >
+                        Payment Method: <span class="text-danger">*</span>
+                      </label>
+                      <div class="col-sm-8">
+                        <ng-select
+                          [items]="paymentMethods"
+                          bindLabel="text"
+                          bindValue="value"
+                          formControlName="paymentMethod"
+                          placeholder="Select Payment Method"
+                          [clearable]="false"
+                          class="form-control-sm"
+                        ></ng-select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="note" class="col-sm-4 col-form-label">
+                        Note:
+                      </label>
+                      <div class="col-sm-8">
+                        <textarea
+                          class="form-control form-control-sm"
+                          formControlName="note"
+                          rows="2"
+                          placeholder="Additional notes..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <!-- Action Buttons -->
+                <div class="row">
+                  <div class="col-12 text-end">
+                    <button
+                      type="submit"
+                      class="btn btn-primary btn-sm me-2"
+                      [disabled]="isSubmitting || salaryForm.invalid"
+                    >
+                      @if (isSubmitting) {
+                      <span
+                        class="spinner-border spinner-border-sm me-2"
+                      ></span>
+                      }
+                      <i class="fas fa-check me-1"></i>
+                      Submit Payment
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="reset()"
+                      [disabled]="isSubmitting"
+                    >
+                      <i class="fas fa-redo me-1"></i>
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

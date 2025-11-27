@@ -84,6 +84,18 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'reports',
+        loadChildren: () =>
+          import('./reports/reports.routes').then((m) => m.reportRoutes),
+      },
+      {
+        path: 'salary-payment',
+        loadChildren: () =>
+          import('./salary-payment/salary-payment.routes').then(
+            (m) => m.salaryPaymentRoutes
+          ),
+      },
+      {
         path: 'advance-table',
         loadChildren: () =>
           import('./advance-table/advance-table.routes').then(

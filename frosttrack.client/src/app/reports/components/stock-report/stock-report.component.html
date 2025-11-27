@@ -1,0 +1,476 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="container mt-2">
+      <!-- Filter Form -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <span class="card-label">Stock Report Filters</span>
+            <div class="card-body">
+              <form [formGroup]="reportForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="startDate"
+                        >Start Date <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="form-control form-control-sm"
+                        id="startDate"
+                        formControlName="startDate"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="endDate"
+                        >End Date <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="form-control form-control-sm"
+                        id="endDate"
+                        formControlName="endDate"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="customerId">Customer (Optional)</label>
+                      <ng-select
+                        [items]="customers"
+                        bindLabel="customerName"
+                        bindValue="id"
+                        formControlName="customerId"
+                        placeholder="All Customers"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="productId">Product (Optional)</label>
+                      <ng-select
+                        [items]="products"
+                        bindLabel="productName"
+                        bindValue="id"
+                        formControlName="productId"
+                        placeholder="All Products"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="reportType">Report Type</label>
+                      <ng-select
+                        [items]="reportTypeOptions"
+                        bindLabel="text"
+                        bindValue="value"
+                        formControlName="reportType"
+                        (change)="applyFilters()"
+                      ></ng-select>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="groupBy">Group By</label>
+                      <ng-select
+                        [items]="groupByOptions"
+                        bindLabel="text"
+                        bindValue="value"
+                        formControlName="groupBy"
+                      ></ng-select>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label>&nbsp;</label>
+                      <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                        [disabled]="isLoading || reportForm.invalid"
+                      >
+                        @if (isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm mr-1"
+                        ></span>
+                        } Generate Report
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (showReport) {
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label>&nbsp;</label>
+                      <div class="btn-group btn-block">
+                        <button
+                          type="button"
+                          class="btn btn-success"
+                          (click)="exportToCSV()"
+                          title="Export to CSV"
+                        >
+                          <i class="fas fa-file-excel"></i> Export
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-info"
+                          printSectionId="print-section"
+                          ngxPrint
+                          title="Print Report"
+                        >
+                          <i class="fas fa-print"></i> Print
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  }
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Display -->
+      @if (showReport) {
+      <div id="print-section">
+        <!-- Summary Cards -->
+        <div class="row">
+          <div class="col-lg-12">
+            <app-report-invoice-header></app-report-invoice-header>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="row">
+              <div class="col-md-6 col-sm-6">
+                <div class="card stats-card">
+                  <div class="card-body">
+                    <div class="stats-info">
+                      <h5 class="card-title">
+                        {{
+                          summary?.totalBookedQuantity || 0 | number : "1.2-2"
+                        }}
+                      </h5>
+                      <p class="stats-text">Total Booked Quantity</p>
+                    </div>
+                    <div class="stats-icon">
+                      <i class="fas fa-box text-primary"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 col-sm-6">
+                <div class="card stats-card">
+                  <div class="card-body">
+                    <div class="stats-info">
+                      <h5 class="card-title text-success">
+                        {{
+                          summary?.totalDeliveredQuantity || 0
+                            | number : "1.2-2"
+                        }}
+                      </h5>
+                      <p class="stats-text">Total Delivered Quantity</p>
+                    </div>
+                    <div class="stats-icon">
+                      <i class="fas fa-truck text-success"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 col-sm-6">
+                <div class="card stats-card">
+                  <div class="card-body">
+                    <div class="stats-info">
+                      <h5 class="card-title text-warning">
+                        {{
+                          summary?.totalRemainingQuantity || 0
+                            | number : "1.2-2"
+                        }}
+                      </h5>
+                      <p class="stats-text">Remaining Quantity</p>
+                    </div>
+                    <div class="stats-icon">
+                      <i class="fas fa-warehouse text-warning"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 col-sm-6">
+                <div class="card stats-card">
+                  <div class="card-body">
+                    <div class="stats-info">
+                      <h5 class="card-title text-info">
+                        ৳{{ summary?.totalValue || 0 | number : "1.2-2" }}
+                      </h5>
+                      <p class="stats-text">Total Stock Value</p>
+                    </div>
+                    <div class="stats-icon">
+                      <i class="fas fa-coins text-info"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h4>Stock Status Overview</h4>
+              </div>
+              <div class="card-body">
+                @if (chartOptions) {
+                <apx-chart
+                  [series]="chartOptions.series"
+                  [chart]="chartOptions.chart"
+                  [labels]="chartOptions.labels"
+                  [colors]="chartOptions.colors"
+                  [legend]="chartOptions.legend"
+                  [plotOptions]="chartOptions.plotOptions"
+                  [dataLabels]="chartOptions.dataLabels"
+                ></apx-chart>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Information -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="info-box">
+              <div class="info-row">
+                <strong>Report Period:</strong>
+                <span>
+                  {{ reportForm.value.startDate | date : "dd MMM yyyy" }} to
+                  {{ reportForm.value.endDate | date : "dd MMM yyyy" }}
+                </span>
+              </div>
+              <div class="info-row">
+                <strong>Generated On:</strong>
+                <span>{{ today | date : "dd MMM yyyy hh:mm a" }}</span>
+              </div>
+              @if (reportForm.value.customerId) {
+              <div class="info-row">
+                <strong>Customer Filter:</strong>
+                <span>{{ getCustomerName(reportForm.value.customerId) }}</span>
+              </div>
+              } @if (reportForm.value.productId) {
+              <div class="info-row">
+                <strong>Product Filter:</strong>
+                <span>{{ getProductName(reportForm.value.productId) }}</span>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Data Table -->
+        @for (group of getGroupedData(); track group.groupName) {
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="card">
+              @if (reportForm.value.groupBy !== 'none') {
+              <div class="card-header bg-light">
+                <h5 class="mb-0">{{ group.groupName }}</h5>
+              </div>
+              }
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Serial</th>
+                        <th>Booking #</th>
+                        <th>Booking Date</th>
+                        @if (reportForm.value.groupBy !== 'customer') {
+                        <th>Customer</th>
+                        } @if (reportForm.value.groupBy !== 'product') {
+                        <th>Product</th>
+                        }
+                        <th class="text-right">Booked Qty</th>
+                        <th class="text-right">Delivered Qty</th>
+                        <th class="text-right">Remaining Qty</th>
+                        <th>Unit</th>
+                        <th class="text-right">Rate</th>
+                        <th class="text-right">Total Value</th>
+                        <th>Status</th>
+                        <th>Last Delivery</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of group.items; track item.bookingId; let i =
+                      $index) {
+                      <tr>
+                        <td>{{ i + 1 }}</td>
+                        <td>
+                          <strong>{{ item.bookingNumber }}</strong>
+                        </td>
+                        <td>{{ item.bookingDate | date : "dd MMM yyyy" }}</td>
+                        @if (reportForm.value.groupBy !== 'customer') {
+                        <td>{{ item.customerName }}</td>
+                        } @if (reportForm.value.groupBy !== 'product') {
+                        <td>{{ item.productName }}</td>
+                        }
+                        <td class="text-right">
+                          <strong>{{
+                            item.bookingQuantity | number : "1.2-2"
+                          }}</strong>
+                        </td>
+                        <td class="text-right text-success">
+                          {{ item.deliveredQuantity | number : "1.2-2" }}
+                        </td>
+                        <td class="text-right text-warning">
+                          <strong>{{
+                            item.remainingQuantity | number : "1.2-2"
+                          }}</strong>
+                        </td>
+                        <td>{{ item.unitName }}</td>
+                        <td class="text-right">
+                          ৳{{ item.bookingRate | number : "1.2-2" }}
+                        </td>
+                        <td class="text-right">
+                          <strong
+                            >৳{{ item.totalValue | number : "1.2-2" }}</strong
+                          >
+                        </td>
+                        <td>
+                          <span
+                            class="badge"
+                            [ngClass]="getStatusBadgeClass(item.status)"
+                            >{{ item.status }}</span
+                          >
+                        </td>
+                        <td>
+                          {{
+                            item.lastDeliveryDate
+                              ? (item.lastDeliveryDate | date : "dd MMM yyyy")
+                              : "N/A"
+                          }}
+                        </td>
+                      </tr>
+                      }
+                    </tbody>
+                    @if (group.subtotal) {
+                    <tfoot class="table-footer">
+                      <tr>
+                        <td
+                          [attr.colspan]="
+                            reportForm.value.groupBy === 'none' ? 4 : 3
+                          "
+                          class="text-right"
+                        >
+                          <strong>Subtotal:</strong>
+                        </td>
+                        <td class="text-right">
+                          <strong>{{
+                            group.subtotal.bookedQty | number : "1.2-2"
+                          }}</strong>
+                        </td>
+                        <td class="text-right text-success">
+                          <strong>{{
+                            group.subtotal.deliveredQty | number : "1.2-2"
+                          }}</strong>
+                        </td>
+                        <td class="text-right text-warning">
+                          <strong>{{
+                            group.subtotal.remainingQty | number : "1.2-2"
+                          }}</strong>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-right">
+                          <strong
+                            >৳{{
+                              group.subtotal.totalValue | number : "1.2-2"
+                            }}</strong
+                          >
+                        </td>
+                        <td colspan="2"></td>
+                      </tr>
+                    </tfoot>
+                    }
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- Grand Total -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="card bg-light">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3 col-sm-6 text-center border-right">
+                    <h5 class="mb-0">
+                      {{ summary?.totalBookedQuantity || 0 | number : "1.2-2" }}
+                    </h5>
+                    <small class="text-muted">Total Booked</small>
+                  </div>
+                  <div class="col-md-3 col-sm-6 text-center border-right">
+                    <h5 class="mb-0 text-success">
+                      {{
+                        summary?.totalDeliveredQuantity || 0 | number : "1.2-2"
+                      }}
+                    </h5>
+                    <small class="text-muted">Total Delivered</small>
+                  </div>
+                  <div class="col-md-3 col-sm-6 text-center border-right">
+                    <h5 class="mb-0 text-warning">
+                      {{
+                        summary?.totalRemainingQuantity || 0 | number : "1.2-2"
+                      }}
+                    </h5>
+                    <small class="text-muted">Total Remaining</small>
+                  </div>
+                  <div class="col-md-3 col-sm-6 text-center">
+                    <h5 class="mb-0 text-info">
+                      ৳{{ summary?.totalValue || 0 | number : "1.2-2" }}
+                    </h5>
+                    <small class="text-muted">Total Value</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <app-report-footer></app-report-footer>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle fa-2x mb-2"></i>
+            <p class="mb-0">
+              Please select date range and click "Generate Report" to view stock
+              report
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>
