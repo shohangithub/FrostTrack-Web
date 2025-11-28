@@ -55,8 +55,10 @@
               [rowHeight]="'auto'"
               [limit]="pageSize"
               [externalPaging]="true"
+              [externalSorting]="true"
               [count]="totalItems"
               (page)="onPageChange($event)"
+              (sort)="onSort($event)"
             >
               <!-- Payment Number Column -->
               <ngx-datatable-column name="paymentNumber" prop="paymentNumber">

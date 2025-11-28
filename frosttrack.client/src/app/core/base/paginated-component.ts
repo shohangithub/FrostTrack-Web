@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 import { BaseComponent } from './base-component';
 import { DefaultPagination } from '@config/pagination';
+import { PaginationQuery } from '@core/models/pagination-query';
 
 /**
  * Pagination functionality that can be mixed into components
@@ -11,6 +12,14 @@ export abstract class PaginatedComponent extends BaseComponent {
   pageSize = DefaultPagination.PAGESIZE;
   totalItems = 0;
   loadingIndicator = false;
+
+  // Pagination with sorting
+  pagination: PaginationQuery = {
+    pageSize: DefaultPagination.PAGESIZE,
+    pageIndex: DefaultPagination.PAGEINDEX,
+    orderBy: DefaultPagination.ORDERBY,
+    isAscending: DefaultPagination.ASCENDING,
+  };
 
   // Search and filters
   searchQuery = '';
@@ -34,10 +43,13 @@ export abstract class PaginatedComponent extends BaseComponent {
       errorMessage = 'Error loading data',
     } = options;
 
+    // Update pagination object
+    this.pagination.pageIndex = this.currentPage - 1;
+    this.pagination.pageSize = this.pageSize;
+
     const paginationQuery = {
-      pageIndex: this.currentPage - 1,
-      pageSize: this.pageSize,
-      searchQuery: this.searchQuery,
+      ...this.pagination,
+      openText: this.searchQuery,
       ...additionalFilters,
     };
 

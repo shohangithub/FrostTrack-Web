@@ -132,6 +132,21 @@ public class SalesService : ISalesService
 
     public async Task<PaginationResult<SalesListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "invoiceNumber" => nameof(Sales.InvoiceNumber),
+                "invoiceDate" => nameof(Sales.InvoiceDate),
+                "salesType" => nameof(Sales.SalesType),
+                "invoiceAmount" => nameof(Sales.InvoiceAmount),
+                "paidAmount" => nameof(Sales.PaidAmount),
+                "subtotal" => nameof(Sales.Subtotal),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
 
         Expression<Func<Sales, bool>>? predicate = null;
 

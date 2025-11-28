@@ -94,6 +94,23 @@ public class SupplierPaymentService : ISupplierPaymentService
 
     public async Task<PaginationResult<SupplierPaymentListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "paymentNumber" => nameof(SupplierPayment.PaymentNumber),
+                "paymentDate" => nameof(SupplierPayment.PaymentDate),
+                "paymentType" => nameof(SupplierPayment.PaymentType),
+                "paymentMethod" => nameof(SupplierPayment.PaymentMethod),
+                "paymentAmount" => nameof(SupplierPayment.PaymentAmount),
+                "checkNumber" => nameof(SupplierPayment.CheckNumber),
+                "checkDate" => nameof(SupplierPayment.CheckDate),
+                _ => requestQuery.OrderBy // Keep original if no mapping found
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
+
         Expression<Func<SupplierPayment, bool>>? predicate = null;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))

@@ -143,7 +143,6 @@ export class DeliveryListComponent implements OnInit {
   fetchData() {
     this.deliveryService.getWithPagination(this.pagination).subscribe({
       next: (response: PaginationResult<IDeliveryListResponse>) => {
-        debugger;
         this.data = response.data;
         this.paging = response.paging;
         this.loadingIndicator = false;

@@ -133,6 +133,20 @@ public class PurchaseService : IPurchaseService
 
     public async Task<PaginationResult<PurchaseListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "invoiceNumber" => nameof(Purchase.InvoiceNumber),
+                "invoiceDate" => nameof(Purchase.InvoiceDate),
+                "invoiceAmount" => nameof(Purchase.InvoiceAmount),
+                "paidAmount" => nameof(Purchase.PaidAmount),
+                "subtotal" => nameof(Purchase.Subtotal),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
 
         Expression<Func<Purchase, bool>>? predicate = null;
 

@@ -140,6 +140,19 @@ public class ProductReceiveService : IProductReceiveService
 
     public async Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "bookingNumber" => nameof(Booking.BookingNumber),
+                "bookingDate" => nameof(Booking.BookingDate),
+                "notes" => nameof(Booking.Notes),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
+
         Expression<Func<Booking, bool>>? predicate = null;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))

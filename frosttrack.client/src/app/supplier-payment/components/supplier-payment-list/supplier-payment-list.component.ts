@@ -67,6 +67,13 @@ export class SupplierPaymentListComponent
     );
   }
 
+  onSort(event: any): void {
+    const sort = event.sorts[0];
+    this.pagination.orderBy = sort.prop;
+    this.pagination.isAscending = sort.dir === 'asc';
+    this.loadData();
+  }
+
   async deletePayment(id: number): Promise<void> {
     const result = await Swal.fire({
       title: 'Are you sure?',
