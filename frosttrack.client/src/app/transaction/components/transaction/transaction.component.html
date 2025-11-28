@@ -213,21 +213,20 @@
                       Cancel
                     </button>
                     <button
-                      type="button"
-                      class="btn btn-info mx-2"
-                      (click)="onSaveAndPrint()"
-                      [disabled]="isSubmitted || transactionForm.invalid"
-                    >
-                      @if (isSubmitted) { Processing... } @else { Save & Print
-                      Receipt }
-                    </button>
-                    <button
                       type="submit"
                       class="btn btn-primary mx-2"
                       [disabled]="isSubmitted || transactionForm.invalid"
                     >
                       @if (isSubmitted) { Processing... } @else if (isEditing) {
                       Update } @else { Save }
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-info mx-2"
+                      (click)="onSaveAndPrint()"
+                      [disabled]="isSubmitted || transactionForm.invalid"
+                    >
+                      @if (isSubmitted) { Processing... } @else { Save & Print }
                     </button>
                   </div>
                 </div>

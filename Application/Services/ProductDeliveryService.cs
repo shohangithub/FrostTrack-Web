@@ -87,7 +87,7 @@ public class DeliveryService : IDeliveryService
 
             var transactionRequest = new TransactionRequest(
                 Id: Guid.NewGuid(),
-                TransactionCode: await _transactionService.GenerateTransactionCode(),
+                TransactionCode: CodeGenerator.GenerateTransactionCode("DEL"),
                 TransactionDate: request.DeliveryDate,
                 TransactionType: TransactionTypes.BILL_COLLECTION,
                 TransactionFlow: TransactionFlows.IN,
@@ -250,12 +250,13 @@ public class DeliveryService : IDeliveryService
 
     public async Task<string> GenerateDeliveryNumberAsync()
     {
-        var lastNumber = await _repository.Query()
-            .OrderByDescending(x => x.Id)
-            .Select(x => x.DeliveryNumber)
-            .FirstOrDefaultAsync();
+        // var lastNumber = await _repository.Query()
+        //     .OrderByDescending(x => x.Id)
+        //     .Select(x => x.DeliveryNumber)
+        //     .FirstOrDefaultAsync();
 
-        return GenerateNextNumber(lastNumber, "DEL");
+        //return GenerateNextNumber(lastNumber, "DEL");
+        return await Task.FromResult(CodeGenerator.GenerateTransactionCode("DEL"));
     }
 
     public async Task<List<CustomerStockResponse>> GetCustomerStockAsync(int customerId)

@@ -63,46 +63,12 @@ public class SalaryPaymentService : ISalaryPaymentService
     }
 
 
-    public async Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default)
-    {
-        var currentDate = DateTime.Now;
-        var year = currentDate.Year.ToString().Substring(2, 2);
-        var month = currentDate.Month.ToString("D2");
-        var dateString = $"{year}{month}";
-
-        var lastTransaction = await _transactionRepository.Query()
-            .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
-            .OrderByDescending(x => x.TransactionCode)
-            .Select(x => x.TransactionCode)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        long code = 1;
-        if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
-        {
-            var lastCodePart = lastTransaction.Substring(6);
-            if (long.TryParse(lastCodePart, out long lastCode))
-            {
-                code = lastCode + 1;
-            }
-        }
-
-        if (code < 10)
-            return $"TC{dateString}0000{code}";
-        else if (code < 100)
-            return $"TC{dateString}000{code}";
-        else if (code < 1000)
-            return $"TC{dateString}00{code}";
-        else if (code < 10000)
-            return $"TC{dateString}0{code}";
-        else
-            return $"TC{dateString}{code}";
-    }
 
     public async Task<SalaryPaymentResponse> CreateSalaryPaymentAsync(SalaryPaymentRequest request, CancellationToken cancellationToken = default)
     {
         // Validate the request
 
-        var nextCode = await GenerateTransactionCode(cancellationToken);
+        var nextCode = CodeGenerator.GenerateTransactionCode("SAL");
         var validator = new SalaryPaymentValidator(_employeeRepository, _transactionRepository, nextCode);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 

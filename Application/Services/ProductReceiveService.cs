@@ -190,52 +190,53 @@ public class ProductReceiveService : IProductReceiveService
 
     public async Task<string> GenerateReceiveNumber(CancellationToken cancellationToken = default)
     {
-        var currentDate = DateTime.Now;
-        var year = currentDate.Year.ToString()?.Remove(0, 2);
-        var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
-        var dateString = $"{year}{month}";
-        var dependOn = await _companyRepository.Query().Select(x => x.CodeGeneration).FirstOrDefaultAsync();
+        return await Task.FromResult(CodeGenerator.GenerateTransactionCode("BK"));
+        // var currentDate = DateTime.Now;
+        // var year = currentDate.Year.ToString()?.Remove(0, 2);
+        // var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
+        // var dateString = $"{year}{month}";
+        // var dependOn = await _companyRepository.Query().Select(x => x.CodeGeneration).FirstOrDefaultAsync();
 
-        if (dependOn == ECodeGeneration.Branch)
-        {
-            var code = long.Parse((await _repository.Query()
-                .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
-                .OrderByDescending(x => x.BookingNumber)
-                .Select(x => x.BookingNumber)
-                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
+        // if (dependOn == ECodeGeneration.Branch)
+        // {
+        //     var code = long.Parse((await _repository.Query()
+        //         .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
+        //         .OrderByDescending(x => x.BookingNumber)
+        //         .Select(x => x.BookingNumber)
+        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
 
-            var range = code / 10;
+        //     var range = code / 10;
 
-            if (range == 0)
-                return $"B{dateString}0000{code}";
-            else if (range <= 9)
-                return $"B{dateString}000{code}";
-            else if (range <= 99)
-                return $"B{dateString}00{code}";
-            else if (range <= 999)
-                return $"B{dateString}0{code}";
-            else
-                return $"B{dateString}{code}";
-        }
-        else
-        {
-            var code = long.Parse((await _repository.Query()
-                .OrderByDescending(x => x.BookingNumber)
-                .Select(x => x.BookingNumber)
-                .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
+        //     if (range == 0)
+        //         return $"B{dateString}0000{code}";
+        //     else if (range <= 9)
+        //         return $"B{dateString}000{code}";
+        //     else if (range <= 99)
+        //         return $"B{dateString}00{code}";
+        //     else if (range <= 999)
+        //         return $"B{dateString}0{code}";
+        //     else
+        //         return $"B{dateString}{code}";
+        // }
+        // else
+        // {
+        //     var code = long.Parse((await _repository.Query()
+        //         .OrderByDescending(x => x.BookingNumber)
+        //         .Select(x => x.BookingNumber)
+        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
 
-            var range = code / 10;
+        //     var range = code / 10;
 
-            if (range == 0)
-                return $"B{dateString}0000{code}";
-            else if (range <= 9)
-                return $"B{dateString}000{code}";
-            else if (range <= 99)
-                return $"B{dateString}00{code}";
-            else if (range <= 999)
-                return $"B{dateString}0{code}";
-            else
-                return $"B{dateString}{code}";
-        }
+        //     if (range == 0)
+        //         return $"B{dateString}0000{code}";
+        //     else if (range <= 9)
+        //         return $"B{dateString}000{code}";
+        //     else if (range <= 99)
+        //         return $"B{dateString}00{code}";
+        //     else if (range <= 999)
+        //         return $"B{dateString}0{code}";
+        //     else
+        //         return $"B{dateString}{code}";
+        // }
     }
 }

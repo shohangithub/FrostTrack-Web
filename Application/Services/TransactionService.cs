@@ -236,37 +236,38 @@ public class TransactionService : ITransactionService
 
     public async Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default)
     {
-        var currentDate = DateTime.Now;
-        var year = currentDate.Year.ToString().Substring(2, 2);
-        var month = currentDate.Month.ToString("D2");
-        var dateString = $"{year}{month}";
+        // var currentDate = DateTime.Now;
+        // var year = currentDate.Year.ToString().Substring(2, 2);
+        // var month = currentDate.Month.ToString("D2");
+        // var dateString = $"{year}{month}";
 
-        var lastTransaction = await _repository.Query()
-            .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
-            .OrderByDescending(x => x.TransactionCode)
-            .Select(x => x.TransactionCode)
-            .FirstOrDefaultAsync(cancellationToken);
+        // var lastTransaction = await _repository.Query()
+        //     .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
+        //     .OrderByDescending(x => x.TransactionCode)
+        //     .Select(x => x.TransactionCode)
+        //     .FirstOrDefaultAsync(cancellationToken);
 
-        long code = 1;
-        if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
-        {
-            var lastCodePart = lastTransaction.Substring(6);
-            if (long.TryParse(lastCodePart, out long lastCode))
-            {
-                code = lastCode + 1;
-            }
-        }
+        // long code = 1;
+        // if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
+        // {
+        //     var lastCodePart = lastTransaction.Substring(6);
+        //     if (long.TryParse(lastCodePart, out long lastCode))
+        //     {
+        //         code = lastCode + 1;
+        //     }
+        // }
 
-        if (code < 10)
-            return $"TC{dateString}0000{code}";
-        else if (code < 100)
-            return $"TC{dateString}000{code}";
-        else if (code < 1000)
-            return $"TC{dateString}00{code}";
-        else if (code < 10000)
-            return $"TC{dateString}0{code}";
-        else
-            return $"TC{dateString}{code}";
+        // if (code < 10)
+        //     return $"TC{dateString}0000{code}";
+        // else if (code < 100)
+        //     return $"TC{dateString}000{code}";
+        // else if (code < 1000)
+        //     return $"TC{dateString}00{code}";
+        // else if (code < 10000)
+        //     return $"TC{dateString}0{code}";
+        // else
+        //     return $"TC{dateString}{code}";
+        return CodeGenerator.GenerateTransactionCode();
     }
 
     public async Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
