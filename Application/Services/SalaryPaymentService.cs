@@ -38,7 +38,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             .ToListAsync(cancellationToken);
 
         var transactions = await _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == "SALARY")
+            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY)
             .ToListAsync(cancellationToken);
 
         var result = employees.Select(emp =>
@@ -62,8 +62,50 @@ public class SalaryPaymentService : ISalaryPaymentService
         return result;
     }
 
+
+    public async Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default)
+    {
+        var currentDate = DateTime.Now;
+        var year = currentDate.Year.ToString().Substring(2, 2);
+        var month = currentDate.Month.ToString("D2");
+        var dateString = $"{year}{month}";
+
+        var lastTransaction = await _transactionRepository.Query()
+            .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
+            .OrderByDescending(x => x.TransactionCode)
+            .Select(x => x.TransactionCode)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        long code = 1;
+        if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
+        {
+            var lastCodePart = lastTransaction.Substring(6);
+            if (long.TryParse(lastCodePart, out long lastCode))
+            {
+                code = lastCode + 1;
+            }
+        }
+
+        if (code < 10)
+            return $"TC{dateString}0000{code}";
+        else if (code < 100)
+            return $"TC{dateString}000{code}";
+        else if (code < 1000)
+            return $"TC{dateString}00{code}";
+        else if (code < 10000)
+            return $"TC{dateString}0{code}";
+        else
+            return $"TC{dateString}{code}";
+    }
+
     public async Task<SalaryPaymentResponse> CreateSalaryPaymentAsync(SalaryPaymentRequest request, CancellationToken cancellationToken = default)
     {
+        // Validate the request
+
+        var nextCode = await GenerateTransactionCode(cancellationToken);
+        var validator = new SalaryPaymentValidator(_employeeRepository, _transactionRepository, nextCode);
+        await validator.ValidateAndThrowAsync(request, cancellationToken);
+
         var tenantId = _tenantProvider.GetTenantId();
         var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId, cancellationToken);
 
@@ -75,38 +117,26 @@ public class SalaryPaymentService : ISalaryPaymentService
         var netAmount = request.BasicSalary + request.Bonus - request.Deduction;
         var period = $"{request.Month:D2}/{request.Year}";
 
-        // Get next transaction code
-        var lastTransaction = await _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId)
-            .OrderByDescending(t => t.TransactionCode)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var nextCode = "TRX-0001";
-        if (lastTransaction != null && lastTransaction.TransactionCode.StartsWith("TRX-"))
-        {
-            var lastNumber = int.Parse(lastTransaction.TransactionCode.Substring(4));
-            nextCode = $"TRX-{(lastNumber + 1):D4}";
-        }
-
         // Create transaction
         var transaction = new Transaction
         {
             Id = Guid.NewGuid(),
             TransactionCode = nextCode,
             TransactionDate = DateTime.Now,
-            TransactionType = "SALARY",
-            TransactionFlow = "OUT",
+            TransactionType = TransactionTypes.SALARY,
+            TransactionFlow = TransactionFlows.OUT,
             EntityName = "Employee",
             EntityId = employee.Id.ToString(),
             Amount = netAmount,
             NetAmount = netAmount,
             PaymentMethod = request.PaymentMethod,
-            Category = "SALARY",
+            Category = ExpenseCategories.SALARY,
             Description = $"Salary payment for {period}",
             Note = string.IsNullOrEmpty(request.Note) ? null : request.Note,
             BranchId = employee.BranchId ?? 1,
             TenantId = tenantId
         };
+
 
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(transaction);
         await _transactionRepository.AddAsync(transaction, cancellationToken);
@@ -136,7 +166,7 @@ public class SalaryPaymentService : ISalaryPaymentService
     {
         var tenantId = _tenantProvider.GetTenantId();
         var transactions = await _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == "SALARY")
+            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync(cancellationToken);
 
@@ -179,7 +209,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
         // Build base query
         var query = _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == "SALARY" && !t.IsDeleted);
+            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY && !t.IsDeleted);
 
         // Apply employee filter
         if (employeeId.HasValue && employeeId.Value > 0)
@@ -294,7 +324,7 @@ public class SalaryPaymentService : ISalaryPaymentService
     {
         var tenantId = _tenantProvider.GetTenantId();
         var query = _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == "SALARY");
+            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY);
 
         if (employeeId.HasValue)
         {
@@ -347,7 +377,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
         var transactions = await _transactionRepository.Query()
             .Where(t => t.TenantId == tenantId
-                && t.TransactionType == "SALARY"
+                && t.TransactionType == TransactionTypes.SALARY
                 && t.TransactionDate >= startDate
                 && t.TransactionDate <= endDate)
             .ToListAsync(cancellationToken);
@@ -393,7 +423,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var tenantId = _tenantProvider.GetTenantId();
         var transaction = await _transactionRepository.GetByIdAsync(Guid.Parse(id.ToString()), cancellationToken);
 
-        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != "SALARY")
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != TransactionTypes.SALARY)
         {
             throw new Exception("Salary payment not found");
         }
@@ -447,7 +477,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var tenantId = _tenantProvider.GetTenantId();
         var transaction = await _transactionRepository.GetByIdAsync(transactionId, cancellationToken);
 
-        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != "SALARY")
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != TransactionTypes.SALARY)
         {
             throw new Exception("Salary payment not found");
         }

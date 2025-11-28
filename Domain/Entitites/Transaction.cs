@@ -78,6 +78,8 @@ public static class TransactionTypes
     public const string BILL_PAYMENT = "BILL_PAYMENT"; // Money OUT for vendor bills
     public const string ADJUSTMENT = "ADJUSTMENT"; // IN/OUT adjustments
     public const string REFUND = "REFUND"; // Money OUT refunds to customers
+    public const string SALARY = "SALARY"; // Money OUT for employee salaries   
+    public const string OTHER = "OTHER"; // Miscellaneous transactions
 }
 
 public static class TransactionFlows

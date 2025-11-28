@@ -21,6 +21,10 @@ import {
 } from '@swimlane/ngx-datatable';
 import { PaginationQuery } from '@core/models/pagination-query';
 import { DefaultPagination } from '@config/pagination';
+import {
+  PaymentMethod,
+  TransactionType,
+} from 'app/transaction/models/transaction.interface';
 
 @Component({
   selector: 'app-salary-payment-form',
@@ -105,7 +109,7 @@ export class SalaryPaymentFormComponent implements OnInit {
       bonus: [null],
       deduction: [null],
       netAmount: [{ value: 0, disabled: true }],
-      paymentMethod: ['Cash', Validators.required],
+      paymentMethod: [PaymentMethod.CASH, Validators.required],
       note: [''],
     });
 
