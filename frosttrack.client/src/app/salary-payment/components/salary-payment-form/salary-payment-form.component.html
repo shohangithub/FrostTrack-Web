@@ -27,7 +27,8 @@
                           formControlName="employeeId"
                           placeholder="Select Employee"
                           (change)="onEmployeeChange($event)"
-                          [clearable]="false"
+                          [clearable]="true"
+                          (clear)="onEmployeeChange(null)"
                           class="form-control-sm"
                         >
                           <ng-template ng-option-tmp let-item="item">

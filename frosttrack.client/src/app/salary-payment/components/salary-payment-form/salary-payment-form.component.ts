@@ -142,6 +142,7 @@ export class SalaryPaymentFormComponent implements OnInit {
   }
 
   onEmployeeChange(event: any): void {
+    debugger;
     const employee = event;
     if (employee) {
       this.selectedEmployee = employee;
@@ -151,6 +152,7 @@ export class SalaryPaymentFormComponent implements OnInit {
       this.calculateNetAmount();
     } else {
       this.selectedEmployee = null;
+      this.reset();
     }
   }
 

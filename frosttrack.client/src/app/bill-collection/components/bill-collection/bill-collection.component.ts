@@ -41,6 +41,7 @@ export class BillCollectionComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   isEditing = false;
+  isGeneratingCode = false;
   transactionCode = '';
   selectedBranch!: number;
 
@@ -104,13 +105,16 @@ export class BillCollectionComponent implements OnInit {
   }
 
   generateTransactionCode() {
+    this.isGeneratingCode = true;
     this.transactionService.generateCode().subscribe({
       next: (response) => {
         this.transactionCode = response.code;
         this.billCollectionForm.patchValue({ transactionCode: response.code });
+        this.isGeneratingCode = false;
       },
       error: () => {
         this.toastr.error('Failed to generate transaction code');
+        this.isGeneratingCode = false;
       },
     });
   }
