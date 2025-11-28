@@ -178,6 +178,19 @@ public class BookingService : IBookingService
 
     public async Task<PaginationResult<BookingListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "bookingNumber" => nameof(Booking.BookingNumber),
+                "bookingDate" => nameof(Booking.BookingDate),
+                "notes" => nameof(Booking.Notes),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
+
         Expression<Func<Booking, bool>>? predicate = null;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
@@ -211,6 +224,12 @@ public class BookingService : IBookingService
             );
 
         var query = _bookingRepository.Query();
+
+        // Apply search predicate if it exists
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
