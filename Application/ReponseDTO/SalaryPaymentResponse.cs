@@ -19,14 +19,15 @@ public record SalaryPaymentResponse(
 );
 
 public record SalaryPaymentListResponse(
-    int Id,
+    Guid Id,
     string EmployeeName,
     string EmployeeCode,
     string Period,
     decimal BasicSalary,
     decimal NetAmount,
     DateTime PaymentDate,
-    string PaymentMethod
+    string PaymentMethod,
+    DateTime CreatedAt
 );
 
 public record EmployeeForSalaryResponse(

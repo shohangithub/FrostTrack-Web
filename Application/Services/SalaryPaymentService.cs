@@ -14,17 +14,20 @@ public class SalaryPaymentService : ISalaryPaymentService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly ITenantProvider _tenantProvider;
     private readonly DefaultValueInjector _defaultValueInjector;
+    private readonly CurrentUser _currentUser;
 
     public SalaryPaymentService(
         IRepository<Employee, int> employeeRepository,
         IRepository<Transaction, Guid> transactionRepository,
         ITenantProvider tenantProvider,
-        DefaultValueInjector defaultValueInjector)
+        DefaultValueInjector defaultValueInjector,
+        IUserContextService userContextService)
     {
         _employeeRepository = employeeRepository;
         _transactionRepository = transactionRepository;
         _tenantProvider = tenantProvider;
         _defaultValueInjector = defaultValueInjector;
+        _currentUser = userContextService.GetCurrentUser();
     }
 
     public async Task<IEnumerable<EmployeeForSalaryResponse>> GetEmployeesForPaymentAsync(CancellationToken cancellationToken = default)
@@ -150,18 +153,137 @@ public class SalaryPaymentService : ISalaryPaymentService
             var period = ExtractPeriodFromNote(t.Description ?? "");
 
             return new SalaryPaymentListResponse(
-                0,
+                t.Id,
                 emp?.EmployeeName ?? "Unknown",
                 emp?.EmployeeCode ?? "N/A",
                 period,
                 t.Amount,
                 t.NetAmount,
                 t.TransactionDate,
-                t.PaymentMethod
+                t.PaymentMethod,
+                t.CreatedTime
             );
         }).ToList();
 
         return result;
+    }
+
+    public async Task<PaginationResult<SalaryPaymentListResponse>> PaginationListAsync(
+        PaginationQuery requestQuery,
+        int? employeeId,
+        int? month,
+        int? year,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = _tenantProvider.GetTenantId();
+
+        // Build base query
+        var query = _transactionRepository.Query()
+            .Where(t => t.TenantId == tenantId && t.TransactionType == "SALARY" && !t.IsDeleted);
+
+        // Apply employee filter
+        if (employeeId.HasValue && employeeId.Value > 0)
+        {
+            query = query.Where(t => t.EntityId == employeeId.Value.ToString());
+        }
+
+        // Apply month filter
+        if (month.HasValue && month.Value > 0)
+        {
+            query = query.Where(t => t.TransactionDate.Month == month.Value);
+        }
+
+        // Apply year filter
+        if (year.HasValue && year.Value > 0)
+        {
+            query = query.Where(t => t.TransactionDate.Year == year.Value);
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var searchTerm = requestQuery.OpenText.ToLower();
+            var employeeIds = await _employeeRepository.Query()
+                .Where(e => e.TenantId == tenantId &&
+                    (e.EmployeeName.ToLower().Contains(searchTerm) ||
+                     e.EmployeeCode.ToLower().Contains(searchTerm)))
+                .Select(e => e.Id.ToString())
+                .ToListAsync(cancellationToken);
+
+            query = query.Where(t => employeeIds.Contains(t.EntityId) ||
+                                    t.Description.ToLower().Contains(searchTerm) ||
+                                    t.TransactionCode.ToLower().Contains(searchTerm));
+        }
+
+        // Apply sorting - map frontend column names to entity properties
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var orderByColumn = requestQuery.OrderBy switch
+            {
+                "transactionCode" => nameof(Transaction.TransactionCode),
+                "transactionDate" => nameof(Transaction.TransactionDate),
+                "amount" => nameof(Transaction.Amount),
+                "netAmount" => nameof(Transaction.NetAmount),
+                "paymentMethod" => nameof(Transaction.PaymentMethod),
+                "employeeCode" => nameof(Transaction.EntityId), // Will sort by EntityId (employee id)
+                "employeeName" => nameof(Transaction.EntityId), // Will sort by EntityId (employee id)
+                "period" => nameof(Transaction.TransactionDate), // Sort by transaction date for period
+                "createdTime" => nameof(Transaction.CreatedTime),
+                "basicSalary" => nameof(Transaction.Amount),
+                _ => nameof(Transaction.TransactionDate) // Default to TransactionDate
+            };
+
+            query = requestQuery.IsAscending ?? true
+                ? query.OrderBy(t => EF.Property<object>(t, orderByColumn))
+                : query.OrderByDescending(t => EF.Property<object>(t, orderByColumn));
+        }
+        else
+        {
+            query = query.OrderByDescending(t => t.TransactionDate);
+        }
+
+        // Get total count
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // Get paged data
+        var transactions = await query
+            .Skip(requestQuery.PageIndex * requestQuery.PageSize)
+            .Take(requestQuery.PageSize)
+            .ToListAsync(cancellationToken);
+
+        // Get employee details
+        var empIds = transactions.Select(t => int.Parse(t.EntityId)).Distinct().ToList();
+        var employees = await _employeeRepository.Query()
+            .Where(e => e.TenantId == tenantId && empIds.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        var employeeDict = employees.ToDictionary(e => e.Id.ToString(), e => e);
+
+        // Map to response
+        var result = transactions.Select(t =>
+        {
+            var emp = employeeDict.ContainsKey(t.EntityId) ? employeeDict[t.EntityId] : null;
+            var period = ExtractPeriodFromNote(t.Description ?? "");
+
+            return new SalaryPaymentListResponse(
+                    t.Id,
+                    emp?.EmployeeName ?? "Unknown",
+                    emp?.EmployeeCode ?? "N/A",
+                    period,
+                    t.Amount,
+                    t.NetAmount,
+                    t.TransactionDate,
+                    t.PaymentMethod,
+                    t.CreatedTime
+                );
+        }).AsQueryable();
+
+        return await PaginationResult<SalaryPaymentListResponse>.CreateAsync(
+            result,
+            requestQuery.PageIndex,
+            requestQuery.PageSize,
+            cancellationToken
+        );
     }
 
     public async Task<IEnumerable<SalaryPaymentListResponse>> GetPaymentHistoryAsync(
@@ -202,14 +324,15 @@ public class SalaryPaymentService : ISalaryPaymentService
             var period = ExtractPeriodFromNote(t.Description ?? "");
 
             return new SalaryPaymentListResponse(
-                0,
+                Guid.Empty,
                 emp?.EmployeeName ?? "Unknown",
                 emp?.EmployeeCode ?? "N/A",
                 period,
                 t.Amount,
                 t.NetAmount,
                 t.TransactionDate,
-                t.PaymentMethod
+                t.PaymentMethod,
+                t.CreatedTime
             );
         }).ToList();
 
@@ -240,14 +363,15 @@ public class SalaryPaymentService : ISalaryPaymentService
             var period = $"{month:D2}/{year}";
 
             return new SalaryPaymentListResponse(
-                0,
+                Guid.Empty,
                 emp?.EmployeeName ?? "Unknown",
                 emp?.EmployeeCode ?? "N/A",
                 period,
                 t.Amount,
                 t.NetAmount,
                 t.TransactionDate,
-                t.PaymentMethod
+                t.PaymentMethod,
+                t.CreatedTime
             );
         }).ToList();
 
@@ -316,5 +440,31 @@ public class SalaryPaymentService : ISalaryPaymentService
         }
 
         return (DateTime.Now.Month, DateTime.Now.Year);
+    }
+
+    public async Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default)
+    {
+        var tenantId = _tenantProvider.GetTenantId();
+        var transaction = await _transactionRepository.GetByIdAsync(transactionId, cancellationToken);
+
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != "SALARY")
+        {
+            throw new Exception("Salary payment not found");
+        }
+
+        // Check if the transaction was created within the last day
+        var oneDayAgo = DateTime.Now.AddDays(-1);
+        if (transaction.CreatedTime < oneDayAgo)
+        {
+            throw new Exception("Cannot delete salary payment. Deletion is only allowed within one day of creation.");
+        }
+
+        // Soft delete the transaction
+        transaction.IsDeleted = true;
+        transaction.DeletedAt = DateTime.Now;
+        transaction.DeletedById = _currentUser.Id;
+
+        await _transactionRepository.UpdateAsync(transaction, cancellationToken);
+        return true;
     }
 }

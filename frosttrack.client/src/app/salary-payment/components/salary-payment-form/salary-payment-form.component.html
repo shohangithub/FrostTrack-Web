@@ -1,17 +1,17 @@
 <section class="main-content">
   <div class="section-body">
-    <div class="row">
-      <form
-        class="register-form"
-        [formGroup]="salaryForm"
-        (ngSubmit)="onSubmit()"
-      >
-        <div class="container mt-2">
+    <div class="container mt-2">
+      <div class="row">
+        <form
+          class="register-form"
+          [formGroup]="salaryForm"
+          (ngSubmit)="onSubmit()"
+        >
           <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
             <!-- Salary Payment Form Card -->
             <div class="card mb-3">
               <span class="card-label">Salary Payment Form</span>
-              <div class="card-body-narrow">
+              <div class="card-body">
                 <!-- Employee & Period Selection -->
                 <div class="row">
                   <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
@@ -84,7 +84,7 @@
 
                 <div class="row mt-2">
                   <div class="col-12">
-                    <div class="alert alert-info mb-2">
+                    <div class="alert alert-primary mb-2">
                       <div class="row">
                         <div class="col-md-3">
                           <strong>Code:</strong>
@@ -116,7 +116,7 @@
                   <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
                       <label for="basicSalary" class="col-sm-4 col-form-label">
-                        Basic Salary: <span class="text-danger">*</span>
+                        Salary: <span class="text-danger">*</span>
                       </label>
                       <div class="col-sm-8">
                         <input
@@ -185,7 +185,7 @@
 
                 <!-- Payment Information -->
                 <div class="row">
-                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                  <!-- <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
                       <label
                         for="paymentMethod"
@@ -205,14 +205,14 @@
                         ></ng-select>
                       </div>
                     </div>
-                  </div>
+                  </div> -->
 
-                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                     <div class="form-group row">
-                      <label for="note" class="col-sm-4 col-form-label">
+                      <label for="note" class="col-sm-2 col-form-label">
                         Note:
                       </label>
-                      <div class="col-sm-8">
+                      <div class="col-sm-10">
                         <textarea
                           class="form-control form-control-sm"
                           formControlName="note"
@@ -256,8 +256,86 @@
               </div>
             </div>
           </div>
-        </div>
-      </form>
+          <!-- Current Month Payments List -->
+          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="card mt-3">
+              <span class="card-label">Current Month Salary Payments</span>
+              <div class="mt-2 p-10">
+                <ngx-datatable
+                  #table
+                  class="material"
+                  [rows]="paymentList"
+                  [loadingIndicator]="loadingPayments"
+                  columnMode="force"
+                  [headerHeight]="50"
+                  [footerHeight]="50"
+                  rowHeight="auto"
+                  [scrollbarH]="scrollBarHorizontal"
+                  [limit]="pagination.pageSize"
+                >
+                  <ngx-datatable-column
+                    name="Employee Code"
+                    prop="employeeCode"
+                    [flexGrow]="1"
+                  ></ngx-datatable-column>
+
+                  <ngx-datatable-column
+                    name="Employee Name"
+                    prop="employeeName"
+                    [flexGrow]="1.5"
+                  ></ngx-datatable-column>
+
+                  <ngx-datatable-column
+                    name="Period"
+                    prop="period"
+                    [flexGrow]="1"
+                  >
+                    <ng-template let-row="row" ngx-datatable-cell-template>
+                      <span class="badge bg-info">{{
+                        getMonthName(row.period)
+                      }}</span>
+                    </ng-template>
+                  </ngx-datatable-column>
+
+                  <ngx-datatable-column
+                    name="Payment Date"
+                    prop="paymentDate"
+                    [flexGrow]="1"
+                  >
+                    <ng-template let-row="row" ngx-datatable-cell-template>
+                      {{ row.paymentDate | date : "dd/MMM/yyyy" }}
+                    </ng-template>
+                  </ngx-datatable-column>
+
+                  <ngx-datatable-column
+                    name="Basic Salary"
+                    prop="basicSalary"
+                    [flexGrow]="1"
+                  >
+                    <ng-template let-row="row" ngx-datatable-cell-template>
+                      <span class="text-primary">
+                        {{ row.basicSalary | number : "1.2-2" }}
+                      </span>
+                    </ng-template>
+                  </ngx-datatable-column>
+
+                  <ngx-datatable-column
+                    name="Net Amount"
+                    prop="netAmount"
+                    [flexGrow]="1"
+                  >
+                    <ng-template let-row="row" ngx-datatable-cell-template>
+                      <span class="text-success fw-bold">
+                        {{ row.netAmount | number : "1.2-2" }}
+                      </span>
+                    </ng-template>
+                  </ngx-datatable-column>
+                </ngx-datatable>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </section>

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import {
   ReactiveFormsModule,
   UntypedFormBuilder,
@@ -11,20 +11,49 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { SalaryPaymentService } from '../../services/salary-payment.service';
-import { IEmployeeForSalary } from '../../models/salary-payment.interface';
+import {
+  IEmployeeForSalary,
+  ISalaryPaymentList,
+} from '../../models/salary-payment.interface';
+import {
+  NgxDatatableModule,
+  DatatableComponent,
+} from '@swimlane/ngx-datatable';
+import { PaginationQuery } from '@core/models/pagination-query';
+import { DefaultPagination } from '@config/pagination';
 
 @Component({
   selector: 'app-salary-payment-form',
   templateUrl: './salary-payment-form.component.html',
   styleUrls: [],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NgSelectModule,
+    NgxDatatableModule,
+    DatePipe,
+    DecimalPipe,
+  ],
 })
 export class SalaryPaymentFormComponent implements OnInit {
+  @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+
   salaryForm: UntypedFormGroup;
   employees: IEmployeeForSalary[] = [];
   selectedEmployee: IEmployeeForSalary | null = null;
   isSubmitting = false;
+
+  // Payment list properties
+  paymentList: ISalaryPaymentList[] = [];
+  loadingPayments = false;
+  scrollBarHorizontal = window.innerWidth < 1200;
+  pagination: PaginationQuery = {
+    pageSize: 20,
+    pageIndex: DefaultPagination.PAGEINDEX,
+    orderBy: DefaultPagination.ORDERBY,
+    isAscending: DefaultPagination.ASCENDING,
+  };
 
   months = [
     { value: 1, text: 'January' },
@@ -59,6 +88,10 @@ export class SalaryPaymentFormComponent implements OnInit {
   ) {
     this.layoutService.loadCurrentRoute();
 
+    window.onresize = () => {
+      this.scrollBarHorizontal = window.innerWidth < 1200;
+    };
+
     const currentYear = new Date().getFullYear();
     for (let i = currentYear - 2; i <= currentYear + 1; i++) {
       this.years.push(i);
@@ -68,9 +101,9 @@ export class SalaryPaymentFormComponent implements OnInit {
       employeeId: [null, Validators.required],
       month: [new Date().getMonth() + 1, Validators.required],
       year: [currentYear, Validators.required],
-      basicSalary: [0, [Validators.required, Validators.min(0)]],
-      bonus: [0, [Validators.min(0)]],
-      deduction: [0, [Validators.min(0)]],
+      basicSalary: [null, [Validators.required, Validators.min(0)]],
+      bonus: [null],
+      deduction: [null],
       netAmount: [{ value: 0, disabled: true }],
       paymentMethod: ['Cash', Validators.required],
       note: [''],
@@ -89,6 +122,7 @@ export class SalaryPaymentFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEmployees();
+    this.loadCurrentMonthPayments();
   }
 
   loadEmployees(): void {
@@ -124,6 +158,39 @@ export class SalaryPaymentFormComponent implements OnInit {
     this.salaryForm.patchValue({ netAmount }, { emitEvent: false });
   }
 
+  loadCurrentMonthPayments(): void {
+    this.loadingPayments = true;
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    this.salaryPaymentService
+      .getWithPagination(this.pagination, undefined, currentMonth, currentYear)
+      .subscribe({
+        next: (result) => {
+          this.paymentList = result.data;
+          this.loadingPayments = false;
+        },
+        error: (err) => {
+          console.error('Error loading payments:', err);
+          this.loadingPayments = false;
+        },
+      });
+  }
+
+  getMonthName(period: string): string {
+    // Period format is "MM/YYYY"
+    const parts = period.split('/');
+    if (parts.length !== 2) return period;
+
+    const monthNum = parseInt(parts[0], 10);
+    const year = parts[1];
+    const monthName =
+      this.months.find((m) => m.value === monthNum)?.text || parts[0];
+
+    return `${monthName} ${year}`;
+  }
+
   onSubmit(): void {
     if (this.salaryForm.invalid) {
       this.toastr.error(
@@ -141,8 +208,8 @@ export class SalaryPaymentFormComponent implements OnInit {
       month: formValue.month,
       year: formValue.year,
       basicSalary: formValue.basicSalary,
-      bonus: formValue.bonus,
-      deduction: formValue.deduction,
+      bonus: formValue.bonus ?? 0,
+      deduction: formValue.deduction ?? 0,
       paymentMethod: formValue.paymentMethod,
       note: formValue.note,
     };
@@ -150,6 +217,7 @@ export class SalaryPaymentFormComponent implements OnInit {
     this.salaryPaymentService.createSalaryPayment(request).subscribe({
       next: () => {
         this.toastr.success('Salary payment created successfully', 'Success');
+        this.loadCurrentMonthPayments();
         this.reset();
         this.isSubmitting = false;
       },

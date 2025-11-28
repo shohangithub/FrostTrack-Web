@@ -38,6 +38,21 @@ public class SalaryPaymentController : ControllerBase
     }
 
     /// <summary>
+    /// Get salary payment list with pagination
+    /// </summary>
+    [HttpGet("get-with-pagination")]
+    public async Task<ActionResult<PaginationResult<SalaryPaymentListResponse>>> GetWithPagination(
+        [FromQuery] PaginationQuery requestQuery,
+        [FromQuery] int? employeeId,
+        [FromQuery] int? month,
+        [FromQuery] int? year,
+        CancellationToken cancellationToken)
+    {
+        var result = await _salaryPaymentService.PaginationListAsync(requestQuery, employeeId, month, year, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Get salary payment list
     /// </summary>
     [HttpGet("list")]
@@ -81,6 +96,16 @@ public class SalaryPaymentController : ControllerBase
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await _salaryPaymentService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Delete salary payment (only allowed within 24 hours)
+    /// </summary>
+    [HttpDelete("{transactionId}")]
+    public async Task<IActionResult> DeleteSalaryPayment(Guid transactionId, CancellationToken cancellationToken)
+    {
+        var result = await _salaryPaymentService.DeleteSalaryPaymentAsync(transactionId, cancellationToken);
         return Ok(result);
     }
 }

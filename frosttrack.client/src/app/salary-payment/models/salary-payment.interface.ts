@@ -38,7 +38,7 @@ export interface IEmployeeForSalary {
 }
 
 export interface ISalaryPaymentList {
-  id: number;
+  id: string;
   employeeName: string;
   employeeCode: string;
   period: string;
@@ -46,6 +46,7 @@ export interface ISalaryPaymentList {
   netAmount: number;
   paymentDate: Date;
   paymentMethod: string;
+  createdAt: Date;
 }
 
 export interface IMonthlyPaymentSummary {
