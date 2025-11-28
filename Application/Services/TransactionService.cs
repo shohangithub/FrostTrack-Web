@@ -169,14 +169,38 @@ public class TransactionService : ITransactionService
 
     public async Task<PaginationResult<TransactionListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "transactionCode" => nameof(Transaction.TransactionCode),
+                "transactionDate" => nameof(Transaction.TransactionDate),
+                "transactionType" => nameof(Transaction.TransactionType),
+                "transactionFlow" => nameof(Transaction.TransactionFlow),
+                "netAmount" => nameof(Transaction.NetAmount),
+                "amount" => nameof(Transaction.Amount),
+                "paymentMethod" => nameof(Transaction.PaymentMethod),
+                "category" => nameof(Transaction.Category),
+                "description" => nameof(Transaction.Description),
+                "customerName" => nameof(Transaction.CustomerId), // Sort by CustomerId instead of navigation property
+                "vendorName" => nameof(Transaction.VendorName),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
+
         Expression<Func<Transaction, bool>>? predicate = null;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.TransactionCode.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Description.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || (obj.VendorName != null && obj.VendorName.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower()));
+            var searchText = requestQuery.OpenText.Trim().ToLower();
+            predicate = obj => (obj.TransactionCode != null && obj.TransactionCode.ToLower().Contains(searchText))
+                            || (obj.Description != null && obj.Description.ToLower().Contains(searchText))
+                            || obj.NetAmount.ToString().Contains(searchText)
+                            || obj.Amount.ToString().Contains(searchText)
+                            || (obj.VendorName != null && obj.VendorName.ToLower().Contains(searchText))
+                            || (obj.Customer != null && obj.Customer.CustomerName != null && obj.Customer.CustomerName.ToLower().Contains(searchText));
         }
 
         Expression<Func<Transaction, TransactionListResponse>>? selector = x => new TransactionListResponse(
@@ -198,7 +222,14 @@ public class TransactionService : ITransactionService
 
         var query = _repository.Query()
             .Include(x => x.Branch)
-            .Include(x => x.Customer);
+            .Include(x => x.Customer)
+            .AsQueryable();
+
+        // Apply search predicate if it exists
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
