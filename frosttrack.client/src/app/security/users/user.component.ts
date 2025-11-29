@@ -39,6 +39,7 @@ import {
   SYSTEM_ROLES,
 } from 'app/common/data/settings-data';
 import { LayoutService } from '@core/service/layout.service';
+import { environment } from 'environments/environment.development';
 
 @Component({
   selector: 'app-user',
@@ -61,6 +62,10 @@ export class UserComponent implements OnInit {
   selectedRowData!: IUserResponse;
   data: IUserListResponse[] = [];
   newUserImg = 'assets/images/users/user-2.png';
+  selectedFile: File | null = null;
+  imagePreview: string | null = null;
+  uploadingImage = false;
+  serverUrl = environment.resource_Url;
   filteredData: any[] = [];
   editForm: UntypedFormGroup;
   register!: UntypedFormGroup;
@@ -93,10 +98,18 @@ export class UserComponent implements OnInit {
   ) {
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
-      userName: new UntypedFormControl(),
-      email: new UntypedFormControl(),
-      isActive: new UntypedFormControl(),
-      role: new UntypedFormControl(),
+      userName: new UntypedFormControl('', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z ]+$'),
+      ]),
+      email: new UntypedFormControl('', [
+        Validators.required,
+        Validators.email,
+        Validators.minLength(5),
+      ]),
+      isActive: new UntypedFormControl('', [Validators.required]),
+      role: new UntypedFormControl('', [Validators.required]),
+      profileImageUrl: new UntypedFormControl(''),
     });
 
     window.onresize = () => {
@@ -159,13 +172,14 @@ export class UserComponent implements OnInit {
       });
 
     this.register = this.fb.group({
-      userName: ['', [Validators.required, Validators.pattern('[a-zA-Z]+')]],
+      userName: ['', [Validators.required, Validators.pattern('^[a-zA-Z ]+$')]],
       role: ['', [Validators.required]],
       email: [
         '',
         [Validators.required, Validators.email, Validators.minLength(5)],
       ],
       isActive: ['', [Validators.required]],
+      profileImageUrl: [''],
     });
   }
 
@@ -199,6 +213,10 @@ export class UserComponent implements OnInit {
 
   // add new record
   addRow(content: any) {
+    // Reset form and image upload state
+    this.register.reset();
+    this.resetImageUpload();
+
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'lg',
@@ -206,6 +224,9 @@ export class UserComponent implements OnInit {
   }
   // edit record
   editRow(row: any, rowIndex: number, content: any) {
+    // Reset image upload state
+    this.resetImageUpload();
+
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'lg',
@@ -217,8 +238,12 @@ export class UserComponent implements OnInit {
           id: response.id,
           userName: response.userName,
           email: response.email,
-          role: response.role,
+          role:
+            response.roleNames && response.roleNames.length > 0
+              ? response.roleNames[0]
+              : '',
           isActive: response.isActive || false,
+          profileImageUrl: response.profileImageUrl || '',
         });
         this.loadingIndicator = false;
       },
@@ -234,16 +259,22 @@ export class UserComponent implements OnInit {
   save(form: UntypedFormGroup) {
     if (this.register.valid) {
       const payload: IUserRequest = { ...form.value };
+      payload.profileImageUrl = payload.profileImageUrl
+        ? this.serverUrl + payload.profileImageUrl
+        : '';
       this.userService.create(payload).subscribe({
         next: (response: IUserResponse) => {
           const mappedData: IUserListResponse = {
             id: response.id,
             userName: response.userName,
             email: response.email,
-            role: response.role,
+            role:
+              response.roleNames && response.roleNames.length > 0
+                ? response.roleNames[0]
+                : '',
             status: response.status,
           };
-          var temp = JSON.parse(JSON.stringify(this.data));
+          const temp = JSON.parse(JSON.stringify(this.data));
           temp.push(mappedData);
           this.data.length = 0;
           this.data = temp;
@@ -253,7 +284,7 @@ export class UserComponent implements OnInit {
           this.fetchData();
         },
         error: (err: ErrorResponse) => {
-          var errString = formatErrorMessage(err);
+          const errString = formatErrorMessage(err);
           this.toastr.error(errString);
         },
       });
@@ -264,6 +295,12 @@ export class UserComponent implements OnInit {
     if (this.editForm.valid) {
       const formData = form.value;
       const payload: IUserRequest = { ...formData };
+      if (!payload.profileImageUrl?.startsWith(this.serverUrl)) {
+        payload.profileImageUrl = payload.profileImageUrl
+          ? this.serverUrl + payload.profileImageUrl
+          : '';
+      }
+
       this.userService.update(formData.id, payload).subscribe({
         next: (response: IUserResponse) => {
           this.data = this.data.filter((value, key) => {
@@ -271,7 +308,10 @@ export class UserComponent implements OnInit {
               value.userName = response.userName;
               value.email = response.email;
               value.status = response.status;
-              value.role = response.role;
+              value.role =
+                response.roleNames && response.roleNames.length > 0
+                  ? response.roleNames[0]
+                  : '';
             }
             this.modalService.dismissAll();
             return true;
@@ -374,5 +414,61 @@ export class UserComponent implements OnInit {
     this.router.navigate(['/security/change-password'], {
       queryParams: { userId: row.id, userName: row.userName },
     });
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        this.toastr.error('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.toastr.error('Image size must not exceed 5MB');
+        return;
+      }
+
+      this.selectedFile = file;
+
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.imagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Upload image
+      this.uploadImage();
+    }
+  }
+
+  uploadImage(): void {
+    if (!this.selectedFile) return;
+
+    this.uploadingImage = true;
+    this.userService.uploadProfileImage(this.selectedFile).subscribe({
+      next: (response) => {
+        this.register.patchValue({ profileImageUrl: response.imageUrl });
+        this.editForm.patchValue({ profileImageUrl: response.imageUrl });
+        this.uploadingImage = false;
+      },
+      error: () => {
+        this.uploadingImage = false;
+        this.selectedFile = null;
+        this.imagePreview = null;
+      },
+    });
+  }
+
+  resetImageUpload(): void {
+    this.selectedFile = null;
+    this.imagePreview = null;
+    this.register.patchValue({ profileImageUrl: '' });
+    this.editForm.patchValue({ profileImageUrl: '' });
   }
 }

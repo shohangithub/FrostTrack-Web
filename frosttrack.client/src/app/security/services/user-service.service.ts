@@ -112,4 +112,15 @@ export class UserService extends BaseService {
       'Password set successfully'
     );
   }
+
+  uploadProfileImage(file: File): Observable<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.postWithSuccess<{ imageUrl: string }>(
+      `${this.path}/upload-profile-image`,
+      formData,
+      'Upload Profile Image',
+      'Profile image uploaded successfully'
+    );
+  }
 }

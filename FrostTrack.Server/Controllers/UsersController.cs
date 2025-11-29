@@ -124,6 +124,57 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpPost("upload-profile-image")]
+    public async Task<ActionResult<string>> UploadProfileImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "No file uploaded" });
+        }
+
+        // Validate file type
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension))
+        {
+            return BadRequest(new { message = "Only image files are allowed" });
+        }
+
+        // Validate file size (max 5MB)
+        if (file.Length > 5 * 1024 * 1024)
+        {
+            return BadRequest(new { message = "File size must not exceed 5MB" });
+        }
+
+        try
+        {
+            // Create uploads directory if it doesn't exist
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+            if (!Directory.Exists(uploadsPath))
+            {
+                Directory.CreateDirectory(uploadsPath);
+            }
+
+            // Generate unique filename
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            // Save file
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Return relative URL
+            var imageUrl = $"/uploads/profiles/{fileName}";
+            return Ok(new { imageUrl });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error uploading file: {ex.Message}" });
+        }
+    }
+
 
     private async ValueTask<bool> UserExists(int id, CancellationToken cancellationToken)
     {

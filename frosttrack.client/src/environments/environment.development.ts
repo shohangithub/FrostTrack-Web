@@ -5,6 +5,7 @@
 export const environment = {
   production: false,
   apiUrl: 'https://localhost:7101/api',
+  resource_Url: 'https://localhost:7101',
   api_key: '0d2d44f7-d1ad-4955-9f81-48c7d2e76e5e',
 };
 

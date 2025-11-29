@@ -28,7 +28,7 @@ public class UserTokenService : IUserTokenService
         // get user roles
         var roles = await _userManager.GetRolesAsync(user);
         // create response
-        var response = new UserResponseForToken(user.Id, user.TenantId, user.UserName, user.Email, roles, user.BranchId, user.IsActive, user.Status);
+        var response = new UserResponseForToken(user.Id, user.TenantId, user.Name, user.UserName, user.Email, roles, user.BranchId, user.IsActive, user.Status, user.ProfileImageUrl);
 
         return response;
     }
@@ -42,13 +42,13 @@ public class UserTokenService : IUserTokenService
             id: user.Id,
             tenantId: user.TenantId,
             email: user.Email,
-            firstName: user.UserName,
-            lastName: user.UserName,
+            name: user.Name,
             branchId: user.BranchId,
             roles: user.RoleNames,
+            profileImageUrl: user.ProfileImageUrl,
             permissions: null
             ));
-        return new TokenResponse(token, user.Email, user.UserName, user.UserName);
+        return new TokenResponse(token, user.Email, user.Name);
     }
 
 }

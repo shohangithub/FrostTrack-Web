@@ -4,15 +4,17 @@ export interface IUserListResponse {
   email: string;
   role: string;
   status: string;
+  profileImageUrl?: string;
 }
 
 export interface IUserResponse {
   id: number;
   userName: string;
   email: string;
-  role: string;
+  roleNames: string[];
   isActive: boolean;
   status: string;
+  profileImageUrl?: string;
 }
 
 export interface IUserRequest {
@@ -20,6 +22,7 @@ export interface IUserRequest {
   email: string;
   role: string;
   isActive: boolean;
+  profileImageUrl?: string;
 }
 
 export interface IChangePasswordRequest {

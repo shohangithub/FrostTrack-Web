@@ -22,6 +22,8 @@ public class UserService : IUserService<int>
 
 
         var entity = user.Adapt<ApplicationUser>();
+        entity.Name = user.UserName;
+        entity.UserName = user.Email;
         entity.TenantId = _currentUser.TenantId;
         entity.BranchId = _currentUser.BranchId;
 
@@ -48,7 +50,7 @@ public class UserService : IUserService<int>
         }
 
         var roles = await _userManager.GetRolesAsync(entity);
-        return new UserResponse(entity.Id, entity.UserName ?? string.Empty, entity.Email ?? string.Empty, roles, entity.IsActive, entity.IsActive ? "Active" : "Inactive");
+        return new UserResponse(entity.Id, entity.Name ?? string.Empty, entity.Email ?? string.Empty, roles, entity.IsActive, entity.IsActive ? "Active" : "Inactive", entity.ProfileImageUrl);
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -80,7 +82,7 @@ public class UserService : IUserService<int>
         var u = await _userManager.FindByEmailAsync(email);
         if (u == null) return default!;
         var roles = await _userManager.GetRolesAsync(u);
-        return new UserResponse(u.Id, u.UserName ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive, u.IsActive ? "Active" : "Inactive");
+        return new UserResponse(u.Id, u.Name ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive, u.IsActive ? "Active" : "Inactive", u.ProfileImageUrl);
     }
 
     public async Task<UserResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -88,13 +90,13 @@ public class UserService : IUserService<int>
         var u = await _userManager.FindByIdAsync(id.ToString());
         if (u == null) return default!;
         var roles = await _userManager.GetRolesAsync(u);
-        return new UserResponse(u.Id, u.UserName ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive, u.IsActive ? "Active" : "Inactive");
+        return new UserResponse(u.Id, u.Name ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive, u.IsActive ? "Active" : "Inactive", u.ProfileImageUrl);
     }
 
     public async Task<IEnumerable<Lookup<int>>> GetLookup(Expression<Func<ApplicationUser, bool>> predicate, CancellationToken cancellationToken = default)
     {
         // For Identity-backed users we ignore the legacy predicate and return a lookup of users
-        var list = await _userManager.Users.Select(x => new Lookup<int>(x.Id, x.UserName ?? string.Empty)).ToListAsync(cancellationToken);
+        var list = await _userManager.Users.Select(x => new Lookup<int>(x.Id, x.Name ?? string.Empty)).ToListAsync(cancellationToken);
         return list;
     }
 
@@ -108,7 +110,7 @@ public class UserService : IUserService<int>
         foreach (var u in users)
         {
             var roles = await _userManager.GetRolesAsync(u);
-            result.Add(new UserListResponse(u.Id, u.UserName ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive ? "Active" : "Inactive"));
+            result.Add(new UserListResponse(u.Id, u.Name ?? string.Empty, u.Email ?? string.Empty, roles, u.IsActive ? "Active" : "Inactive", u.ProfileImageUrl));
         }
         return result;
     }
@@ -121,7 +123,7 @@ public class UserService : IUserService<int>
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
             var term = requestQuery.OpenText.ToLower();
-            query = query.Where(u => (u.UserName ?? string.Empty).ToLower().Contains(term) || (u.Email ?? string.Empty).ToLower().Contains(term));
+            query = query.Where(u => (u.Name ?? string.Empty).ToLower().Contains(term) || (u.Email ?? string.Empty).ToLower().Contains(term));
         }
 
         // Get user list for pagination
@@ -129,7 +131,7 @@ public class UserService : IUserService<int>
             .Select(u => new
             {
                 u.Id,
-                u.UserName,
+                u.Name,
                 u.Email,
                 u.IsActive
             })
@@ -143,11 +145,11 @@ public class UserService : IUserService<int>
             // guard against null (user may have been removed)
             if (appUser is null)
             {
-                userList.Add(new UserListResponse(user.Id, user.UserName ?? string.Empty, user.Email ?? string.Empty, new List<string>(), (user.IsActive ? "Active" : "Inactive")));
+                userList.Add(new UserListResponse(user.Id, user.Name ?? string.Empty, user.Email ?? string.Empty, new List<string>(), (user.IsActive ? "Active" : "Inactive"), null));
                 continue;
             }
             var roles = await _userManager.GetRolesAsync(appUser);
-            userList.Add(new UserListResponse(user.Id, user.UserName ?? string.Empty, user.Email ?? string.Empty, roles, (user.IsActive ? "Active" : "Inactive")));
+            userList.Add(new UserListResponse(user.Id, user.Name ?? string.Empty, user.Email ?? string.Empty, roles, (user.IsActive ? "Active" : "Inactive"), appUser.ProfileImageUrl));
         }
 
         // Convert to IQueryable for pagination
@@ -161,9 +163,11 @@ public class UserService : IUserService<int>
         if (appUser is null) throw new ArgumentNullException(nameof(appUser));
 
         // Update basic properties
-        appUser.UserName = user.UserName;
+        appUser.Name = user.UserName;
+        appUser.UserName = user.Email;
         appUser.Email = user.Email;
         appUser.IsActive = user.IsActive;
+        appUser.ProfileImageUrl = user.ProfileImageUrl;
 
         var updateResult = await _userManager.UpdateAsync(appUser);
         if (!updateResult.Succeeded)
@@ -191,7 +195,7 @@ public class UserService : IUserService<int>
         }
 
         var roles = await _userManager.GetRolesAsync(appUser);
-        return new UserResponse(appUser.Id, appUser.UserName ?? string.Empty, appUser.Email ?? string.Empty, roles, appUser.IsActive, appUser.IsActive ? "Active" : "Inactive");
+        return new UserResponse(appUser.Id, appUser.Name ?? string.Empty, appUser.Email ?? string.Empty, roles, appUser.IsActive, appUser.IsActive ? "Active" : "Inactive", appUser.ProfileImageUrl);
     }
 
     public async Task<bool> ChangePasswordAsync(int id, ChangePasswordRequest request, CancellationToken cancellationToken = default)

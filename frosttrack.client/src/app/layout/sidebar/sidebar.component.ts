@@ -91,6 +91,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (this.authService.currentUserValue) {
       this.sidebarItems = ROUTES.filter((sidebarItem) => sidebarItem);
+
+      // Extract user information from JWT token
+      const decodedToken = this.authService.getDecodedToken();
+      if (decodedToken) {
+        this.userFullName =
+          decodedToken['unique_name'] || decodedToken['name'] || 'User';
+        this.userImg =
+          decodedToken['profileImageUrl'] || 'assets/images/user.png';
+        this.userType = decodedToken['role'] || 'User';
+      }
     }
     this.initLeftSidebar();
     this.bodyTag = this.document.body;

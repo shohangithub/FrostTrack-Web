@@ -183,10 +183,61 @@
                   (ngSubmit)="save(register)"
                 >
                   <div class="row">
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-3">
+                      <label>Profile Image</label>
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          @if (imagePreview) {
+                          <img
+                            [src]="imagePreview"
+                            alt="Preview"
+                            style="
+                              width: 80px;
+                              height: 80px;
+                              object-fit: cover;
+                              border-radius: 8px;
+                            "
+                          />
+                          } @else {
+                          <img
+                            [src]="newUserImg"
+                            alt="Default"
+                            style="
+                              width: 80px;
+                              height: 80px;
+                              object-fit: cover;
+                              border-radius: 8px;
+                            "
+                          />
+                          }
+                        </div>
+                        <div class="flex-grow-1">
+                          <input
+                            type="file"
+                            class="form-control"
+                            accept="image/*"
+                            (change)="onFileSelected($event)"
+                          />
+                          @if (uploadingImage) {
+                          <small class="form-text text-info"
+                            >Uploading image...</small
+                          >
+                          } @if (imagePreview) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-danger mt-1"
+                            (click)="resetImageUpload()"
+                          >
+                            Remove Image
+                          </button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
                     <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label
-                        >First name <span class="text-danger">*</span></label
-                      >
+                      <label>Name <span class="text-danger">*</span></label>
                       <input
                         type="text"
                         class="form-control"
@@ -310,10 +361,73 @@
                   </div>
 
                   <div class="row">
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-3">
+                      <label>Profile Image</label>
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          @if (imagePreview) {
+                          <img
+                            [src]="imagePreview"
+                            alt="Preview"
+                            style="
+                              width: 80px;
+                              height: 80px;
+                              object-fit: cover;
+                              border-radius: 8px;
+                            "
+                          />
+                          } @else if (editForm.get('profileImageUrl')?.value) {
+                          <img
+                            [src]="editForm.get('profileImageUrl')?.value"
+                            alt="Current"
+                            style="
+                              width: 80px;
+                              height: 80px;
+                              object-fit: cover;
+                              border-radius: 8px;
+                            "
+                          />
+                          } @else {
+                          <img
+                            [src]="newUserImg"
+                            alt="Default"
+                            style="
+                              width: 80px;
+                              height: 80px;
+                              object-fit: cover;
+                              border-radius: 8px;
+                            "
+                          />
+                          }
+                        </div>
+                        <div class="flex-grow-1">
+                          <input
+                            type="file"
+                            class="form-control"
+                            accept="image/*"
+                            (change)="onFileSelected($event)"
+                          />
+                          @if (uploadingImage) {
+                          <small class="form-text text-info"
+                            >Uploading image...</small
+                          >
+                          } @if (imagePreview ||
+                          editForm.get('profileImageUrl')?.value) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-danger mt-1"
+                            (click)="resetImageUpload()"
+                          >
+                            Remove Image
+                          </button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
                     <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label
-                        >First name <span class="text-danger">*</span></label
-                      >
+                      <label>Name <span class="text-danger">*</span></label>
                       <input
                         type="text"
                         class="form-control"
@@ -321,8 +435,8 @@
                         formControlName="userName"
                         required
                       />
-                      @if (!register.get('userName')?.valid &&
-                      register.get('userName')?.touched) {
+                      @if (!editForm.get('userName')?.valid &&
+                      editForm.get('userName')?.touched) {
                       <small class="form-text text-danger">
                         User name is required</small
                       >
@@ -337,8 +451,8 @@
                         formControlName="email"
                         required
                       />
-                      @if (!register.get('email')?.valid &&
-                      register.get('email')?.touched) {
+                      @if (!editForm.get('email')?.valid &&
+                      editForm.get('email')?.touched) {
                       <small class="form-text text-danger">
                         Please enter a valid email address</small
                       >

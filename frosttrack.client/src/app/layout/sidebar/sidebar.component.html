@@ -16,20 +16,22 @@
     <div class="menu">
       <ng-scrollbar [style.height]="listMaxHeight + 'px'" visibility="hover">
         <ul class="list">
-          <li class="sidebar-user-panel">
-            <div class="user-panel">
+          <li class="sidebar-user-panel bg-primary py-1 rounded">
+            <!-- <div class="user-panel">
               <div class="image">
                 <img
-                  src="assets/images/user.png"
+                  [src]="userImg || 'assets/images/user.png'"
                   class="img-circle user-img-circle"
                   alt="User Image"
                 />
               </div>
-            </div>
+            </div> -->
             <div class="profile-usertitle">
-              <div class="sidebar-userpic-name">Emily Smith</div>
-              <div class="profile-usertitle-job">
-                {{ "MENUITEMS.USER.POST" | translate }}
+              <div class="sidebar-userpic-name text-white fw-bold uppercase">
+                {{ userFullName || "User" }}
+              </div>
+              <div class="profile-usertitle-job text-white uppercase">
+                {{ userType || ("MENUITEMS.USER.POST" | translate) }}
               </div>
             </div>
           </li>

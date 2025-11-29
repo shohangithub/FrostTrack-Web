@@ -1,4 +1,4 @@
-import { DOCUMENT, NgClass } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import {
   Component,
   Inject,
@@ -9,13 +9,18 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgScrollbar } from 'ngx-scrollbar';
 import {
   NgbDropdown,
   NgbDropdownToggle,
   NgbDropdownMenu,
 } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+} from '@angular/forms';
 import { FeatherModule } from 'angular-feather';
 import {
   AuthService,
@@ -28,7 +33,10 @@ import { LayoutService } from '@core/service/layout.service';
 import { BranchService } from 'app/administration/services/branch.service';
 import { Subject, pairwise, startWith } from 'rxjs';
 import { ILookup } from '@core/models/lookup';
-import { ErrorResponse, formatErrorMessage } from 'app/utils/server-error-handler';
+import {
+  ErrorResponse,
+  formatErrorMessage,
+} from 'app/utils/server-error-handler';
 import Swal from 'sweetalert2';
 import { SwalConfirm } from 'app/theme-config';
 
@@ -44,12 +52,10 @@ import { SwalConfirm } from 'app/theme-config';
     NgbDropdown,
     NgbDropdownToggle,
     NgbDropdownMenu,
-    NgClass,
-    NgScrollbar,
     RouterLink,
     TranslateModule,
   ],
-  providers: [RightSidebarService,AuthService],
+  providers: [RightSidebarService, AuthService],
 })
 export class HeaderComponent implements OnInit, AfterViewInit {
   public config!: InConfiguration;
@@ -67,6 +73,8 @@ export class HeaderComponent implements OnInit, AfterViewInit {
   selectedBranch!: number;
   isMainBranch: boolean = false;
   private branchSubject: Subject<number> = new Subject<number>();
+  userFullName?: string;
+  userImg?: string;
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -79,9 +87,8 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     private router: Router,
     public languageService: LanguageService,
     private branchService: BranchService,
-    private fb: UntypedFormBuilder,
-  ) {
-  }
+    private fb: UntypedFormBuilder
+  ) {}
 
   listLang = [
     { text: 'English', flag: 'assets/images/flags/us.jpg', lang: 'en' },
@@ -89,13 +96,22 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     { text: 'German', flag: 'assets/images/flags/germany.jpg', lang: 'de' },
   ];
 
-  previousValue!: string
+  previousValue!: string;
   ngOnInit() {
     this.branchForm = this.fb.group({
       branchId: [this.selectedBranch],
     });
     this.config = this.configService.configData;
     this.docElement = document.documentElement;
+
+    // Extract user information from JWT token
+    const decodedToken = this.authService.getDecodedToken();
+    if (decodedToken) {
+      this.userFullName =
+        decodedToken['unique_name'] || decodedToken['name'] || 'User';
+      this.userImg =
+        decodedToken['profileImageUrl'] || 'assets/images/user.png';
+    }
 
     this.langStoreValue = localStorage.getItem('lang') as string;
     const val = this.listLang.filter((x) => x.lang === this.langStoreValue);
@@ -128,27 +144,30 @@ export class HeaderComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.branchForm.get('branchId')?.valueChanges.pipe(startWith(null), pairwise()).subscribe(([prev, next]: [any, any]) => {
-      if (prev != null && prev != next && this.previousValue != next) {
-        Swal.fire({
-          title: "Do you want to change current branch ?",
-          showCancelButton: true,
-          confirmButtonColor: SwalConfirm.confirmButtonColor,
-          cancelButtonColor: SwalConfirm.cancelButtonColor,
-          confirmButtonText: 'Yes',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.previousValue = "";
-            this.branchSubject.next(next)
-            this.authService.setUserBranchId(next)
-          } else if (result.isDismissed) {
-            this.previousValue = prev;
-            this.branchSubject.next(prev)
-            this.authService.setUserBranchId(prev)
-          }
-        })
-      }
-    });
+    this.branchForm
+      .get('branchId')
+      ?.valueChanges.pipe(startWith(null), pairwise())
+      .subscribe(([prev, next]: [any, any]) => {
+        if (prev != null && prev != next && this.previousValue != next) {
+          Swal.fire({
+            title: 'Do you want to change current branch ?',
+            showCancelButton: true,
+            confirmButtonColor: SwalConfirm.confirmButtonColor,
+            cancelButtonColor: SwalConfirm.cancelButtonColor,
+            confirmButtonText: 'Yes',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.previousValue = '';
+              this.branchSubject.next(next);
+              this.authService.setUserBranchId(next);
+            } else if (result.isDismissed) {
+              this.previousValue = prev;
+              this.branchSubject.next(prev);
+              this.authService.setUserBranchId(prev);
+            }
+          });
+        }
+      });
   }
   ngAfterViewInit() {
     // set theme on startup
@@ -259,6 +278,4 @@ export class HeaderComponent implements OnInit, AfterViewInit {
   getUserBranch() {
     this.selectedBranch = this.authService.currentBranchId;
   }
-
-
 }

@@ -31,14 +31,19 @@ public sealed class JwtProvider : IJwtProvider
         {
             new(JwtRegisteredClaimNames.Sub, user.id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.email),
-            new(JwtRegisteredClaimNames.Name, user.firstName),
-            new(JwtRegisteredClaimNames.FamilyName, user.lastName),
+            new(JwtRegisteredClaimNames.Name, user.name),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 
             new(CustomClaims.Id, user.id.ToString()),
             new(CustomClaims.Tenant, user.tenantId.ToString()),
             new(CustomClaims.BranchId, user.branchId?.ToString() ?? "0"),
         };
+
+        // Add profileImageUrl claim if available
+        if (!string.IsNullOrEmpty(user.profileImageUrl))
+        {
+            claims.Add(new Claim("profileImageUrl", user.profileImageUrl));
+        }
 
         // Add individual role claims for ASP.NET Core authorization
         foreach (var role in user.roles)

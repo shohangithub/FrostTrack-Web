@@ -292,7 +292,7 @@
       >
         <img
           alt="image"
-          src="assets/images/user.png"
+          [src]="userImg || 'assets/images/user.png'"
           class="user-img-radious-style collapse-btn" />
         <span class="d-sm-none d-lg-inline-block"></span
       ></a>
@@ -300,7 +300,7 @@
         ngbDropdownMenu
         class="dropdown-menu dropdown-menu-right header-dropdown pullDown"
       >
-        <div class="dropdown-title">Hello User..</div>
+        <div class="dropdown-title">Hello {{ userFullName || "User" }}..</div>
         <a
           routerLink="/security/change-password"
           class="dropdown-item has-icon"

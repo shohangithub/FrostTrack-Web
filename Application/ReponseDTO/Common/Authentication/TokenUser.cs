@@ -1,3 +1,3 @@
 ﻿namespace Application.ReponseDTO;
 
-public record struct TokenUser(int id, Guid tenantId, string email, string firstName, string lastName, int? branchId, IList<string> roles, List<string>? permissions = null);
+public record struct TokenUser(int id, Guid tenantId, string email, string name, int? branchId, IList<string> roles, string? profileImageUrl = null, List<string>? permissions = null);

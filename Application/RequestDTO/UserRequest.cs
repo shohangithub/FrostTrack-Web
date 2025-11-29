@@ -3,7 +3,7 @@
 
 
 public record UserRequest1(string UserName, string Email);
-public record UserRequest(string UserName, string Email, string Role, bool IsActive);
+public record UserRequest(string UserName, string Email, string Role, bool IsActive, string? ProfileImageUrl);
 //public class UserRequest
 //{
 //    [Required]

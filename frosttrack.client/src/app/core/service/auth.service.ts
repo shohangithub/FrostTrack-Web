@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { User } from '../models/user';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LoginRequest } from '@core/models/login-request';
 import { TokenResponse } from '@core/models/token-response';
 import { environment } from 'environments/environment';
 import { JwtHelperService } from 'angular-jwt-updated';
-import { ErrorResponse } from 'app/utils/server-error-handler';
 @Injectable({
   providedIn: 'root',
 })
@@ -18,6 +16,7 @@ export class AuthService {
   private users = [
     {
       id: 1,
+      name: 'Admin User',
       username: 'admin@email.com',
       password: 'admin@123',
       firstName: 'Sarah',
@@ -60,20 +59,13 @@ export class AuthService {
       this.setBranchId();
       return this.ok({
         id: user.id,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
+        email: user.username,
         token: user.token,
       });
     }
   }
-  ok(body?: {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-    token: string;
-  }) {
+  ok(body?: { id: number; name: string; email: string; token: string }) {
     return of(new HttpResponse({ status: 200, body }));
   }
   error(message: string) {
@@ -146,6 +138,15 @@ export class AuthService {
         ] ||
         null
       );
+    }
+    return null;
+  }
+
+  getDecodedToken(): any {
+    const helper = new JwtHelperService();
+    const tokenObj = this.currentUserSubject.value;
+    if (tokenObj && tokenObj.token) {
+      return helper.decodeToken(tokenObj.token);
     }
     return null;
   }
