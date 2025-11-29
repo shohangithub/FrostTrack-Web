@@ -15,7 +15,7 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   IUserListResponse,
   IUserRequest,
@@ -46,7 +46,6 @@ import { LayoutService } from '@core/service/layout.service';
   styleUrls: ['./user.component.sass'],
   standalone: true,
   imports: [
-    RouterLink,
     NgxDatatableModule,
     FormsModule,
     ReactiveFormsModule,
@@ -89,7 +88,8 @@ export class UserComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private userService: UserService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private router: Router
   ) {
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
@@ -368,5 +368,11 @@ export class UserComponent implements OnInit {
 
   deleteRecordSuccess(count: number) {
     // Success message is now handled by the service
+  }
+
+  changePassword(row: IUserListResponse) {
+    this.router.navigate(['/security/change-password'], {
+      queryParams: { userId: row.id, userName: row.userName },
+    });
   }
 }

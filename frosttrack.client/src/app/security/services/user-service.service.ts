@@ -6,6 +6,8 @@ import {
   IUserListResponse,
   IUserRequest,
   IUserResponse,
+  IChangePasswordRequest,
+  ISetPasswordRequest,
 } from '../models/user.interface';
 import { getApiEndpoint } from 'app/utils/api-builder';
 import { PaginationResult } from '../../core/models/pagination-result';
@@ -87,6 +89,27 @@ export class UserService extends BaseService {
       this.path + `/${userId}/roles?role=${encodeURIComponent(role)}`,
       'Remove Role from User',
       MessageHub.DELETE_ONE
+    );
+  }
+
+  changePassword(
+    userId: number,
+    payload: IChangePasswordRequest
+  ): Observable<boolean> {
+    return this.postWithSuccess<boolean>(
+      `${this.path}/${userId}/change-password`,
+      payload,
+      'Change Password',
+      'Password changed successfully'
+    );
+  }
+
+  setPassword(payload: ISetPasswordRequest): Observable<boolean> {
+    return this.postWithSuccess<boolean>(
+      `${this.path}/set-password`,
+      payload,
+      'Set Password',
+      'Password set successfully'
     );
   }
 }

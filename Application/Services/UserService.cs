@@ -193,4 +193,55 @@ public class UserService : IUserService<int>
         var roles = await _userManager.GetRolesAsync(appUser);
         return new UserResponse(appUser.Id, appUser.UserName ?? string.Empty, appUser.Email ?? string.Empty, roles, appUser.IsActive, appUser.IsActive ? "Active" : "Inactive");
     }
+
+    public async Task<bool> ChangePasswordAsync(int id, ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request.NewPassword != request.ConfirmPassword)
+        {
+            throw new Exception("New password and confirm password do not match");
+        }
+
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            throw new Exception("User not found");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new Exception("Failed to change password: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return true;
+    }
+
+    public async Task<bool> SetPasswordAsync(SetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request.NewPassword != request.ConfirmPassword)
+        {
+            throw new Exception("New password and confirm password do not match");
+        }
+
+        var user = await _userManager.FindByIdAsync(request.UserId.ToString());
+        if (user is null)
+        {
+            throw new Exception("User not found");
+        }
+
+        // Remove existing password if any
+        if (await _userManager.HasPasswordAsync(user))
+        {
+            await _userManager.RemovePasswordAsync(user);
+        }
+
+        // Add new password
+        var result = await _userManager.AddPasswordAsync(user, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new Exception("Failed to set password: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return true;
+    }
 }

@@ -21,3 +21,15 @@ export interface IUserRequest {
   role: string;
   isActive: boolean;
 }
+
+export interface IChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ISetPasswordRequest {
+  userId: number;
+  newPassword: string;
+  confirmPassword: string;
+}

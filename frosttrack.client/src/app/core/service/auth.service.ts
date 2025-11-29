@@ -132,4 +132,21 @@ export class AuthService {
       }
     }
   }
+
+  getUserId(): number | null {
+    const helper = new JwtHelperService();
+    const tokenObj = this.currentUserSubject.value;
+    if (tokenObj && tokenObj.token) {
+      const decodedToken = helper.decodeToken(tokenObj.token);
+      return (
+        decodedToken['sub'] ||
+        decodedToken['userId'] ||
+        decodedToken[
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+        ] ||
+        null
+      );
+    }
+    return null;
+  }
 }

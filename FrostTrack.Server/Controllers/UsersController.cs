@@ -96,6 +96,34 @@ public class UsersController : ControllerBase
         return await _userService.DeleteBatchAsync(ids, cancellationToken);
     }
 
+    [HttpPost("{id}/change-password")]
+    public async Task<ActionResult<bool>> ChangePassword(int id, [FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _userService.ChangePasswordAsync(id, request, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("set-password")]
+    public async Task<ActionResult<bool>> SetPassword([FromBody] SetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _userService.SetPasswordAsync(request, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 
     private async ValueTask<bool> UserExists(int id, CancellationToken cancellationToken)
     {

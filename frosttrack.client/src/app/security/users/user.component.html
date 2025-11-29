@@ -117,7 +117,7 @@
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
-                [width]="50"
+                [width]="100"
                 name="Actions"
                 [sortable]="false"
               >
@@ -131,14 +131,23 @@
                     <button
                       class="btn btn-tbl-edit h-auto"
                       (click)="editRow(row, rowIndex, editRecord)"
+                      title="Edit User"
                     >
                       <i class="fas fa-pen"></i>
                     </button>
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
+                      title="Delete User"
                     >
                       <i class="far fa-trash-alt"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="changePassword(row)"
+                      title="Change Password"
+                    >
+                      <i class="fas fa-key"></i>
                     </button>
                   </span>
                 </ng-template>

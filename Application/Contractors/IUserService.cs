@@ -16,4 +16,6 @@ public interface IUserService<T>
     Task<bool> DeleteBatchAsync(List<int> ids, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(T id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<int>>> GetLookup(Expression<Func<ApplicationUser, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<bool> ChangePasswordAsync(T id, ChangePasswordRequest request, CancellationToken cancellationToken = default);
+    Task<bool> SetPasswordAsync(SetPasswordRequest request, CancellationToken cancellationToken = default);
 }

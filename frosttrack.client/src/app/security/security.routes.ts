@@ -1,9 +1,10 @@
-import { Route } from "@angular/router";
-import { Page404Component } from "../authentication/page404/page404.component";
-import { UserComponent } from "./users/user.component";
-import { RoleComponent } from "./roles/role.component";
-import { AssignRoleComponent } from "./assign-role/assign-role.component";
-import { AssignClaimComponent } from "./assign-claim/assign-claim.component";
+import { Route } from '@angular/router';
+import { Page404Component } from '../authentication/page404/page404.component';
+import { UserComponent } from './users/user.component';
+import { RoleComponent } from './roles/role.component';
+import { AssignRoleComponent } from './assign-role/assign-role.component';
+import { AssignClaimComponent } from './assign-claim/assign-claim.component';
+import { ChangePasswordComponent } from './change-password/change-password.component';
 
 export const SECURITY_ROUTE: Route[] = [
   {
@@ -27,6 +28,9 @@ export const SECURITY_ROUTE: Route[] = [
     path: 'assign-claim',
     component: AssignClaimComponent,
   },
-  { path: "**", component: Page404Component },
+  {
+    path: 'change-password',
+    component: ChangePasswordComponent,
+  },
+  { path: '**', component: Page404Component },
 ];
-
