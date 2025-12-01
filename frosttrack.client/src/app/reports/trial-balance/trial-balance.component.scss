@@ -1,6 +1,6 @@
 /*
 =====================================================================
-Stock Report Component Styles - Matching Transaction Report Format
+Trial Balance Report Component Styles - Matching Transaction Report Format
 =====================================================================
 Professional report styling matching the transaction report pattern
 =====================================================================
@@ -60,6 +60,50 @@ $font-size: 11px;
     box-shadow: none;
 }
 
+// Summary Cards (No Print)
+.summary-cards {
+    margin-bottom: 20px;
+
+    .summary-card {
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card-amount {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        &.debit-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        &.credit-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        &.balance-card-positive {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        &.balance-card-negative {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+    }
+}
+
 // Report Info Box Section
 .booking-info-box {
     margin-bottom: 15px;
@@ -95,28 +139,6 @@ $font-size: 11px;
     }
 }
 
-// Info Cards Section
-.info-card {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    text-align: center;
-    background-color: #f9f9f9;
-
-    .info-card-label {
-        font-size: 11px;
-        color: #666;
-        margin-bottom: 8px;
-        font-weight: 600;
-    }
-
-    .info-card-value {
-        font-size: 20px;
-        font-weight: bold;
-        color: #333;
-    }
-}
-
 // Section Titles
 .section-title {
     font-weight: bold;
@@ -127,7 +149,7 @@ $font-size: 11px;
     color: #000;
 }
 
-// Products Section (for stock details)
+// Trial Balance Table Section
 .stored-products-section {
     margin-bottom: 15px;
 
@@ -164,36 +186,9 @@ $font-size: 11px;
             text-align: right;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 3px;
-
-            &.badge-completed {
-                background-color: #d4edda;
-                color: #155724;
-                border: 1px solid #c3e6cb;
-            }
-
-            &.badge-partial {
-                background-color: #fff3cd;
-                color: #856404;
-                border: 1px solid #ffeaa7;
-            }
-
-            &.badge-pending {
-                background-color: #f8d7da;
-                color: #721c24;
-                border: 1px solid #f5c6cb;
-            }
-
-            &.badge-default {
-                background-color: #e2e3e5;
-                color: #383d41;
-                border: 1px solid #d6d8db;
-            }
+        .amount-cell {
+            font-family: "Courier New", monospace;
+            font-weight: 500;
         }
 
         tfoot .total-row {
@@ -201,65 +196,30 @@ $font-size: 11px;
             font-weight: bold;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+
+            td {
+                border-top: 2px solid #000 !important;
+            }
         }
     }
 }
 
-// Notes Section
-.notes-section {
-    clear: both;
-    margin: 20px 0;
-    padding: 10px;
-    border: 1px solid #000;
-    background-color: #f9f9f9;
-    font-size: $font-size;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-
-    strong {
-        display: block;
-        margin-bottom: 5px;
-    }
+// No Data Message
+.no-data-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
 
     p {
         margin: 0;
-    }
-}
-
-// Signature Section
-.signature-section {
-    clear: both;
-    margin-top: 40px;
-    display: flex;
-    justify-content: space-between;
-    page-break-inside: avoid;
-
-    .signature-box {
-        width: 45%;
-        text-align: center;
-
-        .signature-line {
-            border-bottom: 1px solid #000;
-            margin-bottom: 8px;
-            height: 60px;
-        }
-
-        .signature-label {
-            font-weight: bold;
-            font-size: $font-size;
-            margin-bottom: 3px;
-        }
-
-        .signature-sublabel {
-            font-size: 10px;
-            font-style: italic;
-            color: #666;
-        }
+        font-size: 14px;
     }
 }
 
 @media print {
-    .no-print {
+    .no-print,
+    .summary-cards {
         display: none !important;
     }
 
@@ -302,8 +262,6 @@ $font-size: 11px;
     .booking-info-box,
     .section-title,
     .stored-products-section,
-    .notes-section,
-    .signature-section,
     table,
     th,
     td {
@@ -336,8 +294,7 @@ $font-size: 11px;
     }
 
     // Background colors - ensure they print
-    .info-label,
-    .notes-section {
+    .info-label {
         background-color: #f9f9f9 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -360,45 +317,9 @@ $font-size: 11px;
         page-break-after: avoid;
     }
 
-    // Status badges
-    .status-badge {
-        &.badge-completed {
-            background-color: #d4edda !important;
-            color: #155724 !important;
-            border: 1px solid #c3e6cb !important;
-        }
-
-        &.badge-partial {
-            background-color: #fff3cd !important;
-            color: #856404 !important;
-            border: 1px solid #ffeaa7 !important;
-        }
-
-        &.badge-pending {
-            background-color: #f8d7da !important;
-            color: #721c24 !important;
-            border: 1px solid #f5c6cb !important;
-        }
-
-        &.badge-default {
-            background-color: #e2e3e5 !important;
-            color: #383d41 !important;
-            border: 1px solid #d6d8db !important;
-        }
-    }
-
-    // Signature section
-    .signature-section {
-        page-break-inside: avoid;
-
-        .signature-sublabel {
-            color: #666 !important;
-        }
-    }
-
-    // Hide info cards in print
-    .info-card {
-        display: none !important;
+    // Amount cells
+    .amount-cell {
+        font-family: "Courier New", monospace !important;
     }
 }
 
@@ -411,5 +332,11 @@ $font-size: 11px;
 
     .print-section-container {
         width: 100%;
+    }
+
+    .summary-cards {
+        .summary-card {
+            margin-bottom: 15px;
+        }
     }
 }

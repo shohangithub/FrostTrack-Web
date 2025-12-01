@@ -8,4 +8,11 @@ export const reportRoutes: Route[] = [
         (m) => m.StockReportComponent
       ),
   },
+  {
+    path: 'trial-balance',
+    loadComponent: () =>
+      import('./trial-balance/trial-balance.component').then(
+        (m) => m.TrialBalanceComponent
+      ),
+  },
 ];

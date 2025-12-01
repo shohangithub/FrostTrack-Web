@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IBillCollectionService, BillCollectionService>();
         services.AddScoped<IStockReportService, StockReportService>();
         services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
+        services.AddScoped<ITrialBalanceService, TrialBalanceService>();
 
         services.AddTransient<DefaultValueInjector>();
 

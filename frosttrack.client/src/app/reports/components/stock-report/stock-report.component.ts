@@ -21,7 +21,6 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { IProductListResponse } from 'app/administration/models/product.interface';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
-import { NgApexchartsModule } from 'ng-apexcharts';
 
 @Component({
   selector: 'app-stock-report',
@@ -35,7 +34,6 @@ import { NgApexchartsModule } from 'ng-apexcharts';
     NgxPrintModule,
     ReportInvoiceHeaderComponent,
     ReportFooterComponent,
-    NgApexchartsModule,
   ],
 })
 export class StockReportComponent implements OnInit {
@@ -57,14 +55,6 @@ export class StockReportComponent implements OnInit {
     { value: 'completed', text: 'Completed Deliveries Only' },
   ];
 
-  groupByOptions = [
-    { value: 'none', text: 'No Grouping' },
-    { value: 'customer', text: 'Group by Customer' },
-    { value: 'product', text: 'Group by Product' },
-  ];
-
-  chartOptions: any;
-
   constructor(
     private fb: UntypedFormBuilder,
     private stockReportService: StockReportService,
@@ -75,6 +65,7 @@ export class StockReportComponent implements OnInit {
   ) {
     this.layoutService.loadCurrentRoute();
 
+    // Initialize form with default date range (current month)
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -87,7 +78,6 @@ export class StockReportComponent implements OnInit {
       customerId: [null],
       productId: [null],
       reportType: ['all'],
-      groupBy: ['none'],
     });
   }
 
@@ -148,7 +138,6 @@ export class StockReportComponent implements OnInit {
           this.stockItems = response;
           this.applyFilters();
           this.calculateSummary();
-          this.initializeChart();
           this.showReport = true;
           this.isLoading = false;
         },
@@ -197,109 +186,6 @@ export class StockReportComponent implements OnInit {
     };
   }
 
-  getGroupedData(): any[] {
-    const groupBy = this.reportForm.value.groupBy;
-
-    if (groupBy === 'customer') {
-      const grouped = new Map<string, IStockReportItem[]>();
-      this.filteredItems.forEach((item) => {
-        const key = `${item.customerId}-${item.customerName}`;
-        if (!grouped.has(key)) {
-          grouped.set(key, []);
-        }
-        grouped.get(key)!.push(item);
-      });
-
-      return Array.from(grouped.entries()).map(([key, items]) => ({
-        groupName: key.split('-')[1],
-        items,
-        subtotal: {
-          bookedQty: items.reduce((sum, i) => sum + i.bookingQuantity, 0),
-          deliveredQty: items.reduce((sum, i) => sum + i.deliveredQuantity, 0),
-          remainingQty: items.reduce((sum, i) => sum + i.remainingQuantity, 0),
-          totalValue: items.reduce((sum, i) => sum + i.totalValue, 0),
-        },
-      }));
-    } else if (groupBy === 'product') {
-      const grouped = new Map<string, IStockReportItem[]>();
-      this.filteredItems.forEach((item) => {
-        const key = `${item.productId}-${item.productName}`;
-        if (!grouped.has(key)) {
-          grouped.set(key, []);
-        }
-        grouped.get(key)!.push(item);
-      });
-
-      return Array.from(grouped.entries()).map(([key, items]) => ({
-        groupName: key.split('-')[1],
-        items,
-        subtotal: {
-          bookedQty: items.reduce((sum, i) => sum + i.bookingQuantity, 0),
-          deliveredQty: items.reduce((sum, i) => sum + i.deliveredQuantity, 0),
-          remainingQty: items.reduce((sum, i) => sum + i.remainingQuantity, 0),
-          totalValue: items.reduce((sum, i) => sum + i.totalValue, 0),
-        },
-      }));
-    }
-
-    return [
-      {
-        groupName: 'All Items',
-        items: this.filteredItems,
-        subtotal: null,
-      },
-    ];
-  }
-
-  initializeChart(): void {
-    const bookedQty = this.summary?.totalBookedQuantity || 0;
-    const deliveredQty = this.summary?.totalDeliveredQuantity || 0;
-    const remainingQty = this.summary?.totalRemainingQuantity || 0;
-
-    this.chartOptions = {
-      series: [deliveredQty, remainingQty],
-      chart: {
-        type: 'donut',
-        height: 280,
-      },
-      labels: ['Delivered', 'Remaining'],
-      colors: ['#28a745', '#ffc107'],
-      legend: {
-        position: 'bottom',
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: '65%',
-            labels: {
-              show: true,
-              name: {
-                show: true,
-                fontSize: '18px',
-              },
-              value: {
-                show: true,
-                fontSize: '24px',
-                fontWeight: 600,
-              },
-              total: {
-                show: true,
-                showAlways: true,
-                label: 'Total Booked',
-                fontSize: '16px',
-                fontWeight: 400,
-                formatter: () => bookedQty.toString(),
-              },
-            },
-          },
-        },
-      },
-      dataLabels: {
-        enabled: true,
-      },
-    };
-  }
-
   getStatusBadgeClass(status: string): string {
     switch (status) {
       case 'Completed':
@@ -321,6 +207,13 @@ export class StockReportComponent implements OnInit {
   getProductName(productId: number): string {
     const product = this.products.find((p) => p.id === productId);
     return product ? product.productName : 'N/A';
+  }
+
+  resetReport(): void {
+    this.showReport = false;
+    this.stockItems = [];
+    this.filteredItems = [];
+    this.summary = null;
   }
 
   exportToCSV(): void {
