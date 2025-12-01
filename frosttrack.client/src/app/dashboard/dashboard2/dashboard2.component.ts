@@ -1,7 +1,26 @@
 import { Component, OnInit } from '@angular/core';
-import { ChartComponent, ApexAxisChartSeries, ApexNonAxisChartSeries, ApexChart, ApexFill, ApexStroke, ApexYAxis, ApexTooltip, ApexMarkers, ApexXAxis, ApexDataLabels, ApexLegend, ApexPlotOptions, ApexGrid, ApexResponsive, NgApexchartsModule } from 'ng-apexcharts';
+import { CommonModule } from '@angular/common';
+import {
+  ChartComponent,
+  ApexAxisChartSeries,
+  ApexNonAxisChartSeries,
+  ApexChart,
+  ApexFill,
+  ApexStroke,
+  ApexYAxis,
+  ApexTooltip,
+  ApexMarkers,
+  ApexXAxis,
+  ApexDataLabels,
+  ApexLegend,
+  ApexPlotOptions,
+  ApexGrid,
+  ApexResponsive,
+  NgApexchartsModule,
+} from 'ng-apexcharts';
 import { NgScrollbar } from 'ngx-scrollbar';
 import { RouterLink } from '@angular/router';
+import { StockChartComponent } from '../components/stock-chart/stock-chart.component';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -30,24 +49,28 @@ export type smallBarChart = {
 };
 
 @Component({
-    selector: 'app-dashboard2',
-    templateUrl: './dashboard2.component.html',
-    styleUrls: ['./dashboard2.component.sass'],
-    standalone: true,
-    imports: [
-        RouterLink,
-        NgApexchartsModule,
-        NgScrollbar,
-    ],
+  selector: 'app-dashboard2',
+  templateUrl: './dashboard2.component.html',
+  styleUrls: ['./dashboard2.component.sass'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterLink,
+    NgApexchartsModule,
+    NgScrollbar,
+    StockChartComponent,
+  ],
 })
 export class Dashboard2Component implements OnInit {
   public lineChartOptions!: Partial<ChartOptions>;
   public pieChartOptions!: Partial<ChartOptions>;
   public gaugeChartOptions!: Partial<ChartOptions>;
   public smallBarChart: any;
+
   public sampleData = [
     31, 40, 28, 44, 60, 55, 68, 51, 42, 85, 77, 31, 40, 28, 44, 60, 55,
   ];
+
   constructor() {
     //constructor
   }

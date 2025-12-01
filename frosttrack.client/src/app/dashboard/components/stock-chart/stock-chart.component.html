@@ -1,0 +1,77 @@
+<div class="card">
+  <div class="card-header">
+    <h4>Stock Status</h4>
+  </div>
+  <div class="card-body">
+    <!-- Date Filter -->
+    <form [formGroup]="stockFilterForm" class="mb-3">
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label font-12">Start Date</label>
+          <input
+            type="date"
+            class="form-control form-control-sm"
+            formControlName="startDate"
+            (change)="onStockFilterChange()"
+          />
+        </div>
+        <div class="col-6">
+          <label class="form-label font-12">End Date</label>
+          <input
+            type="date"
+            class="form-control form-control-sm"
+            formControlName="endDate"
+            (change)="onStockFilterChange()"
+          />
+        </div>
+      </div>
+    </form>
+
+    @if(isLoadingStock) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    } @else if(stockChartOptions.series && stockChartOptions.series.length > 0)
+    {
+    <div id="chart">
+      <apx-chart
+        [series]="stockChartOptions.series!"
+        [chart]="stockChartOptions.chart!"
+        [labels]="stockChartOptions.labels!"
+        [colors]="stockChartOptions.colors!"
+        [dataLabels]="stockChartOptions.dataLabels!"
+        [plotOptions]="stockChartOptions.plotOptions!"
+        [legend]="stockChartOptions.legend!"
+        class="apex-pie-center"
+      >
+      </apx-chart>
+    </div>
+    <div class="table-responsive m-t-15">
+      <table class="table align-items-center">
+        <tbody>
+          <tr class="tbl-row-border">
+            <td><i class="fa fa-circle col-cyan msr-2"></i>Delivered</td>
+            <td>{{ getTotalDelivered() | number }}</td>
+            <td class="col-green">{{ getDeliveryPercentage() }}%</td>
+          </tr>
+          <tr class="tbl-row-border">
+            <td><i class="fa fa-circle col-orange msr-2"></i>Remaining</td>
+            <td>{{ getTotalRemaining() | number }}</td>
+            <td class="col-orange">{{ 100 - getDeliveryPercentage() }}%</td>
+          </tr>
+          <tr class="tbl-row-border">
+            <td><i class="fa fa-circle col-blue msr-2"></i>Total Booked</td>
+            <td colspan="2">{{ getTotalBooked() | number }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    } @else {
+    <div class="text-center py-5 text-muted">
+      <p>No stock data available</p>
+    </div>
+    }
+  </div>
+</div>

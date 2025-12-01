@@ -1,8 +1,25 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ApexAxisChartSeries, ApexChart, ApexXAxis, ApexDataLabels, ApexStroke, ApexMarkers, ApexYAxis, ApexGrid, ApexTitleSubtitle, ApexTooltip, ApexLegend, ApexFill, ApexPlotOptions, ApexResponsive, NgApexchartsModule } from 'ng-apexcharts';
+import {
+  ApexAxisChartSeries,
+  ApexChart,
+  ApexXAxis,
+  ApexDataLabels,
+  ApexStroke,
+  ApexMarkers,
+  ApexYAxis,
+  ApexGrid,
+  ApexTitleSubtitle,
+  ApexTooltip,
+  ApexLegend,
+  ApexFill,
+  ApexPlotOptions,
+  ApexResponsive,
+  NgApexchartsModule,
+} from 'ng-apexcharts';
 import { NgScrollbar } from 'ngx-scrollbar';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
+import { StockChartComponent } from '../components/stock-chart/stock-chart.component';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -22,16 +39,17 @@ export type ChartOptions = {
   responsive: ApexResponsive[];
 };
 @Component({
-    selector: 'app-main',
-    templateUrl: './main.component.html',
-    styleUrls: ['./main.component.scss'],
-    standalone: true,
-    imports: [
-        RouterLink,
-        NgbProgressbar,
-        NgApexchartsModule,
-        NgScrollbar,
-    ],
+  selector: 'app-main',
+  templateUrl: './main.component.html',
+  styleUrls: ['./main.component.scss'],
+  standalone: true,
+  imports: [
+    RouterLink,
+    NgbProgressbar,
+    NgApexchartsModule,
+    NgScrollbar,
+    StockChartComponent,
+  ],
 })
 export class MainComponent implements OnInit {
   public lineChartOptions!: Partial<ChartOptions>;
