@@ -1,0 +1,400 @@
+<section class="main-content">
+  <div class="section-body">
+    <!-- Filter Section -->
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Balance Sheet Report</span>
+          <div class="p-10 mt-2">
+            <form
+              class="product-form"
+              [formGroup]="reportForm"
+              (ngSubmit)="onSubmit()"
+            >
+              <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <label for="asOfDate" class="col-sm-12 col-form-label"
+                      >As Of Date <span class="text-danger">*</span></label
+                    >
+                    <div class="col-sm-12">
+                      <input
+                        type="date"
+                        id="asOfDate"
+                        class="form-control form-control-sm"
+                        formControlName="asOfDate"
+                        [class.is-invalid]="
+                          reportForm.get('asOfDate')?.invalid &&
+                          reportForm.get('asOfDate')?.touched
+                        "
+                      />
+                      @if(reportForm.get('asOfDate')?.invalid &&
+                      reportForm.get('asOfDate')?.touched) {
+                      <small class="form-text text-danger"
+                        >Date is required</small
+                      >
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <label class="col-sm-12 col-form-label">&nbsp;</label>
+                    <div class="col-sm-12 text-end">
+                      <button
+                        type="submit"
+                        class="btn btn-primary px-2"
+                        [disabled]="isLoading || reportForm.invalid"
+                      >
+                        @if(isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                          role="status"
+                        ></span>
+                        } Show Report
+                      </button>
+                      @if(showReport) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-2 px-2"
+                        (click)="resetReport()"
+                      >
+                        Clear
+                      </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Display Section -->
+    @if(showReport && !isLoading && balanceSheetData) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <!-- Action Buttons (No Print) -->
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="Balance Sheet"
+                  printSectionId="print-section-id"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="print-section-id" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <!-- Report Print Area -->
+                <div class="invoice-container">
+                  <!-- Report Header Component -->
+                  <app-report-invoice-header
+                    [Title]="'Balance Sheet'"
+                    [InvoiceNumber]="''"
+                  ></app-report-invoice-header>
+
+                  <!-- Report Information Section -->
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">As Of Date:</td>
+                        <td class="info-value">
+                          {{ getFormattedDate(balanceSheetData.asOfDate) }}
+                        </td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">
+                          {{ today | date : "dd/MM/yyyy HH:mm" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Total Transactions:</td>
+                        <td class="info-value">
+                          {{ balanceSheetData.totalTransactions }}
+                        </td>
+                        <td class="info-label">Net Worth:</td>
+                        <td class="info-value">
+                          {{ balanceSheetData.netWorth | number : "1.2-2" }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Summary Cards -->
+                  <div class="summary-cards mb-4">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="summary-card asset-card">
+                          <div class="card-title">Total Assets</div>
+                          <div class="card-amount">
+                            ৳
+                            {{
+                              balanceSheetData.totalAssets | number : "1.2-2"
+                            }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="summary-card liability-card">
+                          <div class="card-title">Total Liabilities</div>
+                          <div class="card-amount">
+                            ৳
+                            {{
+                              balanceSheetData.totalLiabilities
+                                | number : "1.2-2"
+                            }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="summary-card equity-card">
+                          <div class="card-title">Total Equity</div>
+                          <div class="card-amount">
+                            ৳
+                            {{
+                              balanceSheetData.totalEquity | number : "1.2-2"
+                            }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Assets Section -->
+                  <div class="section-title">Assets</div>
+                  @if(balanceSheetData.assets.length > 0) {
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>ক্রমিক</th>
+                          <th>Account Name</th>
+                          <th>Transactions</th>
+                          <th class="text-end">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="
+                            let item of balanceSheetData.assets;
+                            let i = index
+                          "
+                        >
+                          <td class="text-center">{{ i + 1 }}</td>
+                          <td>{{ item.accountName }}</td>
+                          <td class="text-center">
+                            {{ item.transactionCount }}
+                          </td>
+                          <td class="text-end amount-cell">
+                            {{ item.amount | number : "1.2-2" }}
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="3" class="text-end">
+                            <strong>Total Assets:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              balanceSheetData.totalAssets | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">
+                    <p>No assets available.</p>
+                  </div>
+                  }
+
+                  <!-- Liabilities Section -->
+                  <div class="section-title">Liabilities</div>
+                  @if(balanceSheetData.liabilities.length > 0) {
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>ক্রমিক</th>
+                          <th>Account Name</th>
+                          <th>Transactions</th>
+                          <th class="text-end">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="
+                            let item of balanceSheetData.liabilities;
+                            let i = index
+                          "
+                        >
+                          <td class="text-center">{{ i + 1 }}</td>
+                          <td>{{ item.accountName }}</td>
+                          <td class="text-center">
+                            {{ item.transactionCount }}
+                          </td>
+                          <td class="text-end amount-cell">
+                            {{ item.amount | number : "1.2-2" }}
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="3" class="text-end">
+                            <strong>Total Liabilities:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              balanceSheetData.totalLiabilities
+                                | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">
+                    <p>No liabilities recorded.</p>
+                  </div>
+                  }
+
+                  <!-- Equity Section -->
+                  <div class="section-title">Equity</div>
+                  @if(balanceSheetData.equity.length > 0) {
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>ক্রমিক</th>
+                          <th>Account Name</th>
+                          <th>Transactions</th>
+                          <th class="text-end">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="
+                            let item of balanceSheetData.equity;
+                            let i = index
+                          "
+                        >
+                          <td class="text-center">{{ i + 1 }}</td>
+                          <td>{{ item.accountName }}</td>
+                          <td class="text-center">
+                            {{ item.transactionCount }}
+                          </td>
+                          <td class="text-end amount-cell">
+                            {{ item.amount | number : "1.2-2" }}
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="3" class="text-end">
+                            <strong>Total Equity:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              balanceSheetData.totalEquity | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">
+                    <p>No equity recorded.</p>
+                  </div>
+                  }
+
+                  <!-- Balance Sheet Equation -->
+                  <div class="equation-section">
+                    <div class="equation-box">
+                      <div class="equation-title">
+                        Balance Sheet Equation Verification
+                      </div>
+                      <div class="equation-content">
+                        <div class="equation-item">
+                          <span class="equation-label">Total Assets:</span>
+                          <span class="equation-value">{{
+                            balanceSheetData.totalAssets | number : "1.2-2"
+                          }}</span>
+                        </div>
+                        <div class="equation-separator">=</div>
+                        <div class="equation-item">
+                          <span class="equation-label">Total Liabilities:</span>
+                          <span class="equation-value">{{
+                            balanceSheetData.totalLiabilities | number : "1.2-2"
+                          }}</span>
+                        </div>
+                        <div class="equation-separator">+</div>
+                        <div class="equation-item">
+                          <span class="equation-label">Total Equity:</span>
+                          <span class="equation-value">{{
+                            balanceSheetData.totalEquity | number : "1.2-2"
+                          }}</span>
+                        </div>
+                      </div>
+                      <div class="equation-result">
+                        <span
+                          [ngClass]="{
+                            'text-success':
+                              Math.abs(
+                                balanceSheetData.totalAssets -
+                                  (balanceSheetData.totalLiabilities +
+                                    balanceSheetData.totalEquity)
+                              ) < 0.01,
+                            'text-danger':
+                              Math.abs(
+                                balanceSheetData.totalAssets -
+                                  (balanceSheetData.totalLiabilities +
+                                    balanceSheetData.totalEquity)
+                              ) >= 0.01
+                          }"
+                        >
+                          {{
+                            Math.abs(
+                              balanceSheetData.totalAssets -
+                                (balanceSheetData.totalLiabilities +
+                                  balanceSheetData.totalEquity)
+                            ) < 0.01
+                              ? "✓ Balanced"
+                              : "⚠ Not Balanced"
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Report Footer Component -->
+                  <app-report-footer></app-report-footer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</section>

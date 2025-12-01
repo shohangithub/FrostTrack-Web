@@ -827,6 +827,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/reports/balance-sheet',
+        title: 'Balance Sheet',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/transaction/report',
         title: 'Transaction Report',
         iconType: '',

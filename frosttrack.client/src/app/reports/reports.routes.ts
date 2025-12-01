@@ -15,4 +15,11 @@ export const reportRoutes: Route[] = [
         (m) => m.TrialBalanceComponent
       ),
   },
+  {
+    path: 'balance-sheet',
+    loadComponent: () =>
+      import('./balance-sheet/balance-sheet.component').then(
+        (m) => m.BalanceSheetComponent
+      ),
+  },
 ];
