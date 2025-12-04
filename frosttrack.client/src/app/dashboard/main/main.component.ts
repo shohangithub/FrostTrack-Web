@@ -15,6 +15,7 @@ import {
   ApexPlotOptions,
   ApexResponsive,
   NgApexchartsModule,
+  ApexNonAxisChartSeries,
 } from 'ng-apexcharts';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
@@ -26,6 +27,7 @@ import {
 } from '../models/dashboard.interface';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
+import { NgScrollbar } from 'ngx-scrollbar';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -44,6 +46,25 @@ export type ChartOptions = {
   plotOptions: ApexPlotOptions;
   responsive: ApexResponsive[];
 };
+
+export type ChartOptions2 = {
+  series: ApexAxisChartSeries;
+  series2: ApexNonAxisChartSeries;
+  chart: ApexChart;
+  xaxis: ApexXAxis;
+  yaxis: ApexYAxis | ApexYAxis[];
+  labels: string[];
+  stroke: ApexStroke;
+  legend: ApexLegend;
+  markers: ApexMarkers;
+  dataLabels: ApexDataLabels;
+  colors: string[];
+  fill: ApexFill;
+  grid: ApexGrid;
+  tooltip: ApexTooltip;
+  plotOptions: ApexPlotOptions;
+  responsive: ApexResponsive | ApexResponsive[];
+};
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
@@ -55,10 +76,12 @@ export type ChartOptions = {
     NgbProgressbar,
     NgApexchartsModule,
     StockChartComponent,
+    NgScrollbar,
   ],
 })
 export class MainComponent implements OnInit {
   public lineChartOptions!: Partial<ChartOptions>;
+  public lineChartOptions2!: Partial<ChartOptions2>;
   public barChartOptions!: Partial<ChartOptions>;
   public stackBarChart!: Partial<ChartOptions>;
 
@@ -199,6 +222,10 @@ export class MainComponent implements OnInit {
           name: 'Data 2',
           data: [85, 130, 85, 225, 80, 190, 120],
         },
+        {
+          name: 'Data 3',
+          data: [85, 100, 85, 305, 80, 190, 90],
+        },
       ],
       chart: {
         height: 350,
@@ -262,92 +289,81 @@ export class MainComponent implements OnInit {
     };
   }
   private chart2() {
-    this.barChartOptions = {
+    this.lineChartOptions2 = {
       series: [
         {
-          name: 'Males',
-          data: [2.4, 4.65, 2.88, 2.9, 3.9, 2.2, 3, 4.1, 3.9, 3],
+          name: 'Income',
+          type: 'area',
+          data: [220, 410, 66, 324, 630, 178, 389],
         },
         {
-          name: 'Females',
-          data: [-3.8, -3.18, -2.4, -3.7, -3.96, -2.3, -3.1, -4, -4.1, -2.8],
+          name: 'Sales',
+          type: 'line',
+          data: [26, 45, 12, 37, 68, 22, 42],
         },
       ],
       chart: {
-        type: 'bar',
         height: 350,
-        stacked: true,
+        type: 'area',
+        foreColor: '#9aa0ac',
         toolbar: {
           show: false,
         },
-        foreColor: '#9aa0ac',
       },
-      colors: ['#6236AF', '#F02769'],
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          barHeight: '80%',
-          columnWidth: '30%',
-          borderRadius: 5,
-        },
-      },
-      dataLabels: {
-        enabled: false,
+      fill: {
+        type: 'solid',
+        opacity: [0.35, 1],
       },
       stroke: {
-        width: 1,
-        colors: ['#fff'],
+        width: [0, 4],
+        curve: 'smooth',
       },
 
+      labels: [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ],
+      markers: {
+        size: 0,
+      },
+      colors: ['#999999', '#6777EF'],
+      dataLabels: {
+        enabled: true,
+        enabledOnSeries: [1, 2],
+      },
       grid: {
-        xaxis: {
-          lines: {
-            show: false,
-          },
-        },
         borderColor: '#9aa0ac',
       },
-      yaxis: {
-        min: -5,
-        max: 5,
-        title: {
-          // text: 'Age',
+      yaxis: [
+        {
+          title: {
+            text: 'Income',
+          },
+        },
+        {
+          opposite: true,
+          title: {
+            text: 'Sales',
+          },
+        },
+      ],
+      xaxis: {
+        labels: {
+          trim: false,
         },
       },
       tooltip: {
-        shared: false,
         theme: 'dark',
+        marker: {
+          show: true,
+        },
         x: {
-          formatter: function (val) {
-            return val.toString();
-          },
-        },
-        y: {
-          formatter: function (val) {
-            return val.toString() + '%';
-          },
-        },
-      },
-      xaxis: {
-        categories: [
-          '90+',
-          '80-89',
-          '70-79',
-          '60-69',
-          '50-59',
-          '40-49',
-          '30-39',
-          '20-29',
-          '10-19',
-          '0-9',
-        ],
-        title: {
-          text: 'Percent',
-        },
-        labels: {
-          formatter: function (val) {
-            return Math.abs(Math.round(parseInt(val, 10))) + '%';
-          },
+          show: true,
         },
       },
     };

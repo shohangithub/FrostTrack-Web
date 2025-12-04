@@ -22,6 +22,7 @@ export interface IDashboardCardData {
 }
 
 export enum DashboardPeriod {
+  Today = 1,
   Last7Days = 7,
   Last15Days = 15,
   Last30Days = 30,
