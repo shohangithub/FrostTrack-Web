@@ -8,7 +8,83 @@
     </li>
     <li class="breadcrumb-item">Dashboard</li>
   </ul>
+
+  <!-- Period Filter Section -->
   <div class="section-body">
+    <div class="row">
+      <div class="col-12">
+        <div
+          class="d-flex float-end justify-content-between align-items-center m-1"
+        >
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="selectedPeriod === DashboardPeriod.Last7Days"
+              [class.btn-outline-primary]="
+                selectedPeriod !== DashboardPeriod.Last7Days
+              "
+              (click)="loadDashboardData(DashboardPeriod.Last7Days)"
+              [disabled]="isLoading"
+            >
+              Last 7 Days
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="
+                selectedPeriod === DashboardPeriod.Last15Days
+              "
+              [class.btn-outline-primary]="
+                selectedPeriod !== DashboardPeriod.Last15Days
+              "
+              (click)="loadDashboardData(DashboardPeriod.Last15Days)"
+              [disabled]="isLoading"
+            >
+              Last 15 Days
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="
+                selectedPeriod === DashboardPeriod.Last30Days
+              "
+              [class.btn-outline-primary]="
+                selectedPeriod !== DashboardPeriod.Last30Days
+              "
+              (click)="loadDashboardData(DashboardPeriod.Last30Days)"
+              [disabled]="isLoading"
+            >
+              Last 30 Days
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="
+                selectedPeriod === DashboardPeriod.Last90Days
+              "
+              [class.btn-outline-primary]="
+                selectedPeriod !== DashboardPeriod.Last90Days
+              "
+              (click)="loadDashboardData(DashboardPeriod.Last90Days)"
+              [disabled]="isLoading"
+            >
+              Last 90 Days
+            </button>
+          </div>
+        </div>
+        <!-- @if(isLoading) {
+            <div class="text-center mt-2">
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+              ></span>
+              <span class="ms-2">Loading dashboard data...</span>
+            </div>
+            } -->
+      </div>
+    </div>
+    <!-- Statistics Cards -->
     <div class="row">
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
         <div class="card">
@@ -19,13 +95,17 @@
                   class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing"
                 >
                   <div class="card-content">
-                    <h6>New Booking</h6>
-                    <h2 class="mb-3 font-18">258</h2>
-                    <p class="mb-0"><span class="col-green">42%</span></p>
+                    <h6>Bookings</h6>
+                    <h2 class="mb-3 font-18">{{ bookingData.count }}</h2>
+                    <p class="mb-0">
+                      <span class="col-green"
+                        >৳{{ bookingData.amount | number : "1.0-0" }}</span
+                      >
+                    </p>
                   </div>
                   <ngb-progressbar
                     type="success"
-                    [value]="42"
+                    [value]="bookingData.percentage"
                     height=".3rem"
                   ></ngb-progressbar>
                 </div>
@@ -50,13 +130,17 @@
                   class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing"
                 >
                   <div class="card-content">
-                    <h6>Customers</h6>
-                    <h2 class="mb-3 font-18">1,287</h2>
-                    <p class="mb-0"><span class="col-orange">33%</span></p>
+                    <h6>Deliveries</h6>
+                    <h2 class="mb-3 font-18">{{ deliveryData.count }}</h2>
+                    <p class="mb-0">
+                      <span class="col-orange"
+                        >৳{{ deliveryData.amount | number : "1.0-0" }}</span
+                      >
+                    </p>
                   </div>
                   <ngb-progressbar
                     type="warning"
-                    [value]="33"
+                    [value]="deliveryData.percentage"
                     height=".3rem"
                   ></ngb-progressbar>
                 </div>
@@ -81,13 +165,19 @@
                   class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing"
                 >
                   <div class="card-content">
-                    <h6>New Project</h6>
-                    <h2 class="mb-3 font-18">128</h2>
-                    <p class="mb-0"><span class="col-blue">25%</span></p>
+                    <h6>Bill Collections</h6>
+                    <h2 class="mb-3 font-18">{{ billCollectionData.count }}</h2>
+                    <p class="mb-0">
+                      <span class="col-blue"
+                        >৳{{
+                          billCollectionData.amount | number : "1.0-0"
+                        }}</span
+                      >
+                    </p>
                   </div>
                   <ngb-progressbar
                     type="info"
-                    [value]="25"
+                    [value]="billCollectionData.percentage"
                     height=".3rem"
                   ></ngb-progressbar>
                 </div>
@@ -112,13 +202,22 @@
                   class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing"
                 >
                   <div class="card-content">
-                    <h6>Revenue</h6>
-                    <h2 class="mb-3 font-18">$48,697</h2>
-                    <p class="mb-0"><span class="col-red">65%</span></p>
+                    <h6>Net Revenue</h6>
+                    <h2 class="mb-3 font-18">
+                      ৳{{ revenueData.net | number : "1.0-0" }}
+                    </h2>
+                    <p class="mb-0">
+                      <span
+                        class="col-red"
+                        [class.col-green]="revenueData.net >= 0"
+                      >
+                        {{ revenueData.percentage | number : "1.0-0" }}%
+                      </span>
+                    </p>
                   </div>
                   <ngb-progressbar
-                    type="danger"
-                    [value]="65"
+                    [type]="revenueData.net >= 0 ? 'success' : 'danger'"
+                    [value]="Math.abs(revenueData.percentage)"
                     height=".3rem"
                   ></ngb-progressbar>
                 </div>

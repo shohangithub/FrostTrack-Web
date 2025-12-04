@@ -16,10 +16,16 @@ import {
   ApexResponsive,
   NgApexchartsModule,
 } from 'ng-apexcharts';
-import { NgScrollbar } from 'ngx-scrollbar';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
 import { StockChartComponent } from '../components/stock-chart/stock-chart.component';
+import { DashboardService } from '../services/dashboard.service';
+import {
+  IDashboardStatsResponse,
+  DashboardPeriod,
+} from '../models/dashboard.interface';
+import { ToastrService } from 'ngx-toastr';
+import { CommonModule } from '@angular/common';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -44,10 +50,10 @@ export type ChartOptions = {
   styleUrls: ['./main.component.scss'],
   standalone: true,
   imports: [
+    CommonModule,
     RouterLink,
     NgbProgressbar,
     NgApexchartsModule,
-    NgScrollbar,
     StockChartComponent,
   ],
 })
@@ -55,10 +61,132 @@ export class MainComponent implements OnInit {
   public lineChartOptions!: Partial<ChartOptions>;
   public barChartOptions!: Partial<ChartOptions>;
   public stackBarChart!: Partial<ChartOptions>;
+
+  // Dashboard data
+  dashboardStats: IDashboardStatsResponse | null = null;
+  isLoading = false;
+  selectedPeriod: DashboardPeriod = DashboardPeriod.Last30Days;
+  DashboardPeriod = DashboardPeriod; // Expose enum to template
+  Math = Math; // Expose Math for template
+
+  // Card data
+  bookingData = {
+    count: 0,
+    amount: 0,
+    percentage: 0,
+  };
+
+  deliveryData = {
+    count: 0,
+    amount: 0,
+    percentage: 0,
+  };
+
+  billCollectionData = {
+    count: 0,
+    amount: 0,
+    percentage: 0,
+  };
+
+  revenueData = {
+    revenue: 0,
+    expense: 0,
+    net: 0,
+    percentage: 0,
+  };
+
+  constructor(
+    private dashboardService: DashboardService,
+    private toastr: ToastrService
+  ) {}
+
   ngOnInit() {
     this.chart1();
     this.chart2();
     this.chart3();
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(period?: DashboardPeriod): void {
+    if (period) {
+      this.selectedPeriod = period;
+    }
+
+    this.isLoading = true;
+    this.dashboardService.getDashboardStats(this.selectedPeriod).subscribe({
+      next: (response: IDashboardStatsResponse) => {
+        this.dashboardStats = response;
+        this.calculateCardData();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to load dashboard data');
+        this.isLoading = false;
+      },
+    });
+  }
+
+  calculateCardData(): void {
+    if (!this.dashboardStats) return;
+
+    const maxTarget = 1000; // Target values for percentage calculation
+
+    // Booking card
+    this.bookingData = {
+      count: this.dashboardStats.totalBookings,
+      amount: this.dashboardStats.totalBookingAmount,
+      percentage: Math.min(
+        (this.dashboardStats.totalBookings / maxTarget) * 100,
+        100
+      ),
+    };
+
+    // Delivery card
+    this.deliveryData = {
+      count: this.dashboardStats.totalDeliveries,
+      amount: this.dashboardStats.totalDeliveryAmount,
+      percentage: Math.min(
+        (this.dashboardStats.totalDeliveries / maxTarget) * 100,
+        100
+      ),
+    };
+
+    // Bill Collection card
+    this.billCollectionData = {
+      count: this.dashboardStats.totalBillCollections,
+      amount: this.dashboardStats.totalBillCollectionAmount,
+      percentage: Math.min(
+        (this.dashboardStats.totalBillCollections / maxTarget) * 100,
+        100
+      ),
+    };
+
+    // Revenue card
+    const revenueTarget = 100000;
+    this.revenueData = {
+      revenue: this.dashboardStats.totalRevenue,
+      expense: this.dashboardStats.totalExpense,
+      net: this.dashboardStats.netRevenue,
+      percentage: Math.min(
+        (this.dashboardStats.netRevenue / revenueTarget) * 100,
+        100
+      ),
+    };
+  }
+
+  getPeriodLabel(period: DashboardPeriod): string {
+    switch (period) {
+      case DashboardPeriod.Last7Days:
+        return 'Last 7 Days';
+      case DashboardPeriod.Last15Days:
+        return 'Last 15 Days';
+      case DashboardPeriod.Last30Days:
+        return 'Last 30 Days';
+      case DashboardPeriod.Last90Days:
+        return 'Last 90 Days';
+      default:
+        return 'Last 30 Days';
+    }
   }
   private chart1() {
     this.lineChartOptions = {

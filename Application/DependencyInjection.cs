@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
         services.AddScoped<ITrialBalanceService, TrialBalanceService>();
         services.AddScoped<IBalanceSheetService, BalanceSheetService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         services.AddTransient<DefaultValueInjector>();
 
