@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IDashboardStatsResponse } from '../models/dashboard.interface';
+import {
+  IDashboardStatsResponse,
+  IDashboardTrendsResponse,
+} from '../models/dashboard.interface';
 import { environment } from 'environments/environment';
 
 @Injectable({
@@ -37,5 +40,24 @@ export class DashboardService {
     }
 
     return this.http.get<IDashboardStatsResponse>(this.apiUrl, { params });
+  }
+
+  getDashboardTrends(
+    periodDays?: number,
+    branchId?: number
+  ): Observable<IDashboardTrendsResponse> {
+    let params = new HttpParams();
+
+    if (periodDays) {
+      params = params.set('periodDays', periodDays.toString());
+    }
+
+    if (branchId) {
+      params = params.set('branchId', branchId.toString());
+    }
+
+    return this.http.get<IDashboardTrendsResponse>(`${this.apiUrl}/trends`, {
+      params,
+    });
   }
 }

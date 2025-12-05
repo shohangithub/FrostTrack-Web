@@ -249,13 +249,59 @@
         </div>
       </div>
     </div>
+
+    <!-- Charts Row -->
     <div class="row">
+      <!-- Revenue vs Expenses Chart -->
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <div class="card">
+          <div class="card-header">
+            <h4>Revenue & Expenses Trend</h4>
+            <span class="text-muted"
+              >Track your financial performance over time</span
+            >
+          </div>
+          <div class="card-body">
+            @if(dashboardTrends) {
+            <apx-chart
+              [series]="lineChartOptions.series!"
+              [chart]="lineChartOptions.chart!"
+              [xaxis]="lineChartOptions.xaxis!"
+              [yaxis]="lineChartOptions.yaxis!"
+              [stroke]="lineChartOptions.stroke!"
+              [dataLabels]="lineChartOptions.dataLabels!"
+              [markers]="lineChartOptions.markers!"
+              [colors]="lineChartOptions.colors!"
+              [grid]="lineChartOptions.grid!"
+              [fill]="lineChartOptions.fill!"
+              [legend]="lineChartOptions.legend!"
+              [tooltip]="lineChartOptions.tooltip!"
+            ></apx-chart>
+            } @else {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3">Loading chart data...</p>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Bookings vs Deliveries Chart -->
       <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12">
         <div class="card">
           <div class="card-header">
-            <h4>Chart Sample</h4>
+            <h4>Bookings vs Deliveries</h4>
+            <span class="text-muted"
+              >Compare booking and delivery activity</span
+            >
           </div>
           <div class="card-body">
+            @if(dashboardTrends) {
             <apx-chart
               [series]="lineChartOptions2.series!"
               [chart]="lineChartOptions2.chart!"
@@ -270,300 +316,52 @@
               [fill]="lineChartOptions2.fill!"
               [tooltip]="lineChartOptions2.tooltip!"
             ></apx-chart>
+            } @else {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            }
           </div>
         </div>
       </div>
+
+      <!-- Transaction Categories Chart -->
       <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12">
         <div class="card">
           <div class="card-header">
-            <h4>Booking Graph</h4>
+            <h4>Transaction Categories</h4>
+            <span class="text-muted">Breakdown of transactions by type</span>
           </div>
           <div class="card-body">
+            @if(dashboardTrends) {
             <apx-chart
-              [series]="lineChartOptions.series!"
-              [chart]="lineChartOptions.chart!"
-              [xaxis]="lineChartOptions.xaxis!"
-              [stroke]="lineChartOptions.stroke!"
-              [colors]="lineChartOptions.colors!"
-              [dataLabels]="lineChartOptions.dataLabels!"
-              [legend]="lineChartOptions.legend!"
-              [tooltip]="lineChartOptions.tooltip!"
-              [markers]="lineChartOptions.markers!"
-              [grid]="lineChartOptions.grid!"
-              [yaxis]="lineChartOptions.yaxis!"
-              [title]="lineChartOptions.title!"
-              [fill]="lineChartOptions.fill!"
-            >
-            </apx-chart>
+              [series]="stackBarChart.series!"
+              [chart]="stackBarChart.chart!"
+              [xaxis]="stackBarChart.xaxis!"
+              [yaxis]="stackBarChart.yaxis!"
+              [dataLabels]="stackBarChart.dataLabels!"
+              [colors]="stackBarChart.fill!.colors!"
+              [grid]="stackBarChart.grid!"
+              [legend]="stackBarChart.legend!"
+              [plotOptions]="stackBarChart.plotOptions!"
+              [fill]="stackBarChart.fill!"
+              [responsive]="stackBarChart.responsive!"
+              [tooltip]="stackBarChart.tooltip!"
+            ></apx-chart>
+            } @else {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            }
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Stock Chart -->
     <div class="row">
-      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
-        <app-stock-chart></app-stock-chart>
-      </div>
-      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
-        <div class="card">
-          <div class="card-header">
-            <h4>Traffic Sources</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-sm-12">
-                <div class="d-flex justify-content-between mt-2 text-dark mb-2">
-                  <div><span class="fw-bold">3487</span> Hits</div>
-                  <div>Target: 10000</div>
-                </div>
-                <div class="progress traffic-bar mb-2">
-                  <div class="progress-bar bg-red" style="width: 33%"></div>
-                  <div class="progress-bar bg-blue" style="width: 25%"></div>
-                  <div class="progress-bar bg-amber" style="width: 12%"></div>
-                  <div class="progress-bar bg-purple" style="width: 10%"></div>
-                  <div class="progress-bar bg-green" style="width: 7%"></div>
-                  <div
-                    class="progress-bar bg-blue-grey"
-                    style="width: 13%"
-                  ></div>
-                </div>
-              </div>
-              <div class="col-sm-12">
-                <div class="search-traffic">
-                  <div class="d-flex justify-content-between mb-1 mt-2">
-                    <div class="fw-bold">SOURCE</div>
-                    <div class="fw-bold">TOTAL</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span><i class="fa fa-circle col-red msr-2"></i></span
-                      >Google Search
-                    </div>
-                    <div>33%</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span><i class="fa fa-circle col-blue msr-2"></i></span
-                      >Social Media
-                    </div>
-                    <div>25%</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span><i class="fa fa-circle col-amber msr-2"></i></span
-                      >Referrals
-                    </div>
-                    <div>12%</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span><i class="fa fa-circle col-purple msr-2"></i></span
-                      >Direct Access
-                    </div>
-                    <div>10%</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span><i class="fa fa-circle col-green msr-2"></i></span
-                      >Bing Search
-                    </div>
-                    <div>7%</div>
-                  </div>
-                  <div class="d-flex justify-content-between traffic-source">
-                    <div>
-                      <span
-                        ><i class="fa fa-circle col-blue-grey msr-2"></i></span
-                      >Email Marketing
-                    </div>
-                    <div>13%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
-        <div class="card gradient-bottom">
-          <div class="card-header">
-            <h4>Top 5 Products</h4>
-          </div>
-          <div class="card-body" id="top-5-scroll">
-            <ng-scrollbar style="height: 320px" visibility="hover">
-              <ul class="list-unstyled list-unstyled-border">
-                <li class="product-list">
-                  <img
-                    class="msr-3 rounded"
-                    width="55"
-                    src="assets/images/products/product-3.png"
-                    alt="product"
-                  />
-                  <div class="set-flex">
-                    <div class="float-end">
-                      <div class="font-weight-600 text-muted text-small">
-                        112 Sales
-                      </div>
-                    </div>
-                    <div class="fw-bold font-15">Mobile</div>
-                    <div class="mt-1">
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-primary"
-                          style="width: 60%"
-                        ></div>
-                        <div class="budget-price-label">$24,897</div>
-                      </div>
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-danger"
-                          style="width: 40%"
-                        ></div>
-                        <div class="budget-price-label">$18,865</div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li class="product-list">
-                  <img
-                    class="msr-3 rounded"
-                    width="55"
-                    src="assets/images/products/product-4.png"
-                    alt="product"
-                  />
-                  <div class="set-flex">
-                    <div class="float-end">
-                      <div class="font-weight-600 text-muted text-small">
-                        49 Sales
-                      </div>
-                    </div>
-                    <div class="fw-bold font-15">Laptop</div>
-                    <div class="mt-1">
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-primary"
-                          style="width: 78%"
-                        ></div>
-                        <div class="budget-price-label">$74,568</div>
-                      </div>
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-danger"
-                          style="width: 55%"
-                        ></div>
-                        <div class="budget-price-label">$65,892</div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li class="product-list">
-                  <img
-                    class="msr-3 rounded"
-                    width="55"
-                    src="assets/images/products/product-1.png"
-                    alt="product"
-                  />
-                  <div class="set-flex">
-                    <div class="float-end">
-                      <div class="font-weight-600 text-muted text-small">
-                        63 Sales
-                      </div>
-                    </div>
-                    <div class="fw-bold font-15">Headphone</div>
-                    <div class="mt-1">
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-primary"
-                          style="width: 38%"
-                        ></div>
-                        <div class="budget-price-label">$2,859</div>
-                      </div>
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-danger"
-                          style="width: 25%"
-                        ></div>
-                        <div class="budget-price-label">$1,872</div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li class="product-list">
-                  <img
-                    class="msr-3 rounded"
-                    width="55"
-                    src="assets/images/products/product-2.png"
-                    alt="product"
-                  />
-                  <div class="set-flex">
-                    <div class="float-end">
-                      <div class="font-weight-600 text-muted text-small">
-                        28 Sales
-                      </div>
-                    </div>
-                    <div class="fw-bold font-15">Tablet</div>
-                    <div class="mt-1">
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-primary"
-                          style="width: 48%"
-                        ></div>
-                        <div class="budget-price-label">$11,238</div>
-                      </div>
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-danger"
-                          style="width: 33%"
-                        ></div>
-                        <div class="budget-price-label">$7,564</div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li class="product-list">
-                  <img
-                    class="msr-3 rounded"
-                    width="55"
-                    src="assets/images/products/product-5.png"
-                    alt="product"
-                  />
-                  <div class="set-flex">
-                    <div class="float-end">
-                      <div class="font-weight-600 text-muted text-small">
-                        19 Sales
-                      </div>
-                    </div>
-                    <div class="fw-bold font-15">Camera</div>
-                    <div class="mt-1">
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-primary"
-                          style="width: 91%"
-                        ></div>
-                        <div class="budget-price-label">$7,285</div>
-                      </div>
-                      <div class="budget-price">
-                        <div
-                          class="budget-price-square bg-danger"
-                          style="width: 74%"
-                        ></div>
-                        <div class="budget-price-label">$5,147</div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </ng-scrollbar>
-          </div>
-          <div class="card-footer pt-3 d-flex justify-content-center">
-            <div class="budget-price justify-content-center">
-              <div class="budget-price-square bg-primary" data-width="20"></div>
-              <div class="budget-price-label">Selling Price</div>
-            </div>
-            <div class="budget-price justify-content-center">
-              <div class="budget-price-square bg-danger" data-width="20"></div>
-              <div class="budget-price-label">Product Cost</div>
-            </div>
-          </div>
-        </div>
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <app-stock-chart [periodDays]="selectedPeriod"></app-stock-chart>
       </div>
     </div>
   </div>

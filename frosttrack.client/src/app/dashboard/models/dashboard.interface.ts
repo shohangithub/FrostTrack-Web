@@ -21,6 +21,22 @@ export interface IDashboardCardData {
   progressType: 'success' | 'warning' | 'info' | 'danger';
 }
 
+export interface IDashboardTrendsResponse {
+  revenueTrend: IDailyTrendData[];
+  expenseTrend: IDailyTrendData[];
+  netProfitTrend: IDailyTrendData[];
+  bookingTrend: IDailyTrendData[];
+  deliveryTrend: IDailyTrendData[];
+  transactionCategoryTrends: { [key: string]: number[] };
+  dateLabels: string[];
+}
+
+export interface IDailyTrendData {
+  date: string;
+  amount: number;
+  count: number;
+}
+
 export enum DashboardPeriod {
   Today = 1,
   Last7Days = 7,

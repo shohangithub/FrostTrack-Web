@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-  ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormGroup,
-} from '@angular/forms';
+  Component,
+  OnInit,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   ApexNonAxisChartSeries,
   ApexChart,
@@ -17,6 +18,7 @@ import {
 import { StockReportService } from 'app/reports/services/stock-report.service';
 import { IStockReportItem } from 'app/reports/models/stock-report.interface';
 import { ToastrService } from 'ngx-toastr';
+import { DashboardPeriod } from 'app/dashboard/models/dashboard.interface';
 
 export type StockChartOptions = {
   series: ApexNonAxisChartSeries;
@@ -34,39 +36,37 @@ export type StockChartOptions = {
   templateUrl: './stock-chart.component.html',
   styleUrls: ['./stock-chart.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule],
 })
-export class StockChartComponent implements OnInit {
+export class StockChartComponent implements OnInit, OnChanges {
+  @Input() periodDays: number = 30; // Default to 30 days
+
   public stockChartOptions!: Partial<StockChartOptions>;
-  public stockFilterForm: UntypedFormGroup;
   public stockData: IStockReportItem[] = [];
   public isLoadingStock = false;
 
   constructor(
-    private fb: UntypedFormBuilder,
     private stockReportService: StockReportService,
     private toastr: ToastrService
-  ) {
-    // Initialize stock filter form with current month dates
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    this.stockFilterForm = this.fb.group({
-      startDate: [firstDayOfMonth.toISOString().split('T')[0]],
-      endDate: [today.toISOString().split('T')[0]],
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
     this.loadStockData();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['periodDays'] && !changes['periodDays'].firstChange) {
+      this.loadStockData();
+    }
+  }
+
   loadStockData(): void {
     this.isLoadingStock = true;
-    const formValue = this.stockFilterForm.value;
 
-    const startDate = new Date(formValue.startDate);
-    const endDate = new Date(formValue.endDate);
+    // Calculate dates based on period
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - this.periodDays);
 
     this.stockReportService
       .getStockReport(startDate, endDate, undefined, undefined)
@@ -144,10 +144,6 @@ export class StockChartComponent implements OnInit {
         },
       ],
     };
-  }
-
-  onStockFilterChange(): void {
-    this.loadStockData();
   }
 
   getTotalBooked(): number {

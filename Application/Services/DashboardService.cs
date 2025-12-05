@@ -107,4 +107,159 @@ public class DashboardService : IDashboardService
             PeriodDays: periodDays
         );
     }
+
+    public async Task<DashboardTrendsResponse> GetDashboardTrendsAsync(
+        int periodDays, 
+        int? branchId = null, 
+        CancellationToken cancellationToken = default)
+    {
+        var endDate = DateTime.UtcNow.Date;
+        var startDate = endDate.AddDays(-periodDays);
+
+        // Base queries
+        var bookingsQuery = _bookingRepository.Query()
+            .Where(x => x.TenantId == _tenantId 
+                && x.BookingDate >= startDate 
+                && x.BookingDate <= endDate);
+
+        var deliveriesQuery = _deliveryRepository.Query()
+            .Where(x => x.TenantId == _tenantId 
+                && x.DeliveryDate >= startDate 
+                && x.DeliveryDate <= endDate);
+
+        var transactionsQuery = _transactionRepository.Query()
+            .Where(x => x.TenantId == _tenantId 
+                && x.TransactionDate >= startDate 
+                && x.TransactionDate <= endDate);
+
+        // Apply branch filter
+        if (branchId.HasValue)
+        {
+            bookingsQuery = bookingsQuery.Where(x => x.BranchId == branchId.Value);
+            deliveriesQuery = deliveriesQuery.Where(x => x.BranchId == branchId.Value);
+            transactionsQuery = transactionsQuery.Where(x => x.BranchId == branchId.Value);
+        }
+
+        // Get all data
+        var bookings = await bookingsQuery.ToListAsync(cancellationToken);
+        var deliveries = await deliveriesQuery.ToListAsync(cancellationToken);
+        var transactions = await transactionsQuery.ToListAsync(cancellationToken);
+
+        // Generate date labels
+        var dateLabels = new List<string>();
+        var groupingDays = periodDays <= 15 ? 1 : periodDays <= 30 ? 2 : periodDays <= 90 ? 7 : 30;
+        
+        // Revenue trend (IN transactions)
+        var revenueTrend = transactions
+            .Where(t => t.TransactionFlow == TransactionFlows.IN)
+            .GroupBy(t => t.TransactionDate.Date)
+            .Select(g => new DailyTrendData(g.Key, g.Sum(x => x.NetAmount), g.Count()))
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        // Expense trend (OUT transactions)
+        var expenseTrend = transactions
+            .Where(t => t.TransactionFlow == TransactionFlows.OUT)
+            .GroupBy(t => t.TransactionDate.Date)
+            .Select(g => new DailyTrendData(g.Key, Math.Abs(g.Sum(x => x.NetAmount)), g.Count()))
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        // Net profit trend
+        var netProfitTrend = new List<DailyTrendData>();
+        var allDates = revenueTrend.Select(r => r.Date)
+            .Union(expenseTrend.Select(e => e.Date))
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        foreach (var date in allDates)
+        {
+            var revenue = revenueTrend.FirstOrDefault(r => r.Date == date)?.Amount ?? 0;
+            var expense = expenseTrend.FirstOrDefault(e => e.Date == date)?.Amount ?? 0;
+            netProfitTrend.Add(new DailyTrendData(date, revenue - expense, 0));
+        }
+
+        // Booking trend
+        var bookingTrend = bookings
+            .GroupBy(b => b.BookingDate.Date)
+            .Select(g => new DailyTrendData(
+                g.Key,
+                g.SelectMany(b => b.BookingDetails).Sum(d => (decimal)d.BookingQuantity * d.BookingRate),
+                g.Count()
+            ))
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        // Delivery trend
+        var deliveryTrend = deliveries
+            .GroupBy(d => d.DeliveryDate.Date)
+            .Select(g => new DailyTrendData(
+                g.Key,
+                g.SelectMany(d => d.DeliveryDetails).Sum(dd => (decimal)dd.DeliveryQuantity * dd.BookingDetail!.BookingRate),
+                g.Count()
+            ))
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        // Transaction category trends (for stacked bar chart)
+        var categoryTrends = new Dictionary<string, List<decimal>>();
+        var transactionTypes = new[] { 
+            TransactionTypes.BILL_COLLECTION, 
+            TransactionTypes.BILL_PAYMENT, 
+            TransactionTypes.SALARY, 
+            TransactionTypes.OFFICE_COST 
+        };
+
+        // Group data by date intervals for better visualization
+        var groupedDates = GenerateDateGroups(startDate, endDate, groupingDays);
+        
+        foreach (var type in transactionTypes)
+        {
+            var typeData = new List<decimal>();
+            foreach (var dateGroup in groupedDates)
+            {
+                var amount = transactions
+                    .Where(t => t.TransactionType == type 
+                        && t.TransactionDate >= dateGroup.Start 
+                        && t.TransactionDate < dateGroup.End)
+                    .Sum(t => Math.Abs(t.NetAmount));
+                typeData.Add(amount);
+            }
+            categoryTrends[type] = typeData;
+        }
+
+        // Generate labels based on grouping
+        dateLabels = groupedDates.Select(g => 
+            groupingDays == 1 ? g.Start.ToString("MMM dd") : 
+            groupingDays <= 7 ? $"{g.Start:MMM dd}" : 
+            $"{g.Start:MMM dd}-{g.End.AddDays(-1):dd}"
+        ).ToList();
+
+        return new DashboardTrendsResponse(
+            RevenueTrend: revenueTrend,
+            ExpenseTrend: expenseTrend,
+            NetProfitTrend: netProfitTrend,
+            BookingTrend: bookingTrend,
+            DeliveryTrend: deliveryTrend,
+            TransactionCategoryTrends: categoryTrends,
+            DateLabels: dateLabels
+        );
+    }
+
+    private List<(DateTime Start, DateTime End)> GenerateDateGroups(DateTime startDate, DateTime endDate, int groupingDays)
+    {
+        var groups = new List<(DateTime Start, DateTime End)>();
+        var current = startDate;
+
+        while (current < endDate)
+        {
+            var groupEnd = current.AddDays(groupingDays);
+            if (groupEnd > endDate) groupEnd = endDate;
+            groups.Add((current, groupEnd));
+            current = groupEnd;
+        }
+
+        return groups;
+    }
 }

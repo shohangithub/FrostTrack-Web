@@ -43,4 +43,21 @@ public class DashboardController : ControllerBase
 
         return Ok(stats);
     }
+
+    [HttpGet("trends")]
+    public async Task<IActionResult> GetDashboardTrends(
+        [FromQuery] int? periodDays,
+        [FromQuery] int? branchId,
+        CancellationToken cancellationToken)
+    {
+        // Default to 30 days if not provided
+        var days = periodDays ?? 30;
+
+        var trends = await _dashboardService.GetDashboardTrendsAsync(
+            days,
+            branchId,
+            cancellationToken);
+
+        return Ok(trends);
+    }
 }

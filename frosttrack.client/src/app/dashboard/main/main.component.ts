@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -23,11 +23,11 @@ import { StockChartComponent } from '../components/stock-chart/stock-chart.compo
 import { DashboardService } from '../services/dashboard.service';
 import {
   IDashboardStatsResponse,
+  IDashboardTrendsResponse,
   DashboardPeriod,
 } from '../models/dashboard.interface';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
-import { NgScrollbar } from 'ngx-scrollbar';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -76,7 +76,6 @@ export type ChartOptions2 = {
     NgbProgressbar,
     NgApexchartsModule,
     StockChartComponent,
-    NgScrollbar,
   ],
 })
 export class MainComponent implements OnInit {
@@ -87,6 +86,7 @@ export class MainComponent implements OnInit {
 
   // Dashboard data
   dashboardStats: IDashboardStatsResponse | null = null;
+  dashboardTrends: IDashboardTrendsResponse | null = null;
   isLoading = false;
   selectedPeriod: DashboardPeriod = DashboardPeriod.Last30Days;
   DashboardPeriod = DashboardPeriod; // Expose enum to template
@@ -124,9 +124,6 @@ export class MainComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.chart1();
-    this.chart2();
-    this.chart3();
     this.loadDashboardData();
   }
 
@@ -136,17 +133,30 @@ export class MainComponent implements OnInit {
     }
 
     this.isLoading = true;
-    this.dashboardService.getDashboardStats(this.selectedPeriod).subscribe({
-      next: (response: IDashboardStatsResponse) => {
-        this.dashboardStats = response;
+
+    // Load both stats and trends
+    Promise.all([
+      this.dashboardService.getDashboardStats(this.selectedPeriod).toPromise(),
+      this.dashboardService.getDashboardTrends(this.selectedPeriod).toPromise(),
+    ])
+      .then(([stats, trends]) => {
+        this.dashboardStats = stats!;
+        this.dashboardTrends = trends!;
         this.calculateCardData();
+        this.updateCharts();
         this.isLoading = false;
-      },
-      error: () => {
+      })
+      .catch(() => {
         this.toastr.error('Failed to load dashboard data');
         this.isLoading = false;
-      },
-    });
+      });
+  }
+
+  updateCharts(): void {
+    if (!this.dashboardTrends) return;
+    this.chart1();
+    this.chart2();
+    this.chart3();
   }
 
   calculateCardData(): void {
@@ -212,19 +222,38 @@ export class MainComponent implements OnInit {
     }
   }
   private chart1() {
+    if (!this.dashboardTrends) return;
+
+    const revenueData = this.dashboardTrends.revenueTrend.map((d) => d.amount);
+    const expenseData = this.dashboardTrends.expenseTrend.map((d) => d.amount);
+    const netProfitData = this.dashboardTrends.netProfitTrend.map(
+      (d) => d.amount
+    );
+
+    // Get categories from trend dates or use date labels
+    const categories =
+      this.dashboardTrends.dateLabels.length > 0
+        ? this.dashboardTrends.dateLabels
+        : this.dashboardTrends.revenueTrend.map((d) =>
+            new Date(d.date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })
+          );
+
     this.lineChartOptions = {
       series: [
         {
-          name: 'Data 1',
-          data: [80, 250, 30, 120, 260, 100, 180],
+          name: 'Revenue',
+          data: revenueData,
         },
         {
-          name: 'Data 2',
-          data: [85, 130, 85, 225, 80, 190, 120],
+          name: 'Expenses',
+          data: expenseData,
         },
         {
-          name: 'Data 3',
-          data: [85, 100, 85, 305, 80, 190, 90],
+          name: 'Net Profit',
+          data: netProfitData,
         },
       ],
       chart: {
@@ -243,13 +272,14 @@ export class MainComponent implements OnInit {
           show: false,
         },
       },
-      colors: ['#6777EF', '#8B8697'],
+      colors: ['#54CA68', '#EF447C', '#6777EF'],
       stroke: {
         curve: 'smooth',
+        width: 3,
       },
       grid: {
         row: {
-          colors: ['transparent', 'transparent'], // takes an array which will be repeated on columns
+          colors: ['transparent', 'transparent'],
           opacity: 0.5,
         },
         borderColor: '#9aa0ac',
@@ -257,18 +287,22 @@ export class MainComponent implements OnInit {
       fill: {
         type: 'gradient',
         gradient: {
-          gradientToColors: ['#54CA68', '#EF447C'],
-          stops: [0, 50, 65, 91],
+          gradientToColors: ['#54CA68', '#EF447C', '#6777EF'],
+          stops: [0, 50, 100],
         },
       },
       markers: {
         size: 3,
       },
       xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        categories: categories,
       },
       yaxis: {
-        // opposite: true,
+        labels: {
+          formatter: function (val) {
+            return '৳' + val.toFixed(0);
+          },
+        },
       },
       legend: {
         position: 'top',
@@ -285,21 +319,41 @@ export class MainComponent implements OnInit {
         x: {
           show: true,
         },
+        y: {
+          formatter: function (val) {
+            return '৳' + val.toFixed(2);
+          },
+        },
       },
     };
   }
   private chart2() {
+    if (!this.dashboardTrends) return;
+
+    const bookingData = this.dashboardTrends.bookingTrend.map((d) => d.count);
+    const deliveryData = this.dashboardTrends.deliveryTrend.map((d) => d.count);
+
+    const categories =
+      this.dashboardTrends.dateLabels.length > 0
+        ? this.dashboardTrends.dateLabels
+        : this.dashboardTrends.bookingTrend.map((d) =>
+            new Date(d.date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })
+          );
+
     this.lineChartOptions2 = {
       series: [
         {
-          name: 'Income',
+          name: 'Bookings',
           type: 'area',
-          data: [220, 410, 66, 324, 630, 178, 389],
+          data: bookingData,
         },
         {
-          name: 'Sales',
+          name: 'Deliveries',
           type: 'line',
-          data: [26, 45, 12, 37, 68, 22, 42],
+          data: deliveryData,
         },
       ],
       chart: {
@@ -318,23 +372,13 @@ export class MainComponent implements OnInit {
         width: [0, 4],
         curve: 'smooth',
       },
-
-      labels: [
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-      ],
+      labels: categories,
       markers: {
         size: 0,
       },
-      colors: ['#999999', '#6777EF'],
+      colors: ['#6777EF', '#54CA68'],
       dataLabels: {
-        enabled: true,
-        enabledOnSeries: [1, 2],
+        enabled: false,
       },
       grid: {
         borderColor: '#9aa0ac',
@@ -342,13 +386,13 @@ export class MainComponent implements OnInit {
       yaxis: [
         {
           title: {
-            text: 'Income',
+            text: 'Bookings',
           },
         },
         {
           opposite: true,
           title: {
-            text: 'Sales',
+            text: 'Deliveries',
           },
         },
       ],
@@ -370,28 +414,37 @@ export class MainComponent implements OnInit {
   }
 
   private chart3() {
+    if (!this.dashboardTrends) return;
+
+    const categories =
+      this.dashboardTrends.dateLabels.length > 0
+        ? this.dashboardTrends.dateLabels
+        : [];
+
+    const categoryTrends = this.dashboardTrends.transactionCategoryTrends;
+
     this.stackBarChart = {
       series: [
         {
-          name: 'Data 1',
-          data: [44, 55, 41, 67, 22, 43],
+          name: 'Bill Collection',
+          data: categoryTrends['BILL_COLLECTION'] || [],
         },
         {
-          name: 'Data 2',
-          data: [13, 23, 20, 8, 13, 27],
+          name: 'Bill Payment',
+          data: categoryTrends['BILL_PAYMENT'] || [],
         },
         {
-          name: 'Data 3',
-          data: [11, 17, 15, 15, 21, 14],
+          name: 'Salary',
+          data: categoryTrends['SALARY'] || [],
         },
         {
-          name: 'Data 4',
-          data: [21, 7, 25, 13, 22, 8],
+          name: 'Office Cost',
+          data: categoryTrends['OFFICE_COST'] || [],
         },
       ],
       chart: {
         type: 'bar',
-        height: 310,
+        height: 350,
         foreColor: '#9aa0ac',
         stacked: true,
         toolbar: {
@@ -413,7 +466,7 @@ export class MainComponent implements OnInit {
       plotOptions: {
         bar: {
           horizontal: false,
-          columnWidth: '20%',
+          columnWidth: '40%',
         },
       },
       dataLabels: {
@@ -424,14 +477,30 @@ export class MainComponent implements OnInit {
       },
       xaxis: {
         type: 'category',
-        categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        categories: categories,
       },
       legend: {
-        show: false,
+        position: 'top',
+        horizontalAlign: 'left',
       },
       fill: {
         opacity: 1,
-        colors: ['#F0457D', '#704DAD', '#FFC107', '#a5a5a5'],
+        colors: ['#54CA68', '#EF447C', '#FFC107', '#6777EF'],
+      },
+      yaxis: {
+        labels: {
+          formatter: function (val) {
+            return '৳' + val.toFixed(0);
+          },
+        },
+      },
+      tooltip: {
+        theme: 'dark',
+        y: {
+          formatter: function (val) {
+            return '৳' + val.toFixed(2);
+          },
+        },
       },
     };
   }

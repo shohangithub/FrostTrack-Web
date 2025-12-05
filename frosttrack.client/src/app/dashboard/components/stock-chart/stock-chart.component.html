@@ -1,32 +1,9 @@
 <div class="card">
   <div class="card-header">
     <h4>Stock Status</h4>
+    <span class="text-muted">Delivery status for selected period</span>
   </div>
   <div class="card-body">
-    <!-- Date Filter -->
-    <!-- <form [formGroup]="stockFilterForm" class="mb-3">
-      <div class="row g-2">
-        <div class="col-6">
-          <label class="form-label font-12">Start Date</label>
-          <input
-            type="date"
-            class="form-control form-control-sm"
-            formControlName="startDate"
-            (change)="onStockFilterChange()"
-          />
-        </div>
-        <div class="col-6">
-          <label class="form-label font-12">End Date</label>
-          <input
-            type="date"
-            class="form-control form-control-sm"
-            formControlName="endDate"
-            (change)="onStockFilterChange()"
-          />
-        </div>
-      </div>
-    </form> -->
-
     @if(isLoadingStock) {
     <div class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
