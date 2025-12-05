@@ -27,7 +27,7 @@ import {
   ErrorResponse,
   formatErrorMessage,
 } from 'app/utils/server-error-handler';
-import { SwalConfirm, ThemeConfig } from 'app/theme-config';
+import { SwalConfirm } from 'app/theme-config';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import {
   PaginationResult,
@@ -37,8 +37,10 @@ import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   COMMON_STATUS_LIST,
   SYSTEM_ROLES,
+  ROLE_HIERARCHY,
 } from 'app/common/data/settings-data';
 import { LayoutService } from '@core/service/layout.service';
+import { AuthService } from '@core/service/auth.service';
 import { environment } from 'environments/environment.development';
 
 @Component({
@@ -79,6 +81,8 @@ export class UserComponent implements OnInit {
 
   roles = SYSTEM_ROLES;
   statusList = COMMON_STATUS_LIST;
+  currentUserRole: string | null = null;
+  availableRoles: typeof SYSTEM_ROLES = [];
   MessageHub = {
     ADD: 'Add Record Successfully',
     UPDATE: '',
@@ -94,6 +98,7 @@ export class UserComponent implements OnInit {
     private toastr: ToastrService,
     private userService: UserService,
     private layoutService: LayoutService,
+    private authService: AuthService,
     private router: Router
   ) {
     this.editForm = this.fb.group({
@@ -132,6 +137,24 @@ export class UserComponent implements OnInit {
   }
 
   deleteSelected() {
+    // Filter selected users to only include those with accessible roles
+    const accessibleUsers = this.selected.filter((user) =>
+      this.canAccessUser(user.roleNames[0])
+    );
+
+    if (accessibleUsers.length === 0) {
+      this.toastr.error(
+        'You do not have permission to delete the selected user(s)'
+      );
+      return;
+    }
+
+    if (accessibleUsers.length < this.selected.length) {
+      this.toastr.warning(
+        'Some users were excluded due to insufficient permissions'
+      );
+    }
+
     Swal.fire({
       title: this.MessageHub.DELETE_CONFIRM,
       showCancelButton: true,
@@ -140,14 +163,14 @@ export class UserComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        const ids = this.selected.map((x) => x.id);
+        const ids = accessibleUsers.map((x) => x.id);
         this.userService.batchDelete(ids).subscribe({
           next: (response) => {
             if (response) {
-              this.selected.forEach((row) => {
+              accessibleUsers.forEach((row) => {
                 this.removeRecord(row);
               });
-              this.deleteRecordSuccess(this.selected.length);
+              this.deleteRecordSuccess(accessibleUsers.length);
               this.selected = [];
               this.isRowSelected = false;
             }
@@ -161,6 +184,8 @@ export class UserComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.getCurrentUserRole();
+    this.filterAvailableRoles();
     this.fetchData();
 
     //subject call change open text search
@@ -183,10 +208,57 @@ export class UserComponent implements OnInit {
     });
   }
 
+  getCurrentUserRole(): void {
+    const roles = this.authService.getUserRoles();
+    // Handle both single role string and array of roles
+    this.currentUserRole = Array.isArray(roles) ? roles[0] : roles;
+  }
+
+  filterAvailableRoles(): void {
+    if (!this.currentUserRole) {
+      // If no role found, show all roles (fallback for development)
+      this.availableRoles = SYSTEM_ROLES;
+      return;
+    }
+
+    const allowedRoleIds = ROLE_HIERARCHY[this.currentUserRole] || [];
+
+    // Filter SYSTEM_ROLES to only include roles that current user can create
+    this.availableRoles = SYSTEM_ROLES.filter((role) =>
+      allowedRoleIds.includes(role.id)
+    );
+
+    // If no roles available (shouldn't happen), default to current role only
+    if (this.availableRoles.length === 0) {
+      this.availableRoles = SYSTEM_ROLES.filter(
+        (role) => role.id === this.currentUserRole
+      );
+    }
+  }
+
+  canAccessUser(userRole: string): boolean {
+    // If no current user role, allow access (fallback for development)
+    if (!this.currentUserRole) {
+      return true;
+    }
+
+    // Get allowed roles for current user
+    const allowedRoleIds = ROLE_HIERARCHY[this.currentUserRole] || [];
+
+    // Check if the user's role is in the allowed list
+    return allowedRoleIds.includes(userRole);
+  }
+
+  filterUsersByRole(users: IUserListResponse[]): IUserListResponse[] {
+    // Filter users to only show those with accessible roles
+    return users.filter((user) => this.canAccessUser(user.roleNames[0]));
+  }
+
   fetchData() {
     this.userService.getWithPagination(this.pagination).subscribe({
       next: (response: PaginationResult<IUserListResponse>) => {
-        this.data = response.data;
+        // Filter users based on role hierarchy
+        this.data = this.filterUsersByRole(response.data);
         this.paging = response.paging;
         this.loadingIndicator = false;
       },
@@ -224,6 +296,12 @@ export class UserComponent implements OnInit {
   }
   // edit record
   editRow(row: any, rowIndex: number, content: any) {
+    // Check if current user can access this user's role
+    if (!this.canAccessUser(row.role)) {
+      this.toastr.error('You do not have permission to edit this user');
+      return;
+    }
+
     // Reset image upload state
     this.resetImageUpload();
 
@@ -268,10 +346,10 @@ export class UserComponent implements OnInit {
             id: response.id,
             userName: response.userName,
             email: response.email,
-            role:
+            roleNames:
               response.roleNames && response.roleNames.length > 0
-                ? response.roleNames[0]
-                : '',
+                ? response.roleNames
+                : [],
             status: response.status,
           };
           const temp = JSON.parse(JSON.stringify(this.data));
@@ -308,10 +386,10 @@ export class UserComponent implements OnInit {
               value.userName = response.userName;
               value.email = response.email;
               value.status = response.status;
-              value.role =
+              value.roleNames =
                 response.roleNames && response.roleNames.length > 0
-                  ? response.roleNames[0]
-                  : '';
+                  ? response.roleNames
+                  : [];
             }
             this.modalService.dismissAll();
             return true;
@@ -328,6 +406,12 @@ export class UserComponent implements OnInit {
 
   // delete single row
   delete(row: any) {
+    // Check if current user can access this user's role
+    if (!this.canAccessUser(row.role)) {
+      this.toastr.error('You do not have permission to delete this user');
+      return;
+    }
+
     Swal.fire({
       title: this.MessageHub.DELETE_CONFIRM,
       showCancelButton: true,

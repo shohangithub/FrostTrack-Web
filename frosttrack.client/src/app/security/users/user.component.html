@@ -280,7 +280,7 @@
                         <option value="" selected disabled>
                           Please select
                         </option>
-                        @for (role of roles; track role) {
+                        @for (role of availableRoles; track role) {
                         <option [value]="role.id">
                           {{ role.value }}
                         </option>
@@ -470,7 +470,7 @@
                         <option value="" selected disabled>
                           Please select
                         </option>
-                        @for (role of roles; track role) {
+                        @for (role of availableRoles; track role) {
                         <option [value]="role.id">
                           {{ role.value }}
                         </option>

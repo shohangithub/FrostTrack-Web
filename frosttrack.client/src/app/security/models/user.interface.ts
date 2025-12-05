@@ -2,7 +2,7 @@ export interface IUserListResponse {
   id: number;
   userName: string;
   email: string;
-  role: string;
+  roleNames: string[];
   status: string;
   profileImageUrl?: string;
 }

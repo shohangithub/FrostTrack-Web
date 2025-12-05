@@ -19,6 +19,16 @@ export const ROLES = {
   STANDARD: 'STANDARD',
 };
 
+// Role hierarchy: defines which roles can create which other roles
+// A role can create users of the same role and all descendant roles
+export const ROLE_HIERARCHY: { [key: string]: string[] } = {
+  SUPERADMIN: ['SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'STANDARD'],
+  ADMIN: ['ADMIN', 'MANAGER', 'SELLER', 'STANDARD'],
+  MANAGER: ['MANAGER', 'SELLER', 'STANDARD'],
+  SELLER: ['SELLER', 'STANDARD'],
+  STANDARD: ['STANDARD'],
+};
+
 export const SALES_TYPES = {
   RETAIL: 'RETAIL',
   WHOLESALE: 'WHOLESALE',
