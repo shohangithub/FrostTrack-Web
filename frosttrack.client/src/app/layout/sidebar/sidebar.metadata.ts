@@ -9,4 +9,5 @@ export interface RouteInfo {
   badge: string;
   badgeClass: string;
   submenu: RouteInfo[];
+  allowedRoles?: string[]; // Roles allowed to see this menu item (empty = all roles)
 }

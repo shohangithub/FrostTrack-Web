@@ -87,6 +87,7 @@ export const ROUTES: RouteInfo[] = [
         badge: '',
         badgeClass: '',
         submenu: [],
+        allowedRoles: ['SUPERADMIN'], // Only SUPERADMIN can see this
       },
       {
         path: '/security/assign-role',
@@ -98,6 +99,7 @@ export const ROUTES: RouteInfo[] = [
         badge: '',
         badgeClass: '',
         submenu: [],
+        allowedRoles: ['SUPERADMIN'], // Only SUPERADMIN can see this
       },
       {
         path: '/security/assign-claim',
@@ -109,6 +111,7 @@ export const ROUTES: RouteInfo[] = [
         badge: '',
         badgeClass: '',
         submenu: [],
+        allowedRoles: ['SUPERADMIN'], // Only SUPERADMIN can see this
       },
     ],
   },

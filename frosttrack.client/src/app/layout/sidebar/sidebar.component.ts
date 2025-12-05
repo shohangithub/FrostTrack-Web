@@ -88,9 +88,50 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     }
   }
+
+  /**
+   * Filter menu items based on user roles
+   * @param menuItems - Array of menu items to filter
+   * @param userRoles - Array of user's roles
+   * @returns Filtered menu items
+   */
+  private filterMenuByRole(
+    menuItems: RouteInfo[],
+    userRoles: string[]
+  ): RouteInfo[] {
+    return menuItems.filter((item) => {
+      // Check if item has role restrictions
+      if (item.allowedRoles && item.allowedRoles.length > 0) {
+        // Check if user has any of the allowed roles
+        const hasAccess = item.allowedRoles.some((role) =>
+          userRoles.includes(role)
+        );
+        if (!hasAccess) {
+          return false; // User doesn't have required role
+        }
+      }
+
+      // Filter submenu items recursively
+      if (item.submenu && item.submenu.length > 0) {
+        item.submenu = this.filterMenuByRole(item.submenu, userRoles);
+        // Hide parent if all children are filtered out
+        if (item.submenu.length === 0 && !item.path) {
+          return false;
+        }
+      }
+
+      return true; // Item is accessible
+    });
+  }
   ngOnInit() {
     if (this.authService.currentUserValue) {
-      this.sidebarItems = ROUTES.filter((sidebarItem) => sidebarItem);
+      debugger;
+      // Get user roles from JWT token
+      const userRoles = this.authService.getUserRoles();
+      const userRoleArray = Array.isArray(userRoles) ? userRoles : [userRoles];
+
+      // Filter menu items based on user roles
+      this.sidebarItems = this.filterMenuByRole(ROUTES, userRoleArray);
 
       // Extract user information from JWT token
       const decodedToken = this.authService.getDecodedToken();
