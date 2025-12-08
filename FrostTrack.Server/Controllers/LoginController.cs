@@ -9,7 +9,7 @@ public class LoginController : ControllerBase
     {
         _tokenService = tokenService;
     }
-    [ApiKey]
+    //[ApiKey]
     [HttpPost]
     public async Task<TokenResponse> Post([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
     {

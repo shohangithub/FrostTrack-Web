@@ -82,11 +82,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     await app.InitialiseDatabaseAsync();
 }
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 
 app.UseCors(builder => builder
-     .WithOrigins("http://localhost:4200", "https://localhost:4200") // Specify exact origins for credentials
+     .WithOrigins("http://localhost:4200", "https://localhost:4200", "http://soft.sylhetcoldstorage.com", "https://soft.sylhetcoldstorage.com") // Specify exact origins for credentials
      .AllowAnyMethod()
      .AllowAnyHeader()
      .AllowCredentials());
