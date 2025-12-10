@@ -66,6 +66,7 @@ public class TransactionService : ITransactionService
 
         await _repository.AddAsync(entity, cancellationToken);
 
+        entity.TransactionDate = DateTime.UtcNow;
         var response = entity.Adapt<TransactionResponse>();
         return response;
     }

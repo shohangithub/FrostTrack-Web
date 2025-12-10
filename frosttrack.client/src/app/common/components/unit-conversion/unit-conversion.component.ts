@@ -172,7 +172,7 @@ export class UnitConversionComponent implements OnInit {
       unitName: ['', [Validators.required]],
       baseUnitId: ['', [Validators.required]],
       conversionValue: ['', [Validators.required]],
-      description: [''],
+      description: [null],
       isActive: ['', [Validators.required]],
     });
   }

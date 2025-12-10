@@ -191,10 +191,14 @@ export class DeliveryComponent implements OnInit {
             null,
             [Validators.min(0), Validators.max(detail.remainingQuantity)],
           ], // No required, allow 0
-          baseQuantity: [0],
+          baseQuantity: [detail.baseQuantity],
           chargeAmount: [0, [Validators.min(0)]],
           availableUnits: [detail.availableUnits],
+          convertedRemainingQty: [detail.remainingQuantity], // Initialize with booking unit remaining qty
         });
+
+        // Calculate initial converted remaining quantity
+        this.calculateConvertedRemainingQty(detailForm);
 
         // // Watch for unit or quantity changes to calculate base quantity and charge
         // detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
@@ -260,16 +264,80 @@ export class DeliveryComponent implements OnInit {
     }
   }
 
+  onUnitChange(index: number) {
+    const detail = this.deliveryDetails.at(index);
+    this.calculateConvertedRemainingQty(detail as FormGroup);
+  }
+
+  calculateConvertedRemainingQty(detailForm: FormGroup) {
+    const remainingQty = detailForm.get('remainingQuantity')?.value || 0;
+    const bookingUnitId = detailForm.get('bookingUnitId')?.value;
+    const deliveryUnitId = detailForm.get('deliveryUnitId')?.value;
+    const units = detailForm.get('availableUnits')?.value || [];
+
+    // Find the booking unit to get remaining quantity in base units
+    const bookingUnit = units.find((u: any) => u.id === bookingUnitId);
+    if (!bookingUnit) {
+      detailForm.patchValue(
+        { convertedRemainingQty: remainingQty },
+        { emitEvent: false }
+      );
+      return;
+    }
+
+    // Calculate remaining quantity in base units
+    const remainingBaseQty = remainingQty * bookingUnit.conversionRate;
+
+    // Find the selected delivery unit
+    const deliveryUnit = units.find((u: any) => u.id === deliveryUnitId);
+    if (!deliveryUnit) {
+      detailForm.patchValue(
+        { convertedRemainingQty: remainingQty },
+        { emitEvent: false }
+      );
+      return;
+    }
+
+    // Convert base quantity to delivery unit
+    const convertedQty = remainingBaseQty / deliveryUnit.conversionRate;
+    detailForm.patchValue(
+      { convertedRemainingQty: convertedQty },
+      { emitEvent: false }
+    );
+  }
+
   validateQuantity(index: number) {
     const detail = this.deliveryDetails.at(index);
-    const deliveryQty = detail.get('deliveryQuantity')?.value || 0;
-    const remainingQty = detail.get('remainingQuantity')?.value || 0;
+    const units = detail.get('availableUnits')?.value || [];
 
-    if (deliveryQty > remainingQty) {
+    // Get remaining quantity in booking unit and convert to base
+    const remainingQty = detail.get('remainingQuantity')?.value || 0;
+    const bookingUnitId = detail.get('bookingUnitId')?.value;
+    const bookingUnit = units.find((u: any) => u.id === bookingUnitId);
+    const remainingBaseQty = bookingUnit
+      ? remainingQty * bookingUnit.conversionRate
+      : 0;
+
+    // Get delivery quantity and convert to base
+    const deliveryQty = detail.get('deliveryQuantity')?.value || 0;
+    const deliveryUnitId = detail.get('deliveryUnitId')?.value;
+    const deliveryUnit = units.find((u: any) => u.id === deliveryUnitId);
+    const deliveryBaseQty = deliveryUnit
+      ? deliveryQty * deliveryUnit.conversionRate
+      : 0;
+
+    if (deliveryBaseQty > remainingBaseQty) {
+      const convertedRemainingQty =
+        detail.get('convertedRemainingQty')?.value || 0;
       this.toastr.warning(
-        `Delivery quantity cannot exceed remaining quantity (${remainingQty})`
+        `Delivery quantity cannot exceed remaining quantity (${convertedRemainingQty.toFixed(
+          2
+        )})`
       );
-      detail.patchValue({ deliveryQuantity: remainingQty });
+      detail.patchValue(
+        { deliveryQuantity: convertedRemainingQty },
+        { emitEvent: false }
+      );
     }
   }
 
@@ -307,23 +375,50 @@ export class DeliveryComponent implements OnInit {
         return remainingQty - deliveryQty === 0;
       });
 
-    // Validate quantities (skip items with zero delivery qty)
-    let hasInvalidQty = false;
-    this.deliveryDetails.controls.forEach((control, index) => {
-      const qty = control.get('deliveryQuantity')?.value || 0;
-      const remainingQty = control.get('remainingQuantity')?.value || 0;
+    // Validate quantities using base units and calculate base quantity (skip items with zero delivery qty)
+    for (let i = 0; i < this.deliveryDetails.controls.length; i++) {
+      const control = this.deliveryDetails.at(i);
+      const deliveryQty = control.get('deliveryQuantity')?.value || 0;
 
-      if (qty > 0 && qty > remainingQty) {
-        hasInvalidQty = true;
-        this.toastr.error(
-          `Item ${
-            index + 1
-          }: Delivery quantity cannot exceed remaining quantity (${remainingQty})`
+      if (deliveryQty > 0) {
+        const units = control.get('availableUnits')?.value || [];
+
+        // Get remaining quantity in booking unit and convert to base
+        const remainingQty = control.get('remainingQuantity')?.value || 0;
+        const bookingUnitId = control.get('bookingUnitId')?.value;
+        const bookingUnit = units.find((u: any) => u.id === bookingUnitId);
+        const remainingBaseQty = bookingUnit
+          ? remainingQty * bookingUnit.conversionRate
+          : 0;
+
+        // Get delivery quantity and convert to base
+        const deliveryUnitId = control.get('deliveryUnitId')?.value;
+        const deliveryUnit = units.find((u: any) => u.id === deliveryUnitId);
+        const deliveryBaseQty = deliveryUnit
+          ? deliveryQty * deliveryUnit.conversionRate
+          : 0;
+
+        // Update baseQuantity field for payload
+        control.patchValue(
+          { baseQuantity: deliveryBaseQty },
+          { emitEvent: false }
         );
-      }
-    });
 
-    if (hasInvalidQty) return;
+        // Validate that delivery base quantity doesn't exceed remaining base quantity
+        if (deliveryBaseQty > remainingBaseQty) {
+          const convertedRemainingQty =
+            control.get('convertedRemainingQty')?.value || 0;
+          this.toastr.error(
+            `Item ${
+              i + 1
+            }: Delivery quantity (${deliveryQty}) cannot exceed remaining quantity (${convertedRemainingQty.toFixed(
+              2
+            )})`
+          );
+          return;
+        }
+      }
+    }
     // If all remaining quantities will be zero and no payment, show confirmation
     const formData = this.deliveryForm.value;
     const isShowConfirm =

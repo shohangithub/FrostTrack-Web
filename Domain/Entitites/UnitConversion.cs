@@ -8,7 +8,7 @@ public class UnitConversion : AuditableEntity<int>
     public required BaseUnit BaseUnit { get; set; }
     public required float ConversionValue { get; set; }
 
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; } = string.Empty;
     public required bool IsActive { get; set; }
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";

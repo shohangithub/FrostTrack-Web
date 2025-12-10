@@ -94,7 +94,7 @@ public class BillCollectionService : IBillCollectionService
             .ToListAsync(cancellationToken);
 
         var totalAmount = bookingDetails.Sum(bd =>
-            bd.BillType == "BOOKING"
+            bd.BillType == "MONTHLY"
                 ? (decimal)bd.BookingQuantity * bd.BookingRate
                 : bd.BaseQuantity * bd.BaseRate);
 

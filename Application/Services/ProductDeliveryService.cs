@@ -46,6 +46,7 @@ public class DeliveryService : IDeliveryService
 
         var entity = request.Adapt<Delivery>();
         entity.BranchId = _currentUser.BranchId;
+        entity.DeliveryDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
 
@@ -88,7 +89,7 @@ public class DeliveryService : IDeliveryService
             var transactionRequest = new TransactionRequest(
                 Id: Guid.NewGuid(),
                 TransactionCode: CodeGenerator.GenerateTransactionCode("DEL"),
-                TransactionDate: request.DeliveryDate,
+                TransactionDate: DateTime.UtcNow,
                 TransactionType: TransactionTypes.BILL_COLLECTION,
                 TransactionFlow: TransactionFlows.IN,
                 EntityName: "Delivery",
@@ -336,20 +337,40 @@ public class DeliveryService : IDeliveryService
         foreach (var detail in request.DeliveryDetails)
         {
             var bookingDetail = await _bookingDetailRepository.Query()
+                .Include(bd => bd.BookingUnit)
                 .FirstOrDefaultAsync(bd => bd.Id == detail.BookingDetailId);
 
             if (bookingDetail == null)
                 throw new Exception($"Booking detail not found");
 
-            // Calculate already delivered quantity for this booking detail
-            var deliveredQty = await _detailRepository.Query()
+            // Calculate already delivered base quantity for this booking detail
+            var deliveredBaseQty = await _detailRepository.Query()
                 .Where(dd => dd.BookingDetailId == detail.BookingDetailId && dd.DeliveryId != existingDeliveryId)
-                .SumAsync(dd => dd.DeliveryQuantity);
+                .SumAsync(dd => dd.BaseQuantity);
 
-            var availableStock = bookingDetail.BookingQuantity - deliveredQty;
+            // Calculate booking base quantity
+            var bookingBaseQty = bookingDetail.BaseQuantity;
 
-            if (detail.DeliveryQuantity > availableStock)
-                throw new Exception($"Insufficient stock for product. Available: {availableStock}, Requested: {detail.DeliveryQuantity}");
+            // Calculate remaining base quantity
+            var remainingBaseQty = bookingBaseQty - deliveredBaseQty;
+
+            // Get delivery unit conversion to calculate delivery base quantity
+            var deliveryUnit = await _unitConversionRepository.Query()
+                .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId);
+
+            var deliveryBaseQty = deliveryUnit != null 
+                ? (decimal)(detail.DeliveryQuantity * deliveryUnit.ConversionValue)
+                : (decimal)detail.DeliveryQuantity;
+
+            if (deliveryBaseQty > remainingBaseQty)
+            {
+                // Calculate available in delivery unit for user-friendly error message
+                var availableInDeliveryUnit = deliveryUnit != null && deliveryUnit.ConversionValue > 0
+                    ? remainingBaseQty / (decimal)deliveryUnit.ConversionValue
+                    : remainingBaseQty;
+                
+                throw new Exception($"Insufficient stock for product. Available: {availableInDeliveryUnit:F2} (in selected unit), Requested: {detail.DeliveryQuantity}");
+            }
         }
     }
 
@@ -358,20 +379,40 @@ public class DeliveryService : IDeliveryService
         foreach (var detail in request.DeliveryDetails)
         {
             var bookingDetail = await _bookingDetailRepository.Query()
+                .Include(bd => bd.BookingUnit)
                 .FirstOrDefaultAsync(bd => bd.Id == detail.BookingDetailId);
 
             if (bookingDetail == null)
                 throw new Exception($"Booking detail not found");
 
-            // Calculate already delivered quantity for this booking detail
-            var deliveredQty = await _detailRepository.Query()
+            // Calculate already delivered base quantity for this booking detail (excluding current delivery)
+            var deliveredBaseQty = await _detailRepository.Query()
                 .Where(dd => dd.BookingDetailId == detail.BookingDetailId && dd.DeliveryId != existingDeliveryId)
-                .SumAsync(dd => dd.DeliveryQuantity);
+                .SumAsync(dd => dd.BaseQuantity);
 
-            var availableStock = bookingDetail.BookingQuantity - deliveredQty;
+            // Calculate booking base quantity
+            var bookingBaseQty = bookingDetail.BaseQuantity;
 
-            if (detail.DeliveryQuantity > availableStock)
-                throw new Exception($"Insufficient stock for product. Available: {availableStock}, Requested: {detail.DeliveryQuantity}");
+            // Calculate remaining base quantity
+            var remainingBaseQty = bookingBaseQty - deliveredBaseQty;
+
+            // Get delivery unit conversion to calculate delivery base quantity
+            var deliveryUnit = await _unitConversionRepository.Query()
+                .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId);
+
+            var deliveryBaseQty = deliveryUnit != null 
+                ? (decimal)(detail.DeliveryQuantity * deliveryUnit.ConversionValue)
+                : (decimal)detail.DeliveryQuantity;
+
+            if (deliveryBaseQty > remainingBaseQty)
+            {
+                // Calculate available in delivery unit for user-friendly error message
+                var availableInDeliveryUnit = deliveryUnit != null && deliveryUnit.ConversionValue > 0
+                    ? remainingBaseQty / (decimal)deliveryUnit.ConversionValue
+                    : remainingBaseQty;
+                
+                throw new Exception($"Insufficient stock for product. Available: {availableInDeliveryUnit:F2} (in selected unit), Requested: {detail.DeliveryQuantity}");
+            }
         }
     }
 
@@ -442,12 +483,22 @@ public class DeliveryService : IDeliveryService
 
         foreach (var detail in booking.BookingDetails)
         {
-            // Calculate total delivered for this booking detail
-            var totalDelivered = detail.DeliveryDetails.Sum(dd => dd.DeliveryQuantity);
+            // Calculate total delivered base quantity for this booking detail
+            var totalDeliveredBaseQty = detail.DeliveryDetails.Sum(dd => dd.BaseQuantity);
 
-            var remainingQty = detail.BookingQuantity - totalDelivered;
+            // Calculate remaining in base units
+            var remainingBaseQty = detail.BaseQuantity - totalDeliveredBaseQty;
 
+            // Convert remaining base quantity back to booking unit
+            var bookingUnitConversion = detail.BookingUnit?.ConversionValue ?? 1;
+            var remainingQty = bookingUnitConversion > 0 
+                ? (float)(remainingBaseQty / (decimal)bookingUnitConversion)
+                : 0;
 
+            // Calculate total delivered in booking unit for display
+            var totalDelivered = bookingUnitConversion > 0
+                ? (float)(totalDeliveredBaseQty / (decimal)bookingUnitConversion)
+                : 0;
 
             var unitConversions = new List<DeliveryUnitConversionResponse>();
             if (bookingUnit != null)
@@ -503,6 +554,7 @@ public class DeliveryService : IDeliveryService
     public async Task<List<RemainingQuantityResponse>> GetRemainingQuantitiesAsync(Guid bookingId)
     {
         var bookingDetails = await _bookingDetailRepository.Query()
+            .Include(bd => bd.BookingUnit)
             .Where(bd => bd.Booking != null && bd.Booking.Id == bookingId)
             .ToListAsync();
 
@@ -515,17 +567,31 @@ public class DeliveryService : IDeliveryService
 
         foreach (var detail in bookingDetails)
         {
-            var totalDelivered = deliveries
+            // Calculate total delivered base quantity
+            var totalDeliveredBaseQty = deliveries
                 .SelectMany(d => d.DeliveryDetails)
                 .Where(dd => dd.BookingDetailId == detail.Id)
-                .Sum(dd => dd.DeliveryQuantity);
+                .Sum(dd => dd.BaseQuantity);
+
+            // Calculate remaining in base units
+            var remainingBaseQty = detail.BaseQuantity - totalDeliveredBaseQty;
+
+            // Convert back to booking unit
+            var bookingUnitConversion = detail.BookingUnit?.ConversionValue ?? 1;
+            var totalDelivered = bookingUnitConversion > 0
+                ? (float)(totalDeliveredBaseQty / (decimal)bookingUnitConversion)
+                : 0;
+            
+            var remainingQty = bookingUnitConversion > 0
+                ? (float)(remainingBaseQty / (decimal)bookingUnitConversion)
+                : 0;
 
             results.Add(new RemainingQuantityResponse
             {
                 BookingDetailId = detail.Id,
                 BookingQuantity = detail.BookingQuantity,
                 TotalDeliveredQuantity = totalDelivered,
-                RemainingQuantity = detail.BookingQuantity - totalDelivered
+                RemainingQuantity = remainingQty
             });
         }
 
@@ -554,7 +620,7 @@ public class DeliveryService : IDeliveryService
 
         // Sum up all bill collection transactions for these deliveries
         var totalPaid = await _transactionRepository.Query()
-            .Where(t => t.TransactionType == "BILL_COLLECTION"
+            .Where(t => t.TransactionType ==  TransactionTypes.BILL_COLLECTION
                      && t.EntityName == "Delivery"
                      && deliveries.Contains(t.EntityId))
             .SumAsync(t => t.Amount);
@@ -651,19 +717,36 @@ public class DeliveryService : IDeliveryService
             BookingRate = d.BookingDetail?.BookingRate ?? 0
         }).ToList();
 
+        // Sum up all bill collection transactions for these deliveries
+        var totalPaid = await _transactionRepository.Query()
+            .Where(t => t.TransactionType ==  TransactionTypes.BILL_COLLECTION
+                     && t.BookingId == entity.BookingId
+                     && t.TransactionDate <= entity.DeliveryDate)
+            .SumAsync(t => t.Amount);
+
         // Calculate Total Paid Amount (from all transactions for this booking)
-        response.TotalPaidAmount = await GetBookingPreviousPaymentsAsync(entity.BookingId);
+        response.TotalPaidAmount = totalPaid;
 
-        // Calculate Extra Charge (total charge amount from all deliveries for this booking)
-        var allDeliveries = await _repository.Query()
-            .Where(d => d.BookingId == entity.BookingId)
-            .ToListAsync();
+        // Sum up all extra charge transactions for this booking
+        var totalExtraCharge = await _transactionRepository.Query()
+            .Where(t => t.TransactionType ==  TransactionTypes.BOOKING_EXTRA_CHARGE
+                     && t.BookingId == entity.BookingId
+                     && t.TransactionDate <= entity.DeliveryDate)
+            .SumAsync(t => t.Amount);
 
-        var totalDeliveryCharges = allDeliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
-        response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
+      
+
+        response.ExtraCharge = totalExtraCharge;
+        //// Calculate Extra Charge (total charge amount from all deliveries for this booking)
+        //var allDeliveries = await _repository.Query()
+        //    .Where(d => d.BookingId == entity.BookingId)
+        //    .ToListAsync();
+
+        //var totalDeliveryCharges = allDeliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
+        //response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
 
         // Calculate Due Amount
-        response.DueAmount = (response.TotalBookingAmount + response.ExtraCharge) - response.TotalPaidAmount;
+        response.DueAmount = response.TotalBookingAmount + response.ExtraCharge + response.TotalPaidAmount;
 
         return response;
     }

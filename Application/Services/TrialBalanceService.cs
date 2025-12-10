@@ -122,13 +122,14 @@ public class TrialBalanceService : ITrialBalanceService
     {
         return transactionType switch
         {
-            "BILL_COLLECTION" => "Bill Collection",
-            "OFFICE_COST" => "Office Cost",
-            "BILL_PAYMENT" => "Bill Payment",
-            "ADJUSTMENT" => "Adjustment",
-            "REFUND" => "Refund",
-            "SALARY" => "Salary Payment",
-            "OTHER" => "Other",
+            TransactionTypes.BILL_COLLECTION => "Bill Collection",
+            TransactionTypes.BOOKING_EXTRA_CHARGE => "Booking Extra Charge",
+            TransactionTypes.OFFICE_COST => "Office Cost",
+            TransactionTypes.BILL_PAYMENT => "Bill Payment",
+            TransactionTypes.ADJUSTMENT => "Adjustment",
+            TransactionTypes.REFUND => "Refund",
+            TransactionTypes.SALARY => "Salary Payment",
+            TransactionTypes.OTHER => "Other",
             _ => transactionType
         };
     }

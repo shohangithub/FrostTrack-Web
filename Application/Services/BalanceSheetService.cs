@@ -106,7 +106,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // LIABILITIES: Calculate accounts payable (unpaid bills)
         var accountsPayable = transactions
-            .Where(t => t.TransactionType == "BILL_PAYMENT" && t.TransactionFlow == "OUT")
+            .Where(t => t.TransactionType == TransactionTypes.BILL_PAYMENT && t.TransactionFlow == "OUT")
             .Sum(t => t.NetAmount);
 
         if (accountsPayable > 0)
@@ -116,17 +116,17 @@ public class BalanceSheetService : IBalanceSheetService
                 AccountName = "Accounts Payable",
                 AccountCategory = "Liability",
                 Amount = accountsPayable,
-                TransactionCount = transactions.Count(t => t.TransactionType == "BILL_PAYMENT")
+                TransactionCount = transactions.Count(t => t.TransactionType == TransactionTypes.BILL_PAYMENT)
             });
         }
 
         // EQUITY: Calculate from bill collections and revenue
         var revenue = transactions
-            .Where(t => t.TransactionType == "BILL_COLLECTION" && t.TransactionFlow == "IN")
+            .Where(t => t.TransactionType == TransactionTypes.BILL_COLLECTION && t.TransactionFlow == "IN")
             .Sum(t => t.NetAmount);
 
         var expenses = transactions
-            .Where(t => (t.TransactionType == "OFFICE_COST" || t.TransactionType == "SALARY")
+            .Where(t => (t.TransactionType == TransactionTypes.OFFICE_COST || t.TransactionType == TransactionTypes.SALARY)
                      && t.TransactionFlow == "OUT")
             .Sum(t => t.NetAmount);
 
@@ -140,9 +140,9 @@ public class BalanceSheetService : IBalanceSheetService
                 AccountCategory = "Equity",
                 Amount = retainedEarnings,
                 TransactionCount = transactions.Count(t =>
-                    t.TransactionType == "BILL_COLLECTION" ||
-                    t.TransactionType == "OFFICE_COST" ||
-                    t.TransactionType == "SALARY")
+                    t.TransactionType == TransactionTypes.BILL_COLLECTION ||
+                    t.TransactionType ==  TransactionTypes.OFFICE_COST ||
+                    t.TransactionType == TransactionTypes.SALARY)
             });
         }
 

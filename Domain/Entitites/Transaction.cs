@@ -74,6 +74,7 @@ public class Transaction : AuditableEntity<Guid>
 public static class TransactionTypes
 {
     public const string BILL_COLLECTION = "BILL_COLLECTION"; // Money IN from customers
+    public const string BOOKING_EXTRA_CHARGE = "BOOKING_EXTRA_CHARGE";
     public const string OFFICE_COST = "OFFICE_COST"; // Money OUT for office expenses
     public const string BILL_PAYMENT = "BILL_PAYMENT"; // Money OUT for vendor bills
     public const string ADJUSTMENT = "ADJUSTMENT"; // IN/OUT adjustments
