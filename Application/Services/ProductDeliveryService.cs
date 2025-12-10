@@ -721,7 +721,7 @@ public class DeliveryService : IDeliveryService
         var totalPaid = await _transactionRepository.Query()
             .Where(t => t.TransactionType ==  TransactionTypes.BILL_COLLECTION
                      && t.BookingId == entity.BookingId
-                     && t.TransactionDate <= entity.DeliveryDate)
+                     && t.TransactionDate <= entity.DeliveryDate.AddMinutes(1))
             .SumAsync(t => t.Amount);
 
         // Calculate Total Paid Amount (from all transactions for this booking)
@@ -746,7 +746,7 @@ public class DeliveryService : IDeliveryService
         //response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
 
         // Calculate Due Amount
-        response.DueAmount = response.TotalBookingAmount + response.ExtraCharge + response.TotalPaidAmount;
+        response.DueAmount = response.TotalBookingAmount + response.ExtraCharge - response.TotalPaidAmount;
 
         return response;
     }

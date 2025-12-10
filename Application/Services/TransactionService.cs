@@ -62,11 +62,11 @@ public class TransactionService : ITransactionService
         // Calculate NetAmount
         entity.NetAmount = entity.Amount - entity.DiscountAmount + entity.AdjustmentValue;
 
+        entity.TransactionDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
 
         await _repository.AddAsync(entity, cancellationToken);
 
-        entity.TransactionDate = DateTime.UtcNow;
         var response = entity.Adapt<TransactionResponse>();
         return response;
     }
