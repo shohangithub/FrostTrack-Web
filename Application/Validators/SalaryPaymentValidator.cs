@@ -35,7 +35,7 @@ public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
 
         RuleFor(x => x.Year)
             .GreaterThan(2000).WithMessage("Year must be greater than 2000")
-            .LessThanOrEqualTo(DateTime.Now.Year).WithMessage("Year cannot be in the future");
+            .LessThanOrEqualTo(DateTime.UtcNow.Year).WithMessage("Year cannot be in the future");
 
         RuleFor(x => x.BasicSalary)
             .GreaterThan(0).WithMessage("Basic salary must be greater than 0");

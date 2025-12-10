@@ -46,7 +46,6 @@ import { LayoutService } from '@core/service/layout.service';
   styleUrls: [],
   standalone: true,
   imports: [
-    RouterLink,
     NgxDatatableModule,
     FormsModule,
     ReactiveFormsModule,

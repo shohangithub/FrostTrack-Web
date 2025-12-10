@@ -7,6 +7,14 @@ declare global {
   }
 
   interface Date {
+    /**
+     * Formats date as YYYY-MM-DD for HTML date inputs (local timezone)
+     */
     systemFormat(): string;
+
+    /**
+     * Converts date to UTC ISO string for API calls
+     */
+    toUtcIso(): string;
   }
 }

@@ -52,6 +52,7 @@ public class BookingService : IBookingService
 
         var entity = request.Adapt<Booking>();
         entity.BranchId = _currentUser.BranchId;
+        entity.BookingDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Booking, Guid>(entity);
         if (entity.BookingDetails != null && entity.BookingDetails.Any())
         {
@@ -133,7 +134,6 @@ public class BookingService : IBookingService
         if (existingData == null) throw new Exception("Booking record not found!");
 
         existingData.BranchId = _currentUser.BranchId;
-        existingData.BookingDate = request.BookingDate;
         existingData.CustomerId = request.CustomerId;
         existingData.Notes = request.Notes;
 

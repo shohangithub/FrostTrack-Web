@@ -35,6 +35,7 @@ public class SaleReturnService : ISaleReturnService
 
         var entity = request.Adapt<SaleReturn>();
         entity.BranchId = _currentUser.BranchId;
+        entity.ReturnDate = DateTime.UtcNow;
         // Audit fields will be automatically set by DbContext.SaveChangesAsync
 
         var result = await _stockRepository.ManageAddSaleReturnStock(entity, cancellationToken);
@@ -94,7 +95,6 @@ public class SaleReturnService : ISaleReturnService
         existingData.DiscountAmount = request.DiscountAmount;
         existingData.DiscountPercent = request.DiscountPercent;
         existingData.ReturnAmount = request.ReturnAmount;
-        existingData.ReturnDate = request.ReturnDate;
         existingData.OtherCost = request.OtherCost;
         existingData.Subtotal = request.Subtotal;
         existingData.VatAmount = request.VatAmount;
@@ -177,7 +177,7 @@ public class SaleReturnService : ISaleReturnService
 
     public async Task<string> GenerateReturnNumber(CancellationToken cancellationToken = default)
     {
-        var currentDate = DateTime.Now;
+        var currentDate = DateTime.UtcNow;
         var year = currentDate.Year.ToString()?.Remove(0, 2);
         var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
         var dateString = $"{year}{month}";

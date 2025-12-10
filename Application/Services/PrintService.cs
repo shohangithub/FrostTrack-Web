@@ -674,7 +674,7 @@ namespace Application.Services
                 Notes = booking.Notes,
                 TotalAmount = totalAmount,
                 TotalQuantity = totalQuantity,
-                PrintDateTime = DateTime.Now,
+                PrintDateTime = DateTime.UtcNow,
                 CreatedBy = "System",
                 BookingDetails = booking.BookingDetails?.Select((detail, index) => new BookingInvoiceDetail
                 {

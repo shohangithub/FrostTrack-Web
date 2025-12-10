@@ -29,7 +29,7 @@ namespace Application.RequestDTO
         public string Notes { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
         public string BranchName { get; set; } = string.Empty;
-        public DateTime PrintDateTime { get; set; } = DateTime.Now;
+        public DateTime PrintDateTime { get; set; } = DateTime.UtcNow;
     }
 
     public class SupplierInfo

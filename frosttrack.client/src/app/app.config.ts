@@ -6,10 +6,8 @@ import {
 } from '@angular/common/http';
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { APP_ROUTE } from './app.routes';
-import { provideRouter, withHashLocation } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { HashLocationStrategy, LocationStrategy } from '@angular/common';
-import { JwtInterceptor } from '@core/interceptor/jwt.interceptor';
 import { ErrorInterceptor } from '@core/interceptor/error.interceptor';
 import { DirectionService, LanguageService } from '@core';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -19,6 +17,7 @@ import { allIcons } from 'angular-feather/icons';
 import { provideToastr } from 'ngx-toastr';
 import { authInterceptor } from '@core/interceptor/auth.interceptor';
 import { loadingInterceptor } from '@core/interceptor/loading.interceptor';
+import { utcDateInterceptor } from '@core/interceptors/utc-date.interceptor';
 
 export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,7 +25,13 @@ export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor,
+        loadingInterceptor,
+        utcDateInterceptor,
+      ])
+    ),
     provideRouter(APP_ROUTE),
     provideToastr(),
     provideAnimations(),

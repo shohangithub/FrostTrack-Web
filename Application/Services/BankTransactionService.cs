@@ -47,6 +47,7 @@ public class BankTransactionService : IBankTransactionService
 
         var entity = bankTransaction.Adapt<BankTransaction>();
         entity.BranchId = _currentUser.BranchId;
+        entity.TransactionDate = DateTime.UtcNow;
 
         // Calculate new balance
         if (bankTransaction.TransactionType == "Deposit")

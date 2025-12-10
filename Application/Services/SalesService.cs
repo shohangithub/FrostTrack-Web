@@ -39,6 +39,7 @@ public class SalesService : ISalesService
 
         var entity = request.Adapt<Sales>();
         entity.BranchId = _currentUser.BranchId;
+        entity.InvoiceDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Sales, long>(entity);
         _defaultValueInjector.InjectCreatingAudit<SalesDetail, long>(entity.SalesDetails as List<SalesDetail>);
 
@@ -89,7 +90,6 @@ public class SalesService : ISalesService
         existingData.DiscountAmount = request.DiscountAmount;
         existingData.DiscountPercent = request.DiscountPercent;
         existingData.InvoiceAmount = request.InvoiceAmount;
-        existingData.InvoiceDate = request.InvoiceDate;
         existingData.OtherCost = request.OtherCost;
         existingData.PaidAmount = request.PaidAmount;
         existingData.Subtotal = request.Subtotal;
@@ -183,7 +183,7 @@ public class SalesService : ISalesService
 
     public async Task<string> GenerateInvoiceNumber(CancellationToken cancellationToken = default)
     {
-        var currentDate = DateTime.Now;
+        var currentDate = DateTime.UtcNow;
         var year = currentDate.Year.ToString()?.Remove(0, 2);
         var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
         var dateString = $"{year}{month}";

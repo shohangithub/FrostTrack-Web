@@ -419,12 +419,12 @@ public class DeliveryService : IDeliveryService
     private string GenerateNextNumber(string? lastNumber, string prefix)
     {
         if (string.IsNullOrEmpty(lastNumber))
-            return $"{prefix}-{DateTime.Now.Year}-0001";
+            return $"{prefix}-{DateTime.UtcNow.Year}-0001";
 
         var parts = lastNumber.Split('-');
         if (parts.Length == 3 && int.TryParse(parts[2], out int number))
         {
-            return $"{prefix}-{DateTime.Now.Year}-{(number + 1):D4}";
+            return $"{prefix}-{DateTime.UtcNow.Year}-{(number + 1):D4}";
         }
 
         return $"{prefix}-{DateTime.Now.Year}-0001";

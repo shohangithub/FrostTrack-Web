@@ -1,5 +1,6 @@
 ﻿using FrostTrack.Server.Middlewares;
 using System.Text.Json;
+using Infrastructure.Converters;
 
 namespace FrostTrack.Server;
 
@@ -12,13 +13,22 @@ public static class DependencyInjection
         services.AddTransient<AuthenticationDebugMiddleware>();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
-        services.AddControllers().AddNewtonsoftJson();
+        
+        // Configure Newtonsoft.Json to handle UTC dates
+        services.AddControllers().AddNewtonsoftJson(options =>
+        {
+            options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+            options.SerializerSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+        });
 
-        // services.AddControllers().AddJsonOptions(option =>
-        //{
-        //    option.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-        //    option.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        //});
+        // Also configure System.Text.Json for services that use it
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+            options.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+        });
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         services.AddEndpointsApiExplorer();
@@ -35,3 +45,4 @@ public static class DependencyInjection
         return services;
     }
 }
+

@@ -88,7 +88,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         {
             Id = Guid.NewGuid(),
             TransactionCode = nextCode,
-            TransactionDate = DateTime.Now,
+            TransactionDate = DateTime.UtcNow,
             TransactionType = TransactionTypes.SALARY,
             TransactionFlow = TransactionFlows.OUT,
             EntityName = "Employee",
@@ -427,7 +427,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
     private (int month, int year) ExtractMonthYearFromNote(string note)
     {
-        if (string.IsNullOrEmpty(note)) return (DateTime.Now.Month, DateTime.Now.Year);
+        if (string.IsNullOrEmpty(note)) return (DateTime.UtcNow.Month, DateTime.UtcNow.Year);
 
         var match = System.Text.RegularExpressions.Regex.Match(note, @"(\d{2})/(\d{4})");
         if (match.Success)
@@ -435,7 +435,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             return (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
         }
 
-        return (DateTime.Now.Month, DateTime.Now.Year);
+        return (DateTime.UtcNow.Month, DateTime.UtcNow.Year);
     }
 
     public async Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default)
@@ -449,7 +449,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         }
 
         // Check if the transaction was created within the last day
-        var oneDayAgo = DateTime.Now.AddDays(-1);
+        var oneDayAgo = DateTime.UtcNow.AddDays(-1);
         if (transaction.CreatedTime < oneDayAgo)
         {
             throw new Exception("Cannot delete salary payment. Deletion is only allowed within one day of creation.");
@@ -457,7 +457,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
         // Soft delete the transaction
         transaction.IsDeleted = true;
-        transaction.DeletedAt = DateTime.Now;
+        transaction.DeletedAt = DateTime.UtcNow;
         transaction.DeletedById = _currentUser.Id;
 
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);
