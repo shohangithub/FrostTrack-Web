@@ -122,7 +122,7 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="Salary" prop="salary">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.salary | currency }}
+                  {{ row.salary | number : "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column

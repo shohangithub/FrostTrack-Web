@@ -111,10 +111,7 @@
                           </div>
                           } @else {
                           <div class="h4 fw-bold text-danger mb-0">
-                            {{
-                              supplierDueBalance
-                                | currency : "BDT" : "symbol" : "1.2-2"
-                            }}
+                            {{ supplierDueBalance | number : "1.2-2" }}
                           </div>
                           }
                           <small class="text-muted">Outstanding Balance</small>
@@ -409,10 +406,7 @@
                     </div>
                     } @else {
                     <strong class="text-danger">
-                      {{
-                        supplierDueBalance
-                          | currency : "BDT" : "symbol" : "1.2-2"
-                      }}
+                      {{ supplierDueBalance | number : "1.2-2" }}
                     </strong>
                     }
                   </div>
@@ -420,10 +414,7 @@
                   <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Credit Limit:</span>
                     <span class="text-info">
-                      {{
-                        selectedSupplier.creditLimit
-                          | currency : "BDT" : "symbol" : "1.2-2"
-                      }}
+                      {{ selectedSupplier.creditLimit | number : "1.2-2" }}
                     </span>
                   </div>
 
@@ -431,8 +422,7 @@
                     <span class="text-muted">Current Payment:</span>
                     <strong class="text-success">
                       {{
-                        register.get("paymentAmount")?.value
-                          | currency : "BDT" : "symbol" : "1.2-2"
+                        register.get("paymentAmount")?.value | number : "1.2-2"
                       }}
                     </strong>
                   </div>
@@ -445,7 +435,7 @@
                       {{
                         supplierDueBalance -
                           (register.get("paymentAmount")?.value || 0)
-                          | currency : "BDT" : "symbol" : "1.2-2"
+                          | number : "1.2-2"
                       }}
                     </strong>
                   </div>

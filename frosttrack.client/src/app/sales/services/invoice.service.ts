@@ -109,14 +109,14 @@ export class InvoiceService {
 
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `Subtotal: $${salesData.subtotal?.toFixed(2) || '0.00'}`,
+      `Subtotal: ${salesData.subtotal?.toFixed(2) || '0.00'}`,
       totalsX,
       totalsY
     );
 
     if (salesData.vatPercent && salesData.vatPercent > 0) {
       doc.text(
-        `VAT (${salesData.vatPercent}%): $${
+        `VAT (${salesData.vatPercent}%): ${
           salesData.vatAmount?.toFixed(2) || '0.00'
         }`,
         totalsX,
@@ -126,7 +126,7 @@ export class InvoiceService {
 
     if (salesData.discountPercent && salesData.discountPercent > 0) {
       doc.text(
-        `Discount (${salesData.discountPercent}%): -$${
+        `Discount (${salesData.discountPercent}%): -${
           salesData.discountAmount?.toFixed(2) || '0.00'
         }`,
         totalsX,
@@ -136,7 +136,7 @@ export class InvoiceService {
 
     if (salesData.otherCost && salesData.otherCost > 0) {
       doc.text(
-        `Other Costs: $${salesData.otherCost?.toFixed(2) || '0.00'}`,
+        `Other Costs: ${salesData.otherCost?.toFixed(2) || '0.00'}`,
         totalsX,
         totalsY + 30
       );
@@ -147,7 +147,7 @@ export class InvoiceService {
     doc.setFontSize(12);
     const totalY = totalsY + 45;
     doc.text(
-      `Total Amount: $${salesData.invoiceAmount?.toFixed(2) || '0.00'}`,
+      `Total Amount: ${salesData.invoiceAmount?.toFixed(2) || '0.00'}`,
       totalsX,
       totalY
     );
@@ -156,7 +156,7 @@ export class InvoiceService {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(
-        `Paid Amount: $${salesData.paidAmount?.toFixed(2) || '0.00'}`,
+        `Paid Amount: ${salesData.paidAmount?.toFixed(2) || '0.00'}`,
         totalsX,
         totalY + 10
       );
@@ -165,7 +165,7 @@ export class InvoiceService {
         (salesData.invoiceAmount || 0) - (salesData.paidAmount || 0);
       if (balance > 0) {
         doc.setFont('helvetica', 'bold');
-        doc.text(`Balance Due: $${balance.toFixed(2)}`, totalsX, totalY + 20);
+        doc.text(`Balance Due: ${balance.toFixed(2)}`, totalsX, totalY + 20);
       }
     }
 
@@ -276,14 +276,14 @@ export class InvoiceService {
 
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `Subtotal: $${salesData.subtotal?.toFixed(2) || '0.00'}`,
+      `Subtotal: ${salesData.subtotal?.toFixed(2) || '0.00'}`,
       totalsX,
       totalsY
     );
 
     if (salesData.vatPercent && salesData.vatPercent > 0) {
       doc.text(
-        `VAT (${salesData.vatPercent}%): $${
+        `VAT (${salesData.vatPercent}%): ${
           salesData.vatAmount?.toFixed(2) || '0.00'
         }`,
         totalsX,
@@ -293,7 +293,7 @@ export class InvoiceService {
 
     if (salesData.discountPercent && salesData.discountPercent > 0) {
       doc.text(
-        `Discount (${salesData.discountPercent}%): -$${
+        `Discount (${salesData.discountPercent}%): -${
           salesData.discountAmount?.toFixed(2) || '0.00'
         }`,
         totalsX,
@@ -303,7 +303,7 @@ export class InvoiceService {
 
     if (salesData.otherCost && salesData.otherCost > 0) {
       doc.text(
-        `Other Costs: $${salesData.otherCost?.toFixed(2) || '0.00'}`,
+        `Other Costs: ${salesData.otherCost?.toFixed(2) || '0.00'}`,
         totalsX,
         totalsY + 30
       );
@@ -314,7 +314,7 @@ export class InvoiceService {
     doc.setFontSize(12);
     const totalY = totalsY + 45;
     doc.text(
-      `Total Amount: $${salesData.invoiceAmount?.toFixed(2) || '0.00'}`,
+      `Total Amount: ${salesData.invoiceAmount?.toFixed(2) || '0.00'}`,
       totalsX,
       totalY
     );
@@ -323,7 +323,7 @@ export class InvoiceService {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(
-        `Paid Amount: $${salesData.paidAmount?.toFixed(2) || '0.00'}`,
+        `Paid Amount: ${salesData.paidAmount?.toFixed(2) || '0.00'}`,
         totalsX,
         totalY + 10
       );
@@ -332,7 +332,7 @@ export class InvoiceService {
         (salesData.invoiceAmount || 0) - (salesData.paidAmount || 0);
       if (balance > 0) {
         doc.setFont('helvetica', 'bold');
-        doc.text(`Balance Due: $${balance.toFixed(2)}`, totalsX, totalY + 20);
+        doc.text(`Balance Due: ${balance.toFixed(2)}`, totalsX, totalY + 20);
       }
     }
 
@@ -437,41 +437,39 @@ export class InvoiceService {
         const amount = item.salesAmount?.toFixed(2) || '0.00';
 
         commands += `${name}\n`;
-        commands += `  ${qty} x $${rate} = $${amount}\n`;
+        commands += `  ${qty} x ${rate} = ${amount}\n`;
       });
 
       commands += '--------------------------------\n';
 
       // Totals
-      commands += `Subtotal:        $${
+      commands += `Subtotal:        ${
         salesData.subtotal?.toFixed(2) || '0.00'
       }\n`;
 
       if (salesData.vatAmount && salesData.vatAmount > 0) {
-        commands += `VAT:             $${salesData.vatAmount.toFixed(2)}\n`;
+        commands += `VAT:             ${salesData.vatAmount.toFixed(2)}\n`;
       }
 
       if (salesData.discountAmount && salesData.discountAmount > 0) {
-        commands += `Discount:       -$${salesData.discountAmount.toFixed(
-          2
-        )}\n`;
+        commands += `Discount:       -${salesData.discountAmount.toFixed(2)}\n`;
       }
 
       commands += '================================\n';
 
       // Bold total
       commands += ESC + 'E' + '\x01'; // Bold on
-      commands += `TOTAL:           $${
+      commands += `TOTAL:           ${
         salesData.invoiceAmount?.toFixed(2) || '0.00'
       }\n`;
       commands += ESC + 'E' + '\x00'; // Bold off
 
       if (salesData.paidAmount && salesData.paidAmount > 0) {
-        commands += `Paid:            $${salesData.paidAmount.toFixed(2)}\n`;
+        commands += `Paid:            ${salesData.paidAmount.toFixed(2)}\n`;
         const balance =
           (salesData.invoiceAmount || 0) - (salesData.paidAmount || 0);
         if (balance > 0) {
-          commands += `Balance:         $${balance.toFixed(2)}\n`;
+          commands += `Balance:         ${balance.toFixed(2)}\n`;
         }
       }
 
@@ -582,12 +580,12 @@ export class InvoiceService {
                 (item) => `
             <div class="item">
               <div style="width: 70%;">${item.product?.productName || ''}</div>
-              <div style="width: 30%; text-align: right;">$${
+              <div style="width: 30%; text-align: right;">${
                 item.salesAmount?.toFixed(2) || '0.00'
               }</div>
             </div>
             <div class="item-details">
-              ${item.salesQuantity?.toFixed(2) || '0'} x $${
+              ${item.salesQuantity?.toFixed(2) || '0'} x ${
                   item.salesRate?.toFixed(2) || '0.00'
                 }
             </div>
@@ -600,7 +598,7 @@ export class InvoiceService {
           
           <div class="item">
             <div>Subtotal:</div>
-            <div>$${salesData.subtotal?.toFixed(2) || '0.00'}</div>
+            <div>${salesData.subtotal?.toFixed(2) || '0.00'}</div>
           </div>
           
           ${
@@ -608,7 +606,7 @@ export class InvoiceService {
               ? `
             <div class="item">
               <div>VAT (${salesData.vatPercent || 0}%):</div>
-              <div>$${salesData.vatAmount.toFixed(2)}</div>
+              <div>${salesData.vatAmount.toFixed(2)}</div>
             </div>
           `
               : ''
@@ -619,7 +617,7 @@ export class InvoiceService {
               ? `
             <div class="item">
               <div>Discount (${salesData.discountPercent || 0}%):</div>
-              <div>-$${salesData.discountAmount.toFixed(2)}</div>
+              <div>-${salesData.discountAmount.toFixed(2)}</div>
             </div>
           `
               : ''
@@ -630,7 +628,7 @@ export class InvoiceService {
               ? `
             <div class="item">
               <div>Other Costs:</div>
-              <div>$${salesData.otherCost.toFixed(2)}</div>
+              <div>${salesData.otherCost.toFixed(2)}</div>
             </div>
           `
               : ''
@@ -640,7 +638,7 @@ export class InvoiceService {
           
           <div class="total-line">
             <div>TOTAL:</div>
-            <div>$${salesData.invoiceAmount?.toFixed(2) || '0.00'}</div>
+            <div>${salesData.invoiceAmount?.toFixed(2) || '0.00'}</div>
           </div>
           
           ${
@@ -648,14 +646,14 @@ export class InvoiceService {
               ? `
             <div class="item">
               <div>Paid:</div>
-              <div>$${salesData.paidAmount.toFixed(2)}</div>
+              <div>${salesData.paidAmount.toFixed(2)}</div>
             </div>
             ${
               (salesData.invoiceAmount || 0) - (salesData.paidAmount || 0) > 0
                 ? `
               <div class="item bold">
                 <div>Balance Due:</div>
-                <div>$${(
+                <div>${(
                   (salesData.invoiceAmount || 0) - (salesData.paidAmount || 0)
                 ).toFixed(2)}</div>
               </div>

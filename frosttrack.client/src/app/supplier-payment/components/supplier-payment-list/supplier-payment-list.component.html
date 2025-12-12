@@ -118,7 +118,7 @@
               <!-- Payment Amount Column -->
               <ngx-datatable-column name="paymentAmount" prop="paymentAmount">
                 <ng-template let-value="value" ngx-datatable-cell-template>
-                  <strong>{{ value | currency }}</strong>
+                  <strong>{{ value | number : "1.2-2" }}</strong>
                 </ng-template>
               </ngx-datatable-column>
 

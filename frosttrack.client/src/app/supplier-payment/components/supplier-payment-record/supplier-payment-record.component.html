@@ -98,7 +98,7 @@
                   <span><strong>Total Records:</strong> {{ totalItems }}</span>
                   <span
                     ><strong>Total Amount:</strong>
-                    {{ getTotalAmount() | currency }}</span
+                    {{ getTotalAmount() | number : "1.2-2" }}</span
                   >
                 </div>
               </div>
@@ -206,7 +206,9 @@
                 [width]="140"
               >
                 <ng-template let-value="value" ngx-datatable-cell-template>
-                  <strong class="text-success">{{ value | currency }}</strong>
+                  <strong class="text-success">{{
+                    value | number : "1.2-2"
+                  }}</strong>
                 </ng-template>
               </ngx-datatable-column>
 
