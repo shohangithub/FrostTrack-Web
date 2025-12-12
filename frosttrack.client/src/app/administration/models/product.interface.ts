@@ -35,10 +35,10 @@ export interface IProductResponse {
   bookingRate: number | null;
   isActive: boolean;
   status: string;
-  branchId: number | null;
 }
 
 export interface IProductRequest {
+  id: number;
   productName: string;
   productCode: string;
   customBarcode: string;
@@ -47,6 +47,4 @@ export interface IProductRequest {
   imageUrl: string;
   bookingRate: number | null;
   isActive: boolean;
-  status: string;
-  branchId: number | null;
 }

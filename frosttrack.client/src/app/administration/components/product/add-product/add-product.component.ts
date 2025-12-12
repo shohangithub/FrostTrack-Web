@@ -10,7 +10,6 @@ import {
 } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
-import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { COMMON_STATUS_LIST } from 'app/common/data/settings-data';
@@ -221,9 +220,17 @@ export class AddProductComponent implements OnInit {
     if (this.register.valid) {
       this.isSubmitted = true;
       const formData = { ...form.value };
-      formData.categoryId = 1; //formData.productCategory?.value;
-      formData.defaultUnitId = formData.defaultUnit?.value;
-      const payload: IProductRequest = { ...formData };
+      const payload: IProductRequest = {
+        id: 0,
+        productName: formData.productName,
+        productCode: formData.productCode,
+        customBarcode: formData.customBarcode,
+        categoryId: 1, //formData.productCategory?.value,
+        defaultUnitId: formData.defaultUnit?.value,
+        imageUrl: formData.imageUrl,
+        bookingRate: formData.bookingRate,
+        isActive: formData.isActive,
+      };
 
       if (payload.productCode != this.generatedCode)
         this.toastr.error('Product code mismatched !');
@@ -252,9 +259,17 @@ export class AddProductComponent implements OnInit {
     if (this.editForm.valid) {
       this.isSubmitted = true;
       const formData = { ...form.value };
-      formData.categoryId = formData.productCategory?.value;
-      formData.defaultUnitId = formData.defaultUnit?.value;
-      const payload: IProductRequest = { ...formData };
+      const payload: IProductRequest = {
+        id: formData.id,
+        productName: formData.productName,
+        productCode: formData.productCode,
+        customBarcode: formData.customBarcode,
+        categoryId: 1, //formData.productCategory?.value,
+        defaultUnitId: formData.defaultUnit?.value,
+        imageUrl: formData.imageUrl,
+        bookingRate: formData.bookingRate,
+        isActive: formData.isActive,
+      };
 
       this.productService.update(formData.id, payload).subscribe({
         next: (response: IProductResponse) => {
