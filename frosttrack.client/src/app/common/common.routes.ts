@@ -13,6 +13,7 @@ import { AssetComponent } from './components/asset/asset.component';
 import { EmployeeComponent } from './components/employee/employee.component';
 import { PaymentMethodComponent } from './components/payment-method/payment-method.component';
 import { BankTransactionReportComponent } from './components/bank-transaction-report/bank-transaction-report.component';
+import { TransactionHeadComponent } from './components/transaction-head/transaction-head.component';
 
 export const COMMON_ROUTE: Route[] = [
   {
@@ -71,6 +72,10 @@ export const COMMON_ROUTE: Route[] = [
   {
     path: 'employee',
     component: EmployeeComponent,
+  },
+  {
+    path: 'transaction-head',
+    component: TransactionHeadComponent,
   },
   { path: '**', component: Page404Component },
 ];

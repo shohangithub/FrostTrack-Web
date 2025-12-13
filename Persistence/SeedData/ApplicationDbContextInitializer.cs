@@ -292,9 +292,91 @@ public class ApplicationDbContextInitializer
         #endregion
 
 
-        #region SET PRODUCT CATEGORIES
+        #region SET TRANSACTION HEADS
         var userId = _context.Users.Select(x => x.Id).FirstOrDefault();
 
+        if (!_context.TransactionHeads.Any())
+        {
+            var transactionHeads = new List<TransactionHead> {
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "BILL_COLLECTION",
+                Name = "Bill Collection",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "",
+                Description = "Money received from customers for cold storage services",
+                UsageFor = UsageFor.BILL_COLLECTION,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 1,
+                ColorCode = "#28a745",
+                IconClass = "fa-money-bill-wave",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "BOOKING_EXTRA_CHARGE",
+                Name = "Booking Extra Charge",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "",
+                UsageFor = UsageFor.BOOKING,
+                Description = "Additional charges for booking services",
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 2,
+                ColorCode = "#17a2b8",
+                IconClass = "fa-plus-circle",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "OFFICE_COST",
+                Name = "Office Cost",
+                Type = TransactionHeadTypes.DEBIT,
+                DisplayType = "",
+                UsageFor = UsageFor.TRANSACTION,
+                Description = "General office and administrative expenses",
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 3,
+                ColorCode = "#dc3545",
+                IconClass = "fa-building",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "SALARY",
+                Name = "Salary Payment",
+                Type = TransactionHeadTypes.DEBIT,
+                DisplayType = "",
+                UsageFor = UsageFor.SALARY,
+                Description = "Employee salary and wage payments",
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 7,
+                ColorCode = "#fd7e14",
+                IconClass = "fa-wallet",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId
+            }
+        };
+
+
+            _context.TransactionHeads.AddRange(transactionHeads);
+            await _context.SaveChangesAsync();
+        }
+        #endregion
+
+
+        #region SET PRODUCT CATEGORIES
+       
         if (!_context.ProductCategories.Any())
         {
             var categories = new List<ProductCategory>
@@ -345,7 +427,6 @@ public class ApplicationDbContextInitializer
             await _context.SaveChangesAsync();
         }
         #endregion
-
 
         #region SET DEFAULT CUSTOMERS
         if (!_context.Customers.Any())

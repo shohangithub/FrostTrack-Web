@@ -270,6 +270,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/common/transaction-head',
+        title: 'Transaction Head',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/common/customer',
         title: 'Customer',
         iconType: '',

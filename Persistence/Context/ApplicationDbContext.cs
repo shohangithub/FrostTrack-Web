@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Application.Contractors.Authentication;
 using Persistence.Converters;
+using Persistence.Configurations;
 
 namespace Persistence.Context;
 
@@ -58,6 +59,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PaymentMethod> PaymentMethods { get; set; }
     public DbSet<PrintSettings> PrintSettings { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<TransactionHead> TransactionHeads { get; set; }
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
 
@@ -397,6 +399,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.Property(x => x.AdjustmentValue).HasColumnType("decimal(18,2)");
             entity.Property(x => x.NetAmount).HasColumnType("decimal(18,2)");
         });
+
+        //// Apply TransactionHead configuration
+        //modelBuilder.ApplyConfiguration(new TransactionHeadConfiguration());
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
