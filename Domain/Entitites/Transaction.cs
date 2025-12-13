@@ -6,9 +6,9 @@ public class Transaction : AuditableEntity<Guid>
     public required string TransactionCode { get; set; }
     public required DateTime TransactionDate { get; set; }
 
-    public required string TransactionType { get; set; } // BILL_COLLECTION, OFFICE_COST, BILL_PAYMENT
-    public required string TransactionFlow { get; set; } // IN or OUT
-
+    // Transaction Head (replaces static TransactionType and TransactionFlow)
+    public Guid TransactionHeadId { get; set; }
+    public TransactionHead? TransactionHead { get; set; }
     // Polymorphic reference to source entity
     public required string EntityName { get; set; } // "Booking", "Vendor", "Expense", etc.
     public required string EntityId { get; set; } // Changed to string to support Guid
@@ -42,10 +42,6 @@ public class Transaction : AuditableEntity<Guid>
     public required string PaymentMethod { get; set; } // CASH, BANK_TRANSFER, CHEQUE, etc.
     public string? PaymentReference { get; set; } // Cheque/Transaction number
 
-    // Categorization
-    public string? Category { get; set; } // ELECTRIC_BILL, SALARY, RENT, etc.
-    public string? SubCategory { get; set; } // Additional classification
-
     // Description and notes
     public required string Description { get; set; }
     public string? Note { get; set; }
@@ -71,24 +67,6 @@ public class Transaction : AuditableEntity<Guid>
     public int? ArchivedById { get; set; }
 }
 
-public static class TransactionTypes
-{
-    public const string BILL_COLLECTION = "BILL_COLLECTION"; // Money IN from customers
-    public const string BOOKING_EXTRA_CHARGE = "BOOKING_EXTRA_CHARGE";
-    public const string OFFICE_COST = "OFFICE_COST"; // Money OUT for office expenses
-    public const string BILL_PAYMENT = "BILL_PAYMENT"; // Money OUT for vendor bills
-    public const string ADJUSTMENT = "ADJUSTMENT"; // IN/OUT adjustments
-    public const string REFUND = "REFUND"; // Money OUT refunds to customers
-    public const string SALARY = "SALARY"; // Money OUT for employee salaries   
-    public const string OTHER = "OTHER"; // Miscellaneous transactions
-}
-
-public static class TransactionFlows
-{
-    public const string IN = "IN";   // Money coming in
-    public const string OUT = "OUT"; // Money going out
-}
-
 public static class PaymentMethods
 {
     public const string CASH = "CASH";
@@ -99,31 +77,8 @@ public static class PaymentMethods
     public const string CREDIT = "CREDIT"; // Pay later
 }
 
-public static class ExpenseCategories
+public static class TransactionEntityNames
 {
-    // Utility Bills
-    public const string ELECTRIC_BILL = "ELECTRIC_BILL";
-    public const string WATER_BILL = "WATER_BILL";
-    public const string GAS_BILL = "GAS_BILL";
-    public const string INTERNET_BILL = "INTERNET_BILL";
-    public const string PHONE_BILL = "PHONE_BILL";
-
-    // Operational Expenses
-    public const string RENT = "RENT";
-    public const string SALARY = "SALARY";
-    public const string MAINTENANCE = "MAINTENANCE";
-    public const string OFFICE_SUPPLIES = "OFFICE_SUPPLIES";
-    public const string TRANSPORTATION = "TRANSPORTATION";
-    public const string CLEANING = "CLEANING";
-    public const string SECURITY = "SECURITY";
-
-    // Business Expenses
-    public const string MARKETING = "MARKETING";
-    public const string PROFESSIONAL_FEES = "PROFESSIONAL_FEES";
-    public const string INSURANCE = "INSURANCE";
-    public const string LICENSE_FEES = "LICENSE_FEES";
-    public const string TAX = "TAX";
-
-    // Other
-    public const string OTHER = "OTHER";
+    public const string BOOKING = "Booking";
+    public const string DELIVERY = "Delivery";
 }

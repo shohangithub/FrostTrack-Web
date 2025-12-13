@@ -29,7 +29,7 @@ public class TrialBalanceService : ITrialBalanceService
         CancellationToken cancellationToken)
     {
         // Fetch cash transactions
-        var transactionQuery = _transactionRepository.Query()
+        var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId
                      && t.TransactionDate >= startDate
                      && t.TransactionDate <= endDate
@@ -59,21 +59,19 @@ public class TrialBalanceService : ITrialBalanceService
 
         // Group cash transactions by type and calculate debits/credits
         var groupedTransactions = transactions
-            .GroupBy(t => new { t.TransactionType, t.Category })
+            .GroupBy(t => new { t.TransactionHead!.Name })
             .Select(g => new TrialBalanceItemResponse
             {
-                AccountName = string.IsNullOrEmpty(g.Key.Category)
-                    ? GetTransactionTypeName(g.Key.TransactionType)
-                    : g.Key.Category,
-                AccountType = g.Key.TransactionType,
-                DebitAmount = g.Where(t => t.TransactionFlow == "OUT")
+                AccountName = g.Key.Name,
+                AccountType = g.Key.Name,
+                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
                               .Sum(t => t.NetAmount),
-                CreditAmount = g.Where(t => t.TransactionFlow == "IN")
+                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
                                .Sum(t => t.NetAmount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(t => t.TransactionFlow == "IN")
+                Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
                            .Sum(t => t.NetAmount) -
-                          g.Where(t => t.TransactionFlow == "OUT")
+                          g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
                            .Sum(t => t.NetAmount)
             })
             .ToList();
@@ -115,22 +113,6 @@ public class TrialBalanceService : ITrialBalanceService
             EndDate = endDate,
             TotalTransactions = totalTransactionCount,
             Items = allItems
-        };
-    }
-
-    private static string GetTransactionTypeName(string transactionType)
-    {
-        return transactionType switch
-        {
-            TransactionTypes.BILL_COLLECTION => "Bill Collection",
-            TransactionTypes.BOOKING_EXTRA_CHARGE => "Booking Extra Charge",
-            TransactionTypes.OFFICE_COST => "Office Cost",
-            TransactionTypes.BILL_PAYMENT => "Bill Payment",
-            TransactionTypes.ADJUSTMENT => "Adjustment",
-            TransactionTypes.REFUND => "Refund",
-            TransactionTypes.SALARY => "Salary Payment",
-            TransactionTypes.OTHER => "Other",
-            _ => transactionType
         };
     }
 }

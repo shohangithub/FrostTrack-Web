@@ -12,11 +12,6 @@ internal class TransactionHeadValidator : AbstractValidator<TransactionHeadReque
         _repository = repository;
         _id = id;
 
-        RuleFor(x => x.Code)
-            .NotEmpty().WithMessage("Code is required")
-            .MaximumLength(100).WithMessage("Code cannot exceed 100 characters")
-            .MustAsync(BeUniqueCode).WithMessage("Code already exists");
-
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Name is required")
             .MaximumLength(200).WithMessage("Name cannot exceed 200 characters");

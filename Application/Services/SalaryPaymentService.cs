@@ -12,6 +12,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 {
     private readonly IRepository<Employee, int> _employeeRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly ITenantProvider _tenantProvider;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly CurrentUser _currentUser;
@@ -19,12 +20,14 @@ public class SalaryPaymentService : ISalaryPaymentService
     public SalaryPaymentService(
         IRepository<Employee, int> employeeRepository,
         IRepository<Transaction, Guid> transactionRepository,
+         IRepository<TransactionHead, Guid> transactionHeadRepository,
         ITenantProvider tenantProvider,
         DefaultValueInjector defaultValueInjector,
         IUserContextService userContextService)
     {
         _employeeRepository = employeeRepository;
         _transactionRepository = transactionRepository;
+        _transactionHeadRepository = transactionHeadRepository;
         _tenantProvider = tenantProvider;
         _defaultValueInjector = defaultValueInjector;
         _currentUser = userContextService.GetCurrentUser();
@@ -37,8 +40,8 @@ public class SalaryPaymentService : ISalaryPaymentService
             .Where(e => e.TenantId == tenantId && e.IsActive)
             .ToListAsync(cancellationToken);
 
-        var transactions = await _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY)
+        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == tenantId && t.TransactionHead!.UsageFor == UsageFor.SALARY)
             .ToListAsync(cancellationToken);
 
         var result = employees.Select(emp =>
@@ -83,20 +86,24 @@ public class SalaryPaymentService : ISalaryPaymentService
         var netAmount = request.BasicSalary + request.Bonus - request.Deduction;
         var period = $"{request.Month:D2}/{request.Year}";
 
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(th => th.TenantId == tenantId && th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
+        if (transactionHead == null)
+        {
+            throw new Exception("Salary Transaction Head not configured");
+        }
         // Create transaction
         var transaction = new Transaction
         {
             Id = Guid.NewGuid(),
             TransactionCode = nextCode,
             TransactionDate = DateTime.UtcNow,
-            TransactionType = TransactionTypes.SALARY,
-            TransactionFlow = TransactionFlows.OUT,
+            TransactionHeadId = transactionHead.Id,
             EntityName = "Employee",
             EntityId = employee.Id.ToString(),
             Amount = netAmount,
             NetAmount = netAmount,
             PaymentMethod = request.PaymentMethod,
-            Category = ExpenseCategories.SALARY,
             Description = $"Salary payment for {period}",
             Note = string.IsNullOrEmpty(request.Note) ? null : request.Note,
             BranchId = employee.BranchId ?? 1,
@@ -131,8 +138,8 @@ public class SalaryPaymentService : ISalaryPaymentService
     public async Task<IEnumerable<SalaryPaymentListResponse>> GetSalaryPaymentListAsync(CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantProvider.GetTenantId();
-        var transactions = await _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY)
+        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == tenantId && t.TransactionHead!.UsageFor == UsageFor.SALARY)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync(cancellationToken);
 
@@ -174,8 +181,8 @@ public class SalaryPaymentService : ISalaryPaymentService
         var tenantId = _tenantProvider.GetTenantId();
 
         // Build base query
-        var query = _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY && !t.IsDeleted);
+        var query = _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == tenantId && t.TransactionHead!.UsageFor == UsageFor.SALARY && !t.IsDeleted);
 
         // Apply employee filter
         if (employeeId.HasValue && employeeId.Value > 0)
@@ -289,8 +296,8 @@ public class SalaryPaymentService : ISalaryPaymentService
         CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantProvider.GetTenantId();
-        var query = _transactionRepository.Query()
-            .Where(t => t.TenantId == tenantId && t.TransactionType == TransactionTypes.SALARY);
+        var query = _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == tenantId && t.TransactionHead!.UsageFor == UsageFor.SALARY);
 
         if (employeeId.HasValue)
         {
@@ -341,9 +348,9 @@ public class SalaryPaymentService : ISalaryPaymentService
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1).AddDays(-1);
 
-        var transactions = await _transactionRepository.Query()
+        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TenantId == tenantId
-                && t.TransactionType == TransactionTypes.SALARY
+                && t.TransactionHead!.UsageFor == UsageFor.SALARY
                 && t.TransactionDate >= startDate
                 && t.TransactionDate <= endDate)
             .ToListAsync(cancellationToken);
@@ -384,12 +391,12 @@ public class SalaryPaymentService : ISalaryPaymentService
         };
     }
 
-    public async Task<SalaryPaymentResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<SalaryPaymentResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantProvider.GetTenantId();
-        var transaction = await _transactionRepository.GetByIdAsync(Guid.Parse(id.ToString()), cancellationToken);
+        var transaction = await _transactionRepository.GetByIdAsync(id, cancellationToken);
 
-        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != TransactionTypes.SALARY)
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionHead!.UsageFor != UsageFor.SALARY)
         {
             throw new Exception("Salary payment not found");
         }
@@ -441,9 +448,9 @@ public class SalaryPaymentService : ISalaryPaymentService
     public async Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantProvider.GetTenantId();
-        var transaction = await _transactionRepository.GetByIdAsync(transactionId, cancellationToken);
+        var transaction = _transactionRepository.Query().Include(t => t.TransactionHead).FirstOrDefault(t => t.Id == transactionId);
 
-        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionType != TransactionTypes.SALARY)
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionHead!.UsageFor != UsageFor.SALARY)
         {
             throw new Exception("Salary payment not found");
         }

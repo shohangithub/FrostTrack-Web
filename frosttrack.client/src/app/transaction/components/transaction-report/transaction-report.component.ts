@@ -14,6 +14,7 @@ import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
+import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-transaction-report',
@@ -40,6 +41,7 @@ export class TransactionReportComponent {
   totalOutflow = 0;
   netAmount = 0;
 
+  _TRANSACTION_TYPE = TRANSACTION_TYPE;
   transactionTypeOptions = [
     { value: '', text: 'All Types' },
     { value: 'BILL_COLLECTION', text: 'Bill Collection' },
@@ -117,13 +119,13 @@ export class TransactionReportComponent {
 
     if (filters.transactionType) {
       filtered = filtered.filter(
-        (t) => t.transactionType === filters.transactionType
+        (t) => t.transactionHead?.name === filters.transactionType
       );
     }
 
     if (filters.transactionFlow) {
       filtered = filtered.filter(
-        (t) => t.transactionFlow === filters.transactionFlow
+        (t) => t.transactionHead?.type === filters.transactionFlow
       );
     }
 
@@ -132,11 +134,11 @@ export class TransactionReportComponent {
 
   calculateTotals(): void {
     this.totalInflow = this.transactions
-      .filter((t) => t.transactionFlow === 'IN')
+      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.CREDIT)
       .reduce((sum, t) => sum + t.netAmount, 0);
 
     this.totalOutflow = this.transactions
-      .filter((t) => t.transactionFlow === 'OUT')
+      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.DEBIT)
       .reduce((sum, t) => sum + Math.abs(t.netAmount), 0);
 
     this.netAmount = this.totalInflow - this.totalOutflow;

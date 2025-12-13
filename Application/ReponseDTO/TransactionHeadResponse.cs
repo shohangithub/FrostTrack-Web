@@ -24,3 +24,9 @@ public record TransactionHeadListResponse(
     bool IsSystem,
     string Status
 );
+
+public record TransactionHeadLookup(
+    Guid Id,
+    string Name,
+    string Type
+);

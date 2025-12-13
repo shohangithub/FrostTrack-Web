@@ -215,9 +215,10 @@
                         <td class="info-label">Transaction Flow:</td>
                         <td class="info-value">
                           {{
-                            reportForm.get("transactionFlow")?.value === "IN"
-                              ? "Inflow (Money In)"
-                              : "Outflow (Money Out)"
+                            reportForm.get("transactionFlow")?.value ===
+                            _TRANSACTION_TYPE.CREDIT
+                              ? "CASH IN (Money In)"
+                              : "CASH OUT (Money Out)"
                           }}
                         </td>
                         } @else {
@@ -271,7 +272,7 @@
                           <td>
                             {{
                               getTransactionTypeLabel(
-                                transaction.transactionType
+                                transaction.transactionHead?.name || ""
                               )
                             }}
                           </td>
@@ -285,12 +286,13 @@
                             <span
                               [class]="
                                 'flow-badge ' +
-                                (transaction.transactionFlow === 'IN'
+                                (transaction.transactionHead?.type ===
+                                _TRANSACTION_TYPE.CREDIT
                                   ? 'flow-in'
                                   : 'flow-out')
                               "
                             >
-                              {{ transaction.transactionFlow }}
+                              {{ transaction.transactionHead?.type }}
                             </span>
                           </td>
                           <td class="text-end">

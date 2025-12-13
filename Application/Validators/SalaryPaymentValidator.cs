@@ -85,8 +85,8 @@ public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
     private async Task<bool> NotHaveDuplicatePayment(SalaryPaymentRequest request, CancellationToken cancellationToken)
     {
         var period = $"{request.Month:D2}/{request.Year}";
-        var exists = await _transactionRepository.Query()
-            .AnyAsync(x => x.TransactionType == TransactionTypes.SALARY &&
+        var exists = await _transactionRepository.Query().Include(x => x.TransactionHead)
+            .AnyAsync(x => x.TransactionHead!.UsageFor == UsageFor.SALARY &&
                           x.EntityId == request.EmployeeId.ToString() &&
                           x.Description.Contains(period) &&
                           !x.IsDeleted, cancellationToken);

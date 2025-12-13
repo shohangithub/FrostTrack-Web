@@ -26,6 +26,13 @@ public class TransactionHeadController : ControllerBase
     }
 
     [HttpGet]
+    [Route("TransactionLookup")]
+    public async Task<IEnumerable<TransactionHeadLookup>> GetTransactionLookup(CancellationToken cancellationToken)
+    {
+        return await _transactionHeadService.GetTransactionLookup(cancellationToken);
+    }
+
+    [HttpGet]
     [Route("get-with-pagination")]
     public async Task<PaginationResult<TransactionHeadListResponse>> GetWithPagination(
         [FromQuery] PaginationQuery requestQuery,

@@ -76,78 +76,62 @@
                 </div>
 
                 <div class="row">
-                  <!-- Transaction Type -->
+                  <!-- Transaction Head -->
                   <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
                       <label
-                        for="transactionType"
+                        for="transactionHead"
                         class="col-sm-4 col-form-label"
-                        >Transaction Type:<span class="text-danger"
+                        >Transaction Head:<span class="text-danger"
                           >*</span
                         ></label
                       >
                       <div class="col-sm-8">
-                        <select
-                          class="form-select form-control-sm"
-                          id="transactionType"
-                          formControlName="transactionType"
-                          [class.is-invalid]="
-                            transactionForm.get('transactionType')?.invalid &&
-                            transactionForm.get('transactionType')?.touched
-                          "
-                        >
-                          <option value="" selected disabled>
-                            Please select
-                          </option>
-                          @for (type of transactionTypes; track type.value) {
-                          <option [value]="type.value">
-                            {{ type.label }}
-                          </option>
-                          }
-                        </select>
-                        @if (transactionForm.get('transactionType')?.invalid &&
-                        transactionForm.get('transactionType')?.touched) {
+                        <div class="input-group input-group-select">
+                          <ng-select
+                            [items]="transactionHeads"
+                            bindLabel="name"
+                            formControlName="transactionHead"
+                            [loading]="transactionHeadLoading"
+                            placeholder="Select Transaction Head"
+                          >
+                          </ng-select>
+                          <div class="input-group-append">
+                            <button
+                              class="btn btn-primary fw-bold font-20"
+                              type="button"
+                              (click)="addTransactionHead()"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        @if (transactionForm.get('transactionHead')?.invalid &&
+                        transactionForm.get('transactionHead')?.touched) {
                         <small class="form-text text-danger">
-                          Transaction Type is required
+                          Transaction Head is required
                         </small>
                         }
                       </div>
                     </div>
                   </div>
 
-                  <!-- Transaction Flow (In/Out) -->
+                  <!-- Transaction Flow (In/Out) - Readonly -->
                   <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
                       <label
                         for="transactionFlow"
                         class="col-sm-4 col-form-label"
-                        >In/Out:<span class="text-danger">*</span></label
+                        >Type:</label
                       >
                       <div class="col-sm-8">
-                        <select
-                          class="form-select form-control-sm"
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
                           id="transactionFlow"
                           formControlName="transactionFlow"
-                          [class.is-invalid]="
-                            transactionForm.get('transactionFlow')?.invalid &&
-                            transactionForm.get('transactionFlow')?.touched
-                          "
-                        >
-                          <option value="" selected disabled>
-                            Please select
-                          </option>
-                          @for (flow of transactionFlows; track flow.value) {
-                          <option [value]="flow.value">
-                            {{ flow.label }}
-                          </option>
-                          }
-                        </select>
-                        @if (transactionForm.get('transactionFlow')?.invalid &&
-                        transactionForm.get('transactionFlow')?.touched) {
-                        <small class="form-text text-danger">
-                          Transaction Flow is required
-                        </small>
-                        }
+                          readonly
+                        />
                       </div>
                     </div>
                   </div>
@@ -206,7 +190,7 @@
                   <div class="col-12 text-end">
                     <button
                       type="button"
-                      class="btn btn-secondary"
+                      class="btn btn-light mx-2"
                       (click)="cancel()"
                       [disabled]="isSubmitted"
                     >
@@ -222,7 +206,7 @@
                     </button>
                     <button
                       type="button"
-                      class="btn btn-info mx-2"
+                      class="btn btn-success mx-2"
                       (click)="onSaveAndPrint()"
                       [disabled]="isSubmitted || transactionForm.invalid"
                     >

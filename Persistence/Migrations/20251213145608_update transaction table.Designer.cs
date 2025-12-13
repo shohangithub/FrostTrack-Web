@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Context;
 
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213145608_update transaction table")]
+    partial class updatetransactiontable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2096,6 +2099,9 @@ namespace Persistence.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("CreatedById")
                         .HasColumnType("int");
 
@@ -2151,6 +2157,9 @@ namespace Persistence.Migrations
                     b.Property<string>("PaymentReference")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SubCategory")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2161,8 +2170,14 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("TransactionFlow")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("TransactionHeadId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TransactionType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VendorContact")
                         .HasColumnType("nvarchar(max)");

@@ -13,11 +13,18 @@ import { TransactionService } from '../../services/transaction.service';
 import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
 import { CodeResponse } from '@core/models/code-response';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ModalOption } from 'app/config/modal-option';
+import { Subject } from 'rxjs';
+import { ITransactionHeadLookup } from 'app/common/models/transaction-head.interface';
+import { TransactionHeadService } from 'app/common/services/transaction-head.service';
+import { TransactionHeadComponent } from 'app/common/components/transaction-head/transaction-head.component';
 
 @Component({
   selector: 'app-transaction',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule],
   templateUrl: './transaction.component.html',
 })
 export class TransactionComponent implements OnInit {
@@ -30,20 +37,10 @@ export class TransactionComponent implements OnInit {
   private generatedCode: string = '';
   private savedTransactionId: string = '';
 
-  // Transaction Types with Pascal Case labels
-  transactionTypes = [
-    { value: 'BILL_COLLECTION', label: 'Bill Collection' },
-    { value: 'OFFICE_COST', label: 'Office Cost' },
-    { value: 'BILL_PAYMENT', label: 'Bill Payment' },
-    { value: 'ADJUSTMENT', label: 'Adjustment' },
-    { value: 'REFUND', label: 'Refund' },
-  ];
-
-  // Transaction Flows
-  transactionFlows = [
-    { value: 'IN', label: 'In' },
-    { value: 'OUT', label: 'Out' },
-  ];
+  transactionHeads: ITransactionHeadLookup[] = [];
+  transactionHeadLoading = false;
+  private transactionHeadSubject: Subject<string> = new Subject<string>();
+  private editableTransactionHeadId?: string;
 
   constructor(
     private fb: FormBuilder,
@@ -52,7 +49,9 @@ export class TransactionComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private transactionHeadService: TransactionHeadService,
+    private modalService: NgbModal
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -60,13 +59,28 @@ export class TransactionComponent implements OnInit {
   ngOnInit(): void {
     this.selectedBranch = this.authService.currentBranchId;
     this.initForm();
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditing = true;
-      this.loadTransaction(id);
+      // Fetch transaction heads first, then load transaction
+      this.fetchTransactionHeads(() => {
+        this.loadTransaction(id);
+      });
     } else {
+      this.fetchTransactionHeads();
       this.generateCode();
     }
+
+    this.transactionHeadSubject.subscribe((value: string) => {
+      const selectedHead = this.transactionHeads.find((x) => x.id === value);
+      if (selectedHead) {
+        this.transactionForm.patchValue({
+          transactionHead: selectedHead,
+          transactionFlow: selectedHead.type,
+        });
+      }
+    });
   }
 
   initForm(): void {
@@ -74,12 +88,61 @@ export class TransactionComponent implements OnInit {
       id: ['00000000-0000-0000-0000-000000000000'],
       transactionCode: ['', [Validators.required]],
       transactionDate: [new Date().systemFormat(), [Validators.required]],
-      transactionType: ['', [Validators.required]],
-      transactionFlow: ['', [Validators.required]],
+      transactionHead: [null, [Validators.required]],
+      transactionFlow: [''],
       branchId: [this.selectedBranch, [Validators.required]],
       amount: [null, [Validators.required, Validators.min(0)]],
       note: [''],
     });
+
+    // Watch for transactionHead changes to auto-populate transactionFlow
+    this.transactionForm
+      .get('transactionHead')
+      ?.valueChanges.subscribe((value) => {
+        if (value && value.type) {
+          this.transactionForm.patchValue(
+            {
+              transactionFlow: value.type,
+            },
+            { emitEvent: false }
+          );
+        }
+      });
+  }
+
+  fetchTransactionHeads(callback?: () => void): void {
+    this.transactionHeadLoading = true;
+    this.transactionHeadService.getTransactionLookup().subscribe({
+      next: (data) => {
+        this.transactionHeads = data;
+        this.transactionHeadLoading = false;
+        if (callback) {
+          callback();
+        }
+      },
+      error: () => {
+        this.transactionHeadLoading = false;
+      },
+    });
+  }
+
+  addTransactionHead(): void {
+    const modalRef = this.modalService.open(
+      TransactionHeadComponent,
+      ModalOption.xl
+    );
+    modalRef.result.then(
+      (result: string) => {
+        if (result) {
+          this.editableTransactionHeadId = result;
+          this.fetchTransactionHeads();
+          setTimeout(() => {
+            this.transactionHeadSubject.next(result);
+          }, 300);
+        }
+      },
+      () => {}
+    );
   }
 
   generateCode(): void {
@@ -102,12 +165,18 @@ export class TransactionComponent implements OnInit {
     this.transactionService.getById(id).subscribe({
       next: (transaction) => {
         this.generatedCode = transaction.transactionCode;
+
+        // Find the transaction head by matching the transactionHeadId
+        const transactionHead = this.transactionHeads.find(
+          (th) => th.id === transaction.transactionHeadId
+        );
+
         this.transactionForm.patchValue({
           id: transaction.id,
           transactionCode: transaction.transactionCode,
           transactionDate: new Date(transaction.transactionDate).systemFormat(),
-          transactionType: transaction.transactionType,
-          transactionFlow: transaction.transactionFlow,
+          transactionHead: transactionHead || null,
+          transactionFlow: transactionHead?.type || '',
           branchId: transaction.branchId,
           amount: Math.abs(transaction.amount), // Show as positive in form
           note: transaction.note || '',
@@ -139,13 +208,17 @@ export class TransactionComponent implements OnInit {
     this.isSubmitted = true;
 
     const payload = {
-      ...formValue,
+      id: formValue.id,
+      transactionCode: formValue.transactionCode,
+      transactionHeadId: formValue.transactionHead?.id,
+      transactionDate: formValue.transactionDate,
+      branchId: formValue.branchId,
+      amount: formValue.amount,
+      note: formValue.note,
       paymentMethod: 'CASH', // Default to CASH
       entityName: 'GENERAL',
       entityId: '00000000-0000-0000-0000-000000000000',
-      description: `${this.getTransactionTypeLabel(
-        formValue.transactionType
-      )} - ${this.getTransactionFlowLabel(formValue.transactionFlow)}`,
+      description: `${formValue.transactionHead?.name} - ${formValue.transactionFlow}`,
       discountAmount: 0,
       adjustmentValue: 0,
     };
@@ -184,13 +257,17 @@ export class TransactionComponent implements OnInit {
     this.isSubmitted = true;
 
     const payload = {
-      ...formValue,
+      id: formValue.id,
+      transactionCode: formValue.transactionCode,
+      transactionHeadId: formValue.transactionHead?.id,
+      transactionDate: formValue.transactionDate,
+      branchId: formValue.branchId,
+      amount: formValue.amount,
+      note: formValue.note,
       paymentMethod: 'CASH', // Default to CASH
       entityName: 'GENERAL',
       entityId: '00000000-0000-0000-0000-000000000000',
-      description: `${this.getTransactionTypeLabel(
-        formValue.transactionType
-      )} - ${this.getTransactionFlowLabel(formValue.transactionFlow)}`,
+      description: `${formValue.transactionHead?.name} - ${formValue.transactionFlow}`,
       discountAmount: 0,
       adjustmentValue: 0,
     };
@@ -213,16 +290,6 @@ export class TransactionComponent implements OnInit {
         this.isSubmitted = false;
       },
     });
-  }
-
-  getTransactionTypeLabel(value: string): string {
-    const type = this.transactionTypes.find((t) => t.value === value);
-    return type ? type.label : value;
-  }
-
-  getTransactionFlowLabel(value: string): string {
-    const flow = this.transactionFlows.find((f) => f.value === value);
-    return flow ? flow.label : value;
   }
 
   cancel(): void {

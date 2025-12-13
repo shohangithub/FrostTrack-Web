@@ -8,6 +8,7 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<DeliveryDetail, Guid> _detailRepository;
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly ITransactionService _transactionService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
@@ -21,6 +22,7 @@ public class DeliveryService : IDeliveryService
         IRepository<DeliveryDetail, Guid> detailRepository,
         IRepository<UnitConversion, int> unitConversionRepository,
         IRepository<Transaction, Guid> transactionRepository,
+        IRepository<TransactionHead, Guid> transactionHeadRepository,
         ITransactionService transactionService,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
@@ -32,6 +34,7 @@ public class DeliveryService : IDeliveryService
         _detailRepository = detailRepository;
         _unitConversionRepository = unitConversionRepository;
         _transactionRepository = transactionRepository;
+        _transactionHeadRepository = transactionHeadRepository;
         _transactionService = transactionService;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
@@ -86,13 +89,19 @@ public class DeliveryService : IDeliveryService
                 .Include(b => b.Customer)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId);
 
+            // Get BILL_COLLECTION transaction head
+            var transactionHead = await _transactionHeadRepository.Query()
+                .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.CREDIT && th.UsageFor == UsageFor.BILL_COLLECTION && th.IsActive);
+            
+            if (transactionHead == null)
+                throw new Exception("BILL_COLLECTION transaction head not found");
+
             var transactionRequest = new TransactionRequest(
                 Id: Guid.NewGuid(),
                 TransactionCode: CodeGenerator.GenerateTransactionCode("DEL"),
                 TransactionDate: DateTime.UtcNow,
-                TransactionType: TransactionTypes.BILL_COLLECTION,
-                TransactionFlow: TransactionFlows.IN,
-                EntityName: "Delivery",
+                TransactionHeadId: transactionHead.Id,
+                EntityName: TransactionEntityNames.DELIVERY,
                 EntityId: entity.Id.ToString(),
                 BranchId: entity.BranchId,
                 CustomerId: booking?.CustomerId,
@@ -619,9 +628,9 @@ public class DeliveryService : IDeliveryService
             return 0;
 
         // Sum up all bill collection transactions for these deliveries
-        var totalPaid = await _transactionRepository.Query()
-            .Where(t => t.TransactionType ==  TransactionTypes.BILL_COLLECTION
-                     && t.EntityName == "Delivery"
+        var totalPaid = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BILL_COLLECTION
+                     && t.EntityName == TransactionEntityNames.DELIVERY
                      && deliveries.Contains(t.EntityId))
             .SumAsync(t => t.Amount);
 
@@ -718,8 +727,8 @@ public class DeliveryService : IDeliveryService
         }).ToList();
 
         // Sum up all bill collection transactions for these deliveries
-        var totalPaid = await _transactionRepository.Query()
-            .Where(t => t.TransactionType ==  TransactionTypes.BILL_COLLECTION
+        var totalPaid = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BILL_COLLECTION
                      && t.BookingId == entity.BookingId
                      && t.TransactionDate <= entity.DeliveryDate.AddMinutes(1))
             .SumAsync(t => t.Amount);
@@ -728,8 +737,8 @@ public class DeliveryService : IDeliveryService
         response.TotalPaidAmount = totalPaid;
 
         // Sum up all extra charge transactions for this booking
-        var totalExtraCharge = await _transactionRepository.Query()
-            .Where(t => t.TransactionType ==  TransactionTypes.BOOKING_EXTRA_CHARGE
+        var totalExtraCharge = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BOOKING_EXTRA_CHARGE
                      && t.BookingId == entity.BookingId
                      && t.TransactionDate <= entity.DeliveryDate)
             .SumAsync(t => t.Amount);

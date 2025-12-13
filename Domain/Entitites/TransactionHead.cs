@@ -54,6 +54,7 @@ public static class UsageFor
     public const string TRANSACTION = "TRANSACTION"; // Generic money IN/OUT
     public const string BANK_TRANSACTION = "BANK_TRANSACTION"; // Money IN/OUT via bank
     public const string BOOKING = "BOOKING"; // Money IN from bookings
+    public const string BOOKING_EXTRA_CHARGE = "BOOKING_EXTRA_CHARGE"; // Money IN from bookings
     public const string DELEVERY = "DELEVERY"; // Money IN from delevery payments
      public const string SALARY = "SALARY";
     // public const string OFFICE_COST = "OFFICE_COST  "; // Money OUT for office expenses

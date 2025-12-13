@@ -36,12 +36,12 @@ public class TransactionController : ControllerBase
 
         if (!string.IsNullOrEmpty(transactionType))
         {
-            result = result.Where(t => t.TransactionType == transactionType);
+            result = result.Where(t => t.TransactionHead.Type == transactionType);
         }
 
         if (!string.IsNullOrEmpty(transactionFlow))
         {
-            result = result.Where(t => t.TransactionFlow == transactionFlow);
+            result = result.Where(t => t.TransactionHead.Type == transactionFlow );
         }
 
         return Ok(result);

@@ -50,6 +50,19 @@ export const DEFAULT_CURRENCY_LIST = [
   { id: 'JPY', value: 'Japanese Yen', symbol: '¥' },
 ];
 
+export const TRANSACTION_TYPE = { DEBIT: 'DEBIT', CREDIT: 'CREDIT' };
+export const TRANSACTION_TYPE_LIST = [
+  { id: 'DEBIT', value: 'DEBIT' },
+  { id: 'CREDIT', value: 'CREDIT' },
+];
+
+export const DISPLAY_TYPE_LIST = [
+  { id: 'OUT', value: 'OUT', type: 'DEBIT' },
+  { id: 'EXPENSE', value: 'EXPENSE', type: 'DEBIT' },
+  { id: 'IN', value: 'IN', type: 'CREDIT' },
+  { id: 'INCOME', value: 'INCOME', type: 'CREDIT' },
+];
+
 export const DEFAULT_PAYMENT_METHOD_TYPE = [
   {
     value: 'Cash',

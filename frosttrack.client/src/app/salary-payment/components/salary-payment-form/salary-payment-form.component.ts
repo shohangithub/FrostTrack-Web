@@ -21,10 +21,7 @@ import {
 } from '@swimlane/ngx-datatable';
 import { PaginationQuery } from '@core/models/pagination-query';
 import { DefaultPagination } from '@config/pagination';
-import {
-  PaymentMethod,
-  TransactionType,
-} from 'app/transaction/models/transaction.interface';
+import { PaymentMethod } from 'app/transaction/models/transaction.interface';
 
 @Component({
   selector: 'app-salary-payment-form',
@@ -142,7 +139,6 @@ export class SalaryPaymentFormComponent implements OnInit {
   }
 
   onEmployeeChange(event: any): void {
-    debugger;
     const employee = event;
     if (employee) {
       this.selectedEmployee = employee;

@@ -19,26 +19,13 @@
   <!-- Add Record Modal Window -->
   <form class="register-form" [formGroup]="register" (ngSubmit)="add(register)">
     <div class="row">
-      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-        <label>Code <span class="text-danger">*</span></label>
-        <input
-          type="text"
-          class="form-control form-control-sm"
-          formControlName="code"
-          placeholder="e.g., BONUS"
-          required
-        />
-        @if (!register.get('code')?.valid && register.get('code')?.touched) {
-        <small class="form-text text-danger"> Code is required </small>
-        }
-      </div>
-      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
         <label>Name <span class="text-danger">*</span></label>
         <input
           type="text"
           class="form-control form-control-sm"
           formControlName="name"
-          placeholder="e.g., Bonus Payment"
+          placeholder="e.g. Office Rent"
           required
         />
         @if (!register.get('name')?.valid && register.get('name')?.touched) {
@@ -63,8 +50,10 @@
       </div>
       <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
         <label>Display Type</label>
-        <select class="form-select form-control-sm"
-                formControlName="displayType">
+        <select
+          class="form-select form-control-sm"
+          formControlName="displayType"
+        >
           <option value="" selected>Select</option>
           @for (displayType of displayTypeList; track displayType) {
           <option [value]="displayType.id">
@@ -152,16 +141,7 @@
     </div>
 
     <div class="row">
-      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-        <label>Code <span class="text-danger">*</span></label>
-        <input
-          type="text"
-          class="form-control form-control-sm"
-          formControlName="code"
-          readonly
-        />
-      </div>
-      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
         <label>Name <span class="text-danger">*</span></label>
         <input
           type="text"
@@ -191,8 +171,10 @@
       </div>
       <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
         <label>Display Type</label>
-        <select class="form-select form-control-sm"
-                formControlName="displayType">
+        <select
+          class="form-select form-control-sm"
+          formControlName="displayType"
+        >
           <option value="" selected>Select</option>
           @for (displayType of displayTypeList; track displayType) {
           <option [value]="displayType.id">

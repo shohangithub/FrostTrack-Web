@@ -4,8 +4,7 @@ public record TransactionRequest(
     Guid Id,
     string TransactionCode,
     DateTime TransactionDate,
-    string TransactionType,
-    string TransactionFlow,
+    Guid TransactionHeadId, // References TransactionHead table
     int BranchId,
     decimal Amount,
     string? Note,

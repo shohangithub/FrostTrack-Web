@@ -17,6 +17,7 @@ import { Subject } from 'rxjs';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
+import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-transaction-receipt-print',
@@ -42,6 +43,7 @@ export class TransactionReceiptPrintComponent implements OnInit {
   isTransactionLoading = false;
   transactionId: string = '';
   backUrl: string | null = null;
+  _TRANSACTION_TYPE = TRANSACTION_TYPE;
   isPrintFromRoute = false;
   criteriaForm: UntypedFormGroup = this.fb.group({
     transactionId: [null, [Validators.required]],
@@ -125,17 +127,6 @@ export class TransactionReceiptPrintComponent implements OnInit {
     this.router.navigate([
       `/transaction/${this.backUrl}` || '/transaction/list',
     ]);
-  }
-
-  getTransactionTypeLabel(type: string): string {
-    const types: { [key: string]: string } = {
-      BILL_COLLECTION: 'Bill Collection',
-      OFFICE_COST: 'Office Cost',
-      BILL_PAYMENT: 'Bill Payment',
-      ADJUSTMENT: 'Adjustment',
-      REFUND: 'Refund',
-    };
-    return types[type] || type;
   }
 
   getPaymentMethodLabel(method: string): string {

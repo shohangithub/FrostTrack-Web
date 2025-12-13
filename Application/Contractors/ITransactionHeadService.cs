@@ -13,4 +13,5 @@ public interface ITransactionHeadService
     Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<TransactionHead, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TransactionHeadLookup>> GetTransactionLookup(CancellationToken cancellationToken = default);
 }

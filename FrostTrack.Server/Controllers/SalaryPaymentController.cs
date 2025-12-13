@@ -93,7 +93,7 @@ public class SalaryPaymentController : ControllerBase
     /// Get salary payment by ID
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _salaryPaymentService.GetByIdAsync(id, cancellationToken);
         return Ok(result);

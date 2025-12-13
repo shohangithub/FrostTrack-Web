@@ -1,6 +1,5 @@
 export interface ITransactionHeadListResponse {
   id: number;
-  code: string;
   name: string;
   type: string;
   displayType: string;
@@ -10,7 +9,6 @@ export interface ITransactionHeadListResponse {
 
 export interface ITransactionHeadResponse {
   id: number;
-  code: string;
   name: string;
   type: string;
   displayType: string;
@@ -24,7 +22,6 @@ export interface ITransactionHeadResponse {
 }
 
 export interface ITransactionHeadRequest {
-  code: string;
   name: string;
   type: string;
   displayType: string;
@@ -33,4 +30,11 @@ export interface ITransactionHeadRequest {
   isActive: boolean;
   colorCode?: string;
   iconClass?: string;
+}
+
+export interface ITransactionHeadLookup {
+  id: string;
+  name: string;
+  type: string;
+  displayType: string;
 }

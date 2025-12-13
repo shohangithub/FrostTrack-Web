@@ -49,7 +49,7 @@ public class DashboardService : IDashboardService
                 && x.DeliveryDate >= startDate 
                 && x.DeliveryDate <= endDate);
 
-        var transactionsQuery = _transactionRepository.Query()
+        var transactionsQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(x => x.TenantId == _tenantId 
                 && x.TransactionDate >= startDate 
                 && x.TransactionDate <= endDate);
@@ -75,18 +75,18 @@ public class DashboardService : IDashboardService
             .SumAsync(d => (decimal)d.DeliveryQuantity * d.BookingDetail!.BookingRate, cancellationToken);
 
         // Get bill collection statistics (from transactions with BILL_COLLECTION type)
-        var billCollectionQuery = transactionsQuery.Where(x => x.TransactionType == TransactionTypes.BILL_COLLECTION);
+        var billCollectionQuery = transactionsQuery.Where(x => x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION);
         var totalBillCollections = await billCollectionQuery.CountAsync(cancellationToken);
         var totalBillCollectionAmount = await billCollectionQuery
             .SumAsync(bc => bc.NetAmount, cancellationToken);
 
         // Get revenue from transactions (IN flow = revenue, OUT flow = expense)
         var revenueTransactions = await transactionsQuery
-            .Where(x => x.TransactionFlow == TransactionFlows.IN)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .SumAsync(x => x.NetAmount, cancellationToken);
 
         var expenseTransactions = await transactionsQuery
-            .Where(x => x.TransactionFlow == TransactionFlows.OUT)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .SumAsync(x => Math.Abs(x.NetAmount), cancellationToken);
 
         var netRevenue = revenueTransactions - expenseTransactions;
@@ -151,7 +151,7 @@ public class DashboardService : IDashboardService
         
         // Revenue trend (IN transactions)
         var revenueTrend = transactions
-            .Where(t => t.TransactionFlow == TransactionFlows.IN)
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .GroupBy(t => t.TransactionDate.Date)
             .Select(g => new DailyTrendData(g.Key, g.Sum(x => x.NetAmount), g.Count()))
             .OrderBy(d => d.Date)
@@ -159,7 +159,7 @@ public class DashboardService : IDashboardService
 
         // Expense trend (OUT transactions)
         var expenseTrend = transactions
-            .Where(t => t.TransactionFlow == TransactionFlows.OUT)
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .GroupBy(t => t.TransactionDate.Date)
             .Select(g => new DailyTrendData(g.Key, Math.Abs(g.Sum(x => x.NetAmount)), g.Count()))
             .OrderBy(d => d.Date)
@@ -205,10 +205,9 @@ public class DashboardService : IDashboardService
         // Transaction category trends (for stacked bar chart)
         var categoryTrends = new Dictionary<string, List<decimal>>();
         var transactionTypes = new[] { 
-            TransactionTypes.BILL_COLLECTION, 
-            TransactionTypes.BILL_PAYMENT, 
-            TransactionTypes.SALARY, 
-            TransactionTypes.OFFICE_COST 
+            UsageFor.BILL_COLLECTION, 
+            UsageFor.SALARY, 
+            UsageFor.TRANSACTION 
         };
 
         // Group data by date intervals for better visualization
@@ -220,7 +219,7 @@ public class DashboardService : IDashboardService
             foreach (var dateGroup in groupedDates)
             {
                 var amount = transactions
-                    .Where(t => t.TransactionType == type 
+                    .Where(t => t.TransactionHead!.UsageFor == type 
                         && t.TransactionDate >= dateGroup.Start 
                         && t.TransactionDate < dateGroup.End)
                     .Sum(t => Math.Abs(t.NetAmount));

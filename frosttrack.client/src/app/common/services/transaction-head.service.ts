@@ -9,6 +9,7 @@ import {
   ITransactionHeadListResponse,
   ITransactionHeadRequest,
   ITransactionHeadResponse,
+  ITransactionHeadLookup,
 } from '../models/transaction-head.interface';
 import { ILookup } from '../../core/models/lookup';
 import { BaseService } from '../../core/service/base.service';
@@ -85,6 +86,13 @@ export class TransactionHeadService extends BaseService {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
       'Load Transaction Heads Lookup'
+    );
+  }
+
+  getTransactionLookup(): Observable<ITransactionHeadLookup[]> {
+    return this.get<ITransactionHeadLookup[]>(
+      this.path + `/TransactionLookup`,
+      'Load Transaction Lookup'
     );
   }
 }

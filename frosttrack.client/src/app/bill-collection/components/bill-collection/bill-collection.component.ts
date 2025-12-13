@@ -13,11 +13,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TransactionService } from 'app/transaction/services/transaction.service';
 import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
-import {
-  ITransactionRequest,
-  TransactionType,
-  TransactionFlow,
-} from 'app/transaction/models/transaction.interface';
+import { ITransactionRequest } from 'app/transaction/models/transaction.interface';
 import { BillCollectionService } from '../../services/bill-collection.service';
 import { IBookingWithDueResponse } from '../../models/bill-collection.interface';
 
@@ -213,8 +209,7 @@ export class BillCollectionComponent implements OnInit {
     const payload: ITransactionRequest = {
       id: this.isEditing ? formValue.id : undefined,
       transactionCode: formValue.transactionCode,
-      transactionType: TransactionType.BILL_COLLECTION,
-      transactionFlow: TransactionFlow.IN,
+      transactionHeadId: '00000000-0000-0000-0000-000000000000', // Assuming a default head for bill collection
       customerId: this.selectedBooking?.customerId,
       transactionDate: formValue.transactionDate,
       branchId: formValue.branchId,
@@ -277,9 +272,8 @@ export class BillCollectionComponent implements OnInit {
     const payload: ITransactionRequest = {
       id: this.isEditing ? formValue.id : undefined,
       transactionCode: formValue.transactionCode,
-      transactionType: TransactionType.BILL_COLLECTION,
-      transactionFlow: TransactionFlow.IN,
       transactionDate: formValue.transactionDate,
+      transactionHeadId: '00000000-0000-0000-0000-000000000000', // Assuming a default head for bill collection
       branchId: formValue.branchId,
       bookingId: formValue.bookingId,
       amount: formValue.amount,

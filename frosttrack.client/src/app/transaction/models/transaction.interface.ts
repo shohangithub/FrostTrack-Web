@@ -1,17 +1,4 @@
-export enum TransactionType {
-  BILL_COLLECTION = 'BILL_COLLECTION',
-  OFFICE_COST = 'OFFICE_COST',
-  BILL_PAYMENT = 'BILL_PAYMENT',
-  ADJUSTMENT = 'ADJUSTMENT',
-  REFUND = 'REFUND',
-  SALARY = 'SALARY',
-  OTHER = 'OTHER',
-}
-
-export enum TransactionFlow {
-  IN = 'IN',
-  OUT = 'OUT',
-}
+import { ITransactionHeadLookup } from 'app/common/models/transaction-head.interface';
 
 export enum PaymentMethod {
   CASH = 'CASH',
@@ -22,33 +9,12 @@ export enum PaymentMethod {
   OTHER = 'OTHER',
 }
 
-export enum ExpenseCategory {
-  RENT = 'RENT',
-  UTILITIES = 'UTILITIES',
-  SALARIES = 'SALARIES',
-  TRANSPORTATION = 'TRANSPORTATION',
-  OFFICE_SUPPLIES = 'OFFICE_SUPPLIES',
-  MAINTENANCE = 'MAINTENANCE',
-  FUEL = 'FUEL',
-  INSURANCE = 'INSURANCE',
-  TAX = 'TAX',
-  COMMISSION = 'COMMISSION',
-  ADVERTISING = 'ADVERTISING',
-  TELECOMMUNICATION = 'TELECOMMUNICATION',
-  EQUIPMENT = 'EQUIPMENT',
-  PROFESSIONAL_FEES = 'PROFESSIONAL_FEES',
-  MEALS_ENTERTAINMENT = 'MEALS_ENTERTAINMENT',
-  TRAVEL = 'TRAVEL',
-  MISCELLANEOUS = 'MISCELLANEOUS',
-  OTHER = 'OTHER',
-}
-
 export interface ITransactionListResponse {
   id: string;
   transactionCode: string;
   transactionDate: Date | string;
-  transactionType: string;
-  transactionFlow: string;
+  transactionHeadId: string;
+  transactionHead: ITransactionHeadLookup | null;
   branchId: number;
   branchName: string;
   customerId?: number | null;
@@ -63,8 +29,7 @@ export interface ITransactionListResponse {
 export interface ITransactionRequest {
   id?: string;
   transactionCode: string;
-  transactionType: TransactionType;
-  transactionFlow: TransactionFlow;
+  transactionHeadId: string;
   transactionDate: Date | string;
   branchId: number;
   amount: number;
@@ -78,8 +43,6 @@ export interface ITransactionRequest {
   adjustmentValue?: number;
   paymentMethod?: PaymentMethod | string;
   paymentReference?: string;
-  category?: ExpenseCategory | string;
-  subCategory?: string;
   description?: string;
   vendorName?: string;
   vendorContact?: string;

@@ -17,7 +17,11 @@ import {
   formatErrorMessage,
 } from 'app/utils/server-error-handler';
 
-import { COMMON_STATUS_LIST } from 'app/common/data/settings-data';
+import {
+  COMMON_STATUS_LIST,
+  DISPLAY_TYPE_LIST,
+  TRANSACTION_TYPE_LIST,
+} from 'app/common/data/settings-data';
 import { TransactionHeadService } from '../../../services/transaction-head.service';
 import {
   ITransactionHeadRequest,
@@ -49,18 +53,8 @@ export class AddTransactionHeadComponent implements OnInit {
   isLoading = false;
   isSubmitted = false;
   statusList = COMMON_STATUS_LIST;
-
-  typeList = [
-    { id: 'DEBIT', value: 'DEBIT' },
-    { id: 'CREDIT', value: 'CREDIT' },
-  ];
-
-  displayTypeList = [
-    { id: 'OUT', value: 'OUT', type: 'DEBIT' },
-    { id: 'EXPENSE', value: 'EXPENSE', type: 'DEBIT' },
-    { id: 'IN', value: 'IN', type: 'CREDIT' },
-    { id: 'INCOME', value: 'INCOME', type: 'CREDIT' },
-  ];
+  typeList = TRANSACTION_TYPE_LIST;
+  displayTypeList = DISPLAY_TYPE_LIST;
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -70,7 +64,6 @@ export class AddTransactionHeadComponent implements OnInit {
   ) {
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
-      code: new UntypedFormControl(),
       name: new UntypedFormControl(),
       type: new UntypedFormControl(),
       displayType: new UntypedFormControl(),
@@ -91,7 +84,6 @@ export class AddTransactionHeadComponent implements OnInit {
 
   initFormData() {
     this.register = this.fb.group({
-      code: ['', [Validators.required]],
       name: ['', [Validators.required]],
       type: ['DEBIT', [Validators.required]],
       displayType: [''],
@@ -109,7 +101,6 @@ export class AddTransactionHeadComponent implements OnInit {
       next: (response: ITransactionHeadResponse) => {
         this.editForm.setValue({
           id: response.id,
-          code: response.code,
           name: response.name,
           type: response.type,
           displayType: response.displayType,
@@ -152,7 +143,6 @@ export class AddTransactionHeadComponent implements OnInit {
       this.isSubmitted = true;
       const formData = form.value;
       const payload: ITransactionHeadRequest = {
-        code: formData.code,
         name: formData.name,
         type: formData.type,
         displayType: formData.displayType,

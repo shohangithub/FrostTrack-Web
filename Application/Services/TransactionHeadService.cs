@@ -1,3 +1,5 @@
+using Application.Contractors;
+
 namespace Application.Services;
 
 public class TransactionHeadService : ITransactionHeadService
@@ -17,6 +19,7 @@ public class TransactionHeadService : ITransactionHeadService
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var entity = request.Adapt<TransactionHead>();
+        entity.Code = CodeGenerator.GenerateTransactionCode("TH");    
         entity.UsageFor = UsageFor.TRANSACTION;
         entity.IsSystem = false; // User-created heads are not system heads
         _defaultValueInjector.InjectCreatingAudit<TransactionHead, Guid>(entity);
@@ -61,6 +64,17 @@ public class TransactionHeadService : ITransactionHeadService
             .Select(x => new Lookup<Guid>(x.Id, x.Name))
             .ToListAsync(cancellationToken);
         return result;
+    }
+
+    public async Task<IEnumerable<TransactionHeadLookup>> GetTransactionLookup(CancellationToken cancellationToken = default)
+    {
+        return await _repository.Query()
+            .Where(x => x.UsageFor == UsageFor.TRANSACTION && x.IsActive)
+            .Select(x => new TransactionHeadLookup(
+                x.Id,
+                x.Name,
+                !string.IsNullOrEmpty(x.DisplayType) ? x.DisplayType : x.Type
+            )).ToListAsync(cancellationToken);
     }
 
     public async Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default)

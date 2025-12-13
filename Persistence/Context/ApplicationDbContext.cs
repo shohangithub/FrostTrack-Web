@@ -398,6 +398,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.Property(x => x.DiscountAmount).HasColumnType("decimal(18,2)");
             entity.Property(x => x.AdjustmentValue).HasColumnType("decimal(18,2)");
             entity.Property(x => x.NetAmount).HasColumnType("decimal(18,2)");
+
+            // Configure TransactionHead foreign key
+            entity.HasOne(x => x.TransactionHead)
+                  .WithMany()
+                  .HasForeignKey(x => x.TransactionHeadId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         //// Apply TransactionHead configuration

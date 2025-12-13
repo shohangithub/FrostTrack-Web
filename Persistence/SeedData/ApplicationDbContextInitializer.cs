@@ -193,6 +193,7 @@ public class ApplicationDbContextInitializer
         new ApplicationUser
         {
             UserName = user,
+            Name = user.ToUpper(),
             NormalizedUserName = user.ToUpper(),
             Email = user,
             NormalizedEmail = user.ToUpper(),
@@ -204,6 +205,7 @@ public class ApplicationDbContextInitializer
         new ApplicationUser
         {
             UserName = "john.doe@company.com",
+            Name = "JOHN DOE",
             NormalizedUserName = "JOHN.DOE@COMPANY.COM",
             Email = "john.doe@company.com",
             NormalizedEmail = "JOHN.DOE@COMPANY.COM",
@@ -215,6 +217,7 @@ public class ApplicationDbContextInitializer
         new ApplicationUser
         {
             UserName = "jane.smith@company.com",
+            Name = "JANE SMITH",
             NormalizedUserName = "JANE.SMITH@COMPANY.COM",
             Email = "jane.smith@company.com",
             NormalizedEmail = "JANE.SMITH@COMPANY.COM",
@@ -226,6 +229,7 @@ public class ApplicationDbContextInitializer
         new ApplicationUser
         {
             UserName = "mark.jones@company.com",
+            Name = "MARK JONES",
             NormalizedUserName = "MARK.JONES@COMPANY.COM",
             Email = "mark.jones@company.com",
             NormalizedEmail = "MARK.JONES@COMPANY.COM",
@@ -237,6 +241,7 @@ public class ApplicationDbContextInitializer
         new ApplicationUser
         {
             UserName = "lisa.brown@company.com",
+            Name = "LISA BROWN",
             NormalizedUserName = "LISA.BROWN@COMPANY.COM",
             Email = "lisa.brown@company.com",
             NormalizedEmail = "LISA.BROWN@COMPANY.COM",

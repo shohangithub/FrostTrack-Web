@@ -86,7 +86,7 @@
               ></ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Type"
+                name="Head"
                 prop="transactionType"
                 [flexGrow]="1"
               >
@@ -96,7 +96,7 @@
               </ngx-datatable-column>
 
               <ngx-datatable-column
-                name="Flow"
+                name="Type"
                 prop="transactionFlow"
                 [flexGrow]="0.8"
               >
@@ -104,11 +104,17 @@
                   <span
                     class="badge"
                     [ngClass]="{
-                      'bg-success': row.transactionFlow === 'IN',
-                      'bg-danger': row.transactionFlow === 'OUT'
+                      'bg-success':
+                        row.transactionFlow === 'IN' ||
+                        row.transactionFlow === 'CREDIT' ||
+                        row.transactionFlow === 'INCOME',
+                      'bg-danger':
+                        row.transactionFlow === 'OUT' ||
+                        row.transactionFlow === 'DEBIT' ||
+                        row.transactionFlow === 'EXPENSE'
                     }"
                   >
-                    {{ row.transactionFlow }}
+                    {{ row.transactionFlow | titlecase }}
                   </span>
                 </ng-template>
               </ngx-datatable-column>
@@ -133,11 +139,11 @@
                 </ng-template>
               </ngx-datatable-column>
 
-              <ngx-datatable-column
+              <!-- <ngx-datatable-column
                 name="Payment Method"
                 prop="paymentMethod"
                 [flexGrow]="1"
-              ></ngx-datatable-column>
+              ></ngx-datatable-column> -->
 
               <ngx-datatable-column
                 name="Status"

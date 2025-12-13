@@ -337,8 +337,8 @@ public class BookingService : IBookingService
         };
 
         // Get all transactions for this booking
-        var transactions = await _transactionRepository.Query()
-            .Where(t => t.BookingId == id && (t.TransactionType == TransactionTypes.BILL_COLLECTION || t.TransactionType == TransactionTypes.ADJUSTMENT) && t.TransactionFlow == "IN")
+        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type  == TransactionHeadTypes.CREDIT)
             .ToListAsync(cancellationToken);
 
         // Get all deliveries for this booking

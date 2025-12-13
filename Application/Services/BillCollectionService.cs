@@ -105,8 +105,8 @@ public class BillCollectionService : IBillCollectionService
     {
         var paidAmount = await _transactionRepository.Query()
             .Where(t => t.BookingId == bookingId &&
-                       t.TransactionType == TransactionTypes.BILL_COLLECTION &&
-                       t.TransactionFlow == "IN")
+                       t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION &&
+                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT )
             .SumAsync(t => t.Amount, cancellationToken);
 
         return paidAmount;

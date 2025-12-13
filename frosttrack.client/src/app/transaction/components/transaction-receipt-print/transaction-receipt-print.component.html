@@ -102,11 +102,7 @@
                     </p>
                     <p>
                       <strong>Type:</strong>
-                      {{
-                        getTransactionTypeLabel(
-                          transactionReceipt.transactionType
-                        )
-                      }}
+                      {{ transactionReceipt.transactionHead?.name }}
                     </p>
                   </div>
                   <div class="col-md-6">
@@ -194,12 +190,16 @@
                   class="badge"
                   [ngClass]="{
                     'badge-success':
-                      transactionReceipt.transactionFlow === 'IN',
-                    'badge-danger': transactionReceipt.transactionFlow === 'OUT'
+                      transactionReceipt.transactionHead?.name ===
+                      _TRANSACTION_TYPE.CREDIT,
+                    'badge-danger':
+                      transactionReceipt.transactionHead?.name ===
+                      _TRANSACTION_TYPE.DEBIT
                   }"
                 >
                   {{
-                    transactionReceipt.transactionFlow === "IN"
+                    transactionReceipt.transactionHead?.name ===
+                    _TRANSACTION_TYPE.CREDIT
                       ? "Money Received"
                       : "Money Paid"
                   }}
@@ -216,7 +216,8 @@
                   <div class="signature-line"></div>
                   <div class="signature-label">
                     {{
-                      transactionReceipt.transactionFlow === "IN"
+                      transactionReceipt.transactionHead?.name ===
+                      _TRANSACTION_TYPE.CREDIT
                         ? "Received By"
                         : "Paid By"
                     }}

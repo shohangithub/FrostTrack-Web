@@ -3,6 +3,7 @@ namespace Application.Services;
 public class TransactionService : ITransactionService
 {
     private readonly IRepository<Transaction, Guid> _repository;
+    private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -10,11 +11,13 @@ public class TransactionService : ITransactionService
 
     public TransactionService(
         IRepository<Transaction, Guid> repository,
+        IRepository<TransactionHead, Guid> transactionHeadRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService)
     {
         _repository = repository;
+        _transactionHeadRepository = transactionHeadRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
@@ -23,12 +26,19 @@ public class TransactionService : ITransactionService
 
     public async Task<TransactionResponse> AddAsync(TransactionRequest request, CancellationToken cancellationToken = default)
     {
-        TransactionValidator validator = new(_repository);
+        TransactionValidator validator = new(_repository, _transactionHeadRepository);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
+
+        // Load TransactionHead to get Type and DisplayType
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.Id == request.TransactionHeadId, cancellationToken);
+        
+        if (transactionHead == null)
+            throw new Exception("Transaction head not found!");
 
         var entity = request.Adapt<Transaction>();
         entity.BranchId = _currentUser.BranchId;
-
+        
         // Set default PaymentMethod to CASH if not provided
         if (string.IsNullOrEmpty(entity.PaymentMethod))
         {
@@ -50,11 +60,11 @@ public class TransactionService : ITransactionService
         // Set default Description if empty
         if (string.IsNullOrEmpty(entity.Description))
         {
-            entity.Description = $"{entity.TransactionType} - {entity.TransactionFlow}";
+            entity.Description = $"{transactionHead.Name} - {transactionHead.DisplayType}";
         }
 
         // Make amount negative for OUT transactions
-        if (entity.TransactionFlow == TransactionFlows.OUT && entity.Amount > 0)
+        if (transactionHead.Type == TransactionHeadTypes.DEBIT && entity.Amount > 0)
         {
             entity.Amount = -entity.Amount;
         }
@@ -91,7 +101,11 @@ public class TransactionService : ITransactionService
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Booking)
+            .Include(x => x.TransactionHead)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if(result != null && result.TransactionHead != null)
+        result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
 
         var response = result is not null ? result.Adapt<TransactionResponse>() : null;
         return response;
@@ -111,15 +125,22 @@ public class TransactionService : ITransactionService
 
     public async Task<TransactionResponse> UpdateAsync(Guid id, TransactionRequest request, CancellationToken cancellationToken = default)
     {
-        TransactionValidator validator = new(_repository, id);
+        TransactionValidator validator = new(_repository, _transactionHeadRepository, id);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
 
+        // Load TransactionHead to get Type and DisplayType
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.Id == request.TransactionHeadId, cancellationToken);
+        
+        if (transactionHead == null)
+            throw new Exception("Transaction head not found!");
+
         request.Adapt(entity);
         entity.BranchId = _currentUser.BranchId;
-
+        
         // Set default PaymentMethod to CASH if not provided
         if (string.IsNullOrEmpty(entity.PaymentMethod))
         {
@@ -127,7 +148,7 @@ public class TransactionService : ITransactionService
         }
 
         // Make amount negative for OUT transactions
-        if (entity.TransactionFlow == TransactionFlows.OUT && entity.Amount > 0)
+        if (transactionHead.Type == TransactionHeadTypes.DEBIT && entity.Amount > 0)
         {
             entity.Amount = -entity.Amount;
         }
@@ -148,19 +169,24 @@ public class TransactionService : ITransactionService
         var response = await _repository.Query()
             .Include(x => x.Branch)
             .Include(x => x.Customer)
+            .Include(x => x.TransactionHead)
             .Select(x => new TransactionListResponse(
                 x.Id,
                 x.TransactionCode,
                 x.TransactionDate,
-                x.TransactionType,
-                x.TransactionFlow,
+                x.TransactionHeadId,
+                new TransactionHeadLookup
+                (
+                    x.TransactionHead!.Id,
+                    x.TransactionHead!.Name,
+                    !string.IsNullOrWhiteSpace(x.TransactionHead!.DisplayType) ? x.TransactionHead!.DisplayType : x.TransactionHead!.Type
+                ),  
                 x.BranchId,
                 x.Branch!.Name,
                 x.CustomerId,
                 x.Customer != null ? x.Customer.CustomerName : null,
                 x.NetAmount,
                 x.PaymentMethod,
-                x.Category,
                 x.Description,
                 x.VendorName
             ))
@@ -177,12 +203,9 @@ public class TransactionService : ITransactionService
             {
                 "transactionCode" => nameof(Transaction.TransactionCode),
                 "transactionDate" => nameof(Transaction.TransactionDate),
-                "transactionType" => nameof(Transaction.TransactionType),
-                "transactionFlow" => nameof(Transaction.TransactionFlow),
                 "netAmount" => nameof(Transaction.NetAmount),
                 "amount" => nameof(Transaction.Amount),
                 "paymentMethod" => nameof(Transaction.PaymentMethod),
-                "category" => nameof(Transaction.Category),
                 "description" => nameof(Transaction.Description),
                 "customerName" => nameof(Transaction.CustomerId), // Sort by CustomerId instead of navigation property
                 "vendorName" => nameof(Transaction.VendorName),
@@ -208,15 +231,19 @@ public class TransactionService : ITransactionService
             x.Id,
             x.TransactionCode,
             x.TransactionDate,
-            x.TransactionType,
-            x.TransactionFlow,
+            x.TransactionHeadId,
+             new TransactionHeadLookup
+                (
+                    x.TransactionHead!.Id,
+                    x.TransactionHead!.Name,
+                    !string.IsNullOrWhiteSpace(x.TransactionHead!.DisplayType) ? x.TransactionHead!.DisplayType : x.TransactionHead!.Type
+                ),
             x.BranchId,
             x.Branch!.Name,
             x.CustomerId,
             x.Customer != null ? x.Customer.CustomerName : null,
             x.NetAmount,
             x.PaymentMethod,
-            x.Category,
             x.Description,
             x.VendorName
         );
@@ -224,6 +251,7 @@ public class TransactionService : ITransactionService
         var query = _repository.Query()
             .Include(x => x.Branch)
             .Include(x => x.Customer)
+            .Include(x => x.TransactionHead)
             .AsQueryable();
 
         // Apply search predicate if it exists
@@ -273,7 +301,7 @@ public class TransactionService : ITransactionService
 
     public async Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
-        var query = _repository.Query()
+        var query = _repository.Query().Include(x => x.TransactionHead)
             .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate);
 
         if (branchId.HasValue)
@@ -281,18 +309,18 @@ public class TransactionService : ITransactionService
 
         var transactions = await query.ToListAsync(cancellationToken);
 
-        var totalIncome = transactions.Where(x => x.TransactionFlow == TransactionFlows.IN).Sum(x => x.NetAmount);
-        var totalExpense = transactions.Where(x => x.TransactionFlow == TransactionFlows.OUT).Sum(x => x.NetAmount);
+        var totalIncome = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount);
+        var totalExpense = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(x => x.NetAmount);
         var netCashFlow = totalIncome - totalExpense;
 
         var incomeByType = transactions
-            .Where(x => x.TransactionFlow == TransactionFlows.IN)
-            .GroupBy(x => x.TransactionType)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .GroupBy(x => x.TransactionHead!.Name)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.NetAmount));
 
         var expenseByCategory = transactions
-            .Where(x => x.TransactionFlow == TransactionFlows.OUT && !string.IsNullOrEmpty(x.Category))
-            .GroupBy(x => x.Category!)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+            .GroupBy(x => x.TransactionHead!.Name)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.NetAmount));
 
         return new TransactionSummaryResponse(
@@ -307,7 +335,7 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<CashFlowResponse>> GetCashFlowAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
-        var query = _repository.Query()
+        var query = _repository.Query().Include(x => x.TransactionHead)
             .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate);
 
         if (branchId.HasValue)
@@ -319,10 +347,9 @@ public class TransactionService : ITransactionService
             .GroupBy(x => x.TransactionDate.Date)
             .Select(g => new CashFlowResponse(
                 g.Key,
-                g.Where(x => x.TransactionFlow == TransactionFlows.IN).Sum(x => x.NetAmount),
-                g.Where(x => x.TransactionFlow == TransactionFlows.OUT).Sum(x => x.NetAmount),
-                g.Where(x => x.TransactionFlow == TransactionFlows.IN).Sum(x => x.NetAmount) -
-                g.Where(x => x.TransactionFlow == TransactionFlows.OUT).Sum(x => x.NetAmount)
+                g.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount),
+                g.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(x => x.NetAmount),
+                g.Sum(x => x.NetAmount)
             ))
             .OrderBy(x => x.Date)
             .ToList();

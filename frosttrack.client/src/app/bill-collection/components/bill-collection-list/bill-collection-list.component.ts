@@ -101,10 +101,6 @@ export class BillCollectionListComponent implements OnInit {
     // For bill collection, we don't need special filtering - just get all transactions with pagination
     this.transactionService.getWithPagination(this.pagination).subscribe({
       next: (result: PaginationResult<ITransactionListResponse>) => {
-        // Filter client-side for BILL_COLLECTION type
-        this.data = result.data.filter(
-          (t) => t.transactionType === 'BILL_COLLECTION'
-        );
         this.paging = result.paging;
         this.loadingIndicator = false;
       },
