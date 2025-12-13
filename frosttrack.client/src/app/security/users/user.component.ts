@@ -297,7 +297,7 @@ export class UserComponent implements OnInit {
   // edit record
   editRow(row: any, rowIndex: number, content: any) {
     // Check if current user can access this user's role
-    if (!this.canAccessUser(row.role)) {
+    if (!this.canAccessUser(row.roleNames[0])) {
       this.toastr.error('You do not have permission to edit this user');
       return;
     }
@@ -407,7 +407,7 @@ export class UserComponent implements OnInit {
   // delete single row
   delete(row: any) {
     // Check if current user can access this user's role
-    if (!this.canAccessUser(row.role)) {
+    if (!this.canAccessUser(row.roleNames[0])) {
       this.toastr.error('You do not have permission to delete this user');
       return;
     }
