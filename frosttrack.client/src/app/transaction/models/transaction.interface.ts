@@ -1,3 +1,4 @@
+import { PaginationQuery } from '@core/models/pagination-query';
 import { ITransactionHeadLookup } from 'app/common/models/transaction-head.interface';
 
 export enum PaymentMethod {
@@ -51,6 +52,22 @@ export interface ITransactionRequest {
   attachmentPath?: string;
 }
 
+export interface IBillCollectionRequest {
+  id?: string;
+  transactionCode: string;
+  transactionDate: Date | string;
+  branchId: number;
+  amount: number;
+  note?: string;
+  // Optional fields with defaults
+  bookingId?: string | null;
+  discountAmount?: number;
+  adjustmentValue?: number;
+  paymentMethod?: PaymentMethod | string;
+  paymentReference?: string;
+  description?: string;
+}
+
 export interface ITransactionDetailResponse extends ITransactionListResponse {
   amount: number;
   discountAmount: number;
@@ -69,4 +86,8 @@ export interface ITransactionDetailResponse extends ITransactionListResponse {
   updatedBy?: string;
   deletedBy?: string;
   archivedBy?: string;
+}
+
+export interface ITransactionPaginationQuery extends PaginationQuery {
+  usageFor: string;
 }

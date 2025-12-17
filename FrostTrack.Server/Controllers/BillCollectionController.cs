@@ -42,4 +42,23 @@ public class BillCollectionController : ControllerBase
 
         return Ok(booking);
     }
+
+    [HttpPost]
+    public async Task<ActionResult<TransactionResponse>> CreateBillCollection(
+        BillCollectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.CreateBillCollectionAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<TransactionResponse>> UpdateBillCollection(
+        Guid id,
+        BillCollectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.UpdateBillCollectionAsync(id, request, cancellationToken);
+        return Ok(response);
+    }
 }

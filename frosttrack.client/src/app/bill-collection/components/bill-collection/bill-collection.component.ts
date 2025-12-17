@@ -13,7 +13,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TransactionService } from 'app/transaction/services/transaction.service';
 import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
-import { ITransactionRequest } from 'app/transaction/models/transaction.interface';
+import { IBillCollectionRequest } from 'app/transaction/models/transaction.interface';
 import { BillCollectionService } from '../../services/bill-collection.service';
 import { IBookingWithDueResponse } from '../../models/bill-collection.interface';
 
@@ -145,11 +145,17 @@ export class BillCollectionComponent implements OnInit {
       .getBookingForBillCollection(bookingId)
       .subscribe({
         next: (booking) => {
-          this.selectedBooking = booking;
-          // Set amount to due amount by default
-          this.billCollectionForm.patchValue({
-            amount: booking.dueAmount,
-          });
+          if (this.isEditing) {
+            const existingAmount =
+              this.billCollectionForm.get('amount')?.value || 0;
+            this.selectedBooking = {
+              ...booking,
+              dueAmount: booking.dueAmount + existingAmount,
+              paidAmount: booking.paidAmount - existingAmount,
+            };
+          } else {
+            this.selectedBooking = booking;
+          }
           this.isLoading = false;
         },
         error: (err) => {
@@ -206,29 +212,20 @@ export class BillCollectionComponent implements OnInit {
 
     this.isSubmitting = true;
 
-    const payload: ITransactionRequest = {
+    const payload: IBillCollectionRequest = {
       id: this.isEditing ? formValue.id : undefined,
       transactionCode: formValue.transactionCode,
-      transactionHeadId: '00000000-0000-0000-0000-000000000000', // Assuming a default head for bill collection
-      customerId: this.selectedBooking?.customerId,
       transactionDate: formValue.transactionDate,
       branchId: formValue.branchId,
       bookingId: formValue.bookingId,
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
       note: formValue.note,
-      entityName: 'BOOKING',
-      entityId: formValue.bookingId,
-      description: `Bill Collection - ${
-        this.selectedBooking?.bookingNumber || ''
-      } - ${this.selectedBooking?.customerName || ''}`,
-      discountAmount: 0,
-      adjustmentValue: 0,
     };
 
     const request$ = this.isEditing
-      ? this.transactionService.update(formValue.id, payload)
-      : this.transactionService.create(payload);
+      ? this.billCollectionService.updateBillCollection(formValue.id, payload)
+      : this.billCollectionService.createBillCollection(payload);
 
     request$.subscribe({
       next: () => {
@@ -269,28 +266,20 @@ export class BillCollectionComponent implements OnInit {
 
     this.isSubmitting = true;
 
-    const payload: ITransactionRequest = {
+    const payload: IBillCollectionRequest = {
       id: this.isEditing ? formValue.id : undefined,
       transactionCode: formValue.transactionCode,
       transactionDate: formValue.transactionDate,
-      transactionHeadId: '00000000-0000-0000-0000-000000000000', // Assuming a default head for bill collection
       branchId: formValue.branchId,
       bookingId: formValue.bookingId,
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
       note: formValue.note,
-      entityName: 'BOOKING',
-      entityId: formValue.bookingId,
-      description: `Bill Collection - ${
-        this.selectedBooking?.bookingNumber || ''
-      } - ${this.selectedBooking?.customerName || ''}`,
-      discountAmount: 0,
-      adjustmentValue: 0,
     };
 
     const request$ = this.isEditing
-      ? this.transactionService.update(formValue.id, payload)
-      : this.transactionService.create(payload);
+      ? this.billCollectionService.updateBillCollection(formValue.id, payload)
+      : this.billCollectionService.createBillCollection(payload);
 
     request$.subscribe({
       next: (response) => {

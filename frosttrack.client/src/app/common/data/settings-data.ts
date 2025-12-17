@@ -56,6 +56,16 @@ export const TRANSACTION_TYPE_LIST = [
   { id: 'CREDIT', value: 'CREDIT' },
 ];
 
+export const USAGE_FOR = {
+  BILL_COLLECTION: 'BILL_COLLECTION',
+  TRANSACTION: 'TRANSACTION',
+  BANK_TRANSACTION: 'BANK_TRANSACTION',
+  BOOKING: 'BOOKING',
+  BOOKING_EXTRA_CHARGE: 'BOOKING_EXTRA_CHARGE',
+  DELEVERY: 'DELEVERY',
+  SALARY: 'SALARY',
+};
+
 export const DISPLAY_TYPE_LIST = [
   { id: 'OUT', value: 'OUT', type: 'DEBIT' },
   { id: 'EXPENSE', value: 'EXPENSE', type: 'DEBIT' },

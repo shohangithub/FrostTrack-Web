@@ -9,7 +9,7 @@ public interface ITransactionService
     Task<TransactionResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<TransactionListResponse>> ListAsync(CancellationToken cancellationToken = default);
-    Task<PaginationResult<TransactionListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<TransactionListResponse>> PaginationListAsync(TransactionPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default);
     Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<CashFlowResponse>> GetCashFlowAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default);

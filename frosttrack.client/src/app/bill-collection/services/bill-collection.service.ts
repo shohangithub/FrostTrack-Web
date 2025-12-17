@@ -8,6 +8,11 @@ import {
   IBookingWithDueResponse,
   IBookingLookupWithDue,
 } from '../models/bill-collection.interface';
+import {
+  IBillCollectionRequest,
+  ITransactionDetailResponse,
+} from 'app/transaction/models/transaction.interface';
+import { MessageHub } from '@config/message-hub';
 
 @Injectable({ providedIn: 'root' })
 export class BillCollectionService extends BaseService {
@@ -35,6 +40,31 @@ export class BillCollectionService extends BaseService {
     return this.get<IBookingWithDueResponse>(
       `${this.path}/booking/${bookingId}`,
       'Load Booking Details'
+    );
+  }
+
+  // Create bill collection
+  createBillCollection(
+    payload: IBillCollectionRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.postWithSuccess<ITransactionDetailResponse>(
+      this.path,
+      payload,
+      'Create Bill Collection',
+      MessageHub.ADD
+    );
+  }
+
+  // Update bill collection
+  updateBillCollection(
+    id: string,
+    payload: IBillCollectionRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.putWithSuccess<ITransactionDetailResponse>(
+      `${this.path}/${id}`,
+      payload,
+      'Update Bill Collection',
+      MessageHub.UPDATE
     );
   }
 }

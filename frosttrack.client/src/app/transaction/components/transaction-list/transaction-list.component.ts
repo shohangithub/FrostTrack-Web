@@ -20,10 +20,6 @@ import { ITransactionListResponse } from '../../models/transaction.interface';
 import { TransactionService } from '../../services/transaction.service';
 import { ROLES } from 'app/common/data/settings-data';
 import { SwalConfirm } from 'app/theme-config';
-import {
-  ErrorResponse,
-  formatErrorMessage,
-} from 'app/utils/server-error-handler';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';

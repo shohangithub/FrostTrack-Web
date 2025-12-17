@@ -194,7 +194,7 @@ public class TransactionService : ITransactionService
         return response;
     }
 
-    public async Task<PaginationResult<TransactionListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<TransactionListResponse>> PaginationListAsync(TransactionPaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         // Map frontend column names to entity property names
         if (!string.IsNullOrEmpty(requestQuery.OrderBy))
@@ -214,19 +214,31 @@ public class TransactionService : ITransactionService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<Transaction, bool>>? predicate = null;
+       Expression<Func<Transaction, bool>> predicate = x => true;
 
-        if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        if (requestQuery.UsageFor != null)
         {
-            var searchText = requestQuery.OpenText.Trim().ToLower();
-            predicate = obj => (obj.TransactionCode != null && obj.TransactionCode.ToLower().Contains(searchText))
-                            || (obj.Description != null && obj.Description.ToLower().Contains(searchText))
-                            || obj.NetAmount.ToString().Contains(searchText)
-                            || obj.Amount.ToString().Contains(searchText)
-                            || (obj.VendorName != null && obj.VendorName.ToLower().Contains(searchText))
-                            || (obj.Customer != null && obj.Customer.CustomerName != null && obj.Customer.CustomerName.ToLower().Contains(searchText));
+            predicate = predicate.And(x =>
+                x.TransactionHead != null &&
+                x.TransactionHead.UsageFor == requestQuery.UsageFor);
         }
 
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var searchText = requestQuery.OpenText.Trim().ToLower();
+
+            predicate = predicate.And(obj =>
+                (obj.TransactionCode != null && obj.TransactionCode.ToLower().Contains(searchText)) ||
+                (obj.Description != null && obj.Description.ToLower().Contains(searchText)) ||
+                obj.NetAmount.ToString().Contains(searchText) ||
+                obj.Amount.ToString().Contains(searchText) ||
+                (obj.VendorName != null && obj.VendorName.ToLower().Contains(searchText)) ||
+                (obj.Customer != null &&
+                obj.Customer.CustomerName != null &&
+                obj.Customer.CustomerName.ToLower().Contains(searchText))
+            );
+        }
+        
         Expression<Func<Transaction, TransactionListResponse>>? selector = x => new TransactionListResponse(
             x.Id,
             x.TransactionCode,

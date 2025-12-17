@@ -2,7 +2,10 @@ using Application.Contractors;
 using Application.Contractors.Authentication;
 using Application.Framework;
 using Application.ReponseDTO;
+using Application.RequestDTO;
+using Application.Services.Common;
 using Domain.Entitites;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
@@ -11,18 +14,24 @@ public class BillCollectionService : IBillCollectionService
 {
     private readonly IRepository<Booking, Guid> _bookingRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
+    private readonly DefaultValueInjector _defaultValueInjector;
     private readonly Guid _tenantId;
 
     public BillCollectionService(
         IRepository<Booking, Guid> bookingRepository,
         IRepository<Transaction, Guid> transactionRepository,
+        IRepository<TransactionHead, Guid> transactionHeadRepository,
         IRepository<Delivery, Guid> deliveryRepository,
+        DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider)
     {
         _bookingRepository = bookingRepository;
         _transactionRepository = transactionRepository;
+        _transactionHeadRepository = transactionHeadRepository;
         _deliveryRepository = deliveryRepository;
+        _defaultValueInjector = defaultValueInjector;
         _tenantId = tenantProvider.GetTenantId();
     }
 
@@ -110,5 +119,95 @@ public class BillCollectionService : IBillCollectionService
             .SumAsync(t => t.Amount, cancellationToken);
 
         return paidAmount;
+    }
+
+    public async Task<TransactionResponse> CreateBillCollectionAsync(BillCollectionRequest request, CancellationToken cancellationToken = default)
+    {
+        // Get BILL_COLLECTION transaction head
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
+
+        if (transactionHead == null)
+            throw new Exception("BILL_COLLECTION transaction head not found");
+
+        // Get booking and customer info
+        var booking = await _bookingRepository.Query()
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
+
+        if (booking == null)
+            throw new Exception("Booking not found");
+
+        // Create transaction entity
+        var entity = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            TransactionCode = request.TransactionCode,
+            TransactionDate = request.TransactionDate,
+            TransactionHeadId = transactionHead.Id,
+            BranchId = request.BranchId,
+            BookingId = request.BookingId,
+            CustomerId = booking.CustomerId,
+            Amount = request.Amount,
+            PaymentMethod = request.PaymentMethod,
+            PaymentReference = request.PaymentReference,
+            Note = request.Note,
+            EntityName = "BOOKING",
+            EntityId = request.BookingId.ToString(),
+            Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}",
+            DiscountAmount = 0,
+            AdjustmentValue = 0,
+            NetAmount = request.Amount
+        };
+
+        _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
+        await _transactionRepository.AddAsync(entity, cancellationToken);
+
+        var response = entity.Adapt<TransactionResponse>();
+        return response;
+    }
+
+    public async Task<TransactionResponse> UpdateBillCollectionAsync(Guid id, BillCollectionRequest request, CancellationToken cancellationToken = default)
+    {
+        var entity = await _transactionRepository.Query()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (entity == null)
+            throw new Exception("Transaction not found");
+
+        // Get BILL_COLLECTION transaction head
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
+
+        if (transactionHead == null)
+            throw new Exception("BILL_COLLECTION transaction head not found");
+
+        // Get booking and customer info
+        var booking = await _bookingRepository.Query()
+            .Include(b => b.Customer)
+            .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
+
+        if (booking == null)
+            throw new Exception("Booking not found");
+
+        // Update entity
+        entity.TransactionCode = request.TransactionCode;
+        entity.TransactionDate = request.TransactionDate;
+        entity.TransactionHeadId = transactionHead.Id;
+        entity.BranchId = request.BranchId;
+        entity.BookingId = request.BookingId;
+        entity.CustomerId = booking.CustomerId;
+        entity.Amount = request.Amount;
+        entity.PaymentMethod = request.PaymentMethod;
+        entity.PaymentReference = request.PaymentReference;
+        entity.Note = request.Note;
+        entity.Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}";
+        entity.NetAmount = request.Amount;
+
+        _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);
+        await _transactionRepository.UpdateAsync(entity, cancellationToken);
+
+        var response = entity.Adapt<TransactionResponse>();
+        return response;
     }
 }

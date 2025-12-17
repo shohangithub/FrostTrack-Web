@@ -48,7 +48,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet("pagination")]
-    public async Task<IActionResult> GetPagination([FromQuery] PaginationQuery query, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPagination([FromQuery] TransactionPaginationQuery query, CancellationToken cancellationToken)
     {
         var result = await _service.PaginationListAsync(query, cancellationToken);
         return Ok(result);

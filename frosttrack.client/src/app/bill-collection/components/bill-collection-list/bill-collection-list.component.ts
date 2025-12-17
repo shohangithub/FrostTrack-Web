@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { MessageHub } from '@config/message-hub';
 import { DefaultPagination } from '@config/pagination';
-import { PaginationQuery } from '@core/models/pagination-query';
 import {
   PaginationResult,
   PagingResponse,
@@ -16,9 +15,12 @@ import {
   SelectionType,
   NgxDatatableModule,
 } from '@swimlane/ngx-datatable';
-import { ITransactionListResponse } from 'app/transaction/models/transaction.interface';
+import {
+  ITransactionListResponse,
+  ITransactionPaginationQuery,
+} from 'app/transaction/models/transaction.interface';
 import { TransactionService } from 'app/transaction/services/transaction.service';
-import { ROLES } from 'app/common/data/settings-data';
+import { ROLES, USAGE_FOR } from 'app/common/data/settings-data';
 import { SwalConfirm } from 'app/theme-config';
 import { formatErrorMessage } from 'app/utils/server-error-handler';
 import { ToastrService } from 'ngx-toastr';
@@ -40,7 +42,8 @@ export class BillCollectionListComponent implements OnInit {
   isRowSelected = false;
   reorderable = true;
   selected: ITransactionListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: ITransactionPaginationQuery = {
+    usageFor: USAGE_FOR.BILL_COLLECTION,
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -101,6 +104,7 @@ export class BillCollectionListComponent implements OnInit {
     // For bill collection, we don't need special filtering - just get all transactions with pagination
     this.transactionService.getWithPagination(this.pagination).subscribe({
       next: (result: PaginationResult<ITransactionListResponse>) => {
+        this.data = result.data;
         this.paging = result.paging;
         this.loadingIndicator = false;
       },
