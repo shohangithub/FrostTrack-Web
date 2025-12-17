@@ -1,138 +1,252 @@
-// Print-specific styles
-@media print {
-    .no-print {
-        display: none !important;
-    }
+/*
+=====================================================================
+Transaction Receipt Print Component Styles - Bengali Format
+=====================================================================
+Professional receipt styling matching delivery slip format
+=====================================================================
+*/
 
-    .card {
-        box-shadow: none !important;
-        border: none !important;
-    }
+$font-size: 11px;
 
-    body {
-        margin: 0;
-        padding: 0;
-    }
-
-    .signature-row {
-        page-break-inside: avoid;
-    }
+.no-print {
+  margin: auto;
+  max-width: 210mm;
 }
 
-// Receipt Container
-.receipt-container {
-    padding: 20px;
-    background: white;
-    max-width: 210mm;
-    margin: 0 auto;
+.print-section-container {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 0;
+  margin: auto;
+  margin-bottom: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
-// Receipt Info
-.receipt-info {
-    margin: 20px 0;
+.invoice-container {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 10mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: white;
+  page-break-after: always;
+  font-size: $font-size;
+  color: #000;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-    p {
-        margin-bottom: 8px;
-        line-height: 1.6;
+.invoice-card {
+  width: 210mm;
+  min-height: 297mm;
+  border: none;
+  box-shadow: none;
+}
+
+// Transaction Info Box Section
+.booking-info-box {
+  margin-bottom: 15px;
+  border: 2px solid #000 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+
+  .info-table {
+    width: 100%;
+    border-collapse: collapse !important;
+
+    tr {
+      td {
+        border: 1px solid #000 !important;
+        padding: 6px 8px;
+        font-size: $font-size;
+        vertical-align: middle;
+        color: #000;
+      }
+
+      .info-label {
+        font-weight: bold;
+        width: 25%;
+        background-color: #f9f9f9;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .info-value {
+        width: 25%;
+      }
+    }
+  }
+}
+
+// Section Titles
+.section-title {
+  font-weight: bold;
+  font-size: 12px;
+  margin: 15px 0 8px 0;
+  text-align: center;
+  text-decoration: underline;
+  color: #000;
+}
+
+// Transaction Details Section
+.stored-products-section {
+  margin-bottom: 15px;
+
+  .products-table {
+    width: 100%;
+    border-collapse: collapse !important;
+
+    thead {
+      th {
+        border: 1px solid #000 !important;
+        padding: 6px 8px;
+        font-size: $font-size;
+        font-weight: bold;
+        text-align: center;
+        background-color: #f9f9f9;
+        color: #000;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
     }
 
-    strong {
-        color: #495057;
-        font-weight: 600;
+    tbody {
+      tr {
+        td {
+          border: 1px solid #000 !important;
+          padding: 6px 8px;
+          font-size: $font-size;
+          color: #000;
+        }
+      }
     }
+
+    tfoot {
+      .total-row {
+        td {
+          border: 1px solid #000 !important;
+          padding: 6px 8px;
+          font-size: $font-size;
+          font-weight: bold;
+          background-color: #f9f9f9;
+          color: #000;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      }
+    }
+  }
 }
 
 // Amount in Words
 .amount-words {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    border-left: 4px solid #007bff;
+  margin: 15px 0;
+  padding: 8px;
+  border: 1px solid #000;
+  font-size: $font-size;
+  font-weight: bold;
+  color: #000;
 
-    strong {
-        color: #212529;
-        display: block;
-        margin-bottom: 5px;
-    }
+  span {
+    font-weight: normal;
+  }
 }
 
-// Badge styles
-.badge {
-    font-size: 14px;
-    padding: 8px 20px;
-    border-radius: 20px;
+// Notes Section
+.notes-section {
+  margin: 15px 0;
+  padding: 8px;
+  border: 1px solid #000;
+  font-size: $font-size;
+  color: #000;
 
-    &.badge-success {
-        background-color: #28a745;
-        color: white;
-    }
+  strong {
+    display: block;
+    margin-bottom: 5px;
+  }
 
-    &.badge-danger {
-        background-color: #dc3545;
-        color: white;
-    }
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
 }
 
 // Signature Section
-.signature-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 60px;
-    margin-bottom: 30px;
-    gap: 40px;
-}
+.signature-section {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
 
-.signature-item {
-    flex: 1;
+  .signature-box {
+    width: 45%;
     text-align: center;
-}
 
-.signature-line {
-    border-top: 1px solid #212529;
-    margin-bottom: 8px;
-    min-width: 200px;
-}
-
-.signature-label {
-    font-size: 12px;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-// Card header action
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    h4 {
-        margin: 0;
+    .signature-line {
+      border-top: 1px solid #000;
+      margin-bottom: 5px;
     }
 
-    .card-header-action {
-        display: flex;
-        gap: 10px;
+    .signature-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 2px;
     }
+
+    .signature-sublabel {
+      font-size: 10px;
+      color: #666;
+    }
+  }
 }
 
-// Responsive adjustments
-@media screen and (max-width: 768px) {
-    .receipt-container {
-        padding: 10px;
-    }
-
-    .signature-row {
-        flex-direction: column;
-        gap: 40px;
-    }
-}
-
-// Print color adjustment
+// Print Styles
 @media print {
-    .badge {
-        border: 1px solid #000 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-section-container {
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+  }
+
+  .invoice-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+  }
+
+  // Ensure borders and backgrounds are printed
+  .booking-info-box,
+  .info-table tr td,
+  .products-table thead th,
+  .products-table tbody tr td,
+  .products-table tfoot tr td,
+  .amount-words,
+  .notes-section,
+  .signature-line {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 }

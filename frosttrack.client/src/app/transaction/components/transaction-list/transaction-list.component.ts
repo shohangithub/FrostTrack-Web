@@ -4,7 +4,6 @@ import { Router, RouterLink } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { MessageHub } from '@config/message-hub';
 import { DefaultPagination } from '@config/pagination';
-import { PaginationQuery } from '@core/models/pagination-query';
 import {
   PaginationResult,
   PagingResponse,

@@ -1,5 +1,5 @@
 import { DatePipe, CommonModule, DecimalPipe } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgxPrintModule } from 'ngx-print';
 import { TransactionService } from '../../services/transaction.service';
@@ -19,6 +19,35 @@ import { ReportFooterComponent } from '@shared/components/reports/report-footer.
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 
+/**
+ * Reusable Transaction Receipt Print Component
+ *
+ * Usage Examples:
+ *
+ * 1. Default standalone page (shows search form):
+ *    <app-transaction-receipt-print></app-transaction-receipt-print>
+ *
+ * 2. For Bill Collection (with custom title and direct transaction ID):
+ *    <app-transaction-receipt-print
+ *      [receiptTitle]="'বিল সংগ্রহ স্লিপ'"
+ *      [preloadedTransactionId]="transactionId"
+ *      [hideSearchForm]="true"
+ *      [usageForFilter]="'BILL_COLLECTION'">
+ *    </app-transaction-receipt-print>
+ *
+ * 3. For Salary Payment:
+ *    <app-transaction-receipt-print
+ *      [receiptTitle]="'বেতন প্রদান স্লিপ'"
+ *      [preloadedTransactionId]="transactionId"
+ *      [hideSearchForm]="true"
+ *      [usageForFilter]="'SALARY'">
+ *    </app-transaction-receipt-print>
+ *
+ * @Input receiptTitle - Title displayed on the receipt (default: 'ট্রানজেকশন স্লিপ')
+ * @Input preloadedTransactionId - Transaction ID to load directly (skips search)
+ * @Input hideSearchForm - Hide the transaction search form (default: false)
+ * @Input usageForFilter - Filter transactions by UsageFor type (default: 'TRANSACTION')
+ */
 @Component({
   selector: 'app-transaction-receipt-print',
   templateUrl: './transaction-receipt-print.component.html',
@@ -37,6 +66,13 @@ import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 })
 export class TransactionReceiptPrintComponent implements OnInit {
   @ViewChild('receiptContent', { static: false }) receiptContent!: ElementRef;
+
+  // Input properties for reusability
+  @Input() receiptTitle: string = 'ট্রানজেকশন স্লিপ'; // Default title
+  @Input() preloadedTransactionId: string = ''; // For direct transaction loading
+  @Input() hideSearchForm: boolean = false; // Hide search form when used externally
+  @Input() usageForFilter: string = 'TRANSACTION'; // Default to TRANSACTION type
+  @Input() backRouteModule: string = 'transaction'; // Module path for back navigation (e.g., 'transaction', 'bill-collection')
 
   transactionReceipt: ITransactionDetailResponse | null = null;
   loadingIndicator = true;
@@ -63,7 +99,20 @@ export class TransactionReceiptPrintComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.fetchTransactionLookup();
+    // Check if transaction ID is provided as Input
+    if (this.preloadedTransactionId) {
+      this.transactionId = this.preloadedTransactionId;
+      this.isPrintFromRoute = true;
+      this.hideSearchForm = true;
+      this.loadTransactionData();
+      return;
+    }
+
+    // Only fetch lookup if search form is visible
+    if (!this.hideSearchForm) {
+      this.fetchTransactionLookup();
+    }
+
     this.transactionListSubject.subscribe((value: string) => {
       this.criteriaForm
         .get('transactionId')
@@ -83,13 +132,12 @@ export class TransactionReceiptPrintComponent implements OnInit {
 
   fetchTransactionLookup() {
     this.isTransactionLoading = true;
-    this.transactionService.getLookup().subscribe({
+    this.transactionService.getLookupByUsageFor(this.usageForFilter).subscribe({
       next: (response: ILookup<string>[]) => {
         this.transactionList = response;
         this.isTransactionLoading = false;
       },
       error: () => {
-        // BaseService already handles error toasts via ErrorHandlerService
         this.isTransactionLoading = false;
       },
     });
@@ -113,20 +161,14 @@ export class TransactionReceiptPrintComponent implements OnInit {
         this.loadingIndicator = false;
       },
       error: () => {
-        // BaseService already handles error toasts via ErrorHandlerService
         this.loadingIndicator = false;
       },
     });
   }
 
-  print(): void {
-    window.print();
-  }
-
   goBack(): void {
-    this.router.navigate([
-      `/transaction/${this.backUrl}` || '/transaction/list',
-    ]);
+    const backPath = this.backUrl || 'list';
+    this.router.navigate([`/${this.backRouteModule}/${backPath}`]);
   }
 
   getPaymentMethodLabel(method: string): string {

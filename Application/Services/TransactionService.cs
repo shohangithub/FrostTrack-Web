@@ -120,6 +120,32 @@ public class TransactionService : ITransactionService
         return result;
     }
 
+    public async Task<IEnumerable<Lookup<Guid>>> GetLookupByUsageFor(string usageFor, CancellationToken cancellationToken = default)
+    {
+        var result = await _repository.Query()
+            .Include(x => x.TransactionHead)
+            .Where(x => x.TransactionHead!.UsageFor == usageFor)
+            .Select(x => new Lookup<Guid>(x.Id, x.TransactionCode))
+            .ToListAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<TransactionResponse?> GetByTransactionCodeAsync(string transactionCode, CancellationToken cancellationToken = default)
+    {
+        var result = await _repository.Query()
+            .Include(x => x.Branch)
+            .Include(x => x.Customer)
+            .Include(x => x.Booking)
+            .Include(x => x.TransactionHead)
+            .FirstOrDefaultAsync(x => x.TransactionCode == transactionCode, cancellationToken);
+
+        if(result != null && result.TransactionHead != null)
+            result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
+
+        var response = result is not null ? result.Adapt<TransactionResponse>() : null;
+        return response;
+    }
+
     public async Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default)
         => await _repository.Query().AnyAsync(x => x.Id == id, cancellationToken);
 
@@ -238,7 +264,7 @@ public class TransactionService : ITransactionService
                 obj.Customer.CustomerName.ToLower().Contains(searchText))
             );
         }
-        
+
         Expression<Func<Transaction, TransactionListResponse>>? selector = x => new TransactionListResponse(
             x.Id,
             x.TransactionCode,

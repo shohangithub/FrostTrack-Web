@@ -136,6 +136,22 @@ export class TransactionService extends BaseService {
     );
   }
 
+  getLookupByUsageFor(usageFor: string): Observable<ILookup<string>[]> {
+    return this.get<ILookup<string>[]>(
+      `${this.path}/lookup-by-usage-for?usageFor=${usageFor}`,
+      'Load Transaction Lookup by UsageFor'
+    );
+  }
+
+  getByTransactionCode(
+    transactionCode: string
+  ): Observable<ITransactionDetailResponse> {
+    return this.get<ITransactionDetailResponse>(
+      `${this.path}/by-code/${transactionCode}`,
+      'Load Transaction by Code'
+    );
+  }
+
   getTransactionReport(
     startDate: Date,
     endDate: Date

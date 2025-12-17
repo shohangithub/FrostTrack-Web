@@ -14,6 +14,8 @@ public interface ITransactionService
     Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<CashFlowResponse>> GetCashFlowAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Transaction, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Lookup<Guid>>> GetLookupByUsageFor(string usageFor, CancellationToken cancellationToken = default);
+    Task<TransactionResponse?> GetByTransactionCodeAsync(string transactionCode, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default);

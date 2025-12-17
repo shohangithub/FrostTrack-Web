@@ -136,12 +136,8 @@ export class BillCollectionListComponent implements OnInit {
     ]);
   }
 
-  print(id: string) {
-    this.router.navigate([
-      '/transaction/receipt-print',
-      id,
-      'bill-collection-list',
-    ]);
+  printReceipt(row: ITransactionListResponse) {
+    this.router.navigate(['/bill-collection/receipt-print', row.id, 'list']);
   }
 
   delete(id: string) {

@@ -103,6 +103,22 @@ public class TransactionController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("lookup-by-usage-for")]
+    public async Task<IActionResult> GetLookupByUsageFor([FromQuery] string usageFor, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetLookupByUsageFor(usageFor, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("by-code/{transactionCode}")]
+    public async Task<ActionResult<TransactionResponse>> GetByCode(string transactionCode, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetByTransactionCodeAsync(transactionCode, cancellationToken);
+        if (result == null)
+            return NotFound();
+        return result;
+    }
+
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(
         [FromQuery] DateTime startDate,

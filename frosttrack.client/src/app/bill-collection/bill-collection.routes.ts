@@ -27,4 +27,18 @@ export const billCollectionRoutes: Route[] = [
         (m) => m.BillCollectionComponent
       ),
   },
+  {
+    path: 'receipt-print',
+    loadComponent: () =>
+      import(
+        './components/bill-collection-receipt-print/bill-collection-receipt-print.component'
+      ).then((m) => m.BillCollectionReceiptPrintComponent),
+  },
+  {
+    path: 'receipt-print/:id/:backurl',
+    loadComponent: () =>
+      import(
+        './components/bill-collection-receipt-print/bill-collection-receipt-print.component'
+      ).then((m) => m.BillCollectionReceiptPrintComponent),
+  },
 ];
