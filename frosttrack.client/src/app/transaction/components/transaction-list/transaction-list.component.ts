@@ -16,9 +16,12 @@ import {
   SelectionType,
   NgxDatatableModule,
 } from '@swimlane/ngx-datatable';
-import { ITransactionListResponse } from '../../models/transaction.interface';
+import {
+  ITransactionListResponse,
+  ITransactionPaginationQuery,
+} from '../../models/transaction.interface';
 import { TransactionService } from '../../services/transaction.service';
-import { ROLES } from 'app/common/data/settings-data';
+import { ROLES, USAGE_FOR } from 'app/common/data/settings-data';
 import { SwalConfirm } from 'app/theme-config';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -45,7 +48,8 @@ export class TransactionListComponent implements OnInit {
   isRowSelected = false;
   reorderable = true;
   selected: ITransactionListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: ITransactionPaginationQuery = {
+    usageFor: USAGE_FOR.TRANSACTION,
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,

@@ -548,17 +548,6 @@ export const ROUTES: RouteInfo[] = [
         badgeClass: '',
         submenu: [],
       },
-      {
-        path: '/bill-collection/invoice-print',
-        title: 'Invoice Print',
-        iconType: '',
-        icon: '',
-        class: 'ml-menu',
-        groupTitle: false,
-        badge: '',
-        badgeClass: '',
-        submenu: [],
-      },
     ],
   },
   // {
@@ -695,17 +684,6 @@ export const ROUTES: RouteInfo[] = [
     badgeClass: '',
     submenu: [
       {
-        path: '/transaction',
-        title: 'All Transactions',
-        iconType: '',
-        icon: '',
-        class: 'ml-menu',
-        groupTitle: false,
-        badge: '',
-        badgeClass: '',
-        submenu: [],
-      },
-      {
         path: '/transaction/add',
         title: 'New Transaction',
         iconType: '',
@@ -717,8 +695,8 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
-        path: '/transaction/summary',
-        title: 'Financial Summary',
+        path: '/transaction',
+        title: 'All Transactions',
         iconType: '',
         icon: '',
         class: 'ml-menu',

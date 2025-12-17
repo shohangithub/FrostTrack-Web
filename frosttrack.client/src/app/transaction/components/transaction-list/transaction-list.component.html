@@ -91,7 +91,7 @@
                 [flexGrow]="1"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.transactionType }}
+                  {{ row.transactionHead?.name ?? "N/A" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -104,17 +104,15 @@
                   <span
                     class="badge"
                     [ngClass]="{
-                      'bg-success':
-                        row.transactionFlow === 'IN' ||
-                        row.transactionFlow === 'CREDIT' ||
-                        row.transactionFlow === 'INCOME',
-                      'bg-danger':
-                        row.transactionFlow === 'OUT' ||
-                        row.transactionFlow === 'DEBIT' ||
-                        row.transactionFlow === 'EXPENSE'
+                      'bg-success': row.transactionHead?.type === 'CREDIT',
+                      'bg-danger': row.transactionHead?.type === 'DEBIT'
                     }"
                   >
-                    {{ row.transactionFlow | titlecase }}
+                    {{
+                      row.transactionHead?.displayType ??
+                        row.transactionHead?.type ??
+                        "N/A" | titlecase
+                    }}
                   </span>
                 </ng-template>
               </ngx-datatable-column>
