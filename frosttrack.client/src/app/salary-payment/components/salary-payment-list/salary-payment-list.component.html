@@ -198,6 +198,21 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <span>
+                    <button
+                      *ngIf="canDeletePayment(row.createdAt)"
+                      class="btn btn-tbl-edit h-auto ng-star-inserted"
+                      (click)="edit(row.id)"
+                      title="Edit Payment"
+                    >
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-info h-auto me-1"
+                      (click)="printReceipt(row)"
+                      title="Print Receipt"
+                    >
+                      <i class="fas fa-print"></i>
+                    </button>
                     <!-- <button
                       class="btn btn-tbl-secondary h-auto me-1"
                       (click)="view(row.id)"

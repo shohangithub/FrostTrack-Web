@@ -234,6 +234,10 @@ export class SalaryPaymentListComponent implements OnInit {
     this.router.navigate(['/salary-payment/view', id]);
   }
 
+  printReceipt(row: ISalaryPaymentList) {
+    this.router.navigate(['/salary-payment/receipt-print', row.id, 'list']);
+  }
+
   getPaymentMethodLabel(method: string): string {
     const methods: { [key: string]: string } = {
       CASH: 'Cash',

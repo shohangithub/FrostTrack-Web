@@ -6,7 +6,7 @@ import {
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
@@ -44,6 +44,8 @@ export class SalaryPaymentFormComponent implements OnInit {
   employees: IEmployeeForSalary[] = [];
   selectedEmployee: IEmployeeForSalary | null = null;
   isSubmitting = false;
+  transactionId: string | null = null;
+  isEditMode = false;
 
   // Payment list properties
   paymentList: ISalaryPaymentList[] = [];
@@ -84,6 +86,7 @@ export class SalaryPaymentFormComponent implements OnInit {
     private fb: UntypedFormBuilder,
     private salaryPaymentService: SalaryPaymentService,
     private router: Router,
+    private route: ActivatedRoute,
     private toastr: ToastrService,
     private layoutService: LayoutService
   ) {
@@ -122,8 +125,43 @@ export class SalaryPaymentFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Check if we're in edit mode
+    this.transactionId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.transactionId;
+
     this.loadEmployees();
-    this.loadCurrentMonthPayments();
+
+    if (this.isEditMode && this.transactionId) {
+      this.loadSalaryPayment(this.transactionId);
+    } else {
+      this.loadCurrentMonthPayments();
+    }
+  }
+
+  loadSalaryPayment(id: string): void {
+    this.salaryPaymentService.getById(id).subscribe({
+      next: (payment) => {
+        this.salaryForm.patchValue({
+          employeeId: payment.employeeId,
+          month: payment.month,
+          year: payment.year,
+          basicSalary: payment.basicSalary,
+          bonus: payment.bonus,
+          deduction: payment.deduction,
+          paymentMethod: payment.paymentMethod,
+          note: payment.note,
+        });
+        this.calculateNetAmount();
+
+        // Load current month payments for the list
+        this.loadCurrentMonthPayments();
+      },
+      error: (error) => {
+        this.toastr.error('Failed to load salary payment', 'Error');
+        console.error('Error loading salary payment:', error);
+        this.router.navigate(['/salary-payment/list']);
+      },
+    });
   }
 
   loadEmployees(): void {
@@ -216,16 +254,96 @@ export class SalaryPaymentFormComponent implements OnInit {
       note: formValue.note,
     };
 
-    this.salaryPaymentService.createSalaryPayment(request).subscribe({
+    const operation =
+      this.isEditMode && this.transactionId
+        ? this.salaryPaymentService.updateSalaryPayment(
+            this.transactionId,
+            request
+          )
+        : this.salaryPaymentService.createSalaryPayment(request);
+
+    operation.subscribe({
       next: () => {
-        this.toastr.success('Salary payment created successfully', 'Success');
-        this.loadCurrentMonthPayments();
-        this.reset();
+        this.toastr.success(
+          `Salary payment ${
+            this.isEditMode ? 'updated' : 'created'
+          } successfully`,
+          'Success'
+        );
+        this.router.navigate(['/salary-payment/list']);
         this.isSubmitting = false;
       },
       error: (error) => {
-        this.toastr.error('Failed to create salary payment', 'Error');
-        console.error('Error creating salary payment:', error);
+        this.toastr.error(
+          `Failed to ${this.isEditMode ? 'update' : 'create'} salary payment`,
+          'Error'
+        );
+        console.error(
+          `Error ${this.isEditMode ? 'updating' : 'creating'} salary payment:`,
+          error
+        );
+        this.isSubmitting = false;
+      },
+    });
+  }
+
+  onSaveAndPrint(): void {
+    if (this.salaryForm.invalid) {
+      this.toastr.error(
+        'Please fill in all required fields',
+        'Validation Error'
+      );
+      return;
+    }
+
+    this.isSubmitting = true;
+    const formValue = this.salaryForm.getRawValue();
+
+    const request = {
+      employeeId: formValue.employeeId,
+      month: formValue.month,
+      year: formValue.year,
+      basicSalary: formValue.basicSalary,
+      bonus: formValue.bonus ?? 0,
+      deduction: formValue.deduction ?? 0,
+      paymentMethod: formValue.paymentMethod,
+      note: formValue.note,
+    };
+
+    const operation =
+      this.isEditMode && this.transactionId
+        ? this.salaryPaymentService.updateSalaryPayment(
+            this.transactionId,
+            request
+          )
+        : this.salaryPaymentService.createSalaryPayment(request);
+
+    operation.subscribe({
+      next: (response) => {
+        this.toastr.success(
+          `Salary payment ${
+            this.isEditMode ? 'updated' : 'created'
+          } successfully`,
+          'Success'
+        );
+        // Navigate to print receipt page with the transaction ID
+        const transactionId = response.transactionId || this.transactionId;
+        this.router.navigate([
+          '/salary-payment/receipt-print',
+          transactionId,
+          'form',
+        ]);
+        this.isSubmitting = false;
+      },
+      error: (error) => {
+        this.toastr.error(
+          `Failed to ${this.isEditMode ? 'update' : 'create'} salary payment`,
+          'Error'
+        );
+        console.error(
+          `Error ${this.isEditMode ? 'updating' : 'creating'} salary payment:`,
+          error
+        );
         this.isSubmitting = false;
       },
     });

@@ -106,6 +106,13 @@
                         <td class="info-value">
                           {{ transactionReceipt.customerName || "" }}
                         </td>
+                        } @else if(transactionReceipt.employeeName) {
+                        <td class="info-label">
+                          কর্মচারীর নাম / Employee Name:
+                        </td>
+                        <td class="info-value">
+                          {{ transactionReceipt.employeeName || "" }}
+                        </td>
                         } @else if(transactionReceipt.vendorName) {
                         <td class="info-label">প্রদানকারী / Vendor Name:</td>
                         <td class="info-value">

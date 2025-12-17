@@ -25,6 +25,10 @@ public class Transaction : AuditableEntity<Guid>
     public Guid? BookingId { get; set; }
     public Booking? Booking { get; set; }
 
+    // Employee tracking (for salary payments)
+    public int? EmployeeId { get; set; }
+    public Employee? Employee { get; set; }
+
     // Financial fields
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal Amount { get; set; }

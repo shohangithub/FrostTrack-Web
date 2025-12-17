@@ -101,13 +101,18 @@ public class TransactionService : ITransactionService
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Booking)
+            .Include(x => x.Employee)
             .Include(x => x.TransactionHead)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if(result != null && result.TransactionHead != null)
         result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
 
-        var response = result is not null ? result.Adapt<TransactionResponse>() : null;
+        if (result is null) return null;
+
+        var response = result.Adapt<TransactionResponse>();
+        // Manually map EmployeeName from Employee object
+        response = response with { EmployeeName = result.Employee?.EmployeeName };
         return response;
     }
 
@@ -136,13 +141,18 @@ public class TransactionService : ITransactionService
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Booking)
+            .Include(x => x.Employee)
             .Include(x => x.TransactionHead)
             .FirstOrDefaultAsync(x => x.TransactionCode == transactionCode, cancellationToken);
 
         if(result != null && result.TransactionHead != null)
             result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
 
-        var response = result is not null ? result.Adapt<TransactionResponse>() : null;
+        if (result is null) return null;
+
+        var response = result.Adapt<TransactionResponse>();
+        // Manually map EmployeeName from Employee object
+        response = response with { EmployeeName = result.Employee?.EmployeeName };
         return response;
     }
 
@@ -195,6 +205,7 @@ public class TransactionService : ITransactionService
         var response = await _repository.Query()
             .Include(x => x.Branch)
             .Include(x => x.Customer)
+            .Include(x => x.Employee)
             .Include(x => x.TransactionHead)
             .Select(x => new TransactionListResponse(
                 x.Id,
@@ -211,6 +222,8 @@ public class TransactionService : ITransactionService
                 x.Branch!.Name,
                 x.CustomerId,
                 x.Customer != null ? x.Customer.CustomerName : null,
+                x.EmployeeId,
+                x.Employee != null ? x.Employee.EmployeeName : null,
                 x.NetAmount,
                 x.PaymentMethod,
                 x.Description,
@@ -280,6 +293,8 @@ public class TransactionService : ITransactionService
             x.Branch!.Name,
             x.CustomerId,
             x.Customer != null ? x.Customer.CustomerName : null,
+            x.EmployeeId,
+            x.Employee != null ? x.Employee.EmployeeName : null,
             x.NetAmount,
             x.PaymentMethod,
             x.Description,
@@ -289,6 +304,7 @@ public class TransactionService : ITransactionService
         var query = _repository.Query()
             .Include(x => x.Branch)
             .Include(x => x.Customer)
+            .Include(x => x.Employee)
             .Include(x => x.TransactionHead)
             .AsQueryable();
 

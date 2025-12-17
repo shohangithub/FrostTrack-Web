@@ -11,5 +11,6 @@ public interface ISalaryPaymentService
     Task<IEnumerable<SalaryPaymentListResponse>> GetPaymentHistoryAsync(int? employeeId, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default);
     Task<MonthlyPaymentSummaryResponse> GetMonthlyPaymentReportAsync(int month, int year, CancellationToken cancellationToken = default);
     Task<SalaryPaymentResponse> GetByIdAsync(Guid transactionId, CancellationToken cancellationToken = default);
+    Task<SalaryPaymentResponse> UpdateSalaryPaymentAsync(Guid id, RequestDTO.SalaryPaymentRequest request, CancellationToken cancellationToken = default);
     Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default);
 }

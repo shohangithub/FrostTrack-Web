@@ -20,6 +20,8 @@ export interface ITransactionListResponse {
   branchName: string;
   customerId?: number | null;
   customerName?: string | null;
+  employeeId?: number | null;
+  employeeName?: string | null;
   netAmount: number;
   paymentMethod: string;
   category?: string | null;

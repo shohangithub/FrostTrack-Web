@@ -100,6 +100,16 @@ public class SalaryPaymentController : ControllerBase
     }
 
     /// <summary>
+    /// Update salary payment (only allowed within 24 hours)
+    /// </summary>
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateSalaryPayment(Guid id, [FromBody] SalaryPaymentRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _salaryPaymentService.UpdateSalaryPaymentAsync(id, request, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Delete salary payment (only allowed within 24 hours)
     /// </summary>
     [HttpDelete("{transactionId}")]

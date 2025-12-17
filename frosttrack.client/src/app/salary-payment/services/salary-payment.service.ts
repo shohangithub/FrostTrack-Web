@@ -94,8 +94,15 @@ export class SalaryPaymentService {
     );
   }
 
-  getById(id: number): Observable<ISalaryPaymentResponse> {
+  getById(id: string): Observable<ISalaryPaymentResponse> {
     return this.http.get<ISalaryPaymentResponse>(`${this.path}/${id}`);
+  }
+
+  updateSalaryPayment(
+    id: string,
+    request: ISalaryPaymentRequest
+  ): Observable<ISalaryPaymentResponse> {
+    return this.http.put<ISalaryPaymentResponse>(`${this.path}/${id}`, request);
   }
 
   deleteSalaryPayment(transactionId: string): Observable<boolean> {

@@ -34,4 +34,18 @@ export const salaryPaymentRoutes: Routes = [
         './components/salary-payment-form/salary-payment-form.component'
       ).then((m) => m.SalaryPaymentFormComponent),
   },
+  {
+    path: 'receipt-print',
+    loadComponent: () =>
+      import(
+        './components/salary-receipt-print/salary-receipt-print.component'
+      ).then((m) => m.SalaryReceiptPrintComponent),
+  },
+  {
+    path: 'receipt-print/:id/:backurl',
+    loadComponent: () =>
+      import(
+        './components/salary-receipt-print/salary-receipt-print.component'
+      ).then((m) => m.SalaryReceiptPrintComponent),
+  },
 ];

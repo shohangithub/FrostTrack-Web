@@ -87,7 +87,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var period = $"{request.Month:D2}/{request.Year}";
 
         var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(th => th.TenantId == tenantId && th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
+            .FirstOrDefaultAsync(th =>th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
         if (transactionHead == null)
         {
             throw new Exception("Salary Transaction Head not configured");
@@ -101,6 +101,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             TransactionHeadId = transactionHead.Id,
             EntityName = "Employee",
             EntityId = employee.Id.ToString(),
+            EmployeeId = employee.Id, // Add explicit EmployeeId
             Amount = netAmount,
             NetAmount = netAmount,
             PaymentMethod = request.PaymentMethod,
@@ -394,7 +395,8 @@ public class SalaryPaymentService : ISalaryPaymentService
     public async Task<SalaryPaymentResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantProvider.GetTenantId();
-        var transaction = await _transactionRepository.GetByIdAsync(id, cancellationToken);
+        var transaction = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionHead!.UsageFor != UsageFor.SALARY)
         {
@@ -443,6 +445,65 @@ public class SalaryPaymentService : ISalaryPaymentService
         }
 
         return (DateTime.UtcNow.Month, DateTime.UtcNow.Year);
+    }
+
+    public async Task<SalaryPaymentResponse> UpdateSalaryPaymentAsync(Guid id, SalaryPaymentRequest request, CancellationToken cancellationToken = default)
+    {
+        var tenantId = _tenantProvider.GetTenantId();
+        var transaction = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+        if (transaction == null || transaction.TenantId != tenantId || transaction.TransactionHead!.UsageFor != UsageFor.SALARY)
+        {
+            throw new Exception("Salary payment not found");
+        }
+
+        // Check if the transaction was created within the last day
+        var oneDayAgo = DateTime.UtcNow.AddDays(-1);
+        if (transaction.CreatedTime < oneDayAgo)
+        {
+            throw new Exception("Cannot update salary payment. Updates are only allowed within one day of creation.");
+        }
+
+        var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId, cancellationToken);
+        if (employee == null || employee.TenantId != tenantId)
+        {
+            throw new Exception("Employee not found");
+        }
+
+        var netAmount = request.BasicSalary + request.Bonus - request.Deduction;
+        var period = $"{request.Month:D2}/{request.Year}";
+
+        // Update transaction
+        transaction.EntityId = employee.Id.ToString();
+        transaction.EmployeeId = employee.Id;
+        transaction.Amount = netAmount;
+        transaction.NetAmount = netAmount;
+        transaction.PaymentMethod = request.PaymentMethod;
+        transaction.Description = $"Salary payment for {period}";
+        transaction.Note = string.IsNullOrEmpty(request.Note) ? null : request.Note;
+
+        _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(transaction);
+        await _transactionRepository.UpdateAsync(transaction, cancellationToken);
+
+        return new SalaryPaymentResponse(
+            0,
+            employee.Id,
+            employee.EmployeeName,
+            employee.EmployeeCode,
+            request.Month,
+            request.Year,
+            request.BasicSalary,
+            request.Bonus,
+            request.Deduction,
+            netAmount,
+            transaction.TransactionDate,
+            request.PaymentMethod,
+            request.Note,
+            transaction.Id.ToString(),
+            transaction.CreatedTime
+        );
     }
 
     public async Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default)
