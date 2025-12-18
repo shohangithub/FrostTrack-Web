@@ -131,7 +131,21 @@ export class BillCollectionListComponent implements OnInit {
   }
 
   edit(id: string) {
-    this.router.navigate(['/bill-collection/edit', id]);
+    // Find the transaction in the data to check its type
+    const transaction = this.data.find((t) => t.id === id);
+
+    // Check if this is a delivery-based transaction
+    // Delivery-based transactions have description containing "Delivery" or related keywords
+    if (
+      transaction &&
+      transaction.description &&
+      (transaction.description.toLowerCase().includes('delivery') ||
+        transaction.description.toLowerCase().includes('deliveries'))
+    ) {
+      this.router.navigate(['/bill-collection/delivery-based/edit', id]);
+    } else {
+      this.router.navigate(['/bill-collection/edit', id]);
+    }
   }
 
   view(id: string) {

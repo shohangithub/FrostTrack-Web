@@ -132,4 +132,11 @@ public class DeliveryController : ControllerBase
         var result = await _service.GetAllUnpaidDeliveriesAsync();
         return Ok(result);
     }
+
+    [HttpGet("by-transaction/{transactionId}")]
+    public async Task<ActionResult<List<DeliveryResponse>>> GetDeliveriesByTransactionId(Guid transactionId)
+    {
+        var result = await _service.GetDeliveriesByTransactionIdAsync(transactionId);
+        return Ok(result);
+    }
 }

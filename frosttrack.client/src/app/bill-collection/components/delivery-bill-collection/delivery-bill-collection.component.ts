@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { TransactionService } from 'app/transaction/services/transaction.service';
 import { AuthService } from '@core/service/auth.service';
 import { LayoutService } from '@core/service/layout.service';
@@ -47,6 +47,8 @@ export class DeliveryBillCollectionComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   isGeneratingCode = false;
+  isEditing = false;
+  saveAndPrint = false;
   transactionCode = '';
   selectedBranch!: number;
   searchMode: 'customer' | 'code' = 'customer';
@@ -67,6 +69,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     private transactionService: TransactionService,
     private toastr: ToastrService,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private layoutService: LayoutService
   ) {
@@ -77,11 +80,19 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.selectedBranch = this.authService.currentBranchId;
     this.initForm();
     this.loadCustomers();
-    this.generateTransactionCode();
+
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.isEditing = true;
+      this.loadExistingTransaction(id);
+    } else {
+      this.generateTransactionCode();
+    }
   }
 
   initForm() {
     this.billCollectionForm = this.fb.group({
+      id: ['00000000-0000-0000-0000-000000000000'],
       transactionCode: ['', Validators.required],
       transactionDate: [
         new Date().toISOString().split('T')[0],
@@ -255,6 +266,48 @@ export class DeliveryBillCollectionComponent implements OnInit {
     return this.selectedDeliveries.size;
   }
 
+  loadExistingTransaction(id: string) {
+    this.isLoading = true;
+    this.transactionService.getById(id).subscribe({
+      next: (transaction) => {
+        this.billCollectionForm.patchValue({
+          id: transaction.id,
+          transactionCode: transaction.transactionCode,
+          transactionDate: new Date(transaction.transactionDate)
+            .toISOString()
+            .split('T')[0],
+          branchId: transaction.branchId,
+          amount: transaction.amount,
+          paymentMethod: transaction.paymentMethod,
+          paymentReference: transaction.paymentReference,
+          note: transaction.note,
+        });
+
+        // Load deliveries associated with this transaction
+        this.deliveryService.getDeliveriesByTransactionId(id).subscribe({
+          next: (deliveries) => {
+            this.unpaidDeliveries = deliveries;
+            // Mark all deliveries as selected
+            deliveries.forEach((d) => this.selectedDeliveries.add(d.id));
+            this.updateTotalAmount();
+            this.isLoading = false;
+          },
+          error: (err) => {
+            console.error('Failed to load deliveries:', err);
+            this.toastr.error('Failed to load deliveries');
+            this.isLoading = false;
+          },
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load transaction:', err);
+        this.toastr.error('Failed to load transaction');
+        this.isLoading = false;
+        this.router.navigate(['/bill-collection/list']);
+      },
+    });
+  }
+
   generateTransactionCode() {
     this.isGeneratingCode = true;
     this.transactionService.generateCode().subscribe({
@@ -273,7 +326,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     });
   }
 
-  onSubmit() {
+  onSubmit(printAfterSave: boolean = false) {
     if (this.billCollectionForm.invalid) {
       this.billCollectionForm.markAllAsTouched();
       this.toastr.error('Please fill all required fields');
@@ -293,6 +346,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     }
 
     this.isSubmitting = true;
+    this.saveAndPrint = printAfterSave;
 
     const payload: IDeliveryBillCollectionRequest = {
       transactionCode: formValue.transactionCode,
@@ -306,8 +360,16 @@ export class DeliveryBillCollectionComponent implements OnInit {
     };
 
     this.billCollectionService.createDeliveryBillCollection(payload).subscribe({
-      next: () => {
-        this.router.navigate(['/bill-collection/list']);
+      next: (response) => {
+        if (printAfterSave) {
+          this.router.navigate([
+            '/transaction/receipt-print',
+            response.id,
+            'bill-collection-list',
+          ]);
+        } else {
+          this.router.navigate(['/bill-collection/list']);
+        }
       },
       error: () => {
         this.isSubmitting = false;

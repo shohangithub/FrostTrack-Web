@@ -82,4 +82,12 @@ export class DeliveryService extends BaseService {
   getAllUnpaidDeliveries(): Observable<IDeliveryResponse[]> {
     return this.get<IDeliveryResponse[]>(this.path + '/unpaid-all');
   }
+
+  getDeliveriesByTransactionId(
+    transactionId: string
+  ): Observable<IDeliveryResponse[]> {
+    return this.get<IDeliveryResponse[]>(
+      this.path + '/by-transaction/' + transactionId
+    );
+  }
 }

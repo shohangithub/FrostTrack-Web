@@ -22,4 +22,5 @@ public interface IDeliveryService
     Task<List<DeliveryResponse>> GetUnpaidDeliveriesByCustomerAsync(int customerId);
     Task<DeliveryResponse?> GetUnpaidDeliveryByCodeAsync(string deliveryCode);
     Task<List<DeliveryResponse>> GetAllUnpaidDeliveriesAsync();
+    Task<List<DeliveryResponse>> GetDeliveriesByTransactionIdAsync(Guid transactionId);
 }

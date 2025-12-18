@@ -25,6 +25,7 @@
                               : 'btn-outline-primary'
                           "
                           (click)="switchSearchMode('customer')"
+                          [disabled]="isEditing"
                         >
                           <i class="fas fa-user"></i> By Customer
                         </button>
@@ -37,6 +38,7 @@
                               : 'btn-outline-primary'
                           "
                           (click)="switchSearchMode('code')"
+                          [disabled]="isEditing"
                         >
                           <i class="fas fa-barcode"></i> By Delivery Code
                         </button>
@@ -58,6 +60,7 @@
                             bindValue="id"
                             [loading]="customerLoading"
                             [clearable]="true"
+                            [disabled]="isEditing"
                             placeholder="Select customer"
                             class="ng-select-sm"
                           >
@@ -83,6 +86,7 @@
                             bindValue="value"
                             [loading]="deliveryCodesLoading"
                             [clearable]="true"
+                            [disabled]="isEditing"
                             (change)="
                               onDeliveryCodeSelect(selectedDeliveryCode || '')
                             "
@@ -118,6 +122,7 @@
                               class="input-group-append"
                               style="cursor: pointer"
                               (click)="generateTransactionCode()"
+                              [class.disabled]="isEditing"
                             >
                               <span
                                 class="input-group-text input-group-text-append"
@@ -314,9 +319,29 @@
                     type="button"
                     class="btn btn-sm btn-warning me-2"
                     (click)="reset()"
-                    [disabled]="isSubmitting"
+                    [disabled]="isSubmitting || isEditing"
                   >
                     <i class="fas fa-redo"></i> Reset
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-info me-2"
+                    (click)="onSubmit(true)"
+                    [disabled]="isSubmitting || selectedCount === 0"
+                  >
+                    <i
+                      class="fas"
+                      [ngClass]="
+                        isSubmitting && saveAndPrint
+                          ? 'fa-spinner fa-spin'
+                          : 'fa-print'
+                      "
+                    ></i>
+                    {{
+                      isSubmitting && saveAndPrint
+                        ? "Saving..."
+                        : "Save & Print"
+                    }}
                   </button>
                   <button
                     type="submit"
@@ -326,10 +351,12 @@
                     <i
                       class="fas"
                       [ngClass]="
-                        isSubmitting ? 'fa-spinner fa-spin' : 'fa-save'
+                        isSubmitting && !saveAndPrint
+                          ? 'fa-spinner fa-spin'
+                          : 'fa-save'
                       "
                     ></i>
-                    {{ isSubmitting ? "Saving..." : "Save" }}
+                    {{ isSubmitting && !saveAndPrint ? "Saving..." : "Save" }}
                   </button>
                 </div>
               </div>
