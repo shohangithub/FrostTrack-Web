@@ -61,4 +61,13 @@ public class BillCollectionController : ControllerBase
         var response = await _billCollectionService.UpdateBillCollectionAsync(id, request, cancellationToken);
         return Ok(response);
     }
+
+    [HttpPost("delivery-based")]
+    public async Task<ActionResult<TransactionResponse>> CreateDeliveryBillCollection(
+        DeliveryBillCollectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.CreateDeliveryBillCollectionAsync(request, cancellationToken);
+        return Ok(response);
+    }
 }

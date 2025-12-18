@@ -64,4 +64,22 @@ export class DeliveryService extends BaseService {
       this.path + '/customer-stock/' + customerId
     );
   }
+
+  getUnpaidDeliveriesByCustomer(
+    customerId: number
+  ): Observable<IDeliveryResponse[]> {
+    return this.get<IDeliveryResponse[]>(
+      this.path + '/unpaid-by-customer/' + customerId
+    );
+  }
+
+  getUnpaidDeliveryByCode(deliveryCode: string): Observable<IDeliveryResponse> {
+    return this.get<IDeliveryResponse>(
+      this.path + '/unpaid-by-code/' + deliveryCode
+    );
+  }
+
+  getAllUnpaidDeliveries(): Observable<IDeliveryResponse[]> {
+    return this.get<IDeliveryResponse[]>(this.path + '/unpaid-all');
+  }
 }

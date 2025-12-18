@@ -125,6 +125,34 @@
               </div>
             </div>
           </div>
+
+          <!-- Billing Period Info Box -->
+          @if(bookingData) {
+          <div class="row mb-3">
+            <div class="col-lg-8">
+              <div class="alert alert-info py-2">
+                <small>
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Billing Period:</strong>
+                  From
+                  <strong>{{
+                    bookingData.bookingDate | date : "dd/MM/yyyy"
+                  }}</strong>
+                  to
+                  <strong>{{
+                    deliveryForm.get("deliveryDate")?.value
+                      | date : "dd/MM/yyyy"
+                  }}</strong>
+                  <span class="ms-2">|</span>
+                  <span class="ms-2"
+                    ><strong>Formula:</strong> Qty × Rate × Billing Cycles</span
+                  >
+                </small>
+              </div>
+            </div>
+          </div>
+          }
+
           <div class="row">
             <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
               <!-- Delivery Items Section -->
@@ -147,20 +175,28 @@
                                 <th scope="col" class="text-center">
                                   Remaining
                                 </th>
-                                <th scope="col" class="text-center">
-                                  Conv. Remaining
-                                </th>
                                 <th scope="col" class="text-center">Unit</th>
                                 <th
                                   scope="col"
-                                  style="width: 15%"
+                                  style="width: 10%"
                                   class="text-center"
                                 >
                                   Qty
                                 </th>
+                                <th scope="col" class="text-center">
+                                  Conv. Remaining
+                                </th>
                                 <th
                                   scope="col"
-                                  style="width: 15%"
+                                  style="width: 12%"
+                                  class="text-center"
+                                  title="Quantity × Rate × Cycles"
+                                >
+                                  Calculation
+                                </th>
+                                <th
+                                  scope="col"
+                                  style="width: 12%"
                                   class="text-center"
                                 >
                                   Bill
@@ -197,14 +233,6 @@
                                     }}
                                   </span>
                                 </td>
-                                <td class="text-center">
-                                  <span class="badge bg-info text-white">
-                                    {{
-                                      detail.get("convertedRemainingQty")?.value
-                                        | number : "1.2-2"
-                                    }}
-                                  </span>
-                                </td>
                                 <td>
                                   <ng-select
                                     formControlName="deliveryUnitId"
@@ -227,10 +255,55 @@
                                     (blur)="validateQuantity(i)"
                                   />
                                 </td>
+                                <td class="text-center">
+                                  <span class="badge bg-info text-white">
+                                    {{
+                                      detail.get("convertedRemainingQty")?.value
+                                        | number : "1.2-2"
+                                    }}
+                                  </span>
+                                </td>
+                                <td class="text-center">
+                                  <small
+                                    class="text-muted"
+                                    style="font-size: 11px"
+                                  >
+                                    @if(detail.get('deliveryQuantity')?.value >
+                                    0) {
+                                    <div>
+                                      {{
+                                        detail.get("deliveryQuantity")?.value
+                                          | number : "1.2-2"
+                                      }}
+                                      ×
+                                      {{
+                                        detail.get("bookingRate")?.value
+                                          | number : "1.2-2"
+                                      }}
+                                      × {{ detail.get("billingCycles")?.value }}
+                                      <span
+                                        class="badge bg-info text-white ms-1"
+                                        title="{{
+                                          getBillTypeLabel(
+                                            detail.get('billType')?.value
+                                          )
+                                        }}"
+                                      >
+                                        {{ detail.get("billingCycles")?.value }}
+                                        {{
+                                          getBillTypeCycleLabel(
+                                            detail.get("billType")?.value
+                                          )
+                                        }}
+                                      </span>
+                                    </div>
+                                    }
+                                  </small>
+                                </td>
                                 <td>
                                   <input
                                     type="number"
-                                    class="form-control form-control-sm text-end"
+                                    class="form-control form-control-sm text-end fw-bold"
                                     formControlName="totalCharge"
                                     readonly
                                   />
@@ -238,7 +311,7 @@
                               </tr>
                               } @empty {
                               <tr>
-                                <td colspan="9" class="text-center text-muted">
+                                <td colspan="10" class="text-center text-muted">
                                   No items available for delivery
                                 </td>
                               </tr>
@@ -246,7 +319,7 @@
                             </tbody>
                             <tfoot *ngIf="deliveryDetails.length > 0">
                               <tr>
-                                <td colspan="8" class="text-end fw-bold">
+                                <td colspan="10" class="text-end fw-bold">
                                   Subtotal:
                                 </td>
                                 <td class="text-end fw-bold">
@@ -301,13 +374,13 @@
                         </div>
                       </div>
                       <div class="form-group row mb-2">
-                        <label class="col-sm-5 col-form-label"
-                          >Previous Payments:</label
-                        >
+                        <label class="col-sm-5 col-form-label">
+                          <strong class="text-danger">Previous Due:</strong>
+                        </label>
                         <div class="col-sm-7">
                           <input
                             type="text"
-                            class="form-control form-control-sm text-end"
+                            class="form-control form-control-sm text-end fw-bold text-danger"
                             [value]="
                               deliveryForm.get('totalPreviousPayments')?.value
                                 | number : '1.2-2'
@@ -316,7 +389,7 @@
                           />
                         </div>
                       </div>
-                      <div class="form-group row mb-0">
+                      <div class="form-group row mb-0" style="display: none">
                         <label class="col-sm-5 col-form-label"
                           ><strong>Remaining Balance:</strong></label
                         >

@@ -17,7 +17,6 @@ import {
   IDeliveryRequest,
 } from 'app/delivery/models/delivery.interface';
 import Swal from 'sweetalert2';
-import { MessageHub } from '@config/message-hub';
 import { SwalConfirm } from 'app/theme-config';
 
 @Component({
@@ -75,7 +74,7 @@ export class DeliveryComponent implements OnInit {
       remainingBalance: [0], // Balance after deducting previous payments
       deliveryDetails: this.fb.array([]),
       // Transaction fields
-      createTransaction: [false],
+      createTransaction: [true], // Changed to true by default
       transactionAmount: [
         null,
         [
@@ -94,6 +93,11 @@ export class DeliveryComponent implements OnInit {
       if (bookingId) {
         this.onBookingChange(bookingId);
       }
+    });
+
+    // Watch for delivery date changes to recalculate billing cycles
+    this.deliveryForm.get('deliveryDate')?.valueChanges.subscribe(() => {
+      this.recalculateAllCharges();
     });
   }
 
@@ -139,8 +143,10 @@ export class DeliveryComponent implements OnInit {
         this.bookingData = booking;
         this.populateDeliveryDetails(booking);
 
-        // Fetch previous payments for this booking
-        this.fetchPreviousPayments(bookingId);
+        // Fetch customer due amount
+        if (booking.customerId) {
+          this.fetchCustomerDue(booking.customerId);
+        }
 
         this.isLoading = false;
       },
@@ -151,25 +157,27 @@ export class DeliveryComponent implements OnInit {
     });
   }
 
-  fetchPreviousPayments(bookingId: string) {
-    this.deliveryService.getBookingPreviousPayments(bookingId).subscribe({
-      next: (totalPaid) => {
-        this.deliveryForm.patchValue(
-          { totalPreviousPayments: totalPaid },
-          { emitEvent: false }
-        );
-        // Recalculate after updating previous payments
-        this.calculateTotalCharge();
-      },
-      error: () => {
-        // If fetching fails, default to 0
-        this.deliveryForm.patchValue(
-          { totalPreviousPayments: 0 },
-          { emitEvent: false }
-        );
-        this.calculateTotalCharge();
-      },
-    });
+  fetchCustomerDue(customerId: number) {
+    // For now, set to 0 - will be implemented with customer service
+    this.deliveryForm.patchValue(
+      { totalPreviousPayments: 0 },
+      { emitEvent: false }
+    );
+    // TODO: Implement customer due amount fetch
+    // this.customerService.getCustomerDue(customerId).subscribe({
+    //   next: (dueAmount) => {
+    //     this.deliveryForm.patchValue(
+    //       { totalPreviousPayments: dueAmount },
+    //       { emitEvent: false }
+    //     );
+    //   },
+    //   error: () => {
+    //     this.deliveryForm.patchValue(
+    //       { totalPreviousPayments: 0 },
+    //       { emitEvent: false }
+    //     );
+    //   },
+    // });
   }
 
   populateDeliveryDetails(booking: IBookingForDeliveryResponse) {
@@ -185,7 +193,12 @@ export class DeliveryComponent implements OnInit {
           bookingQuantity: [detail.bookingQuantity],
           totalDeliveredQuantity: [detail.totalDeliveredQuantity],
           remainingQuantity: [detail.remainingQuantity],
-          totalCharge: [detail.totalCharge],
+          billType: [detail.billType], // Add billType
+          bookingRate: [detail.bookingRate], // Add bookingRate
+          baseRate: [detail.baseRate], // Add baseRate for calculation
+          bookingDate: [booking.bookingDate], // Add bookingDate for cycle calculation
+          billingCycles: [0], // Number of billing cycles
+          totalCharge: [0], // Will be calculated based on delivery quantity
           deliveryUnitId: [detail.bookingUnitId, Validators.required],
           deliveryQuantity: [
             null,
@@ -200,20 +213,28 @@ export class DeliveryComponent implements OnInit {
         // Calculate initial converted remaining quantity
         this.calculateConvertedRemainingQty(detailForm);
 
-        // // Watch for unit or quantity changes to calculate base quantity and charge
-        // detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
-        //   this.calculateBaseQuantity(detailForm);
-        //   this.calculateItemCharge(detailForm);
-        //   this.calculateTotalCharge();
-        // });
+        // Watch for unit or quantity changes to calculate charge
+        detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
+          this.calculateBaseQuantity(detailForm);
+          this.calculateItemCharge(detailForm);
+          this.calculateTotalCharge();
+        });
 
-        // detailForm.get('deliveryUnitId')?.valueChanges.subscribe(() => {
-        //   this.calculateBaseQuantity(detailForm);
-        // });
+        detailForm.get('deliveryUnitId')?.valueChanges.subscribe(() => {
+          this.calculateConvertedRemainingQty(detailForm);
+          this.calculateBaseQuantity(detailForm);
+          this.calculateItemCharge(detailForm);
+          this.calculateTotalCharge();
+        });
 
         this.deliveryDetails.push(detailForm);
       }
     });
+
+    // Calculate initial totals after all details are loaded
+    setTimeout(() => {
+      this.calculateTotalCharge();
+    }, 0);
   }
 
   calculateBaseQuantity(detailForm: FormGroup) {
@@ -228,13 +249,112 @@ export class DeliveryComponent implements OnInit {
     }
   }
 
-  // calculateItemCharge(detailForm: FormGroup) {
-  //   // const quantity = detailForm.get('deliveryQuantity')?.value || 0;
-  //   // const chargePerUnit = detailForm.get('chargePerUnit')?.value || 0;
-  //   // const totalCharge = quantity * chargePerUnit;
-  //   const totalCharge = detailForm.get('totalCharge')?.value || 0;
-  //   detailForm.patchValue({ chargeAmount: totalCharge }, { emitEvent: false });
-  // }
+  calculateItemCharge(detailForm: FormGroup) {
+    const deliveryQty = detailForm.get('deliveryQuantity')?.value || 0;
+    const billType = detailForm.get('billType')?.value;
+    const bookingRate = detailForm.get('bookingRate')?.value || 0;
+    const bookingDate = detailForm.get('bookingDate')?.value;
+    const deliveryDate = this.deliveryForm.get('deliveryDate')?.value;
+
+    let totalCharge = 0;
+
+    let cycleCount = 0;
+
+    if (deliveryQty > 0 && bookingDate && deliveryDate) {
+      // Calculate number of billing cycles
+      cycleCount = this.calculateBillingCycles(
+        bookingDate,
+        deliveryDate,
+        billType
+      );
+
+      // Calculate charge: quantity × rate × cycle_count
+      totalCharge = deliveryQty * bookingRate * cycleCount;
+    }
+
+    // Update the total charge and cycle count for this item
+    detailForm.patchValue(
+      {
+        totalCharge: totalCharge,
+        billingCycles: cycleCount,
+      },
+      { emitEvent: false }
+    );
+  }
+
+  calculateBillingCycles(
+    bookingDate: string | Date,
+    deliveryDate: string | Date,
+    billType: string
+  ): number {
+    const start = new Date(bookingDate);
+    const end = new Date(deliveryDate);
+
+    // Calculate the difference in milliseconds
+    const diffTime = end.getTime() - start.getTime();
+
+    if (diffTime < 0) {
+      return 1; // Delivery before booking
+    }
+
+    let cycles = 0;
+
+    switch (billType) {
+      case 'HOURLY':
+        // Number of hours
+        cycles = Math.ceil(diffTime / (1000 * 60 * 60));
+        break;
+
+      case 'DAILY':
+        // Number of days
+        cycles = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        break;
+
+      case 'WEEKLY':
+        // Number of weeks
+        cycles = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+        break;
+
+      case 'MONTHLY': {
+        // Calculate months difference
+        let months =
+          (end.getFullYear() - start.getFullYear()) * 12 +
+          (end.getMonth() - start.getMonth());
+
+        // If we're in a new month but haven't passed the booking day, don't count it yet
+        if (end.getDate() < start.getDate()) {
+          months--;
+        }
+
+        // Add 1 to include the first month
+        cycles = months + 1;
+        break;
+      }
+
+      case 'YEARLY': {
+        // Calculate years difference
+        let years = end.getFullYear() - start.getFullYear();
+
+        // If we're in a new year but haven't passed the booking month/day, don't count it yet
+        if (
+          end.getMonth() < start.getMonth() ||
+          (end.getMonth() === start.getMonth() &&
+            end.getDate() < start.getDate())
+        ) {
+          years--;
+        }
+
+        // Add 1 to include the first year
+        cycles = years + 1;
+        break;
+      }
+
+      default:
+        cycles = 1; // Default to 1 cycle
+    }
+
+    return Math.max(cycles, 1); // At least 1 cycle
+  }
 
   calculateTotalCharge() {
     let total = 0;
@@ -245,23 +365,22 @@ export class DeliveryComponent implements OnInit {
 
     this.deliveryForm.patchValue({ chargeAmount: total }, { emitEvent: false });
 
-    // Calculate remaining balance: total - previous payments
-    const previousPayments =
-      this.deliveryForm.get('totalPreviousPayments')?.value || 0;
-    const remainingBalance = total - previousPayments;
-
-    this.deliveryForm.patchValue(
-      { remainingBalance: remainingBalance },
-      { emitEvent: false }
-    );
-
-    // Update transaction amount with remaining balance if transaction is enabled
+    // Update transaction amount with charge amount if transaction is enabled
     if (this.deliveryForm.get('createTransaction')?.value) {
       this.deliveryForm.patchValue(
-        { transactionAmount: remainingBalance > 0 ? remainingBalance : 0 },
+        { transactionAmount: total > 0 ? total : 0 },
         { emitEvent: false }
       );
     }
+  }
+
+  recalculateAllCharges() {
+    // Recalculate charge for each delivery detail
+    this.deliveryDetails.controls.forEach((control) => {
+      this.calculateItemCharge(control as FormGroup);
+    });
+    // Then recalculate the total
+    this.calculateTotalCharge();
   }
 
   onUnitChange(index: number) {
@@ -334,11 +453,36 @@ export class DeliveryComponent implements OnInit {
           2
         )})`
       );
-      detail.patchValue(
-        { deliveryQuantity: convertedRemainingQty },
-        { emitEvent: false }
-      );
+
+      detail.patchValue({ deliveryQuantity: convertedRemainingQty });
     }
+
+    // Manually trigger recalculation since patchValue might not trigger subscription
+    this.calculateBaseQuantity(detail as FormGroup);
+    this.calculateItemCharge(detail as FormGroup);
+    this.calculateTotalCharge();
+  }
+
+  getBillTypeLabel(billType: string): string {
+    const labels: { [key: string]: string } = {
+      HOURLY: 'Hourly',
+      DAILY: 'Daily',
+      WEEKLY: 'Weekly',
+      MONTHLY: 'Monthly',
+      YEARLY: 'Yearly',
+    };
+    return labels[billType] || billType;
+  }
+
+  getBillTypeCycleLabel(billType: string): string {
+    const labels: { [key: string]: string } = {
+      HOURLY: 'hr(s)',
+      DAILY: 'day(s)',
+      WEEKLY: 'week(s)',
+      MONTHLY: 'month(s)',
+      YEARLY: 'year(s)',
+    };
+    return labels[billType] || 'cycle(s)';
   }
 
   onSubmit() {
@@ -461,7 +605,8 @@ export class DeliveryComponent implements OnInit {
           deliveryUnitId: d.deliveryUnitId,
           deliveryQuantity: d.deliveryQuantity,
           baseQuantity: d.baseQuantity,
-          chargeAmount: d.chargeAmount,
+          billingCycles: d.billingCycles || 1,
+          chargeAmount: d.totalCharge || 0, // Use totalCharge which is calculated
           adjustmentValue: 0,
         })),
       createTransaction: formData.createTransaction,

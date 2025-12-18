@@ -67,4 +67,27 @@ export class BillCollectionService extends BaseService {
       MessageHub.UPDATE
     );
   }
+
+  // Create delivery-based bill collection
+  createDeliveryBillCollection(
+    payload: IDeliveryBillCollectionRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.postWithSuccess<ITransactionDetailResponse>(
+      `${this.path}/delivery-based`,
+      payload,
+      'Create Delivery Bill Collection',
+      MessageHub.ADD
+    );
+  }
+}
+
+export interface IDeliveryBillCollectionRequest {
+  transactionCode: string;
+  transactionDate: Date;
+  branchId: number;
+  deliveryIds: string[];
+  amount: number;
+  paymentMethod: string;
+  paymentReference?: string;
+  note?: string;
 }

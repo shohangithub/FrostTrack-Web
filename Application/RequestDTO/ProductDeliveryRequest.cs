@@ -23,6 +23,7 @@ public record DeliveryDetailRequest
     public int DeliveryUnitId { get; init; }
     public float DeliveryQuantity { get; init; }
     public decimal BaseQuantity { get; init; }
+    public int BillingCycles { get; init; } = 1;
     public decimal ChargeAmount { get; init; }
     public decimal AdjustmentValue { get; init; }
 }

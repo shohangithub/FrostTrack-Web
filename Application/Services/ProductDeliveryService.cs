@@ -80,6 +80,19 @@ public class DeliveryService : IDeliveryService
             }
         }
 
+        // Set payment status based on transaction creation
+        if (request.CreateTransaction && request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0)
+        {
+            entity.PaymentStatus = PaymentStatuses.PAID;
+            entity.PaymentDate = DateTime.UtcNow;
+        }
+        else
+        {
+            entity.PaymentStatus = PaymentStatuses.UNPAID;
+            entity.PaymentDate = null;
+            entity.TransactionId = null;
+        }
+
         await _repository.AddAsync(entity, CancellationToken.None);
 
         // Create transaction if requested
@@ -123,7 +136,11 @@ public class DeliveryService : IDeliveryService
                 AttachmentPath: null
             );
 
-            await _transactionService.AddAsync(transactionRequest, CancellationToken.None);
+            var transaction = await _transactionService.AddAsync(transactionRequest, CancellationToken.None);
+            
+            // Update delivery with transaction ID
+            entity.TransactionId = transaction.Id;
+            await _repository.UpdateAsync(entity, CancellationToken.None);
         }
 
         return await GetByIdAsync(entity.Id);
@@ -758,5 +775,82 @@ public class DeliveryService : IDeliveryService
         response.DueAmount = response.TotalBookingAmount + response.ExtraCharge - response.TotalPaidAmount;
 
         return response;
+    }
+
+    public async Task<List<DeliveryResponse>> GetUnpaidDeliveriesByCustomerAsync(int customerId)
+    {
+        var deliveries = await _repository.Query()
+            .Where(x => x.Booking!.CustomerId == customerId && x.PaymentStatus == PaymentStatuses.UNPAID)
+            .OrderBy(x => x.DeliveryDate)
+            .Select(x => new DeliveryResponse
+            {
+                Id = x.Id,
+                DeliveryNumber = x.DeliveryNumber,
+                DeliveryDate = x.DeliveryDate,
+                BookingId = x.BookingId,
+                BookingNumber = x.Booking.BookingNumber,
+                CustomerId = x.Booking.CustomerId,
+                CustomerName = x.Booking.Customer.CustomerName,
+                BranchId = x.BranchId,
+                ChargeAmount = x.ChargeAmount,
+                AdjustmentValue = x.AdjustmentValue,
+                PaymentStatus = x.PaymentStatus,
+                PaymentDate = x.PaymentDate,
+                TransactionId = x.TransactionId
+            })
+            .ToListAsync();
+
+        return deliveries;
+    }
+
+    public async Task<DeliveryResponse?> GetUnpaidDeliveryByCodeAsync(string deliveryCode)
+    {
+        var delivery = await _repository.Query()
+            .Where(x => x.DeliveryNumber == deliveryCode && x.PaymentStatus == PaymentStatuses.UNPAID)
+            .Select(x => new DeliveryResponse
+            {
+                Id = x.Id,
+                DeliveryNumber = x.DeliveryNumber,
+                DeliveryDate = x.DeliveryDate,
+                BookingId = x.BookingId,
+                BookingNumber = x.Booking.BookingNumber,
+                CustomerId = x.Booking.CustomerId,
+                CustomerName = x.Booking.Customer.CustomerName,
+                BranchId = x.BranchId,
+                ChargeAmount = x.ChargeAmount,
+                AdjustmentValue = x.AdjustmentValue,
+                PaymentStatus = x.PaymentStatus,
+                PaymentDate = x.PaymentDate,
+                TransactionId = x.TransactionId
+            })
+            .FirstOrDefaultAsync();
+
+        return delivery;
+    }
+
+    public async Task<List<DeliveryResponse>> GetAllUnpaidDeliveriesAsync()
+    {
+        var deliveries = await _repository.Query()
+            .Where(x => x.PaymentStatus == PaymentStatuses.UNPAID)
+            .OrderBy(x => x.DeliveryDate)
+            .Select(x => new DeliveryResponse
+            {
+                Id = x.Id,
+                DeliveryNumber = x.DeliveryNumber,
+                DeliveryDate = x.DeliveryDate,
+                BookingId = x.BookingId,
+                BookingNumber = x.Booking.BookingNumber,
+                CustomerId = x.Booking.CustomerId,
+                CustomerName = x.Booking.Customer.CustomerName,
+                BranchId = x.BranchId,
+                ChargeAmount = x.ChargeAmount,
+                AdjustmentValue = x.AdjustmentValue,
+                PaymentStatus = x.PaymentStatus,
+                PaymentDate = x.PaymentDate,
+                TransactionId = x.TransactionId
+            })
+            .ToListAsync();
+
+        return deliveries;
     }
 }

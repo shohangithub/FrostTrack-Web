@@ -33,13 +33,19 @@ export interface IDeliveryResponse {
   deliveryNumber: string;
   deliveryDate: Date;
   bookingId: string;
-  booking: IBookingResponse;
+  bookingNumber?: string;
+  booking?: IBookingResponse;
+  customerId: number;
+  customerName?: string;
   branchId: number;
   notes?: string;
   chargeAmount: number;
   adjustmentValue: number;
   discountAmount: number;
   paidAmount: number;
+  paymentStatus?: string;
+  paymentDate?: Date;
+  transactionId?: string;
   deliveryDetails: IDeliveryDetailResponse[];
 }
 

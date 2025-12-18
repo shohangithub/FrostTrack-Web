@@ -19,4 +19,7 @@ public interface IDeliveryService
     Task<decimal> GetBookingPreviousPaymentsAsync(Guid bookingId);
     Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync();
     Task<DeliveryInvoiceResponse> GetInvoiceByIdAsync(Guid id);
+    Task<List<DeliveryResponse>> GetUnpaidDeliveriesByCustomerAsync(int customerId);
+    Task<DeliveryResponse?> GetUnpaidDeliveryByCodeAsync(string deliveryCode);
+    Task<List<DeliveryResponse>> GetAllUnpaidDeliveriesAsync();
 }

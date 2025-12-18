@@ -38,7 +38,7 @@ import { AddProductComponent } from 'app/administration/components/product/add-p
 import { AddCustomerComponent } from 'app/common/components/customer/add-customer/add-customer.component';
 import { AddBaseUnitComponent } from 'app/common/components/base-unit/add-base-unit/add-base-unit.component';
 import { UnitConversionService } from 'app/common/services/unit-conversion.service';
-import { BILL_TYPES } from 'app/common/data/settings-data';
+import { BILL_TYPE, BILL_TYPES } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-booking',
@@ -180,7 +180,7 @@ export class BookingComponent implements OnInit {
       product: [null, [Validators.required]],
       bookingRate: [null, [Validators.required]],
       bookingUnit: [null, [Validators.required]],
-      billType: ['MONTHLY', [Validators.required]],
+      billType: [BILL_TYPE.Monthly, [Validators.required]],
       bookingQuantity: [null, [Validators.required]],
     });
   }
@@ -330,7 +330,7 @@ export class BookingComponent implements OnInit {
           );
         childForm
           ?.get('billType')
-          ?.setValue(existingProduct.billType || 'MONTHLY');
+          ?.setValue(existingProduct.billType || BILL_TYPE.Monthly);
       } else {
         childForm
           ?.get('bookingUnit')
@@ -340,7 +340,7 @@ export class BookingComponent implements OnInit {
           );
         childForm?.get('bookingRate')?.setValue(product.bookingRate || 0);
         childForm?.get('bookingQuantity')?.setValue(null);
-        childForm?.get('billType')?.setValue('MONTHLY');
+        childForm?.get('billType')?.setValue(BILL_TYPE.Monthly);
       }
     }
   }

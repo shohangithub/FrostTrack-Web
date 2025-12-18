@@ -19,6 +19,14 @@ public class Delivery : AuditableEntity<Guid>
     [Column(TypeName = "decimal(5, 2)")]
     public required decimal AdjustmentValue { get; set; }
 
+    // Payment tracking
+    [MaxLength(20)]
+    public string PaymentStatus { get; set; } = PaymentStatuses.UNPAID;
+    
+    public DateTime? PaymentDate { get; set; }
+    
+    public Guid? TransactionId { get; set; }
+    public Transaction? Transaction { get; set; }
 
     // [Column(TypeName = "decimal(10, 2)")]
     // public required decimal DiscountAmount { get; set; } = 0;

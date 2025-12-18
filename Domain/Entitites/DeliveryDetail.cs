@@ -13,6 +13,9 @@ public class DeliveryDetail : AuditableEntity<Guid>
     public required float DeliveryQuantity { get; set; }
     public required decimal BaseQuantity { get; set; }
 
+    // Number of billing cycles for this delivery
+    public int BillingCycles { get; set; } = 1;
+
     // Charge Amount for this Delivery Detail
 
     [Column(TypeName = "decimal(10, 2)")]

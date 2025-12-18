@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Context;
 
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251218153204_AddBillingCyclesToDeliveryDetail")]
+    partial class AddBillingCyclesToDeliveryDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -859,18 +862,7 @@ namespace Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("PaymentDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("TransactionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -878,8 +870,6 @@ namespace Persistence.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("BranchId");
-
-                    b.HasIndex("TransactionId");
 
                     b.ToTable("Delivery", "product");
                 });
@@ -2532,16 +2522,9 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entitites.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Booking");
 
                     b.Navigation("Branch");
-
-                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("Domain.Entitites.DeliveryDetail", b =>

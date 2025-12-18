@@ -1,0 +1,342 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="billCollectionForm"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="container mt-2">
+          <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+              <div class="card mb-3">
+                <span class="card-label">Delivery Bill Collection</span>
+                <div class="card-body">
+                  <!-- Search Mode Toggle -->
+                  <div class="row mt-2">
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="btn-group btn-group-sm mb-3" role="group">
+                        <button
+                          type="button"
+                          class="btn"
+                          [ngClass]="
+                            searchMode === 'customer'
+                              ? 'btn-primary'
+                              : 'btn-outline-primary'
+                          "
+                          (click)="switchSearchMode('customer')"
+                        >
+                          <i class="fas fa-user"></i> By Customer
+                        </button>
+                        <button
+                          type="button"
+                          class="btn"
+                          [ngClass]="
+                            searchMode === 'code'
+                              ? 'btn-primary'
+                              : 'btn-outline-primary'
+                          "
+                          (click)="switchSearchMode('code')"
+                        >
+                          <i class="fas fa-barcode"></i> By Delivery Code
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Search by Customer -->
+                    @if (searchMode === 'customer') {
+                    <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label for="customerId" class="col-sm-3 col-form-label"
+                          >Customer:</label
+                        >
+                        <div class="col-sm-9">
+                          <ng-select
+                            id="customerId"
+                            formControlName="customerId"
+                            [items]="customers"
+                            bindLabel="customerName"
+                            bindValue="id"
+                            [loading]="customerLoading"
+                            [clearable]="true"
+                            placeholder="Select customer"
+                            class="ng-select-sm"
+                          >
+                          </ng-select>
+                        </div>
+                      </div>
+                    </div>
+                    }
+                    <!-- Search by Delivery Code -->
+                    @if (searchMode === 'code') {
+                    <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label class="col-sm-3 col-form-label"
+                          >Delivery Code:</label
+                        >
+                        <div class="col-sm-9">
+                          <ng-select
+                            id="deliveryCode"
+                            [(ngModel)]="selectedDeliveryCode"
+                            [ngModelOptions]="{ standalone: true }"
+                            [items]="deliveryCodes"
+                            bindLabel="text"
+                            bindValue="value"
+                            [loading]="deliveryCodesLoading"
+                            [clearable]="true"
+                            (change)="
+                              onDeliveryCodeSelect(selectedDeliveryCode || '')
+                            "
+                            placeholder="Select delivery code"
+                            class="ng-select-sm"
+                          >
+                          </ng-select>
+                        </div>
+                      </div>
+                    </div>
+                    }
+                  </div>
+
+                  <!-- Transaction Info Row -->
+                  <div class="row">
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="transactionCode"
+                          class="col-sm-4 col-form-label"
+                          >Tr. Code:</label
+                        >
+                        <div class="col-sm-8">
+                          <div class="input-group">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="transactionCode"
+                              formControlName="transactionCode"
+                              readonly
+                            />
+                            <div
+                              class="input-group-append"
+                              style="cursor: pointer"
+                              (click)="generateTransactionCode()"
+                            >
+                              <span
+                                class="input-group-text input-group-text-append"
+                              >
+                                <i
+                                  class="fas"
+                                  [ngClass]="
+                                    isGeneratingCode
+                                      ? 'fa-spinner fa-spin'
+                                      : 'fa-sync'
+                                  "
+                                ></i>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="transactionDate"
+                          class="col-sm-4 col-form-label"
+                          >Date:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            id="transactionDate"
+                            formControlName="transactionDate"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="paymentMethod"
+                          class="col-sm-5 col-form-label"
+                          >Payment:</label
+                        >
+                        <div class="col-sm-7">
+                          <ng-select
+                            id="paymentMethod"
+                            formControlName="paymentMethod"
+                            [items]="paymentMethods"
+                            bindLabel="label"
+                            bindValue="value"
+                            [clearable]="false"
+                            class="ng-select-sm"
+                          >
+                          </ng-select>
+                        </div>
+                      </div>
+                    </div> -->
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="paymentReference"
+                          class="col-sm-4 col-form-label"
+                          >Reference:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            id="paymentReference"
+                            formControlName="paymentReference"
+                            placeholder="Optional"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Unpaid Deliveries Table -->
+              @if (unpaidDeliveries.length > 0) {
+              <div class="card mb-3">
+                <span class="card-label">
+                  Unpaid Deliveries
+                  <span class="badge bg-info text-white ms-2"
+                    >{{ selectedCount }} selected</span
+                  >
+                </span>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                      <thead class="table-light">
+                        <tr>
+                          <th class="text-center" style="width: 50px">
+                            <input
+                              type="checkbox"
+                              [checked]="
+                                selectedCount === unpaidDeliveries.length
+                              "
+                              (change)="toggleSelectAll()"
+                            />
+                          </th>
+                          <th>Delivery Code</th>
+                          <th>Delivery Date</th>
+                          <th>Booking Number</th>
+                          <th>Customer</th>
+                          <th class="text-end">Charge</th>
+                          <th class="text-end">Adjustment</th>
+                          <th class="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (delivery of unpaidDeliveries; track delivery.id) {
+                        <tr
+                          [class.table-active]="isDeliverySelected(delivery.id)"
+                        >
+                          <td class="text-center">
+                            <input
+                              type="checkbox"
+                              [checked]="isDeliverySelected(delivery.id)"
+                              (change)="toggleDeliverySelection(delivery.id)"
+                            />
+                          </td>
+                          <td>{{ delivery.deliveryNumber }}</td>
+                          <td>
+                            {{ delivery.deliveryDate | date : "dd/MM/yyyy" }}
+                          </td>
+                          <td>{{ delivery.bookingNumber }}</td>
+                          <td>{{ delivery.customerName }}</td>
+                          <td class="text-end">
+                            {{ delivery.chargeAmount | number : "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            {{ delivery.adjustmentValue | number : "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              delivery.chargeAmount + delivery.adjustmentValue
+                                | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot class="table-light">
+                        <tr>
+                          <td colspan="7" class="text-end">
+                            <strong>Total Selected Amount:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong class="text-primary">{{
+                              selectedTotal | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              }
+
+              <!-- Note Section -->
+              <div class="card mb-3">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="form-group">
+                        <label for="note" class="form-label">Note:</label>
+                        <textarea
+                          class="form-control form-control-sm"
+                          id="note"
+                          formControlName="note"
+                          rows="2"
+                          placeholder="Optional notes..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="card mb-3">
+                <div class="card-body text-end">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-secondary me-2"
+                    (click)="cancel()"
+                    [disabled]="isSubmitting"
+                  >
+                    <i class="fas fa-times"></i> Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-warning me-2"
+                    (click)="reset()"
+                    [disabled]="isSubmitting"
+                  >
+                    <i class="fas fa-redo"></i> Reset
+                  </button>
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-success"
+                    [disabled]="isSubmitting || selectedCount === 0"
+                  >
+                    <i
+                      class="fas"
+                      [ngClass]="
+                        isSubmitting ? 'fa-spinner fa-spin' : 'fa-save'
+                      "
+                    ></i>
+                    {{ isSubmitting ? "Saving..." : "Save" }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

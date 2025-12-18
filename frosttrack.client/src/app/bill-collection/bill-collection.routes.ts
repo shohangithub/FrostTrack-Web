@@ -21,6 +21,13 @@ export const billCollectionRoutes: Route[] = [
       ),
   },
   {
+    path: 'delivery-based',
+    loadComponent: () =>
+      import(
+        './components/delivery-bill-collection/delivery-bill-collection.component'
+      ).then((m) => m.DeliveryBillCollectionComponent),
+  },
+  {
     path: 'edit/:id',
     loadComponent: () =>
       import('./components/bill-collection/bill-collection.component').then(

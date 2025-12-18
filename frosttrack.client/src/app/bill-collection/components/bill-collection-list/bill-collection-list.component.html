@@ -29,8 +29,16 @@
                           <button
                             class="btn btn-icon icon-left btn-primary rounded-button"
                             (click)="add()"
+                            title="Customer Bill Collection"
                           >
                             <i class="material-icons">add</i>
+                          </button>
+                          <button
+                            class="btn btn-icon icon-left btn-success rounded-button"
+                            [routerLink]="['/bill-collection/delivery-based']"
+                            title="Delivery Bill Collection"
+                          >
+                            <i class="material-icons">local_shipping</i>
                           </button>
                           @if (canDelete && isRowSelected) {
                           <button

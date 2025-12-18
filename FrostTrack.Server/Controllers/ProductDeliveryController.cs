@@ -109,4 +109,27 @@ public class DeliveryController : ControllerBase
         var result = await _service.GetInvoiceByIdAsync(id);
         return Ok(result);
     }
+
+    [HttpGet("unpaid-by-customer/{customerId}")]
+    public async Task<ActionResult<List<DeliveryResponse>>> GetUnpaidDeliveriesByCustomer(int customerId)
+    {
+        var result = await _service.GetUnpaidDeliveriesByCustomerAsync(customerId);
+        return Ok(result);
+    }
+
+    [HttpGet("unpaid-by-code/{deliveryCode}")]
+    public async Task<ActionResult<DeliveryResponse?>> GetUnpaidDeliveryByCode(string deliveryCode)
+    {
+        var result = await _service.GetUnpaidDeliveryByCodeAsync(deliveryCode);
+        if (result == null)
+            return NotFound(new { message = "Unpaid delivery not found" });
+        return Ok(result);
+    }
+
+    [HttpGet("unpaid-all")]
+    public async Task<ActionResult<List<DeliveryResponse>>> GetAllUnpaidDeliveries()
+    {
+        var result = await _service.GetAllUnpaidDeliveriesAsync();
+        return Ok(result);
+    }
 }

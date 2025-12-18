@@ -28,8 +28,11 @@ public static class BillTypes
     public const string Yearly = "YEARLY";
 }
 
-
-
+public static class PaymentStatuses
+{
+    public const string PAID = "PAID";
+    public const string UNPAID = "UNPAID";
+}
 
 public enum ECustomerType
 {

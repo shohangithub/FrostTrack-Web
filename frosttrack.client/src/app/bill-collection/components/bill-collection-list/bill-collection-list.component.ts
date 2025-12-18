@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe, CommonModule } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { MessageHub } from '@config/message-hub';
 import { DefaultPagination } from '@config/pagination';
@@ -31,7 +31,13 @@ import Swal from 'sweetalert2';
   selector: 'app-bill-collection-list',
   templateUrl: './bill-collection-list.component.html',
   standalone: true,
-  imports: [NgxDatatableModule, DatePipe, DecimalPipe, CommonModule],
+  imports: [
+    NgxDatatableModule,
+    DatePipe,
+    DecimalPipe,
+    CommonModule,
+    RouterLink,
+  ],
 })
 export class BillCollectionListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;

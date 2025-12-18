@@ -14,6 +14,9 @@ public class DeliveryResponse
     public string? Notes { get; set; }
     public decimal ChargeAmount { get; set; }
     public decimal AdjustmentValue { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
+    public DateTime? PaymentDate { get; set; }
+    public Guid? TransactionId { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public bool IsArchived { get; set; }

@@ -19,6 +19,7 @@ export interface IDeliveryDetailRequest {
   deliveryUnitId: number;
   deliveryQuantity: number;
   baseQuantity: number;
+  billingCycles: number;
   chargeAmount: number;
   adjustmentValue: number;
 }
@@ -75,6 +76,9 @@ export interface IDeliveryResponse {
   notes?: string;
   chargeAmount: number;
   adjustmentValue: number;
+  paymentStatus: string;
+  paymentDate?: Date;
+  transactionId?: string;
   customer?: ICustomerBasicInfo;
   booking?: IBookingBasicInfo;
   deliveryDetails: IDeliveryDetailResponse[];

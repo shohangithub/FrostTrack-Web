@@ -11,4 +11,5 @@ public interface IBillCollectionService
     Task<decimal> GetBookingPaidAmountAsync(Guid bookingId, CancellationToken cancellationToken = default);
     Task<TransactionResponse> CreateBillCollectionAsync(BillCollectionRequest request, CancellationToken cancellationToken = default);
     Task<TransactionResponse> UpdateBillCollectionAsync(Guid id, BillCollectionRequest request, CancellationToken cancellationToken = default);
+    Task<TransactionResponse> CreateDeliveryBillCollectionAsync(DeliveryBillCollectionRequest request, CancellationToken cancellationToken = default);
 }

@@ -35,12 +35,20 @@ export const SALES_TYPES = {
 };
 
 export const BILL_TYPES = [
-  // { label: 'Hourly', value: 'HOURLY' },
-  // { label: 'Daily', value: 'DAILY' },
-  // { label: 'Weekly', value: 'WEEKLY' },
+  { label: 'Hourly', value: 'HOURLY' },
+  { label: 'Daily', value: 'DAILY' },
+  { label: 'Weekly', value: 'WEEKLY' },
   { label: 'Monthly', value: 'MONTHLY' },
-  // { label: 'Yearly', value: 'YEARLY' },
+  { label: 'Yearly', value: 'YEARLY' },
 ];
+
+export const BILL_TYPE = {
+  Hourly: 'HOURLY',
+  Daily: 'DAILY',
+  Weekly: 'WEEKLY',
+  Monthly: 'MONTHLY',
+  Yearly: 'YEARLY',
+};
 
 export const DEFAULT_CURRENCY_LIST = [
   { id: 'BDT', value: 'Bangladeshi Taka', symbol: '৳' },

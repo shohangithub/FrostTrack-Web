@@ -103,7 +103,7 @@ public class BillCollectionService : IBillCollectionService
             .ToListAsync(cancellationToken);
 
         var totalAmount = bookingDetails.Sum(bd =>
-            bd.BillType == "MONTHLY"
+            bd.BillType == BillTypes.Monthly
                 ? (decimal)bd.BookingQuantity * bd.BookingRate
                 : bd.BaseQuantity * bd.BaseRate);
 
@@ -206,6 +206,78 @@ public class BillCollectionService : IBillCollectionService
 
         _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);
         await _transactionRepository.UpdateAsync(entity, cancellationToken);
+
+        var response = entity.Adapt<TransactionResponse>();
+        return response;
+    }
+
+    public async Task<TransactionResponse> CreateDeliveryBillCollectionAsync(DeliveryBillCollectionRequest request, CancellationToken cancellationToken = default)
+    {
+        // Get BILL_COLLECTION transaction head
+        var transactionHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
+
+        if (transactionHead == null)
+            throw new Exception("BILL_COLLECTION transaction head not found");
+
+        // Get deliveries and verify they are all unpaid
+        var deliveries = await _deliveryRepository.Query()
+            .Include(d => d.Booking)
+            .ThenInclude(b => b!.Customer)
+            .Where(d => request.DeliveryIds.Contains(d.Id) && d.PaymentStatus == PaymentStatuses.UNPAID)
+            .ToListAsync(cancellationToken);
+
+        if (deliveries.Count != request.DeliveryIds.Count)
+            throw new Exception("Some deliveries are not found or already paid");
+
+        // Validate amount matches sum of delivery charges
+        var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
+        if (Math.Abs(totalCharges - request.Amount) > 0.01m)
+            throw new Exception($"Payment amount ({request.Amount}) does not match total delivery charges ({totalCharges})");
+
+        // Create transaction entity
+        var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
+        var firstDelivery = deliveries.FirstOrDefault();
+        var customer = await _bookingRepository.Query()
+            .Where(b => b.Id == firstDelivery!.BookingId)
+            .Include(b => b.Customer)
+            .Select(b => b.Customer)
+            .FirstOrDefaultAsync(cancellationToken);
+        var customerName = customer?.CustomerName ?? "N/A";
+        
+        var entity = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            TransactionCode = request.TransactionCode,
+            TransactionDate = request.TransactionDate,
+            TransactionHeadId = transactionHead.Id,
+            BranchId = request.BranchId,
+            BookingId = deliveries.FirstOrDefault()?.BookingId,
+            CustomerId = deliveries.FirstOrDefault()?.Booking?.CustomerId,
+            Amount = request.Amount,
+            PaymentMethod = request.PaymentMethod,
+            PaymentReference = request.PaymentReference,
+            Note = request.Note,
+            EntityName = "DELIVERY",
+            EntityId = string.Join(",", request.DeliveryIds),
+            Description = $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}",
+            DiscountAmount = 0,
+            AdjustmentValue = 0,
+            NetAmount = request.Amount
+        };
+
+        _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
+        await _transactionRepository.AddAsync(entity, cancellationToken);
+
+        // Mark all deliveries as paid
+        foreach (var delivery in deliveries)
+        {
+            delivery.PaymentStatus = PaymentStatuses.PAID;
+            delivery.PaymentDate = request.TransactionDate;
+            delivery.TransactionId = entity.Id;
+            _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(delivery);
+            await _deliveryRepository.UpdateAsync(delivery, cancellationToken);
+        }
 
         var response = entity.Adapt<TransactionResponse>();
         return response;

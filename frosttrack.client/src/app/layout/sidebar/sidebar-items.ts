@@ -538,6 +538,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/bill-collection/delivery-based',
+        title: 'Delivery Based Bill Collection',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/bill-collection/list',
         title: 'Bill Collection List',
         iconType: '',
