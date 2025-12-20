@@ -352,3 +352,13 @@
     </div>
   </div>
 </section>
+
+<!-- Hidden receipt component for inline printing -->
+@if(showReceipt && receiptId) {
+<div style="position: absolute; left: -9999px">
+  <app-salary-receipt-print
+    [preloadedTransactionId]="receiptId"
+    [hideSearchForm]="true"
+  ></app-salary-receipt-print>
+</div>
+}

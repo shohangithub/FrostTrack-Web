@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionReceiptPrintComponent } from '../../../transaction/components/transaction-receipt-print/transaction-receipt-print.component';
@@ -12,9 +12,14 @@ import { LayoutService } from '@core/service/layout.service';
   imports: [CommonModule, TransactionReceiptPrintComponent],
 })
 export class BillCollectionReceiptPrintComponent implements OnInit {
+  @ViewChild(TransactionReceiptPrintComponent)
+  transactionReceiptComponent!: TransactionReceiptPrintComponent;
+
+  @Input() preloadedTransactionId: string = '';
+  @Input() hideSearchForm: boolean = false;
+
   transactionId: string = '';
   receiptTitle: string = 'বিল সংগ্রহ স্লিপ';
-  hideSearchForm: boolean = false;
   backUrl: string = '';
 
   constructor(
@@ -29,12 +34,27 @@ export class BillCollectionReceiptPrintComponent implements OnInit {
     // Check if transaction ID is passed via route params
     const id = this.route.snapshot.paramMap.get('id');
     const backurl = this.route.snapshot.paramMap.get('backurl');
-    if (id) {
+
+    // Use Input property if provided, otherwise use route param
+    if (this.preloadedTransactionId) {
+      this.transactionId = this.preloadedTransactionId;
+    } else if (id) {
       this.transactionId = id;
       this.hideSearchForm = true;
     }
+
     if (backurl) {
       this.backUrl = backurl;
+    }
+  }
+
+  /**
+   * Trigger print on the underlying TransactionReceiptPrintComponent
+   * This method is called by parent components for inline printing
+   */
+  triggerPrint(): void {
+    if (this.transactionReceiptComponent) {
+      this.transactionReceiptComponent.triggerPrint();
     }
   }
 }

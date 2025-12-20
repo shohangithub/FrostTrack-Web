@@ -22,6 +22,7 @@ import {
 import { PaginationQuery } from '@core/models/pagination-query';
 import { DefaultPagination } from '@config/pagination';
 import { PaymentMethod } from 'app/transaction/models/transaction.interface';
+import { SalaryReceiptPrintComponent } from '../salary-receipt-print/salary-receipt-print.component';
 
 @Component({
   selector: 'app-salary-payment-form',
@@ -35,10 +36,13 @@ import { PaymentMethod } from 'app/transaction/models/transaction.interface';
     NgxDatatableModule,
     DatePipe,
     DecimalPipe,
+    SalaryReceiptPrintComponent,
   ],
 })
 export class SalaryPaymentFormComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+  @ViewChild(SalaryReceiptPrintComponent)
+  receiptComponent!: SalaryReceiptPrintComponent;
 
   salaryForm: UntypedFormGroup;
   employees: IEmployeeForSalary[] = [];
@@ -46,6 +50,11 @@ export class SalaryPaymentFormComponent implements OnInit {
   isSubmitting = false;
   transactionId: string | null = null;
   isEditMode = false;
+
+  // Properties for inline printing
+  receiptId: string = '';
+  showReceipt: boolean = false;
+  shouldAutoPrint: boolean = false;
 
   // Payment list properties
   paymentList: ISalaryPaymentList[] = [];
@@ -296,6 +305,7 @@ export class SalaryPaymentFormComponent implements OnInit {
       return;
     }
 
+    this.shouldAutoPrint = true;
     this.isSubmitting = true;
     const formValue = this.salaryForm.getRawValue();
 
@@ -326,13 +336,13 @@ export class SalaryPaymentFormComponent implements OnInit {
           } successfully`,
           'Success'
         );
-        // Navigate to print receipt page with the transaction ID
-        const transactionId = response.transactionId || this.transactionId;
-        this.router.navigate([
-          '/salary-payment/receipt-print',
-          transactionId,
-          'form',
-        ]);
+        // Use inline printing instead of navigation
+        const transactionId =
+          response.transactionId || this.transactionId || '';
+        this.savedTransactionId = transactionId;
+        if (this.shouldAutoPrint) {
+          this.loadReceiptForPrint();
+        }
         this.isSubmitting = false;
       },
       error: (error) => {
@@ -345,8 +355,28 @@ export class SalaryPaymentFormComponent implements OnInit {
           error
         );
         this.isSubmitting = false;
+        this.shouldAutoPrint = false;
       },
     });
+  }
+
+  private savedTransactionId: string = '';
+
+  loadReceiptForPrint(): void {
+    console.log(
+      'Loading salary receipt for print, transaction ID:',
+      this.savedTransactionId
+    );
+    this.receiptId = this.savedTransactionId;
+    this.showReceipt = true;
+
+    // Wait for receipt component to load data before triggering print
+    setTimeout(() => {
+      console.log('Triggering salary receipt print');
+      if (this.receiptComponent) {
+        this.receiptComponent.triggerPrint();
+      }
+    }, 1500);
   }
 
   reset(): void {

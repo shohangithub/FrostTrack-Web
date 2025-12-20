@@ -322,3 +322,13 @@
     </div>
   </div>
 </section>
+
+<!-- Hidden receipt component for inline printing -->
+@if(showReceipt && receiptId) {
+<div style="position: absolute; left: -9999px">
+  <app-bill-collection-receipt-print
+    [preloadedTransactionId]="receiptId"
+    [hideSearchForm]="true"
+  ></app-bill-collection-receipt-print>
+</div>
+}

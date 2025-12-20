@@ -196,6 +196,16 @@
                     >
                       Cancel
                     </button>
+                    @if (!isEditing) {
+                    <button
+                      type="button"
+                      class="btn btn-secondary mx-2"
+                      (click)="reset()"
+                      [disabled]="isSubmitted"
+                    >
+                      Reset
+                    </button>
+                    }
                     <button
                       type="submit"
                       class="btn btn-primary mx-2"
@@ -222,3 +232,13 @@
     </div>
   </div>
 </section>
+
+<!-- Hidden receipt component for inline printing -->
+@if(showReceipt && receiptId) {
+<div style="position: absolute; left: -9999px">
+  <app-transaction-receipt-print
+    [preloadedTransactionId]="receiptId"
+    [hideSearchForm]="true"
+  ></app-transaction-receipt-print>
+</div>
+}

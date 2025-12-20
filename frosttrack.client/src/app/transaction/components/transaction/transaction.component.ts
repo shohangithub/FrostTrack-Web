@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -20,14 +20,23 @@ import { Subject } from 'rxjs';
 import { ITransactionHeadLookup } from 'app/common/models/transaction-head.interface';
 import { TransactionHeadService } from 'app/common/services/transaction-head.service';
 import { TransactionHeadComponent } from 'app/common/components/transaction-head/transaction-head.component';
+import { TransactionReceiptPrintComponent } from '../transaction-receipt-print/transaction-receipt-print.component';
 
 @Component({
   selector: 'app-transaction',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NgSelectModule,
+    TransactionReceiptPrintComponent,
+  ],
   templateUrl: './transaction.component.html',
 })
 export class TransactionComponent implements OnInit {
+  @ViewChild(TransactionReceiptPrintComponent)
+  receiptComponent!: TransactionReceiptPrintComponent;
   transactionForm!: FormGroup;
   isLoading = false;
   isSubmitted = false;
@@ -36,6 +45,11 @@ export class TransactionComponent implements OnInit {
   selectedBranch!: number;
   private generatedCode: string = '';
   private savedTransactionId: string = '';
+
+  // Properties for inline printing
+  receiptId: string = '';
+  showReceipt: boolean = false;
+  shouldAutoPrint: boolean = false;
 
   transactionHeads: ITransactionHeadLookup[] = [];
   transactionHeadLoading = false;
@@ -231,7 +245,11 @@ export class TransactionComponent implements OnInit {
       next: (response) => {
         // BaseService already handles success toasts via ErrorHandlerService
         this.savedTransactionId = response.id;
-        this.router.navigate(['/transaction/list']);
+        if (!this.isEditing) {
+          this.reset();
+        } else {
+          this.router.navigate(['/transaction/list']);
+        }
       },
       error: () => {
         // BaseService already handles error toasts via ErrorHandlerService
@@ -254,6 +272,7 @@ export class TransactionComponent implements OnInit {
       return;
     }
 
+    this.shouldAutoPrint = true;
     this.isSubmitted = true;
 
     const payload = {
@@ -279,20 +298,55 @@ export class TransactionComponent implements OnInit {
     request$.subscribe({
       next: (response) => {
         // BaseService already handles success toasts via ErrorHandlerService
-        this.router.navigate([
-          '/transaction/receipt-print',
-          response.id,
-          'list',
-        ]);
+        this.savedTransactionId = response.id;
+        if (this.shouldAutoPrint) {
+          this.loadReceiptForPrint();
+        }
+        if (!this.isEditing) {
+          this.reset();
+        }
       },
       error: () => {
         // BaseService already handles error toasts via ErrorHandlerService
         this.isSubmitted = false;
+        this.shouldAutoPrint = false;
       },
     });
   }
 
+  loadReceiptForPrint(): void {
+    console.log(
+      'Loading receipt for print, transaction ID:',
+      this.savedTransactionId
+    );
+    this.receiptId = this.savedTransactionId;
+    this.showReceipt = true;
+
+    // Wait for receipt component to load data before triggering print
+    setTimeout(() => {
+      console.log('Triggering receipt print');
+      if (this.receiptComponent) {
+        this.receiptComponent.triggerPrint();
+      }
+    }, 1500);
+  }
+
   cancel(): void {
     this.router.navigate(['/transaction/list']);
+  }
+
+  reset(): void {
+    this.transactionForm.reset({
+      id: '00000000-0000-0000-0000-000000000000',
+      transactionCode: '',
+      transactionDate: new Date().systemFormat(),
+      transactionHead: null,
+      transactionFlow: '',
+      branchId: this.selectedBranch,
+      amount: null,
+      note: '',
+    });
+    this.generateCode();
+    this.isSubmitted = false;
   }
 }

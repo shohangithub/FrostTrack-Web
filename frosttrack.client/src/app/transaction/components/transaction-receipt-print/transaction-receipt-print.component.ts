@@ -1,7 +1,7 @@
 import { DatePipe, CommonModule, DecimalPipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgxPrintModule } from 'ngx-print';
+import { NgxPrintModule, NgxPrintDirective } from 'ngx-print';
 import { TransactionService } from '../../services/transaction.service';
 import { ITransactionDetailResponse } from '../../models/transaction.interface';
 import { ToastrService } from 'ngx-toastr';
@@ -66,10 +66,12 @@ import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 })
 export class TransactionReceiptPrintComponent implements OnInit {
   @ViewChild('receiptContent', { static: false }) receiptContent!: ElementRef;
+  @ViewChild(NgxPrintDirective) ngxPrintDirective!: NgxPrintDirective;
 
   // Input properties for reusability
   @Input() receiptTitle: string = 'ট্রানজেকশন স্লিপ'; // Default title
   @Input() preloadedTransactionId: string = ''; // For direct transaction loading
+  @Input() autoPrint: boolean = false; // Auto-trigger print after data loads
   @Input() hideSearchForm: boolean = false; // Hide search form when used externally
   @Input() usageForFilter: string = 'TRANSACTION'; // Default to TRANSACTION type
   @Input() backRouteModule: string = 'transaction'; // Module path for back navigation (e.g., 'transaction', 'bill-collection')
@@ -154,16 +156,34 @@ export class TransactionReceiptPrintComponent implements OnInit {
   }
 
   loadTransactionData(): void {
+    if (!this.transactionId) {
+      return;
+    }
+
     this.loadingIndicator = true;
     this.transactionService.getById(this.transactionId).subscribe({
       next: (response: ITransactionDetailResponse) => {
         this.transactionReceipt = response;
         this.loadingIndicator = false;
+
+        // Auto-print after data loads if autoPrint is enabled
+        if (this.autoPrint) {
+          setTimeout(() => {
+            this.triggerPrint();
+          }, 300);
+        }
       },
       error: () => {
         this.loadingIndicator = false;
       },
     });
+  }
+
+  // Method to trigger print programmatically
+  triggerPrint(): void {
+    if (this.ngxPrintDirective && this.transactionReceipt) {
+      this.ngxPrintDirective.print();
+    }
   }
 
   goBack(): void {

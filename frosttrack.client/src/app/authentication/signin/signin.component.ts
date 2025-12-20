@@ -70,7 +70,7 @@ export class SigninComponent implements OnInit {
           }
         },
         error: (err: ErrorResponse) => {
-          var errString = formatErrorMessage(err);
+          const errString = formatErrorMessage(err);
           this.toastr.error(errString);
         },
       });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -16,6 +16,7 @@ import { LayoutService } from '@core/service/layout.service';
 import { IBillCollectionRequest } from 'app/transaction/models/transaction.interface';
 import { BillCollectionService } from '../../services/bill-collection.service';
 import { IBookingWithDueResponse } from '../../models/bill-collection.interface';
+import { BillCollectionReceiptPrintComponent } from '../bill-collection-receipt-print/bill-collection-receipt-print.component';
 
 @Component({
   selector: 'app-bill-collection',
@@ -26,10 +27,12 @@ import { IBookingWithDueResponse } from '../../models/bill-collection.interface'
     FormsModule,
     NgSelectModule,
     RouterLink,
+    BillCollectionReceiptPrintComponent,
   ],
   templateUrl: './bill-collection.component.html',
 })
 export class BillCollectionComponent implements OnInit {
+  @ViewChild(BillCollectionReceiptPrintComponent) receiptComponent!: BillCollectionReceiptPrintComponent;
   billCollectionForm!: FormGroup;
   bookings: { value: string; text: string }[] = [];
   selectedBooking: IBookingWithDueResponse | null = null;
@@ -40,6 +43,11 @@ export class BillCollectionComponent implements OnInit {
   isGeneratingCode = false;
   transactionCode = '';
   selectedBranch!: number;
+
+  // Properties for inline printing
+  receiptId: string = '';
+  showReceipt: boolean = false;
+  shouldAutoPrint: boolean = false;
 
   paymentMethods = [
     { value: 'CASH', label: 'Cash' },
@@ -264,6 +272,7 @@ export class BillCollectionComponent implements OnInit {
       return;
     }
 
+    this.shouldAutoPrint = true;
     this.isSubmitting = true;
 
     const payload: IBillCollectionRequest = {
@@ -283,16 +292,32 @@ export class BillCollectionComponent implements OnInit {
 
     request$.subscribe({
       next: (response) => {
-        this.router.navigate([
-          '/transaction/receipt-print',
-          response.id,
-          'bill-collection-list',
-        ]);
+        this.savedTransactionId = response.id;
+        if (this.shouldAutoPrint) {
+          this.loadReceiptForPrint();
+        }
       },
       error: () => {
         this.isSubmitting = false;
+        this.shouldAutoPrint = false;
       },
     });
+  }
+
+  private savedTransactionId: string = '';
+
+  loadReceiptForPrint(): void {
+    console.log('Loading bill collection receipt for print, transaction ID:', this.savedTransactionId);
+    this.receiptId = this.savedTransactionId;
+    this.showReceipt = true;
+
+    // Wait for receipt component to load data before triggering print
+    setTimeout(() => {
+      console.log('Triggering bill collection receipt print');
+      if (this.receiptComponent) {
+        this.receiptComponent.triggerPrint();
+      }
+    }, 1500);
   }
 
   loadExistingTransaction(id: string) {
