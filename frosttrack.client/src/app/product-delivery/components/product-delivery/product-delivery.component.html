@@ -129,7 +129,7 @@
           <!-- Billing Period Info Box -->
           @if(bookingData) {
           <div class="row mb-3">
-            <div class="col-lg-8">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
               <div class="alert alert-info py-2">
                 <small>
                   <i class="fas fa-info-circle me-2"></i>
@@ -154,214 +154,221 @@
           }
 
           <div class="row">
-            <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
-              <!-- Delivery Items Section -->
-              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                <div class="card mb-3">
-                  <span class="card-label">Delivery Items</span>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="table-responsive" style="min-height: 300px">
-                          <table class="table table-sm">
-                            <thead>
-                              <tr>
-                                <th scope="col" class="text-center">#</th>
-                                <th scope="col" class="text-center">Product</th>
-                                <th scope="col" class="text-center">Booked</th>
-                                <th scope="col" class="text-center">
-                                  Delivered
-                                </th>
-                                <th scope="col" class="text-center">
-                                  Remaining
-                                </th>
-                                <th scope="col" class="text-center">Unit</th>
-                                <th
-                                  scope="col"
-                                  style="width: 10%"
-                                  class="text-center"
-                                >
-                                  Qty
-                                </th>
-                                <th scope="col" class="text-center">
+            <!-- Delivery Items Section -->
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+              <div class="card mb-3">
+                <span class="card-label">Delivery Items</span>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                      <div class="table-responsive">
+                        <table class="table table-sm">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="text-center">#</th>
+                              <th scope="col" class="text-center">Product</th>
+                              <th scope="col" class="text-center">Booked</th>
+                              <th scope="col" class="text-center">Delivered</th>
+                              <th scope="col" class="text-center">Remaining</th>
+                              <th scope="col" class="text-center">Unit</th>
+                              <th
+                                scope="col"
+                                style="width: 10%"
+                                class="text-center"
+                              >
+                                Qty
+                              </th>
+                              <!-- <th scope="col" class="text-center">
                                   Conv. Remaining
-                                </th>
-                                <th
-                                  scope="col"
-                                  style="width: 12%"
-                                  class="text-center"
-                                  title="Quantity × Rate × Cycles"
-                                >
-                                  Calculation
-                                </th>
-                                <th
-                                  scope="col"
-                                  style="width: 12%"
-                                  class="text-center"
-                                >
-                                  Bill
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody formArrayName="deliveryDetails">
-                              @for (detail of deliveryDetails.controls; let i =
-                              $index; track i) {
-                              <tr [formGroupName]="i">
-                                <td class="text-center">{{ i + 1 }}</td>
-                                <td>
-                                  <small>{{
-                                    detail.get("productName")?.value
-                                  }}</small>
-                                </td>
-                                <td class="text-center">
+                                </th> -->
+                              <th
+                                scope="col"
+                                style="width: 12%"
+                                class="text-center"
+                                title="Quantity × Rate × Cycles"
+                              >
+                                Calculation
+                              </th>
+                              <th
+                                scope="col"
+                                style="width: 12%"
+                                class="text-center"
+                              >
+                                Bill
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody formArrayName="deliveryDetails">
+                            @for (detail of deliveryDetails.controls; let i =
+                            $index; track i) {
+                            <tr [formGroupName]="i">
+                              <td class="text-center">{{ i + 1 }}</td>
+                              <td>
+                                <small>{{
+                                  detail.get("productName")?.value
+                                }}</small>
+                              </td>
+                              <td class="text-center">
+                                {{
+                                  detail.get("bookingQuantity")?.value
+                                    | number : "1.2-2"
+                                }}
+                              </td>
+                              <td class="text-center">
+                                {{
+                                  detail.get("totalDeliveredQuantity")?.value
+                                    | number : "1.2-2"
+                                }}
+                              </td>
+                              <td class="text-center">
+                                <span class="badge bg-warning text-dark">
                                   {{
-                                    detail.get("bookingQuantity")?.value
+                                    detail.get("remainingQuantity")?.value
                                       | number : "1.2-2"
                                   }}
-                                </td>
-                                <td class="text-center">
-                                  {{
-                                    detail.get("totalDeliveredQuantity")?.value
-                                      | number : "1.2-2"
-                                  }}
-                                </td>
-                                <td class="text-center">
-                                  <span class="badge bg-warning text-dark">
-                                    {{
-                                      detail.get("remainingQuantity")?.value
-                                        | number : "1.2-2"
-                                    }}
-                                  </span>
-                                </td>
-                                <td>
-                                  <ng-select
-                                    formControlName="deliveryUnitId"
-                                    [items]="
-                                      detail.get('availableUnits')?.value
-                                    "
-                                    bindLabel="unitName"
-                                    bindValue="id"
-                                    [clearable]="false"
-                                    class="ng-select-sm"
-                                    (change)="onUnitChange(i)"
-                                  >
-                                  </ng-select>
-                                </td>
-                                <td>
-                                  <input
-                                    type="text"
-                                    class="form-control form-control-sm text-end"
-                                    formControlName="deliveryQuantity"
-                                    (blur)="validateQuantity(i)"
-                                  />
-                                </td>
-                                <td class="text-center">
+                                </span>
+                              </td>
+                              <td>
+                                <ng-select
+                                  formControlName="deliveryUnitId"
+                                  [items]="detail.get('availableUnits')?.value"
+                                  bindLabel="unitName"
+                                  bindValue="id"
+                                  [clearable]="false"
+                                  class="ng-select-sm"
+                                  (change)="onUnitChange(i)"
+                                >
+                                </ng-select>
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  class="form-control form-control-sm text-end"
+                                  formControlName="deliveryQuantity"
+                                  (blur)="validateQuantity(i)"
+                                />
+                              </td>
+                              <!-- <td class="text-center">
                                   <span class="badge bg-info text-white">
                                     {{
                                       detail.get("convertedRemainingQty")?.value
                                         | number : "1.2-2"
                                     }}
                                   </span>
-                                </td>
-                                <td class="text-center">
-                                  <small
-                                    class="text-muted"
-                                    style="font-size: 11px"
-                                  >
-                                    @if(detail.get('deliveryQuantity')?.value >
-                                    0) {
-                                    <div>
+                                </td> -->
+                              <td class="text-center">
+                                <small
+                                  class="text-muted"
+                                  style="font-size: 11px"
+                                >
+                                  @if(detail.get('deliveryQuantity')?.value > 0)
+                                  {
+                                  <div>
+                                    {{
+                                      detail.get("deliveryQuantity")?.value
+                                        | number : "1.2-2"
+                                    }}
+                                    ×
+                                    {{
+                                      detail.get("bookingRate")?.value
+                                        | number : "1.2-2"
+                                    }}
+                                    × {{ detail.get("billingCycles")?.value }}
+                                    <span
+                                      class="badge bg-info text-white ms-1"
+                                      title="{{
+                                        getBillTypeLabel(
+                                          detail.get('billType')?.value
+                                        )
+                                      }}"
+                                    >
+                                      {{ detail.get("billingCycles")?.value }}
                                       {{
-                                        detail.get("deliveryQuantity")?.value
-                                          | number : "1.2-2"
+                                        getBillTypeCycleLabel(
+                                          detail.get("billType")?.value
+                                        )
                                       }}
-                                      ×
-                                      {{
-                                        detail.get("bookingRate")?.value
-                                          | number : "1.2-2"
-                                      }}
-                                      × {{ detail.get("billingCycles")?.value }}
-                                      <span
-                                        class="badge bg-info text-white ms-1"
-                                        title="{{
-                                          getBillTypeLabel(
-                                            detail.get('billType')?.value
-                                          )
-                                        }}"
-                                      >
-                                        {{ detail.get("billingCycles")?.value }}
-                                        {{
-                                          getBillTypeCycleLabel(
-                                            detail.get("billType")?.value
-                                          )
-                                        }}
-                                      </span>
-                                    </div>
-                                    }
-                                  </small>
-                                </td>
-                                <td>
-                                  <input
-                                    type="number"
-                                    class="form-control form-control-sm text-end fw-bold"
-                                    formControlName="totalCharge"
-                                    readonly
-                                  />
-                                </td>
-                              </tr>
-                              } @empty {
-                              <tr>
-                                <td colspan="10" class="text-center text-muted">
-                                  No items available for delivery
-                                </td>
-                              </tr>
-                              }
-                            </tbody>
-                            <tfoot *ngIf="deliveryDetails.length > 0">
-                              <tr>
-                                <td colspan="10" class="text-end fw-bold">
-                                  Subtotal:
-                                </td>
-                                <td class="text-end fw-bold">
-                                  {{
-                                    deliveryForm.get("chargeAmount")?.value
-                                      | number : "1.2-2"
-                                  }}
-                                </td>
-                              </tr>
-                            </tfoot>
-                          </table>
-                        </div>
+                                    </span>
+                                  </div>
+                                  }
+                                </small>
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  class="form-control form-control-sm text-end fw-bold"
+                                  formControlName="totalCharge"
+                                  readonly
+                                />
+                              </td>
+                            </tr>
+                            } @empty {
+                            <tr>
+                              <td colspan="10" class="text-center text-muted">
+                                No items available for delivery
+                              </td>
+                            </tr>
+                            }
+                          </tbody>
+                          <tfoot *ngIf="deliveryDetails.length > 0">
+                            <tr>
+                              <td colspan="10" class="text-end fw-bold">
+                                Subtotal: &nbsp;
+                                {{
+                                  deliveryForm.get("chargeAmount")?.value
+                                    | number : "1.2-2"
+                                }}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
-              <!-- Billing, Payment and Actions Row -->
-              <div class="row">
-                <!-- Transaction Section (Always visible, disabled when unchecked) -->
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                  <div class="card mb-3">
-                    <span class="card-label">
-                      <input
-                        type="checkbox"
-                        class="form-check-input me-2"
-                        id="createTransaction"
-                        formControlName="createTransaction"
-                      />
+          </div>
+          <!-- Billing, Payment and Actions Row -->
+          <div class="row">
+            <!-- Transaction Section (Always visible, disabled when unchecked) -->
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+              <div class="card mb-3">
+                <span class="card-label">
+                  <input
+                    type="checkbox"
+                    class="form-check-input me-2"
+                    id="createTransaction"
+                    formControlName="createTransaction"
+                  />
 
-                      <label class="form-check-label" for="createTransaction">
-                        Collect Payment
-                      </label>
-                    </span>
-                    <div class="card-body">
+                  <label class="form-check-label" for="createTransaction">
+                    Collect Payment
+                  </label>
+                </span>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                      <div class="form-group row mb-0">
+                        <label class="col-sm-3 col-form-label">Notes:</label>
+                        <div class="col-sm-9">
+                          <textarea
+                            class="form-control form-control-sm"
+                            formControlName="transactionNotes"
+                            rows="2"
+                            [disabled]="
+                              !deliveryForm.get('createTransaction')?.value
+                            "
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row mb-2">
-                        <label class="col-sm-5 col-form-label"
+                        <label class="col-sm-3 col-form-label"
                           >Total Charges:</label
                         >
-                        <div class="col-sm-7">
+                        <div class="col-sm-9">
                           <input
                             type="text"
                             class="form-control form-control-sm text-end"
@@ -374,10 +381,10 @@
                         </div>
                       </div>
                       <div class="form-group row mb-2">
-                        <label class="col-sm-5 col-form-label">
+                        <label class="col-sm-3 col-form-label">
                           <strong class="text-danger">Previous Due:</strong>
                         </label>
-                        <div class="col-sm-7">
+                        <div class="col-sm-9">
                           <input
                             type="text"
                             class="form-control form-control-sm text-end fw-bold text-danger"
@@ -390,10 +397,10 @@
                         </div>
                       </div>
                       <div class="form-group row mb-0" style="display: none">
-                        <label class="col-sm-5 col-form-label"
+                        <label class="col-sm-3 col-form-label"
                           ><strong>Remaining Balance:</strong></label
                         >
-                        <div class="col-sm-7">
+                        <div class="col-sm-9">
                           <input
                             type="text"
                             class="form-control form-control-sm text-end fw-bold"
@@ -406,8 +413,8 @@
                         </div>
                       </div>
                       <div class="form-group row mb-2">
-                        <label class="col-sm-5 col-form-label">Amount:</label>
-                        <div class="col-sm-7">
+                        <label class="col-sm-3 col-form-label">Amount:</label>
+                        <div class="col-sm-9">
                           <input
                             type="text"
                             class="form-control form-control-sm text-end"
@@ -439,49 +446,36 @@
                           </ng-select>
                         </div>
                       </div> -->
-                      <div class="form-group row mb-0">
-                        <label class="col-sm-5 col-form-label">Notes:</label>
-                        <div class="col-sm-7">
-                          <textarea
-                            class="form-control form-control-sm"
-                            formControlName="transactionNotes"
-                            rows="2"
-                            [disabled]="
-                              !deliveryForm.get('createTransaction')?.value
-                            "
-                          ></textarea>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div
-                          class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2"
-                        >
-                          <button
-                            type="submit"
-                            class="btn btn-primary btn-block btn-sm mb-2"
-                            [disabled]="isSubmitting || !bookingData"
-                          >
-                            <i class="fas fa-save"></i>
-                            {{
-                              isSubmitting
-                                ? "Processing..."
-                                : "Complete Delivery"
-                            }}
-                          </button>
-                          <!-- <a
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div
+                      class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-primary btn-block btn-sm mb-2"
+                        [disabled]="isSubmitting || !bookingData"
+                      >
+                        <i class="fas fa-save"></i>
+                        {{
+                          isSubmitting ? "Processing..." : "Complete Delivery"
+                        }}
+                      </button>
+                      <!-- <a
                             routerLink="/product-delivery/list"
                             class="btn btn-danger btn-block btn-sm"
                           >
                             <i class="fas fa-times"></i> Cancel
                           </a> -->
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <!-- Notes and Action Buttons -->
-                <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+            <!-- Notes and Action Buttons -->
+            <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                   <div class="card mb-3">
                     <span class="card-label">Notes & Actions</span>
                     <div class="card-body">
@@ -496,8 +490,6 @@
                     </div>
                   </div>
                 </div> -->
-              </div>
-            </div>
           </div>
         </div>
       </form>
