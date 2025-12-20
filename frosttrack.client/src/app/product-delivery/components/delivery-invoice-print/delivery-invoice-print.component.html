@@ -158,7 +158,8 @@
                           <th>পণ্যের নাম</th>
                           <th>একক</th>
                           <th>সংখ্যা</th>
-                          <th>পরিমাণ (কেজি)</th>
+                          <th>ক্যালকুলেশন</th>
+                          <th>সর্বমোট</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -177,20 +178,25 @@
                             {{ item.deliveryQuantity | number : "1.2-2" }}
                           </td>
                           <td class="text-center">
-                            {{ item.baseQuantity | number : "1.2-2" }}
+                            <small>
+                              {{ item.deliveryQuantity | number : "1.2-2" }} ×
+                              {{ item.bookingRate | number : "1.2-2" }} ×
+                              {{ item.billingCycles }}
+                              {{ getBillTypeCycleLabel(item.billType) }}
+                            </small>
+                          </td>
+                          <td class="text-center fw-bold">
+                            {{ item.chargeAmount | number : "1.2-2" }}
                           </td>
                         </tr>
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="3" class="text-end fw-bold">
+                          <td colspan="5" class="text-end fw-bold">
                             সর্বমোট :
                           </td>
                           <td class="text-center fw-bold">
-                            {{ getTotalQuantity() | number : "1.2-2" }}
-                          </td>
-                          <td class="text-center fw-bold">
-                            {{ getTotalBaseQuantity() | number : "1.2-2" }}
+                            {{ getTotalAmount() | number : "1.2-2" }}
                           </td>
                         </tr>
                       </tfoot>
@@ -211,10 +217,7 @@
                       <tr>
                         <td class="summary-label">মোট বুকিং চার্জ:</td>
                         <td class="summary-value text-end">
-                          {{
-                            deliveryInvoice.totalBookingAmount
-                              | number : "1.2-2"
-                          }}
+                          {{ deliveryInvoice.chargeAmount | number : "1.2-2" }}
                         </td>
                       </tr>
                       <tr>
@@ -225,13 +228,13 @@
                           }}
                         </td>
                       </tr>
-                      <tr>
+                      <!-- <tr>
                         <td class="summary-label">অতিরিক্ত চার্জ:</td>
                         <td class="summary-value text-end">
                           {{ deliveryInvoice.extraCharge | number : "1.2-2" }}
                         </td>
                       </tr>
-                      <!-- <tr>
+                      <tr>
                         <td class="summary-label">ডেলিভারী চার্জ:</td>
                         <td class="summary-value text-end">
                           {{ deliveryInvoice.chargeAmount | number : "1.2-2" }}

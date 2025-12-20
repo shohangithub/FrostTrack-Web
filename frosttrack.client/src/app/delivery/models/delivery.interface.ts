@@ -153,4 +153,6 @@ export interface IDeliveryInvoiceDetailResponse {
   baseQuantity: number;
   chargeAmount: number;
   bookingRate: number;
+  billingCycles: number;
+  billType: string;
 }

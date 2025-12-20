@@ -17,6 +17,7 @@ public interface IDeliveryService
     Task<List<RemainingQuantityResponse>> GetRemainingQuantitiesAsync(Guid bookingId);
     Task<IEnumerable<Lookup<Guid>>> GetBookingLookupAsync();
     Task<decimal> GetBookingPreviousPaymentsAsync(Guid bookingId);
+    Task<decimal> GetBookingDueAmountAsync(Guid bookingId);
     Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync();
     Task<DeliveryInvoiceResponse> GetInvoiceByIdAsync(Guid id);
     Task<List<DeliveryResponse>> GetUnpaidDeliveriesByCustomerAsync(int customerId);

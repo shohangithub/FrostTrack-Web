@@ -143,10 +143,8 @@ export class DeliveryComponent implements OnInit {
         this.bookingData = booking;
         this.populateDeliveryDetails(booking);
 
-        // Fetch customer due amount
-        if (booking.customerId) {
-          this.fetchCustomerDue(booking.customerId);
-        }
+        // Fetch booking due amount
+        this.fetchBookingDue(bookingId);
 
         this.isLoading = false;
       },
@@ -157,27 +155,21 @@ export class DeliveryComponent implements OnInit {
     });
   }
 
-  fetchCustomerDue(customerId: number) {
-    // For now, set to 0 - will be implemented with customer service
-    this.deliveryForm.patchValue(
-      { totalPreviousPayments: 0 },
-      { emitEvent: false }
-    );
-    // TODO: Implement customer due amount fetch
-    // this.customerService.getCustomerDue(customerId).subscribe({
-    //   next: (dueAmount) => {
-    //     this.deliveryForm.patchValue(
-    //       { totalPreviousPayments: dueAmount },
-    //       { emitEvent: false }
-    //     );
-    //   },
-    //   error: () => {
-    //     this.deliveryForm.patchValue(
-    //       { totalPreviousPayments: 0 },
-    //       { emitEvent: false }
-    //     );
-    //   },
-    // });
+  fetchBookingDue(bookingId: string) {
+    this.deliveryService.getBookingDueAmount(bookingId).subscribe({
+      next: (dueAmount) => {
+        this.deliveryForm.patchValue(
+          { totalPreviousPayments: dueAmount },
+          { emitEvent: false }
+        );
+      },
+      error: () => {
+        this.deliveryForm.patchValue(
+          { totalPreviousPayments: 0 },
+          { emitEvent: false }
+        );
+      },
+    });
   }
 
   populateDeliveryDetails(booking: IBookingForDeliveryResponse) {

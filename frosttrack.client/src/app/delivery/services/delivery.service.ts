@@ -84,6 +84,12 @@ export class DeliveryService {
     );
   }
 
+  getBookingDueAmount(bookingId: string): Observable<number> {
+    return this.http.get<number>(
+      `${this.apiUrl}/booking-due-amount/${bookingId}`
+    );
+  }
+
   getDeliveryLookup(): Observable<{ value: string; text: string }[]> {
     return this.http.get<{ value: string; text: string }[]>(
       `${this.apiUrl}/delivery-lookup`

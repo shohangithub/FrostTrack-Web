@@ -146,6 +146,23 @@ export class DeliveryInvoicePrintComponent implements OnInit {
     );
   }
 
+  getBillTypeCycleLabel(billType: string): string {
+    switch (billType?.toUpperCase()) {
+      case 'MONTHLY':
+        return 'মাস';
+      case 'DAILY':
+        return 'দিন';
+      case 'WEEKLY':
+        return 'সপ্তাহ';
+      case 'YEARLY':
+        return 'বছর';
+      case 'HOURLY':
+        return 'ঘন্টা';
+      default:
+        return 'মাস';
+    }
+  }
+
   convertToWords(amount: number): string {
     if (amount === 0) return 'Zero only';
 

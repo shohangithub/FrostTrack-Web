@@ -49,4 +49,6 @@ public class DeliveryInvoiceDetailResponse
     public decimal BaseQuantity { get; set; }
     public decimal ChargeAmount { get; set; }
     public decimal BookingRate { get; set; }
+    public int BillingCycles { get; set; }
+    public string BillType { get; set; } = string.Empty;
 }

@@ -96,6 +96,13 @@ public class DeliveryController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("booking-due-amount/{bookingId}")]
+    public async Task<ActionResult<decimal>> GetBookingDueAmount(Guid bookingId)
+    {
+        var result = await _service.GetBookingDueAmountAsync(bookingId);
+        return Ok(result);
+    }
+
     [HttpGet("delivery-lookup")]
     public async Task<ActionResult<IEnumerable<Lookup<Guid>>>> GetDeliveryLookup()
     {
