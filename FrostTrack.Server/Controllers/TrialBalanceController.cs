@@ -14,16 +14,14 @@ public class TrialBalanceController : ControllerBase
     }
 
     /// <summary>
-    /// Get trial balance report with date range filter
+    /// Get trial balance report for a specific date
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<TrialBalanceSummaryResponse>> GetTrialBalance(
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate,
-        [FromQuery] int? branchId,
+        [FromQuery] DateTime reportDate,
         CancellationToken cancellationToken)
     {
-        var result = await _service.GetTrialBalanceAsync(startDate, endDate, branchId, cancellationToken);
+        var result = await _service.GetTrialBalanceAsync(reportDate, cancellationToken);
         return Ok(result);
     }
 }

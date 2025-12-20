@@ -14,8 +14,10 @@ public record BalanceSheetSummaryResponse
     public decimal TotalLiabilities { get; set; }
     public decimal TotalEquity { get; set; }
     public decimal NetWorth { get; set; } // Assets - Liabilities
-    public DateTime AsOfDate { get; set; }
+    public DateTime ReportDate { get; set; }
     public int TotalTransactions { get; set; }
+    public decimal OpeningBalance { get; set; }
+    public decimal ClosingBalance { get; set; }
     public List<BalanceSheetItemResponse> Assets { get; set; } = new();
     public List<BalanceSheetItemResponse> Liabilities { get; set; } = new();
     public List<BalanceSheetItemResponse> Equity { get; set; } = new();

@@ -12,18 +12,8 @@ export class TrialBalanceService {
 
   constructor(private http: HttpClient) {}
 
-  getTrialBalance(
-    startDate: string,
-    endDate: string,
-    branchId?: number
-  ): Observable<ITrialBalanceSummary> {
-    let params = new HttpParams()
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    if (branchId) {
-      params = params.set('branchId', branchId.toString());
-    }
+  getTrialBalance(reportDate: Date): Observable<ITrialBalanceSummary> {
+    const params = new HttpParams().set('reportDate', reportDate.toISOString());
 
     return this.http.get<ITrialBalanceSummary>(this.apiUrl, { params });
   }

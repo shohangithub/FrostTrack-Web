@@ -16,6 +16,20 @@ export const reportRoutes: Route[] = [
       ),
   },
   {
+    path: 'cashbook',
+    loadComponent: () =>
+      import('./components/cashbook/cashbook.component').then(
+        (m) => m.CashbookComponent
+      ),
+  },
+  {
+    path: 'ledger-book',
+    loadComponent: () =>
+      import('./components/ledger-book/ledger-book.component').then(
+        (m) => m.LedgerBookComponent
+      ),
+  },
+  {
     path: 'trial-balance',
     loadComponent: () =>
       import('./trial-balance/trial-balance.component').then(

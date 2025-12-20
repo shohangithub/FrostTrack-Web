@@ -4,12 +4,12 @@
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card mt-2">
-          <span class="card-label">Trial Balance</span>
+          <span class="card-label">নগদ বই / Cash Book Report</span>
           <div class="p-10 mt-2">
             <form
               class="product-form"
               [formGroup]="reportForm"
-              (ngSubmit)="onSubmit()"
+              (ngSubmit)="generateReport()"
             >
               <div class="row">
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
@@ -57,7 +57,7 @@
                       <button
                         type="button"
                         class="btn btn-secondary ms-2 px-2"
-                        (click)="resetReport()"
+                        (click)="reset()"
                       >
                         Clear
                       </button>
@@ -73,7 +73,7 @@
     </div>
 
     <!-- Report Display Section -->
-    @if(showReport && !isLoading && trialBalanceData) {
+    @if(showReport && !isLoading && cashBookReport) {
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card">
@@ -88,7 +88,7 @@
                   [closeWindow]="true"
                   [previewOnly]="false"
                   [useExistingCss]="true"
-                  printTitle="Trial Balance Report"
+                  printTitle="Cash Book Report"
                   printSectionId="print-section-id"
                   ngxPrint
                 >
@@ -105,7 +105,7 @@
                 <div class="invoice-container">
                   <!-- Report Header Component -->
                   <app-report-invoice-header
-                    [Title]="'রেওয়ামিল / Trial Balance'"
+                    [Title]="'নগদ বই / Cash Book'"
                     [InvoiceNumber]="''"
                   ></app-report-invoice-header>
 
@@ -129,29 +129,28 @@
                         <td class="info-label">Opening Balance:</td>
                         <td class="info-value">
                           ৳{{
-                            trialBalanceData.openingBalance | number : "1.2-2"
+                            cashBookReport.openingBalance | number : "1.2-2"
                           }}
                         </td>
                         <td class="info-label">Closing Balance:</td>
                         <td class="info-value">
                           ৳{{
-                            trialBalanceData.closingBalance | number : "1.2-2"
+                            cashBookReport.closingBalance | number : "1.2-2"
                           }}
                         </td>
                       </tr>
                     </table>
                   </div>
 
-                  <!-- Trial Balance Details Section -->
-                  <div class="section-title">Account Details</div>
-                  @if(trialBalanceData.items.length > 0) {
+                  <!-- Cash Book Details Section -->
+                  <div class="section-title">Transaction Head Summary</div>
+                  @if(cashBookReport.items.length > 0) {
                   <div class="stored-products-section">
                     <table class="products-table">
                       <thead>
                         <tr>
                           <th>ক্রমিক / SL No.</th>
-                          <th>হিসাবের নাম / Account Name</th>
-                          <th>হিসাবের ধরন / Account Type</th>
+                          <th>লেনদেনের ধরন / Transaction Head</th>
                           <th>সংখ্যা / Count</th>
                           <th>ডেবিট / Debit Tk.</th>
                           <th>ক্রেডিট / Credit Tk.</th>
@@ -159,51 +158,63 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr
-                          *ngFor="
-                            let item of trialBalanceData.items;
-                            let i = index
-                          "
-                        >
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ item.accountName }}</td>
-                          <td>{{ item.accountType }}</td>
+                        <!-- Opening Balance Row -->
+                        <tr class="opening-row">
+                          <td>-</td>
+                          <td><strong>Opening Balance</strong></td>
+                          <td class="text-center">-</td>
+                          <td class="text-end">-</td>
+                          <td class="text-end">-</td>
+                          <td class="text-end">
+                            <strong>{{
+                              cashBookReport.openingBalance | number : "1.2-2"
+                            }}</strong>
+                          </td>
+                        </tr>
+
+                        <!-- Transaction Head Rows -->
+                        @for (item of cashBookReport.items; track
+                        item.transactionHeadId; let i = $index) {
+                        <tr>
+                          <td>{{ i + 1 }}</td>
+                          <td>{{ item.transactionHeadName }}</td>
                           <td class="text-center">
                             {{ item.transactionCount }}
                           </td>
                           <td class="text-end">
                             @if(item.debitAmount > 0) {
-                            {{ item.debitAmount | number : "1.2-2" }}
-                            } @else { - }
+                            {{ item.debitAmount | number : "1.2-2" }} } @else {
+                            - }
                           </td>
                           <td class="text-end">
                             @if(item.creditAmount > 0) {
-                            {{ item.creditAmount | number : "1.2-2" }}
-                            } @else { - }
+                            {{ item.creditAmount | number : "1.2-2" }} } @else {
+                            - }
                           </td>
                           <td class="text-end">
                             {{ item.balance | number : "1.2-2" }}
                           </td>
                         </tr>
+                        }
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="4" class="text-end">
+                          <td colspan="3" class="text-end">
                             <strong>Total / Closing Balance:</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              trialBalanceData.totalDebit | number : "1.2-2"
+                              cashBookReport.totalDebit | number : "1.2-2"
                             }}</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              trialBalanceData.totalCredit | number : "1.2-2"
+                              cashBookReport.totalCredit | number : "1.2-2"
                             }}</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              trialBalanceData.closingBalance | number : "1.2-2"
+                              cashBookReport.closingBalance | number : "1.2-2"
                             }}</strong>
                           </td>
                         </tr>

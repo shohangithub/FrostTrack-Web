@@ -12,11 +12,11 @@ public record TrialBalanceItemResponse
 
 public record TrialBalanceSummaryResponse
 {
+    public DateTime ReportDate { get; set; }
+    public decimal OpeningBalance { get; set; }
     public decimal TotalDebit { get; set; }
     public decimal TotalCredit { get; set; }
-    public decimal NetBalance { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public decimal ClosingBalance { get; set; }
     public int TotalTransactions { get; set; }
     public List<TrialBalanceItemResponse> Items { get; set; } = new();
 }

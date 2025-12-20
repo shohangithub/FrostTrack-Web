@@ -49,7 +49,7 @@ export class BalanceSheetComponent {
     const today = new Date();
 
     this.reportForm = this.fb.group({
-      asOfDate: [today.toISOString().split('T')[0], Validators.required],
+      reportDate: [today.toISOString().split('T')[0], Validators.required],
     });
   }
 
@@ -64,11 +64,9 @@ export class BalanceSheetComponent {
 
   loadBalanceSheet(): void {
     this.isLoading = true;
-    const formValue = this.reportForm.value;
+    const reportDate = new Date(this.reportForm.value.reportDate);
 
-    const asOfDate = new Date(formValue.asOfDate).toISOString();
-
-    this.balanceSheetService.getBalanceSheet(asOfDate).subscribe({
+    this.balanceSheetService.getBalanceSheet(reportDate).subscribe({
       next: (response: IBalanceSheetSummary) => {
         this.balanceSheetData = response;
         this.showReport = true;
@@ -87,6 +85,10 @@ export class BalanceSheetComponent {
   }
 
   resetReport(): void {
+    const today = new Date();
+    this.reportForm.reset({
+      reportDate: today.toISOString().split('T')[0],
+    });
     this.showReport = false;
     this.balanceSheetData = null;
   }

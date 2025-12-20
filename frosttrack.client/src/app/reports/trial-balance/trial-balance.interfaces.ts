@@ -8,11 +8,11 @@ export interface ITrialBalanceItem {
 }
 
 export interface ITrialBalanceSummary {
+  reportDate: Date;
+  openingBalance: number;
   totalDebit: number;
   totalCredit: number;
-  netBalance: number;
-  startDate: string;
-  endDate: string;
+  closingBalance: number;
   totalTransactions: number;
   items: ITrialBalanceItem[];
 }

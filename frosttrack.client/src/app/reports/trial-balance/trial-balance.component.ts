@@ -44,16 +44,11 @@ export class TrialBalanceComponent {
   ) {
     this.layoutService.loadCurrentRoute();
 
-    // Initialize form with default date range (current month)
+    // Initialize form with single report date
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     this.reportForm = this.fb.group({
-      startDate: [
-        firstDayOfMonth.toISOString().split('T')[0],
-        Validators.required,
-      ],
-      endDate: [today.toISOString().split('T')[0], Validators.required],
+      reportDate: [today.toISOString().split('T')[0], Validators.required],
     });
   }
 
@@ -68,12 +63,9 @@ export class TrialBalanceComponent {
 
   loadTrialBalance(): void {
     this.isLoading = true;
-    const formValue = this.reportForm.value;
+    const reportDate = new Date(this.reportForm.value.reportDate);
 
-    const startDate = new Date(formValue.startDate).toISOString();
-    const endDate = new Date(formValue.endDate).toISOString();
-
-    this.trialBalanceService.getTrialBalance(startDate, endDate).subscribe({
+    this.trialBalanceService.getTrialBalance(reportDate).subscribe({
       next: (response: ITrialBalanceSummary) => {
         this.trialBalanceData = response;
         this.showReport = true;
@@ -92,6 +84,10 @@ export class TrialBalanceComponent {
   }
 
   resetReport(): void {
+    const today = new Date();
+    this.reportForm.reset({
+      reportDate: today.toISOString().split('T')[0],
+    });
     this.showReport = false;
     this.trialBalanceData = null;
   }

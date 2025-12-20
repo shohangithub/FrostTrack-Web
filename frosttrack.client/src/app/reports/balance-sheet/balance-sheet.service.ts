@@ -12,15 +12,8 @@ export class BalanceSheetService {
 
   constructor(private http: HttpClient) {}
 
-  getBalanceSheet(
-    asOfDate: string,
-    branchId?: number
-  ): Observable<IBalanceSheetSummary> {
-    let params = new HttpParams().set('asOfDate', asOfDate);
-
-    if (branchId) {
-      params = params.set('branchId', branchId.toString());
-    }
+  getBalanceSheet(reportDate: Date): Observable<IBalanceSheetSummary> {
+    const params = new HttpParams().set('reportDate', reportDate.toISOString());
 
     return this.http.get<IBalanceSheetSummary>(this.apiUrl, { params });
   }

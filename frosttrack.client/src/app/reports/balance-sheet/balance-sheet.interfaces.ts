@@ -6,11 +6,11 @@ export interface IBalanceSheetItem {
 }
 
 export interface IBalanceSheetSummary {
+  reportDate: Date;
   totalAssets: number;
   totalLiabilities: number;
   totalEquity: number;
   netWorth: number;
-  asOfDate: string;
   totalTransactions: number;
   assets: IBalanceSheetItem[];
   liabilities: IBalanceSheetItem[];

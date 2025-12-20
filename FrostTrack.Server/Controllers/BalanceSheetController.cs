@@ -14,15 +14,14 @@ public class BalanceSheetController : ControllerBase
     }
 
     /// <summary>
-    /// Get balance sheet report as of a specific date
+    /// Get balance sheet report for a specific date
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<BalanceSheetSummaryResponse>> GetBalanceSheet(
-        [FromQuery] DateTime asOfDate,
-        [FromQuery] int? branchId,
+        [FromQuery] DateTime reportDate,
         CancellationToken cancellationToken)
     {
-        var result = await _service.GetBalanceSheetAsync(asOfDate, branchId, cancellationToken);
+        var result = await _service.GetBalanceSheetAsync(reportDate, cancellationToken);
         return Ok(result);
     }
 }

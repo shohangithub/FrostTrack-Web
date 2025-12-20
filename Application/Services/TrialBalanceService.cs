@@ -23,37 +23,37 @@ public class TrialBalanceService : ITrialBalanceService
     }
 
     public async Task<TrialBalanceSummaryResponse> GetTrialBalanceAsync(
-        DateTime startDate,
-        DateTime endDate,
-        int? branchId,
+        DateTime reportDate,
         CancellationToken cancellationToken)
     {
-        // Fetch cash transactions
+        // Get opening balance (all transactions before reportDate)
+        var openingBalanceQuery = _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId
+                     && t.TransactionDate.Date < reportDate.Date
+                     && !t.IsDeleted && t.IsArchived == false);
+
+        var openingTransactions = await openingBalanceQuery.ToListAsync(cancellationToken);
+        var openingBalance = openingTransactions
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
+            .Sum(t => t.NetAmount) - openingTransactions
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
+            .Sum(t => t.NetAmount);
+
+        // Fetch cash transactions for the report date
         var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId
-                     && t.TransactionDate >= startDate
-                     && t.TransactionDate <= endDate
+                     && t.TransactionDate.Date == reportDate.Date
                      && !t.IsDeleted);
-
-        if (branchId.HasValue)
-        {
-            transactionQuery = transactionQuery.Where(t => t.BranchId == branchId.Value);
-        }
 
         var transactions = await transactionQuery.ToListAsync(cancellationToken);
 
-        // Fetch bank transactions
+        // Fetch bank transactions for the report date
         var bankTransactionQuery = _bankTransactionRepository.Query()
             .Include(bt => bt.Bank)
             .Where(bt => bt.TenantId == _tenantId
-                      && bt.TransactionDate >= startDate
-                      && bt.TransactionDate <= endDate
+                      && bt.TransactionDate.Date == reportDate.Date
                       && bt.IsActive);
-
-        if (branchId.HasValue)
-        {
-            bankTransactionQuery = bankTransactionQuery.Where(bt => bt.BranchId == branchId.Value);
-        }
 
         var bankTransactions = await bankTransactionQuery.ToListAsync(cancellationToken);
 
@@ -64,14 +64,14 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
-                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
                               .Sum(t => t.NetAmount),
-                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
                                .Sum(t => t.NetAmount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+                Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
                            .Sum(t => t.NetAmount) -
-                          g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+                          g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
                            .Sum(t => t.NetAmount)
             })
             .ToList();
@@ -83,14 +83,14 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = $"{g.Key.BankName} - {g.Key.TransactionType}",
                 AccountType = "BANK_TRANSACTION",
-                DebitAmount = g.Where(bt => bt.TransactionType == "Withdraw")
+                DebitAmount = g.Where(bt => bt.TransactionType == "Withdraw" && bt.IsActive)
                               .Sum(bt => bt.Amount),
-                CreditAmount = g.Where(bt => bt.TransactionType == "Deposit")
+                CreditAmount = g.Where(bt => bt.TransactionType == "Deposit" && bt.IsActive)
                                .Sum(bt => bt.Amount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(bt => bt.TransactionType == "Deposit")
+                Balance = g.Where(bt => bt.TransactionType == "Deposit" && bt.IsActive)
                            .Sum(bt => bt.Amount) -
-                          g.Where(bt => bt.TransactionType == "Withdraw")
+                          g.Where(bt => bt.TransactionType == "Withdraw" && bt.IsActive)
                            .Sum(bt => bt.Amount)
             })
             .ToList();
@@ -103,14 +103,15 @@ public class TrialBalanceService : ITrialBalanceService
         var totalDebit = allItems.Sum(t => t.DebitAmount);
         var totalCredit = allItems.Sum(t => t.CreditAmount);
         var totalTransactionCount = transactions.Count + bankTransactions.Count;
+        var closingBalance = openingBalance + totalCredit - totalDebit;
 
         return new TrialBalanceSummaryResponse
         {
+            ReportDate = reportDate,
+            OpeningBalance = openingBalance,
             TotalDebit = totalDebit,
             TotalCredit = totalCredit,
-            NetBalance = totalCredit - totalDebit,
-            StartDate = startDate,
-            EndDate = endDate,
+            ClosingBalance = closingBalance,
             TotalTransactions = totalTransactionCount,
             Items = allItems
         };

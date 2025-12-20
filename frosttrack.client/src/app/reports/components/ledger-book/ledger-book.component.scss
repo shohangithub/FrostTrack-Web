@@ -1,6 +1,6 @@
 /*
 =====================================================================
-Trial Balance Report Component Styles
+Ledger Book Report Component Styles
 =====================================================================
 */
 
@@ -91,7 +91,7 @@ $font-size: 11px;
     color: #000;
 }
 
-// Trial Balance Table Section
+// Products Section (for ledger details)
 .stored-products-section {
     margin-bottom: 15px;
 
@@ -126,6 +126,13 @@ $font-size: 11px;
 
         .text-end {
             text-align: right;
+        }
+
+        .opening-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         tfoot .total-row {

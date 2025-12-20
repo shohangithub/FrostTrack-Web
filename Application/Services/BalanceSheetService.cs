@@ -26,20 +26,30 @@ public class BalanceSheetService : IBalanceSheetService
     }
 
     public async Task<BalanceSheetSummaryResponse> GetBalanceSheetAsync(
-        DateTime asOfDate,
-        int? branchId,
+        DateTime reportDate,
         CancellationToken cancellationToken)
     {
-        // Fetch all cash transactions up to the date
-        var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
+        // Calculate opening balance from transactions before the report date
+        var openingTransactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId
-                     && t.TransactionDate <= asOfDate
+                     && t.TransactionDate < reportDate.Date
                      && !t.IsDeleted);
 
-        if (branchId.HasValue)
-        {
-            transactionQuery = transactionQuery.Where(t => t.BranchId == branchId.Value);
-        }
+        var openingTransactions = await openingTransactionQuery.ToListAsync(cancellationToken);
+        
+        var openingCashInflow = openingTransactions
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
+            .Sum(t => t.NetAmount);
+        var openingCashOutflow = openingTransactions
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
+            .Sum(t => t.NetAmount);
+        var openingBalance = openingCashInflow - openingCashOutflow;
+
+        // Fetch all cash transactions up to and including the report date
+        var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId
+                     && t.TransactionDate <= reportDate.Date
+                     && !t.IsDeleted);
 
         var transactions = await transactionQuery.ToListAsync(cancellationToken);
 
@@ -47,24 +57,14 @@ public class BalanceSheetService : IBalanceSheetService
         var bankTransactionQuery = _bankTransactionRepository.Query()
             .Include(bt => bt.Bank)
             .Where(bt => bt.TenantId == _tenantId
-                      && bt.TransactionDate <= asOfDate
+                      && bt.TransactionDate <= reportDate.Date
                       && bt.IsActive);
-
-        if (branchId.HasValue)
-        {
-            bankTransactionQuery = bankTransactionQuery.Where(bt => bt.BranchId == branchId.Value);
-        }
 
         var bankTransactions = await bankTransactionQuery.ToListAsync(cancellationToken);
 
         // Fetch bank accounts for current balances
         var bankQuery = _bankRepository.Query()
             .Where(b => b.TenantId == _tenantId && b.IsActive);
-
-        if (branchId.HasValue)
-        {
-            bankQuery = bankQuery.Where(b => b.BranchId == branchId.Value);
-        }
 
         var banks = await bankQuery.ToListAsync(cancellationToken);
 
@@ -178,14 +178,25 @@ public class BalanceSheetService : IBalanceSheetService
             }
         }
 
+        // Calculate closing balance
+        var closingCashInflow = transactions
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
+            .Sum(t => t.NetAmount);
+        var closingCashOutflow = transactions
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
+            .Sum(t => t.NetAmount);
+        var closingBalance = closingCashInflow - closingCashOutflow;
+
         return new BalanceSheetSummaryResponse
         {
             TotalAssets = totalAssets,
             TotalLiabilities = totalLiabilities,
             TotalEquity = totalEquity,
             NetWorth = totalAssets - totalLiabilities,
-            AsOfDate = asOfDate,
+            ReportDate = reportDate,
             TotalTransactions = transactions.Count + bankTransactions.Count,
+            OpeningBalance = openingBalance,
+            ClosingBalance = closingBalance,
             Assets = assets.OrderBy(a => a.AccountName).ToList(),
             Liabilities = liabilities.OrderBy(l => l.AccountName).ToList(),
             Equity = equity.OrderBy(e => e.AccountName).ToList()
