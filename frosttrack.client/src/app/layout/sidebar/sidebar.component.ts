@@ -125,7 +125,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
   ngOnInit() {
     if (this.authService.currentUserValue) {
-      debugger;
       // Get user roles from JWT token
       const userRoles = this.authService.getUserRoles();
       const userRoleArray = Array.isArray(userRoles) ? userRoles : [userRoles];

@@ -28,17 +28,25 @@ import {
 import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
+import { DeliveryInvoiceComponent } from '../delivery-invoice/delivery-invoice.component';
 
 @Component({
   selector: 'app-product-delivery-list',
   templateUrl: './product-delivery-list.component.html',
   standalone: true,
-  imports: [NgxDatatableModule, DatePipe, DecimalPipe],
+  imports: [
+    NgxDatatableModule,
+    DatePipe,
+    DecimalPipe,
+    DeliveryInvoiceComponent,
+  ],
 })
 export class DeliveryListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   @ViewChild('accordionContainer', { static: true })
   accordionContainer!: ElementRef;
+  @ViewChild(DeliveryInvoiceComponent)
+  invoiceComponent!: DeliveryInvoiceComponent;
 
   rows = [];
   expanded: any = {};
@@ -62,6 +70,10 @@ export class DeliveryListComponent implements OnInit {
   currentUser: any;
   canEdit: boolean = false;
   canDelete: boolean = false;
+
+  // For printing
+  invoiceId: string = '';
+  showInvoice: boolean = false;
 
   constructor(
     private modalService: NgbModal,
@@ -239,6 +251,14 @@ export class DeliveryListComponent implements OnInit {
   }
 
   printInvoice(row: any) {
-    this.router.navigate(['/product-delivery/invoice-print', row.id]);
+    this.invoiceId = row.id;
+    this.showInvoice = true;
+
+    // Trigger print after a short delay to allow component to load
+    setTimeout(() => {
+      if (this.invoiceComponent) {
+        this.invoiceComponent.triggerPrint();
+      }
+    }, 1000);
   }
 }

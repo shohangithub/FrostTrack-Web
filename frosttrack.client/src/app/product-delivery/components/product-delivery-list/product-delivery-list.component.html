@@ -240,3 +240,10 @@
     </div>
   </div>
 </section>
+
+<!-- Hidden Invoice Component for Printing -->
+@if(showInvoice && invoiceId) {
+<div style="position: absolute; left: -9999px">
+  <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
+</div>
+}

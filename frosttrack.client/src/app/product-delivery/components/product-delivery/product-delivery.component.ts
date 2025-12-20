@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -18,14 +18,24 @@ import {
 } from 'app/delivery/models/delivery.interface';
 import Swal from 'sweetalert2';
 import { SwalConfirm } from 'app/theme-config';
+import { DeliveryInvoiceComponent } from '../delivery-invoice/delivery-invoice.component';
 
 @Component({
   selector: 'app-delivery',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    NgSelectModule,
+    DeliveryInvoiceComponent,
+  ],
   templateUrl: './product-delivery.component.html',
 })
 export class DeliveryComponent implements OnInit {
+  @ViewChild(DeliveryInvoiceComponent)
+  invoiceComponent!: DeliveryInvoiceComponent;
+
   deliveryForm!: FormGroup;
   bookingData: IBookingForDeliveryResponse | null = null;
   bookings: { value: string; text: string }[] = [];
@@ -33,6 +43,11 @@ export class DeliveryComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   deliveryNumber = '';
+
+  // For printing
+  invoiceId: string = '';
+  showInvoice: boolean = false;
+  shouldAutoPrint: boolean = false;
 
   paymentMethods = [
     { value: 'CASH', label: 'Cash' },
@@ -75,15 +90,7 @@ export class DeliveryComponent implements OnInit {
       deliveryDetails: this.fb.array([]),
       // Transaction fields
       createTransaction: [true], // Changed to true by default
-      transactionAmount: [
-        null,
-        [
-          Validators.min(0),
-          Validators.max(
-            this.deliveryForm?.get('remainingBalance')?.value || 0
-          ),
-        ],
-      ],
+      transactionAmount: [null],
       paymentMethod: ['CASH'],
       transactionNotes: [''],
     });
@@ -619,15 +626,24 @@ export class DeliveryComponent implements OnInit {
       : this.deliveryService.create(payload);
 
     action.subscribe({
-      next: () => {
+      next: (response: any) => {
         this.toastr.success(
           `Delivery ${id ? 'updated' : 'created'} successfully`
         );
-        this.router.navigate(['/product-delivery/list']);
+        this.isSubmitting = false;
+
+        // Handle printing if shouldAutoPrint is true
+        if (this.shouldAutoPrint && response?.id) {
+          this.loadInvoiceForPrint(response.id);
+        } else {
+          // Reset form for regular save without print
+          this.reset();
+        }
       },
       error: (err) => {
         this.toastr.error(err.error?.message || 'Failed to save delivery');
         this.isSubmitting = false;
+        this.shouldAutoPrint = false;
       },
     });
   }
@@ -661,8 +677,32 @@ export class DeliveryComponent implements OnInit {
     });
   }
 
+  onSaveAndPrint() {
+    if (this.deliveryForm.valid) {
+      this.shouldAutoPrint = true;
+      this.onSubmit();
+    }
+  }
+
+  loadInvoiceForPrint(deliveryId: string) {
+    this.invoiceId = deliveryId;
+    this.showInvoice = true;
+
+    // Trigger print after a short delay to allow component to load
+    setTimeout(() => {
+      if (this.invoiceComponent) {
+        this.invoiceComponent.triggerPrint();
+      }
+      // Reset form after print is triggered
+      this.reset();
+    }, 500);
+  }
+
   reset() {
     this.bookingData = null;
+    this.showInvoice = false;
+    this.invoiceId = '';
+    this.shouldAutoPrint = false;
     this.initForm();
     this.generateDeliveryNumber();
     this.loadBookingLookup();

@@ -453,21 +453,31 @@
                       class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2"
                     >
                       <button
+                        type="button"
+                        class="btn btn-success btn-block btn-sm mb-2 me-2"
+                        [disabled]="isSubmitting || !bookingData"
+                        (click)="onSaveAndPrint()"
+                      >
+                        <i class="fas fa-print ms-1"></i>
+                        {{ isSubmitting ? "Processing..." : "Done & Print" }}
+                      </button>
+                      <button
                         type="submit"
-                        class="btn btn-primary btn-block btn-sm mb-2"
+                        class="btn btn-primary btn-block btn-sm mb-2 me-2"
                         [disabled]="isSubmitting || !bookingData"
                       >
                         <i class="fas fa-save"></i>
-                        {{
-                          isSubmitting ? "Processing..." : "Complete Delivery"
-                        }}
+                        {{ isSubmitting ? "Processing..." : "Delivery Done" }}
                       </button>
-                      <!-- <a
-                            routerLink="/product-delivery/list"
-                            class="btn btn-danger btn-block btn-sm"
-                          >
-                            <i class="fas fa-times"></i> Cancel
-                          </a> -->
+                      <button
+                        type="button"
+                        class="btn btn-warning btn-block btn-sm mb-2"
+                        [disabled]="isSubmitting"
+                        (click)="reset()"
+                      >
+                        <i class="fas fa-redo"></i>
+                        Reset
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -496,3 +506,10 @@
     </div>
   </div>
 </section>
+
+<!-- Hidden Invoice Component for Printing -->
+@if(showInvoice && invoiceId) {
+<div style="position: absolute; left: -9999px">
+  <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
+</div>
+}
