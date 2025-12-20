@@ -1,7 +1,15 @@
 import { DatePipe, CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgxPrintModule } from 'ngx-print';
+import { NgxPrintModule, NgxPrintDirective } from 'ngx-print';
 import { BookingService } from '../../services/booking.service';
 import { IBookingResponse } from '../../models/booking.interface';
 import { ToastrService } from 'ngx-toastr';
@@ -32,13 +40,16 @@ import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-
     ReportFooterComponent,
   ],
 })
-export class BookingInvoicePrintComponent implements OnInit {
+export class BookingInvoicePrintComponent implements OnInit, OnChanges {
   @ViewChild('invoiceContent', { static: false }) invoiceContent!: ElementRef;
+  @ViewChild(NgxPrintDirective) ngxPrintDirective!: NgxPrintDirective;
+
+  @Input() invoiceId: string = '';
+  @Input() autoPrint: boolean = false;
 
   bookingInvoice: IBookingResponse | null = null;
   loadingIndicator = true;
   isBookingLoading = false;
-  bookingId: string = '';
   backUrl: string | null = null;
   isPrintFromRoute = false;
   criteriaForm: UntypedFormGroup = this.fb.group({
@@ -66,14 +77,39 @@ export class BookingInvoicePrintComponent implements OnInit {
         ?.setValue(this.bookingList.find((x) => x.value == value));
     });
 
-    // Check if delivery ID is passed via route params
+    // Check if booking ID is passed via route params
     const id = this.route.snapshot.paramMap.get('id');
     const backurl = this.route.snapshot.paramMap.get('backurl') ?? 'list';
     if (id) {
-      this.bookingId = id;
+      this.invoiceId = id;
       this.backUrl = backurl;
       this.isPrintFromRoute = true;
       this.loadBookingData();
+    } else if (this.invoiceId) {
+      // Load data if invoiceId is provided via @Input
+      this.loadBookingData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges called with changes:', changes);
+
+    // Watch for changes to invoiceId input and reload data
+    if (
+      changes['invoiceId'] &&
+      !changes['invoiceId'].firstChange &&
+      changes['invoiceId'].currentValue
+    ) {
+      console.log('invoiceId changed, loading booking data');
+      this.loadBookingData();
+    }
+
+    // Auto-trigger print if autoPrint is enabled
+    if (changes['autoPrint'] && changes['autoPrint'].currentValue) {
+      console.log('autoPrint enabled, will trigger print');
+      setTimeout(() => {
+        this.triggerPrint();
+      }, 500);
     }
   }
 
@@ -93,17 +129,32 @@ export class BookingInvoicePrintComponent implements OnInit {
   getBookingData() {
     const selectedBooking = this.criteriaForm.get('bookingId')?.value;
     if (selectedBooking) {
-      this.bookingId = selectedBooking;
+      this.invoiceId = selectedBooking;
       this.loadBookingData();
     }
   }
 
   loadBookingData(): void {
+    if (!this.invoiceId) {
+      console.warn('loadBookingData: No invoiceId provided');
+      return;
+    }
+
+    console.log('Loading booking data for invoiceId:', this.invoiceId);
     this.loadingIndicator = true;
-    this.bookingService.getById(this.bookingId).subscribe({
+    this.bookingService.getById(this.invoiceId).subscribe({
       next: (response: IBookingResponse) => {
+        console.log('Booking data loaded successfully:', response);
         this.bookingInvoice = response;
         this.loadingIndicator = false;
+
+        // Auto-print after data loads if autoPrint is enabled
+        if (this.autoPrint) {
+          console.log('autoPrint is enabled, will trigger print');
+          setTimeout(() => {
+            this.triggerPrint();
+          }, 300);
+        }
       },
       error: (error) => {
         console.error('Failed to load booking data:', error);
@@ -115,6 +166,24 @@ export class BookingInvoicePrintComponent implements OnInit {
 
   printInvoice(): void {
     window.print();
+  }
+
+  // Method to trigger print programmatically
+  triggerPrint(): void {
+    console.log(
+      'triggerPrint called, ngxPrintDirective:',
+      this.ngxPrintDirective,
+      'bookingInvoice:',
+      this.bookingInvoice
+    );
+    if (this.ngxPrintDirective && this.bookingInvoice) {
+      console.log('Calling ngxPrintDirective.print()');
+      this.ngxPrintDirective.print();
+    } else {
+      console.error(
+        'Cannot print: ngxPrintDirective or bookingInvoice is missing'
+      );
+    }
   }
 
   onAfterPrint(): void {

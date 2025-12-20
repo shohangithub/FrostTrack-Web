@@ -28,17 +28,25 @@ import {
 import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
+import { BookingInvoicePrintComponent } from '../booking-invoice-print/booking-invoice-print.component';
 
 @Component({
   selector: 'app-booking-list',
   templateUrl: './booking-list.component.html',
   standalone: true,
-  imports: [NgxDatatableModule, DatePipe, DecimalPipe],
+  imports: [
+    NgxDatatableModule,
+    DatePipe,
+    DecimalPipe,
+    BookingInvoicePrintComponent,
+  ],
 })
 export class BookingListComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   @ViewChild('accordionContainer', { static: true })
   accordionContainer!: ElementRef;
+  @ViewChild(BookingInvoicePrintComponent)
+  invoiceComponent!: BookingInvoicePrintComponent;
 
   rows = [];
   expanded: any = {};
@@ -62,6 +70,10 @@ export class BookingListComponent implements OnInit {
   currentUser: any;
   canEdit: boolean = false;
   canDelete: boolean = false;
+
+  // For printing
+  invoiceId: string = '';
+  showInvoice: boolean = false;
 
   constructor(
     private modalService: NgbModal,
@@ -241,6 +253,14 @@ export class BookingListComponent implements OnInit {
   }
 
   printInvoice(row: any) {
-    this.router.navigate(['/booking/invoice-print', row.id, 'list']);
+    this.invoiceId = row.id;
+    this.showInvoice = true;
+
+    // Trigger print after a short delay to allow component to load
+    setTimeout(() => {
+      if (this.invoiceComponent) {
+        this.invoiceComponent.triggerPrint();
+      }
+    }, 1000);
   }
 }

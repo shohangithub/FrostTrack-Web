@@ -39,6 +39,7 @@ import { AddCustomerComponent } from 'app/common/components/customer/add-custome
 import { AddBaseUnitComponent } from 'app/common/components/base-unit/add-base-unit/add-base-unit.component';
 import { UnitConversionService } from 'app/common/services/unit-conversion.service';
 import { BILL_TYPE, BILL_TYPES } from 'app/common/data/settings-data';
+import { BookingInvoicePrintComponent } from '../booking-invoice-print/booking-invoice-print.component';
 
 @Component({
   selector: 'app-booking',
@@ -51,11 +52,14 @@ import { BILL_TYPE, BILL_TYPES } from 'app/common/data/settings-data';
     ToastrModule,
     CommonModule,
     NgSelectModule,
+    BookingInvoicePrintComponent,
   ],
   providers: [BookingService, AuthService],
 })
 export class BookingComponent implements OnInit {
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+  @ViewChild(BookingInvoicePrintComponent)
+  invoiceComponent!: BookingInvoicePrintComponent;
   rows = [];
   scrollBarHorizontal = window.innerWidth < 1200;
   data: IBookingListResponse[] = [];
@@ -94,7 +98,11 @@ export class BookingComponent implements OnInit {
 
   private editableProductUnitId?: number;
   private productUnitSubject: Subject<number> = new Subject<number>();
-  private printAfterSave: boolean = false;
+
+  // For printing
+  invoiceId: string = '';
+  showInvoice: boolean = false;
+  shouldAutoPrint: boolean = false;
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -416,49 +424,56 @@ export class BookingComponent implements OnInit {
       const formData = { ...form.value };
       formData.customerId = formData.customer?.id;
       const payload: IBookingRequest = { ...formData };
-      if (payload.bookingNumber !== this.generatedCode) {
+
+      // Only validate booking number for new bookings, not when editing
+      if (!this.isEditing && payload.bookingNumber !== this.generatedCode) {
         this.toastr.error('Booking number is mismatched !');
         this.isSubmitted = false;
         return;
       }
+
       if (formData.id === '00000000-0000-0000-0000-000000000000') {
         this.BookingService.create(payload).subscribe({
           next: (response) => {
             this.toastr.success('Booking created successfully');
-            if (this.printAfterSave && response?.id) {
-              this.router.navigate([
-                '/booking/invoice-print',
-                response.id,
-                'add',
-              ]);
+            this.isSubmitted = false;
+
+            // Handle printing if shouldAutoPrint is true
+            if (this.shouldAutoPrint) {
+              const bookingId = response?.id;
+              if (bookingId) {
+                this.loadInvoiceForPrint(bookingId);
+              }
             } else {
+              // For regular save without print
               this.initFormData();
             }
-            this.isSubmitted = false;
-            this.printAfterSave = false;
           },
           error: () => {
             this.isSubmitted = false;
-            this.printAfterSave = false;
+            this.shouldAutoPrint = false;
           },
         });
       } else {
         this.BookingService.update(formData.id, payload).subscribe({
           next: (response) => {
             this.toastr.success('Booking updated successfully');
-            if (this.printAfterSave && response?.id) {
-              this.router.navigate([
-                '/booking/invoice-print',
-                response.id,
-                'add',
-              ]);
-            }
             this.isSubmitted = false;
-            this.printAfterSave = false;
+
+            // Handle printing if shouldAutoPrint is true
+            if (this.shouldAutoPrint) {
+              const bookingId = response?.id;
+              if (bookingId) {
+                this.loadInvoiceForPrint(bookingId);
+              }
+            } else {
+              // For regular save without print - stay on edit page
+              this.router.navigate(['/booking/list']);
+            }
           },
           error: () => {
             this.isSubmitted = false;
-            this.printAfterSave = false;
+            this.shouldAutoPrint = false;
           },
         });
       }
@@ -466,8 +481,48 @@ export class BookingComponent implements OnInit {
   }
 
   purchaseAndPrint(form: UntypedFormGroup) {
-    this.printAfterSave = true;
-    this.purchase(form);
+    if (this.register.valid) {
+      this.shouldAutoPrint = true;
+      this.purchase(form);
+    }
+  }
+
+  loadInvoiceForPrint(bookingId: string) {
+    console.log('Loading invoice for print, bookingId:', bookingId);
+    this.invoiceId = bookingId;
+    this.showInvoice = true;
+
+    // Trigger print after a delay to allow component to load and fetch data
+    setTimeout(() => {
+      console.log(
+        'Attempting to trigger print, invoiceComponent:',
+        this.invoiceComponent
+      );
+      if (this.invoiceComponent) {
+        this.invoiceComponent.triggerPrint();
+      } else {
+        console.error('Invoice component not found!');
+      }
+
+      // Check if we're in edit mode
+      const isEditMode = this.route.snapshot.paramMap.get('id');
+      if (!isEditMode) {
+        // Only reset form if not in edit mode
+        this.resetForm();
+      } else {
+        // In edit mode, just clear the print flags
+        this.showInvoice = false;
+        this.invoiceId = '';
+        this.shouldAutoPrint = false;
+      }
+    }, 1500);
+  }
+
+  resetForm() {
+    this.showInvoice = false;
+    this.invoiceId = '';
+    this.shouldAutoPrint = false;
+    this.initFormData();
   }
 
   addProduct() {
