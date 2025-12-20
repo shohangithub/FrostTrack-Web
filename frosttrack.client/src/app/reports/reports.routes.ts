@@ -9,6 +9,13 @@ export const reportRoutes: Route[] = [
       ),
   },
   {
+    path: 'daily-stock-book',
+    loadComponent: () =>
+      import('./components/daily-stock-book/daily-stock-book.component').then(
+        (m) => m.DailyStockBookComponent
+      ),
+  },
+  {
     path: 'trial-balance',
     loadComponent: () =>
       import('./trial-balance/trial-balance.component').then(
