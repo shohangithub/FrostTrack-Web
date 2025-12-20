@@ -128,6 +128,7 @@ public class DashboardService : IDashboardService
                 && x.DeliveryDate <= endDate);
 
         var transactionsQuery = _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
             .Where(x => x.TenantId == _tenantId 
                 && x.TransactionDate >= startDate 
                 && x.TransactionDate <= endDate);
