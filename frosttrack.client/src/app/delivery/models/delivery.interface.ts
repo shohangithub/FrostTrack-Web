@@ -113,6 +113,10 @@ export interface IDeliveryDetailResponse {
   bookingQuantity: number;
   totalDeliveredQuantity: number;
   remainingQuantity: number;
+  // For recalculating charges on edit
+  billingCycles: number;
+  bookingRate: number;
+  billType: string;
 }
 
 export interface IDeliveryInvoiceResponse {

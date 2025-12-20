@@ -148,9 +148,10 @@ public class DeliveryService : IDeliveryService
 
     public async Task<DeliveryResponse> UpdateAsync(Guid id, UpdateDeliveryRequest request, CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.Query()
+        // Use tracked query for update operations
+        var existing = await _repository.UpdatableQuery(x => x.Id == id)
             .Include(x => x.DeliveryDetails)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync();
 
         if (existing == null)
             throw new Exception("Product delivery not found");
@@ -158,29 +159,41 @@ public class DeliveryService : IDeliveryService
         // Validate stock availability (considering current delivery)
         await ValidateStockAvailability(request, id);
 
-        request.Adapt(existing);
+        // Update main entity properties manually (avoid Adapt to prevent collection issues)
+        existing.DeliveryNumber = request.DeliveryNumber;
+        existing.DeliveryDate = request.DeliveryDate;
+        existing.Notes = request.Notes;
+        existing.ChargeAmount = request.ChargeAmount;
+        existing.AdjustmentValue = request.AdjustmentValue;
         _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(existing);
 
-        // Remove old details using DeletableQuery
-        await _detailRepository.DeletableQuery(x => x.DeliveryId == id).ExecuteDeleteAsync();
+        // Update child collection: Clear and add new ones (cascade delete handles removal)
+        existing.DeliveryDetails.Clear();
 
+        // Add new details
         if (request.DeliveryDetails != null && request.DeliveryDetails.Any())
         {
-            existing.DeliveryDetails = request.DeliveryDetails.Select(d => new DeliveryDetail
+            foreach (var d in request.DeliveryDetails)
             {
-                DeliveryId = existing.Id,
-                BookingDetailId = d.BookingDetailId,
-                DeliveryUnitId = d.DeliveryUnitId,
-                DeliveryQuantity = d.DeliveryQuantity,
-                BaseQuantity = d.BaseQuantity,
-                ChargeAmount = d.ChargeAmount,
-                AdjustmentValue = d.AdjustmentValue
-            }).ToList();
-            _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(existing.DeliveryDetails.ToList());
+                var newDetail = new DeliveryDetail
+                {
+                    DeliveryId = existing.Id,
+                    BookingDetailId = d.BookingDetailId,
+                    DeliveryUnitId = d.DeliveryUnitId,
+                    DeliveryQuantity = d.DeliveryQuantity,
+                    BaseQuantity = d.BaseQuantity,
+                    ChargeAmount = d.ChargeAmount,
+                    AdjustmentValue = d.AdjustmentValue,
+                    BillingCycles = d.BillingCycles
+                };
+                _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(new List<DeliveryDetail> { newDetail });
+                existing.DeliveryDetails.Add(newDetail);
+            }
         }
 
         await _repository.UpdateAsync(existing, CancellationToken.None);
 
+        // Query fresh data after update since Query() uses AsNoTracking()
         return await GetByIdAsync(id);
     }
 
@@ -211,7 +224,21 @@ public class DeliveryService : IDeliveryService
         if (entity == null)
             throw new Exception("Product delivery not found");
 
-        return entity.Adapt<DeliveryResponse>();
+        var response = entity.Adapt<DeliveryResponse>();
+
+        // Populate additional fields from booking details for edit functionality
+        foreach (var detail in response.DeliveryDetails)
+        {
+            var deliveryDetail = entity.DeliveryDetails.FirstOrDefault(d => d.Id == detail.Id);
+            if (deliveryDetail?.BookingDetail != null)
+            {
+                detail.BillingCycles = deliveryDetail.BillingCycles;
+                detail.BookingRate = deliveryDetail.BookingDetail.BookingRate;
+                detail.BillType = deliveryDetail.BookingDetail.BillType;
+            }
+        }
+
+        return response;
     }
 
     public async Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(PaginationQuery query)

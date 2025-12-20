@@ -61,6 +61,11 @@ public class DeliveryDetailResponse
     public float BookingQuantity { get; set; }
     public float TotalDeliveredQuantity { get; set; }
     public float RemainingQuantity { get; set; }
+    
+    // For recalculating charges on edit
+    public int BillingCycles { get; set; }
+    public decimal BookingRate { get; set; }
+    public string? BillType { get; set; }
 }
 
 public class BookingForDeliveryResponse

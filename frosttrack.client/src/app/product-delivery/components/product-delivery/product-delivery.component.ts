@@ -43,6 +43,7 @@ export class DeliveryComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   deliveryNumber = '';
+  isEditMode = false;
 
   // For printing
   invoiceId: string = '';
@@ -71,6 +72,7 @@ export class DeliveryComponent implements OnInit {
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
+      this.isEditMode = true;
       this.loadExistingDelivery(id);
     }
   }
@@ -627,17 +629,27 @@ export class DeliveryComponent implements OnInit {
 
     action.subscribe({
       next: (response: any) => {
+        const isEditMode = !!id;
         this.toastr.success(
-          `Delivery ${id ? 'updated' : 'created'} successfully`
+          `Delivery ${isEditMode ? 'updated' : 'created'} successfully`
         );
         this.isSubmitting = false;
 
         // Handle printing if shouldAutoPrint is true
-        if (this.shouldAutoPrint && response?.id) {
-          this.loadInvoiceForPrint(response.id);
+        if (this.shouldAutoPrint) {
+          const deliveryId = isEditMode ? id : response?.id;
+          if (deliveryId) {
+            this.loadInvoiceForPrint(deliveryId);
+          }
         } else {
-          // Reset form for regular save without print
-          this.reset();
+          // For regular save without print
+          if (isEditMode) {
+            // In edit mode, stay on page or navigate to list
+            this.router.navigate(['/product-delivery/list']);
+          } else {
+            // In create mode, reset form
+            this.reset();
+          }
         }
       },
       error: (err) => {
@@ -653,22 +665,93 @@ export class DeliveryComponent implements OnInit {
     this.isLoading = true;
     this.deliveryService.getById(id).subscribe({
       next: (delivery) => {
-        // Load and populate form
-        this.deliveryForm.patchValue({
-          deliveryNumber: delivery.deliveryNumber,
-          deliveryDate: delivery.deliveryDate,
-          bookingId: delivery.bookingId,
-          notes: delivery.notes,
-          chargeAmount: delivery.chargeAmount,
-        });
-
-        // Load booking details
+        // First load booking to get full details with remaining quantities
         if (delivery.bookingId) {
-          this.deliveryForm.patchValue({ bookingId: delivery.bookingId });
-          this.onBookingChange(delivery.bookingId);
-        }
+          const selectedBooking = this.bookings.find(
+            (b) => b.value === delivery.bookingId
+          );
+          if (selectedBooking) {
+            this.deliveryService
+              .getBookingForDelivery(selectedBooking.text)
+              .subscribe({
+                next: (booking) => {
+                  this.bookingData = booking;
 
-        this.isLoading = false;
+                  // Populate delivery details from booking
+                  this.populateDeliveryDetails(booking);
+
+                  // Now patch the form with delivery values
+                  this.deliveryForm.patchValue(
+                    {
+                      deliveryNumber: delivery.deliveryNumber,
+                      deliveryDate: new Date(delivery.deliveryDate)
+                        .toISOString()
+                        .split('T')[0],
+                      bookingId: delivery.bookingId,
+                      notes: delivery.notes || '',
+                      chargeAmount: delivery.chargeAmount,
+                    },
+                    { emitEvent: false }
+                  );
+
+                  // Populate delivery quantities from existing delivery
+                  delivery.deliveryDetails.forEach((detail) => {
+                    const index = this.deliveryDetails.controls.findIndex(
+                      (ctrl) =>
+                        ctrl.get('bookingDetailId')?.value ===
+                        detail.bookingDetailId
+                    );
+
+                    if (index !== -1) {
+                      const detailForm = this.deliveryDetails.at(
+                        index
+                      ) as FormGroup;
+
+                      // Use the billing cycles and rates from the saved delivery
+                      detailForm.patchValue(
+                        {
+                          deliveryUnitId: detail.deliveryUnitId,
+                          deliveryQuantity: detail.deliveryQuantity,
+                          billingCycles: detail.billingCycles || 0,
+                          totalCharge: detail.chargeAmount,
+                          baseQuantity: detail.baseQuantity,
+                          bookingRate:
+                            detail.bookingRate ||
+                            detailForm.get('bookingRate')?.value,
+                          billType:
+                            detail.billType ||
+                            detailForm.get('billType')?.value,
+                        },
+                        { emitEvent: false }
+                      );
+
+                      // Recalculate converted remaining quantity for selected unit
+                      this.calculateConvertedRemainingQty(detailForm);
+                      this.calculateBaseQuantity(detailForm);
+                    }
+                  });
+
+                  // Recalculate total charge to ensure sum is correct
+                  this.calculateTotalCharge();
+
+                  // Fetch booking due amount
+                  this.fetchBookingDue(delivery.bookingId);
+
+                  this.isLoading = false;
+                },
+                error: () => {
+                  this.toastr.error('Failed to load booking details');
+                  this.isLoading = false;
+                },
+              });
+          } else {
+            this.toastr.error('Booking not found in lookup');
+            this.isLoading = false;
+          }
+        } else {
+          this.toastr.error('Delivery has no associated booking');
+          this.isLoading = false;
+        }
       },
       error: () => {
         this.toastr.error('Failed to load delivery');
@@ -693,8 +776,17 @@ export class DeliveryComponent implements OnInit {
       if (this.invoiceComponent) {
         this.invoiceComponent.triggerPrint();
       }
-      // Reset form after print is triggered
-      this.reset();
+      // Check if we're in edit mode
+      const isEditMode = this.route.snapshot.paramMap.get('id');
+      if (!isEditMode) {
+        // Only reset form if not in edit mode
+        this.reset();
+      } else {
+        // In edit mode, just clear the print flags
+        this.showInvoice = false;
+        this.invoiceId = '';
+        this.shouldAutoPrint = false;
+      }
     }, 500);
   }
 

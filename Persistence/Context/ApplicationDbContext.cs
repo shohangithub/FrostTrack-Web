@@ -408,6 +408,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
         //// Apply TransactionHead configuration
         //modelBuilder.ApplyConfiguration(new TransactionHeadConfiguration());
+        
+        // Apply DeliveryDetail configuration for cascade delete
+        modelBuilder.ApplyConfiguration(new DeliveryDetailConfiguration());
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

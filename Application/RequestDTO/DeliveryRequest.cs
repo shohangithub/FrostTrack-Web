@@ -46,4 +46,5 @@ public class UpdateDeliveryDetailRequest
     public required decimal BaseQuantity { get; set; }
     public required decimal ChargeAmount { get; set; }
     public required decimal AdjustmentValue { get; set; }
+    public int BillingCycles { get; set; } = 1;
 }
