@@ -75,12 +75,12 @@ export class TransactionReceiptPrintComponent implements OnInit {
   @Input() hideSearchForm: boolean = false; // Hide search form when used externally
   @Input() usageForFilter: string = 'TRANSACTION'; // Default to TRANSACTION type
   @Input() backRouteModule: string = 'transaction'; // Module path for back navigation (e.g., 'transaction', 'bill-collection')
+  @Input() backUrl: string = 'list'; // Back URL (e.g., 'list', 'form', 'add')
 
   transactionReceipt: ITransactionDetailResponse | null = null;
   loadingIndicator = true;
   isTransactionLoading = false;
   transactionId: string = '';
-  backUrl: string | null = null;
   _TRANSACTION_TYPE = TRANSACTION_TYPE;
   isPrintFromRoute = false;
   criteriaForm: UntypedFormGroup = this.fb.group({
@@ -123,10 +123,13 @@ export class TransactionReceiptPrintComponent implements OnInit {
 
     // Check if transaction ID is passed via route params
     const id = this.route.snapshot.paramMap.get('id');
-    const backurl = this.route.snapshot.paramMap.get('backurl') ?? 'list';
+    const backurlParam = this.route.snapshot.paramMap.get('backurl');
     if (id) {
       this.transactionId = id;
-      this.backUrl = backurl;
+      // Use route param backurl if provided, otherwise use Input backUrl
+      if (backurlParam) {
+        this.backUrl = backurlParam;
+      }
       this.isPrintFromRoute = true;
       this.loadTransactionData();
     }
@@ -187,6 +190,12 @@ export class TransactionReceiptPrintComponent implements OnInit {
   }
 
   goBack(): void {
+    // If called inline (from form), navigate back in browser history
+    if (this.hideSearchForm && !this.isPrintFromRoute) {
+      window.history.back();
+      return;
+    }
+    // Otherwise navigate to specified back path
     const backPath = this.backUrl || 'list';
     this.router.navigate([`/${this.backRouteModule}/${backPath}`]);
   }

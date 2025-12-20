@@ -20,7 +20,7 @@ export class BillCollectionReceiptPrintComponent implements OnInit {
 
   transactionId: string = '';
   receiptTitle: string = 'বিল সংগ্রহ স্লিপ';
-  backUrl: string = '';
+  backUrl: string = 'list';
 
   constructor(
     private route: ActivatedRoute,

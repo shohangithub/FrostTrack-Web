@@ -20,7 +20,7 @@ export class SalaryReceiptPrintComponent implements OnInit {
 
   transactionId: string = '';
   receiptTitle: string = 'বেতন প্রদান স্লিপ'; // Salary Payment Slip in Bengali
-  backUrl: string = '';
+  backUrl: string = 'list';
 
   constructor(
     private route: ActivatedRoute,
