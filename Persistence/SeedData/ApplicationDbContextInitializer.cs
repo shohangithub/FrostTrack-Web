@@ -914,69 +914,70 @@ public class ApplicationDbContextInitializer
 
         #region SET STOCKS
 
-        if (!_context.Stocks.Any())
-        {
-            var _unitConversionId = _context.UnitConversions.Select(u => u.Id).FirstOrDefault();
-            var _branchId = _context.Branches.Select(b => b.Id).FirstOrDefault();
-            var _userId = _context.Users.Select(u => u.Id).FirstOrDefault();
+    //     if (!_context.Stocks.Any())
+    //     {
+    //         var _unitConversionId = _context.UnitConversions.Select(u => u.Id).FirstOrDefault();
+    //         var _branchId = _context.Branches.Select(b => b.Id).FirstOrDefault();
+    //         var _userId = _context.Users.Select(u => u.Id).FirstOrDefault();
 
-            var stocks = new List<Stock>
-    {
-        new Stock
-        {
-            ProductId = _context.Products.Select(p => p.Id).ToArray()[0],
-            UnitId = unitConversionId,
-            StockQuantity = 100,
-            LastPurchaseRate = 50.00m,
-            BranchId = branchId,
-            CreatedById = userId,
-            TenantId = tenantId
-        },
-        new Stock
-        {
-            ProductId = _context.Products.Select(p => p.Id).ToArray()[1],
-            UnitId = _unitConversionId,
-            StockQuantity = 250,
-            LastPurchaseRate = 20.50m,
-            BranchId = _branchId,
-            CreatedById = _userId,
-            TenantId = tenantId,
-        },
-        new Stock
-        {
-            ProductId = _context.Products.Select(p => p.Id).ToArray()[2],
-            UnitId = _unitConversionId,
-            StockQuantity = 75,
-            LastPurchaseRate = 15.75m,
-            BranchId = _branchId,
-            CreatedById = _userId,
-            TenantId = tenantId,
-        },
-        new Stock
-        {
-            ProductId = _context.Products.Select(p => p.Id).ToArray()[3],
-            UnitId = _unitConversionId,
-            StockQuantity = 500,
-            LastPurchaseRate = 5.25m,
-            BranchId = _branchId,
-            CreatedById = _userId,
-            TenantId = tenantId
-        },
-        new Stock
-        {
-            ProductId = _context.Products.Select(p => p.Id).ToArray()[4],
-            UnitId = _unitConversionId,
-            StockQuantity = 300,
-            LastPurchaseRate = 32.00m,
-            BranchId = _branchId,
-            CreatedById = _userId,
-            TenantId = tenantId
-        }
-    };
+    //         var stocks = new List<Stock>
+    // {
+    //     new Stock
+    //     {
+    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[0],
+    //         UnitId = unitConversionId,
+    //         StockQuantity = 100,
+    //         LastPurchaseRate = 50.00m,
+    //         BranchId = branchId,
+    //         CreatedById = userId,
+    //         TenantId = tenantId
+    //     },
+    //     new Stock
+    //     {
+    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[1],
+    //         UnitId = _unitConversionId,
+    //         StockQuantity = 250,
+    //         LastPurchaseRate = 20.50m,
+    //         BranchId = _branchId,
+    //         CreatedById = _userId,
+    //         TenantId = tenantId,
+    //     },
+    //     new Stock
+    //     {
+    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[2],
+    //         UnitId = _unitConversionId,
+    //         StockQuantity = 75,
+    //         LastPurchaseRate = 15.75m,
+    //         BranchId = _branchId,
+    //         CreatedById = _userId,
+    //         TenantId = tenantId,
+    //     },
+    //     new Stock
+    //     {
+    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[3],
+    //         UnitId = _unitConversionId,
+    //         StockQuantity = 500,
+    //         LastPurchaseRate = 5.25m,
+    //         BranchId = _branchId,
+    //         CreatedById = _userId,
+    //         TenantId = tenantId
+    //     },
+    //     new Stock
+    //     {
+    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[4],
+    //         UnitId = _unitConversionId,
+    //         StockQuantity = 300,
+    //         LastPurchaseRate = 32.00m,
+    //         BranchId = _branchId,
+    //         CreatedById = _userId,
+    //         TenantId = tenantId
+    //     }
+    // };
 
-            _context.Stocks.AddRange(stocks);
-            await _context.SaveChangesAsync();
-        }
+    //         _context.Stocks.AddRange(stocks);
+    //         await _context.SaveChangesAsync();
+    //     }
+        
         #endregion
 
 
