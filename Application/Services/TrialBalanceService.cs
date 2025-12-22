@@ -64,7 +64,7 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
-                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
+                DebitAmount = (-1) * g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
                               .Sum(t => t.NetAmount),
                 CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
                                .Sum(t => t.NetAmount),

@@ -56,20 +56,20 @@ namespace Application.Services
                     TransactionType = transaction.TransactionHead?.Type ?? "Unknown",
                     PaymentMethod = transaction.PaymentMethod,
                     ReferenceNo = transaction.PaymentReference,
-                    DebitAmount = debitAmount,
+                    DebitAmount = (-1) * debitAmount,
                     CreditAmount = creditAmount,
                     Balance = 0 // Not needed for general ledger
                 });
             }
 
-            var closingBalance = openingBalance + totalCredit - totalDebit;
+            var closingBalance = openingBalance + totalCredit + totalDebit;
 
             return new LedgerBookResponse
             {
                 ReportDate = reportDate,
                 OpeningBalance = openingBalance,
                 Items = items,
-                TotalDebit = totalDebit,
+                TotalDebit = (-1) * totalDebit,
                 TotalCredit = totalCredit,
                 ClosingBalance = closingBalance
             };

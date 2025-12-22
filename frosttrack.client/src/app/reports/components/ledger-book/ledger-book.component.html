@@ -163,13 +163,12 @@
                         <tr class="opening-row">
                           <td>-</td>
                           <td></td>
-                          <td colspan="3"><strong>Opening Balance</strong></td>
+                          <td colspan="4"><strong>Opening Balance</strong></td>
                           <td class="text-end">
                             <strong>{{
                               ledgerBookReport.openingBalance | number : "1.2-2"
                             }}</strong>
                           </td>
-                          <td class="text-end">-</td>
                         </tr>
 
                         <!-- Transaction Rows -->
@@ -207,7 +206,9 @@
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              ledgerBookReport.totalCredit | number : "1.2-2"
+                              ledgerBookReport.totalCredit +
+                                ledgerBookReport.openingBalance
+                                | number : "1.2-2"
                             }}</strong>
                           </td>
                         </tr>

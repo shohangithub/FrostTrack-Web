@@ -60,7 +60,7 @@ namespace Application.Services
                 var debitAmount = !isCredit ? group.TotalAmount : 0;
                 var creditAmount = isCredit ? group.TotalAmount : 0;
 
-                runningBalance += creditAmount - debitAmount;
+                runningBalance += creditAmount + debitAmount;
 
                 items.Add(new CashBookItemResponse
                 {
@@ -68,7 +68,7 @@ namespace Application.Services
                     TransactionHeadName = group.TransactionHeadName,
                     TransactionType = group.TransactionType,
                     TransactionCount = group.Count,
-                    DebitAmount = debitAmount,
+                    DebitAmount = (-1)*debitAmount,
                     CreditAmount = creditAmount,
                     Balance = runningBalance
                 });

@@ -35,7 +35,7 @@ public class ApplicationDbContextInitializer
     {
         try
         {
-            await _context.Database.MigrateAsync();
+          //  await _context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {

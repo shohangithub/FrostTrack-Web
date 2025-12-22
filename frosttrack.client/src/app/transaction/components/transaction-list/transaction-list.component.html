@@ -104,8 +104,14 @@
                   <span
                     class="badge"
                     [ngClass]="{
-                      'bg-success': row.transactionHead?.type === 'CREDIT',
-                      'bg-danger': row.transactionHead?.type === 'DEBIT'
+                      'bg-success':
+                        row.transactionHead?.type === 'CREDIT' ||
+                        row.transactionHead?.type === 'INCOME' ||
+                        row.transactionHead?.type === 'IN',
+                      'bg-danger':
+                        row.transactionHead?.type === 'DEBIT' ||
+                        row.transactionHead?.type === 'EXPENSE' ||
+                        row.transactionHead?.type === 'OUT'
                     }"
                   >
                     {{

@@ -102,8 +102,8 @@ public class SalaryPaymentService : ISalaryPaymentService
             EntityName = "Employee",
             EntityId = employee.Id.ToString(),
             EmployeeId = employee.Id, // Add explicit EmployeeId
-            Amount = netAmount,
-            NetAmount = netAmount,
+            Amount = (-1)*netAmount,
+            NetAmount = (-1)*netAmount,
             PaymentMethod = request.PaymentMethod,
             Description = $"Salary payment for {period}",
             Note = string.IsNullOrEmpty(request.Note) ? null : request.Note,
