@@ -1,3 +1,5 @@
+import { PaginationQuery } from '@core/models/pagination-query';
+
 export interface IBankTransactionListResponse {
   id: number;
   transactionNumber: string;
@@ -40,4 +42,9 @@ export interface IBankTransactionRequest {
   description?: string;
   receiptNumber?: string;
   isActive: boolean;
+}
+
+export interface IBankTransactionPaginationQuery extends PaginationQuery {
+  transactionType?: string;
+  status?: string;
 }

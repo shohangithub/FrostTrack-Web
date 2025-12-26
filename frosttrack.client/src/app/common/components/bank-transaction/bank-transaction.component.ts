@@ -19,7 +19,7 @@ import {
   IBankTransactionRequest,
 } from '../../models/bank-transaction.interface';
 import { BankService } from '../../services/bank.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { SwalConfirm } from 'app/theme-config';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import {
@@ -27,7 +27,10 @@ import {
   PagingResponse,
 } from '../../../core/models/pagination-result';
 import { PaginationQuery } from '../../../core/models/pagination-query';
-import { COMMON_STATUS_LIST } from 'app/common/data/settings-data';
+import {
+  BANK_TRANSACTION_TYPE,
+  COMMON_STATUS_LIST,
+} from 'app/common/data/settings-data';
 import { DefaultPagination } from '../../../config/pagination';
 import { LayoutService } from '@core/service/layout.service';
 import { ILookup } from '../../../core/models/lookup';
@@ -102,6 +105,7 @@ export class BankTransactionComponent implements OnInit {
   // Lookup data
   banks: ILookup<number>[] = [];
   statusList = COMMON_STATUS_LIST;
+  bankTransactionType = BANK_TRANSACTION_TYPE;
   selectedBankBalance: number = 0;
   selectedBankName: string = '';
   isLoadingBalance: boolean = false;
@@ -180,11 +184,11 @@ export class BankTransactionComponent implements OnInit {
       id: [0],
       transactionNumber: ['', [Validators.required]],
       transactionDate: [
-        new Date().toISOString().split('T')[0],
+        formatDate(new Date(), 'yyyy-MM-dd', 'en-US'),
         [Validators.required],
       ],
       bankId: [null, [Validators.required]],
-      transactionType: ['Deposit'],
+      transactionType: [this.bankTransactionType.Deposit],
       amount: [null, [Validators.required, Validators.min(0.01)]],
       reference: [''],
       description: [''],
@@ -196,11 +200,11 @@ export class BankTransactionComponent implements OnInit {
       id: [0],
       transactionNumber: ['', [Validators.required]],
       transactionDate: [
-        new Date().toISOString().split('T')[0],
+        formatDate(new Date(), 'yyyy-MM-dd', 'en-US'),
         [Validators.required],
       ],
       bankId: [null, [Validators.required]],
-      transactionType: ['Withdraw'],
+      transactionType: [this.bankTransactionType.Withdraw],
       amount: [
         null,
         [Validators.required, Validators.min(0.01), this.maxAmountValidator],
@@ -273,7 +277,6 @@ export class BankTransactionComponent implements OnInit {
   }
 
   loadBankBalance(bankId: number) {
-    debugger;
     this.isLoadingBalance = true;
     const selectedBank = this.banks.find((bank) => bank.value === bankId);
     this.selectedBankName = selectedBank ? selectedBank.text : '';

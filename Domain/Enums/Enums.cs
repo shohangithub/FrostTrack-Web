@@ -34,6 +34,13 @@ public static class PaymentStatuses
     public const string UNPAID = "UNPAID";
 }
 
+public static class BankTransactionTypes
+{
+    public const string Deposit = "DEPOSIT";
+    public const string Withdraw = "WITHDRAW";
+
+}
+
 public enum ECustomerType
 {
     Retail = 1,

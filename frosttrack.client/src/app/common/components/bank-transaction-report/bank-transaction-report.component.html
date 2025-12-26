@@ -71,8 +71,34 @@
                     </div>
                   </div>
                 </div>
-
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <div class="col-sm-12 text-end mt-4">
+                      <button
+                        type="submit"
+                        class="btn btn-primary px-2"
+                        [disabled]="isLoading || reportForm.invalid"
+                      >
+                        @if(isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                          role="status"
+                        ></span>
+                        } Show Report
+                      </button>
+                      @if(showReport) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-2 px-2"
+                        (click)="resetReport()"
+                      >
+                        Clear
+                      </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <!-- <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                   <div class="form-group row">
                     <label for="status" class="col-sm-12 col-form-label"
                       >Status</label
@@ -116,7 +142,7 @@
                       }
                     </div>
                   </div>
-                </div>
+                </div> -->
               </div>
             </form>
           </div>
@@ -196,18 +222,18 @@
                         <td class="info-value">
                           @if(reportForm.get('status')?.value) {
                           {{ getStatusLabel(reportForm.get("status")?.value) }}
-                          } @else { All Status }
+                          } @else { All }
                         </td>
                       </tr>
                       } @else {
                       <tr>
                         <td class="info-label">Transaction Type:</td>
-                        <td class="info-value">All Types</td>
+                        <td class="info-value">All</td>
                         <td class="info-label">Status Filter:</td>
                         <td class="info-value">
                           @if(reportForm.get('status')?.value) {
                           {{ getStatusLabel(reportForm.get("status")?.value) }}
-                          } @else { All Status }
+                          } @else { All }
                         </td>
                       </tr>
                       }
@@ -223,7 +249,6 @@
                   </div>
 
                   <!-- Transaction Details Section -->
-                  <div class="section-title">Bank Transaction Details</div>
                   @if(transactions.length > 0) {
                   <div class="stored-products-section">
                     <table class="products-table">
@@ -234,7 +259,6 @@
                           <th>Trans. No.</th>
                           <th>Bank</th>
                           <th>Type</th>
-                          <th>Description</th>
                           <th>Reference</th>
                           <th>Status</th>
                           <th>Amount</th>
@@ -270,7 +294,6 @@
                               }}
                             </span>
                           </td>
-                          <td>{{ transaction.description || "-" }}</td>
                           <td>{{ transaction.reference || "-" }}</td>
                           <td class="text-center">
                             <span
@@ -291,36 +314,38 @@
                         </tr>
                       </tbody>
                       <tfoot>
+                        @if(reportForm.get('transactionType')?.value !==
+                        bankTransactionType.Withdraw ) {
                         <tr class="summary-row">
-                          <td colspan="8" class="text-end">
+                          <td colspan="7" class="text-end">
                             <strong>Total Deposits:</strong>
                           </td>
-                          <td class="text-end">
+                          <td class="text-end" colspan="2">
                             <strong>{{
                               totalDeposit | number : "1.2-2"
                             }}</strong>
                           </td>
-                          <td></td>
                         </tr>
+                        } @if(reportForm.get('transactionType')?.value !==
+                        bankTransactionType.Deposit) {
                         <tr class="summary-row">
-                          <td colspan="8" class="text-end">
+                          <td colspan="7" class="text-end">
                             <strong>Total Withdrawals:</strong>
                           </td>
-                          <td class="text-end">
+                          <td class="text-end" colspan="2">
                             <strong>{{
                               totalWithdrawal | number : "1.2-2"
                             }}</strong>
                           </td>
-                          <td></td>
                         </tr>
+                        }
                         <tr class="total-row">
-                          <td colspan="8" class="text-end">
+                          <td colspan="7" class="text-end">
                             <strong>Net Amount:</strong>
                           </td>
-                          <td class="text-end">
+                          <td class="text-end" colspan="2">
                             <strong>{{ netAmount | number : "1.2-2" }}</strong>
                           </td>
-                          <td></td>
                         </tr>
                       </tfoot>
                     </table>

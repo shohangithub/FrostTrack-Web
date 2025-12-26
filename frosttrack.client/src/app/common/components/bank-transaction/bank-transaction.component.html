@@ -366,7 +366,7 @@
                   [width]="120"
                 >
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                    {{ row.transactionDate | date : "dd/MMM/yyyy" }}
                   </ng-template>
                 </ngx-datatable-column>
 
@@ -382,13 +382,13 @@
                   [width]="100"
                 >
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    @if (row.transactionType === 'Deposit') {
+                    @if (row.transactionType === bankTransactionType.Deposit) {
                     <div class="badge-outline col-green">
-                      {{ row.transactionType }}
+                      {{ row.transactionType | titlecase }}
                     </div>
                     } @else {
                     <div class="badge-outline col-red">
-                      {{ row.transactionType }}
+                      {{ row.transactionType | titlecase }}
                     </div>
                     }
                   </ng-template>
@@ -398,7 +398,7 @@
                   <ng-template let-row="row" ngx-datatable-cell-template>
                     <span
                       [class]="
-                        row.transactionType === 'Deposit'
+                        row.transactionType === bankTransactionType.Deposit
                           ? 'text-success'
                           : 'text-danger'
                       "

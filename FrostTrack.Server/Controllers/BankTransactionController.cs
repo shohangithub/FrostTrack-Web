@@ -33,7 +33,7 @@ public class BankTransactionController : ControllerBase
     }
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<BankTransactionListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<BankTransactionListResponse>> GetWithPagination([FromQuery] BankTransactionPaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _bankTransactionService.PaginationListAsync(requestQuery, cancellationToken);
     }

@@ -18,10 +18,6 @@ import {
 } from '../../models/asset.interface';
 import { AssetService } from '../../services/asset.service';
 import { CommonModule } from '@angular/common';
-import {
-  ErrorResponse,
-  formatErrorMessage,
-} from 'app/utils/server-error-handler';
 import { SwalConfirm } from 'app/theme-config';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import {
@@ -137,8 +133,8 @@ export class AssetComponent implements OnInit {
   private searchSubject = new Subject<boolean>();
 
   filterDatatable(event: any): void {
-    this.pagination.openText = event.target.value?.length > 0;
-    this.searchSubject.next(this.pagination.openText);
+    // this.pagination.openText = event.target.value?.length > 0;
+    // this.searchSubject.next(this.pagination.openText);
   }
 
   addRow() {

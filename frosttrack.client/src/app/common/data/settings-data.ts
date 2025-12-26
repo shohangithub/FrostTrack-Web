@@ -74,6 +74,11 @@ export const USAGE_FOR = {
   SALARY: 'SALARY',
 };
 
+export const BANK_TRANSACTION_TYPE = {
+  Deposit: 'DEPOSIT',
+  Withdraw: 'WITHDRAW',
+};
+
 export const DISPLAY_TYPE_LIST = [
   { id: 'OUT', value: 'OUT', type: 'DEBIT' },
   { id: 'EXPENSE', value: 'EXPENSE', type: 'DEBIT' },

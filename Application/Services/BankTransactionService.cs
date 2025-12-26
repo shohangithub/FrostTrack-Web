@@ -50,12 +50,12 @@ public class BankTransactionService : IBankTransactionService
         entity.TransactionDate = DateTime.UtcNow;
 
         // Calculate new balance
-        if (bankTransaction.TransactionType == "Deposit")
+        if (bankTransaction.TransactionType == BankTransactionTypes.Deposit)
         {
             entity.BalanceAfter = bank.CurrentBalance + bankTransaction.Amount;
             bank.CurrentBalance += bankTransaction.Amount;
         }
-        else if (bankTransaction.TransactionType == "Withdraw")
+        else if (bankTransaction.TransactionType == BankTransactionTypes.Withdraw)
         {
             if (bank.CurrentBalance < bankTransaction.Amount)
                 throw new InvalidOperationException("Insufficient balance for withdrawal");
@@ -205,6 +205,109 @@ public class BankTransactionService : IBankTransactionService
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<BankTransactionListResponse>> PaginationListAsync(BankTransactionPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        // Map frontend column names to entity property names
+        if (!string.IsNullOrEmpty(requestQuery.OrderBy))
+        {
+            var mappedOrderBy = requestQuery.OrderBy switch
+            {
+                "transactionNumber" => nameof(BankTransaction.TransactionNumber),
+                "transactionDate" => nameof(BankTransaction.TransactionDate),
+                "bankName" => nameof(BankTransaction.BankId),
+                "transactionType" => nameof(BankTransaction.TransactionType),
+                "amount" => nameof(BankTransaction.Amount),
+                "reference" => nameof(BankTransaction.Reference),
+                "description" => nameof(BankTransaction.Description),
+                "balanceAfter" => nameof(BankTransaction.BalanceAfter),
+                "receiptNumber" => nameof(BankTransaction.ReceiptNumber),
+                "status" => nameof(BankTransaction.IsActive),
+                _ => requestQuery.OrderBy
+            };
+            requestQuery = requestQuery with { OrderBy = mappedOrderBy };
+        }
+
+        Expression<Func<BankTransaction, bool>> predicate = x => true;
+
+        // Filter by Transaction Type
+        if (!string.IsNullOrWhiteSpace(requestQuery.transactionType))
+        {
+            predicate = predicate.And(x => x.TransactionType == requestQuery.transactionType);
+        }
+
+        // Filter by Status
+        if (!string.IsNullOrWhiteSpace(requestQuery.status))
+        {
+            bool isActive = requestQuery.status.ToLower() == "active";
+            predicate = predicate.And(x => x.IsActive == isActive);
+        }
+
+        // Filter by Date Range (ignore time)
+        if (requestQuery.DateFrom.HasValue)
+        {
+            var fromLocal = requestQuery.DateFrom.Value
+         .ToDateTime(TimeOnly.MinValue);
+
+            var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local)
+                .ToUniversalTime();
+
+            predicate = predicate.And(x => x.TransactionDate >= fromUtc);
+        }
+
+        if (requestQuery.DateTo.HasValue)
+        {
+            var toLocalExclusive = requestQuery.DateTo.Value
+          .AddDays(1)
+          .ToDateTime(TimeOnly.MinValue);
+
+            var toUtcExclusive = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local)
+                .ToUniversalTime();
+
+            predicate = predicate.And(x => x.TransactionDate < toUtcExclusive);
+        }
+
+        // Filter by Open Text Search
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var searchText = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                (obj.TransactionNumber != null && obj.TransactionNumber.ToLower().Contains(searchText)) ||
+                (obj.Bank.BankName != null && obj.Bank.BankName.ToLower().Contains(searchText)) ||
+                (obj.TransactionType != null && obj.TransactionType.ToLower().Contains(searchText)) ||
+                (obj.Reference != null && obj.Reference.ToLower().Contains(searchText)) ||
+                (obj.Description != null && obj.Description.ToLower().Contains(searchText)) ||
+                obj.Amount.ToString().Contains(searchText)
+            );
+        }
+
+        Expression<Func<BankTransaction, BankTransactionListResponse>> selector = x => new BankTransactionListResponse(
+            x.Id,
+            x.TransactionNumber,
+            x.TransactionDate,
+            x.BankId,
+            x.Bank.BankName,
+            x.TransactionType,
+            x.TransactionType == BankTransactionTypes.Deposit ? x.Amount : -x.Amount,
+            x.Reference,
+            x.Description,
+            x.BalanceAfter,
+            x.ReceiptNumber,
+            x.Status
+        );
+
+        var query = _repository.Query()
+            .Include(x => x.Bank)
+            .AsQueryable();
+
+        // Apply search predicate
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
 
     public async Task<BankTransactionResponse> UpdateAsync(long id, BankTransactionRequest bankTransaction, CancellationToken cancellationToken = default)

@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 
 import { getApiEndpoint } from 'app/utils/api-builder';
 import { PaginationResult } from '../../core/models/pagination-result';
-import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IBankTransactionListResponse,
+  IBankTransactionPaginationQuery,
   IBankTransactionRequest,
   IBankTransactionResponse,
 } from '../models/bank-transaction.interface';
@@ -27,7 +27,7 @@ export class BankTransactionService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: IBankTransactionPaginationQuery
   ): Observable<PaginationResult<IBankTransactionListResponse>> {
     return this.get<PaginationResult<IBankTransactionListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),

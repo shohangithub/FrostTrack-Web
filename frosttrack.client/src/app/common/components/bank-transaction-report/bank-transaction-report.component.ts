@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import {
   ReactiveFormsModule,
   UntypedFormBuilder,
@@ -9,11 +9,15 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPrintModule } from 'ngx-print';
 import { BankTransactionService } from '../../services/bank-transaction.service';
-import { IBankTransactionListResponse } from '../../models/bank-transaction.interface';
+import {
+  IBankTransactionListResponse,
+  IBankTransactionPaginationQuery,
+} from '../../models/bank-transaction.interface';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
+import { BANK_TRANSACTION_TYPE } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-bank-transaction-report',
@@ -41,20 +45,20 @@ export class BankTransactionReportComponent {
   netAmount = 0;
 
   transactionTypeOptions = [
-    { value: '', text: 'All Types' },
-    { value: 'Deposit', text: 'Deposit' },
-    { value: 'Withdraw', text: 'Withdraw' },
-    { value: 'Transfer', text: 'Transfer' },
-    { value: 'Fee', text: 'Bank Fee' },
-    { value: 'Interest', text: 'Interest' },
-    { value: 'Other', text: 'Other' },
+    { value: '', text: 'All' },
+    { value: 'DEPOSIT', text: 'Deposit' },
+    { value: 'WITHDRAW', text: 'Withdraw' },
+    // { value: 'Transfer', text: 'Transfer' },
+    // { value: 'Fee', text: 'Bank Fee' },
+    // { value: 'Interest', text: 'Interest' },
+    // { value: 'Other', text: 'Other' },
   ];
 
+  bankTransactionType = BANK_TRANSACTION_TYPE;
   statusOptions = [
-    { value: '', text: 'All Status' },
-    { value: 'Pending', text: 'Pending' },
-    { value: 'Completed', text: 'Completed' },
-    { value: 'Cancelled', text: 'Cancelled' },
+    { value: '', text: 'All' },
+    { value: 'active', text: 'Active' },
+    { value: 'inactive', text: 'Inactive' },
   ];
 
   constructor(
@@ -71,10 +75,10 @@ export class BankTransactionReportComponent {
 
     this.reportForm = this.fb.group({
       startDate: [
-        firstDayOfMonth.toISOString().split('T')[0],
+        formatDate(firstDayOfMonth, 'yyyy-MM-dd', 'en-US'),
         Validators.required,
       ],
-      endDate: [today.toISOString().split('T')[0], Validators.required],
+      endDate: [formatDate(today, 'yyyy-MM-dd', 'en-US'), Validators.required],
       transactionType: [''],
       status: [''],
     });
@@ -93,26 +97,22 @@ export class BankTransactionReportComponent {
     this.isLoading = true;
     const formValue = this.reportForm.value;
 
-    const startDate = new Date(formValue.startDate);
-    const endDate = new Date(formValue.endDate);
-
     // Get all transactions with pagination (set large page size to get all)
-    const paginationQuery = {
+    const paginationQuery: IBankTransactionPaginationQuery = {
       pageIndex: 0,
       pageSize: 10000,
       orderBy: 'transactionDate',
-      isAscending: false,
+      isAscending: true,
+      openText: '',
+      dateFrom: formValue.startDate,
+      dateTo: formValue.endDate,
+      transactionType: formValue.transactionType,
+      status: formValue.status,
     };
 
     this.bankTransactionService.getWithPagination(paginationQuery).subscribe({
       next: (response) => {
-        // Filter by date range and other criteria
-        const filtered = response.data.filter((t) => {
-          const transactionDate = new Date(t.transactionDate);
-          return transactionDate >= startDate && transactionDate <= endDate;
-        });
-
-        this.transactions = this.filterTransactions(filtered, formValue);
+        this.transactions = response.data;
         this.calculateTotals();
         this.showReport = true;
         this.isLoading = false;
@@ -125,40 +125,16 @@ export class BankTransactionReportComponent {
     });
   }
 
-  filterTransactions(
-    transactions: IBankTransactionListResponse[],
-    filters: any
-  ): IBankTransactionListResponse[] {
-    let filtered = [...transactions];
-
-    if (filters.transactionType) {
-      filtered = filtered.filter(
-        (t) => t.transactionType === filters.transactionType
-      );
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter((t) => t.status === filters.status);
-    }
-
-    return filtered;
-  }
-
   calculateTotals(): void {
     this.totalDeposit = this.transactions
-      .filter(
-        (t) =>
-          t.transactionType === 'Deposit' || t.transactionType === 'Interest'
-      )
+      .filter((t) => t.transactionType === BANK_TRANSACTION_TYPE.Deposit)
       .reduce((sum, t) => sum + t.amount, 0);
 
     this.totalWithdrawal = this.transactions
-      .filter(
-        (t) => t.transactionType === 'Withdraw' || t.transactionType === 'Fee'
-      )
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      .filter((t) => t.transactionType === BANK_TRANSACTION_TYPE.Withdraw)
+      .reduce((sum, t) => sum + Math.abs(t.amount) * -1, 0);
 
-    this.netAmount = this.totalDeposit - this.totalWithdrawal;
+    this.netAmount = this.totalDeposit + this.totalWithdrawal;
   }
 
   print(): void {
@@ -175,8 +151,8 @@ export class BankTransactionReportComponent {
 
   getTransactionTypeLabel(type: string): string {
     const types: { [key: string]: string } = {
-      Deposit: 'Deposit',
-      Withdraw: 'Withdraw',
+      DEPOSIT: 'Deposit',
+      WITHDRAW: 'Withdraw',
       Transfer: 'Transfer',
       Fee: 'Bank Fee',
       Interest: 'Interest',
@@ -195,20 +171,20 @@ export class BankTransactionReportComponent {
   }
 
   getTypeBadgeClass(type: string): string {
-    if (type === 'Deposit' || type === 'Interest') {
+    if (type === BANK_TRANSACTION_TYPE.Deposit || type === 'Interest') {
       return 'type-deposit';
-    } else if (type === 'Withdraw' || type === 'Fee') {
+    } else if (type === BANK_TRANSACTION_TYPE.Withdraw || type === 'Fee') {
       return 'type-withdrawal';
     }
     return 'type-other';
   }
 
   getStatusBadgeClass(status: string): string {
-    if (status === 'Completed') {
+    if (status === BANK_TRANSACTION_TYPE.Deposit) {
       return 'status-completed';
     } else if (status === 'Pending') {
       return 'status-pending';
-    } else if (status === 'Cancelled') {
+    } else if (status === BANK_TRANSACTION_TYPE.Withdraw) {
       return 'status-cancelled';
     }
     return '';
