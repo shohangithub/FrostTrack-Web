@@ -23,4 +23,7 @@ public class DeliveryDetail : AuditableEntity<Guid>
 
     [Column(TypeName = "decimal(5, 2)")]
     public required decimal AdjustmentValue { get; set; } = 0;
+    public bool IsArchived { get; set; } = false;
+    public DateTime? ArchivedAt { get; set; }
+    public int? ArchivedById { get; set; }
 }

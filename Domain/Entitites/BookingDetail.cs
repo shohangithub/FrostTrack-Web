@@ -19,5 +19,8 @@ public class BookingDetail : AuditableEntity<Guid>
 
     [Column(TypeName = "datetime")]
     public DateTime LastDeliveryDate { get; set; }
+    public bool IsArchived { get; set; } = false;
+    public DateTime? ArchivedAt { get; set; }
+    public int? ArchivedById { get; set; }
     public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

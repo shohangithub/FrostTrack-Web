@@ -231,6 +231,9 @@ public class BankTransactionService : IBankTransactionService
 
         Expression<Func<BankTransaction, bool>> predicate = x => true;
 
+        // Always exclude archived transactions
+        predicate = predicate.And(x => !x.IsArchived);
+
         // Filter by Transaction Type
         if (!string.IsNullOrWhiteSpace(requestQuery.transactionType))
         {
