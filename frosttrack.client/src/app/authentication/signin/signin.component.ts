@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import {
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -16,6 +16,8 @@ import {
   formatErrorMessage,
 } from 'app/utils/server-error-handler';
 import { ToastrService } from 'ngx-toastr';
+import { JwtHelperService } from 'angular-jwt-updated';
+
 @Component({
   selector: 'app-signin',
   templateUrl: './signin.component.html',
@@ -29,13 +31,47 @@ export class SigninComponent implements OnInit {
   returnUrl!: string;
   error = '';
   hide = true;
+  private jwtHelper = new JwtHelperService();
+
   constructor(
     private formBuilder: UntypedFormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private toastr: ToastrService
   ) {}
+
   ngOnInit() {
+    // Check if user is already logged in with valid token
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser && currentUser.token) {
+      const isExpired = this.jwtHelper.isTokenExpired(currentUser.token);
+      if (!isExpired) {
+        // User already logged in, redirect to dashboard or returnUrl
+        const returnUrl =
+          this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+        this.router.navigate([returnUrl]);
+        return;
+      }
+    }
+
+    // Get return URL from route parameters or default to dashboard
+    this.returnUrl =
+      this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+
+    // Check if redirected due to session expiry
+    const reason = this.route.snapshot.queryParams['reason'];
+    if (reason === 'expired') {
+      this.toastr.warning(
+        'Your session has expired. Please log in again.',
+        'Session Expired',
+        {
+          timeOut: 5000,
+          closeButton: true,
+        }
+      );
+    }
+
     this.loginForm = this.formBuilder.group({
       username: ['ris.shohan@gmail.com', Validators.required],
       password: ['1qazZAQ!', Validators.required],
@@ -63,7 +99,8 @@ export class SigninComponent implements OnInit {
             localStorage.setItem('currentUser', JSON.stringify(response));
             this.authService.currentUserSubject.next(response);
             if (response.token) {
-              this.router.navigate(['/dashboard/main']);
+              // Navigate to returnUrl or default dashboard
+              this.router.navigate([this.returnUrl]);
             }
           } else {
             this.error = 'Invalid Login';
