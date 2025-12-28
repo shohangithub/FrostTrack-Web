@@ -23,7 +23,7 @@ public class BankTransactionValidator : AbstractValidator<BankTransactionRequest
 
         RuleFor(x => x.TransactionType)
             .NotEmpty().WithMessage("Transaction Type is required")
-            .Must(x => x == "Deposit" || x == "Withdraw")
+            .Must(x => x == BankTransactionTypes.Deposit || x == BankTransactionTypes.Withdraw)
             .WithMessage("Transaction Type must be either 'Deposit' or 'Withdraw'");
 
         RuleFor(x => x.Amount)

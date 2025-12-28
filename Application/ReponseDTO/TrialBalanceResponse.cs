@@ -8,6 +8,7 @@ public record TrialBalanceItemResponse
     public decimal CreditAmount { get; set; }
     public decimal Balance { get; set; }
     public int TransactionCount { get; set; }
+    public int SortOrder { get; set; }
 }
 
 public record TrialBalanceSummaryResponse

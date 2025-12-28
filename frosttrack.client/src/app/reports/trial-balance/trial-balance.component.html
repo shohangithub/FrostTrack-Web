@@ -125,7 +125,7 @@
                           {{ today | date : "dd/MM/yyyy HH:mm" }}
                         </td>
                       </tr>
-                      <tr>
+                      <!-- <tr>
                         <td class="info-label">Opening Balance:</td>
                         <td class="info-value">
                           ৳{{
@@ -138,7 +138,7 @@
                             trialBalanceData.closingBalance | number : "1.2-2"
                           }}
                         </td>
-                      </tr>
+                      </tr> -->
                     </table>
                   </div>
 
@@ -152,10 +152,9 @@
                           <th>ক্রমিক / SL No.</th>
                           <th>হিসাবের নাম / Account Name</th>
                           <th>হিসাবের ধরন / Account Type</th>
-                          <th>সংখ্যা / Count</th>
+                          <!-- <th>সংখ্যা / Count</th> -->
                           <th>ডেবিট / Debit Tk.</th>
                           <th>ক্রেডিট / Credit Tk.</th>
-                          <th>ব্যালেন্স / Balance Tk.</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -168,9 +167,9 @@
                           <td class="text-center">{{ i + 1 }}</td>
                           <td>{{ item.accountName }}</td>
                           <td>{{ item.accountType }}</td>
-                          <td class="text-center">
+                          <!-- <td class="text-center">
                             {{ item.transactionCount }}
-                          </td>
+                          </td> -->
                           <td class="text-end">
                             @if(item.debitAmount > 0) {
                             {{ item.debitAmount | number : "1.2-2" }}
@@ -181,15 +180,12 @@
                             {{ item.creditAmount | number : "1.2-2" }}
                             } @else { - }
                           </td>
-                          <td class="text-end">
-                            {{ item.balance | number : "1.2-2" }}
-                          </td>
                         </tr>
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="4" class="text-end">
-                            <strong>Total / Closing Balance:</strong>
+                          <td colspan="3" class="text-end">
+                            <strong>Total:</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
@@ -201,9 +197,15 @@
                               trialBalanceData.totalCredit | number : "1.2-2"
                             }}</strong>
                           </td>
-                          <td class="text-end">
+                        </tr>
+                        <tr class="total-row">
+                          <td colspan="3" class="text-end">
+                            <strong>Balance:</strong>
+                          </td>
+                          <td colspan="2" class="text-center">
                             <strong>{{
-                              trialBalanceData.closingBalance | number : "1.2-2"
+                              trialBalanceData.totalDebit -
+                                trialBalanceData.totalCredit | number : "1.2-2"
                             }}</strong>
                           </td>
                         </tr>
