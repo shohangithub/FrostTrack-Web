@@ -14,6 +14,7 @@ import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
+import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
   selector: 'app-balance-sheet',
@@ -46,10 +47,9 @@ export class BalanceSheetComponent {
     this.layoutService.loadCurrentRoute();
 
     // Initialize form with today's date
-    const today = new Date();
 
     this.reportForm = this.fb.group({
-      reportDate: [today.toISOString().split('T')[0], Validators.required],
+      reportDate: [todayInputFormat(), Validators.required],
     });
   }
 
@@ -85,9 +85,8 @@ export class BalanceSheetComponent {
   }
 
   resetReport(): void {
-    const today = new Date();
     this.reportForm.reset({
-      reportDate: today.toISOString().split('T')[0],
+      reportDate: todayInputFormat(),
     });
     this.showReport = false;
     this.balanceSheetData = null;

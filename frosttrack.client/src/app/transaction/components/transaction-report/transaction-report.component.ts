@@ -15,6 +15,7 @@ import { LayoutService } from '@core/service/layout.service';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
+import { dateInputFormat, todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
   selector: 'app-transaction-report',
@@ -70,11 +71,8 @@ export class TransactionReportComponent {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     this.reportForm = this.fb.group({
-      startDate: [
-        firstDayOfMonth.toISOString().split('T')[0],
-        Validators.required,
-      ],
-      endDate: [today.toISOString().split('T')[0], Validators.required],
+      startDate: [dateInputFormat(firstDayOfMonth), Validators.required],
+      endDate: [todayInputFormat(), Validators.required],
       transactionType: [''],
       transactionFlow: [''],
     });

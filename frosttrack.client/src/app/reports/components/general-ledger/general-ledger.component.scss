@@ -1,0 +1,200 @@
+/*
+=====================================================================
+General Ledger Report Component Styles
+=====================================================================
+*/
+
+$font-size: 11px;
+
+.no-print {
+    margin: auto;
+    max-width: 210mm;
+}
+
+.print-section-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    margin: auto;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.invoice-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white;
+    page-break-after: always;
+    font-size: $font-size;
+    color: #000;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.invoice-card {
+    width: 210mm;
+    min-height: 297mm;
+    border: none;
+    box-shadow: none;
+}
+
+// Report Info Box Section
+.booking-info-box {
+    margin-bottom: 15px;
+    border: 2px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        tr {
+            td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                vertical-align: middle;
+                color: #000;
+            }
+
+            .info-label {
+                font-weight: bold;
+                width: 25%;
+                background-color: #f9f9f9;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .info-value {
+                width: 25%;
+            }
+        }
+    }
+}
+
+// Section Titles
+.section-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin: 15px 0 8px 0;
+    text-align: center;
+    text-decoration: underline;
+    color: #000;
+}
+
+// Products Section (for general ledger details)
+.stored-products-section {
+    margin-bottom: 15px;
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        th {
+            border: 1px solid #000 !important;
+            padding: 6px 8px;
+            font-size: $font-size;
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            color: #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        td {
+            border: 1px solid #000 !important;
+            padding: 6px 8px;
+            font-size: $font-size;
+            text-align: left;
+            vertical-align: middle;
+            color: #000;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .opening-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .closing-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        tfoot .total-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+
+            td {
+                font-weight: bold;
+            }
+        }
+    }
+}
+
+// No Data Message
+.no-data-message {
+    text-align: center;
+    padding: 30px;
+    font-size: 14px;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+// Print Specific Styles
+@media print {
+    .print-section-container {
+        box-shadow: none;
+        margin: 0;
+    }
+
+    .invoice-container {
+        page-break-inside: avoid;
+    }
+
+    .products-table {
+        page-break-inside: auto;
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}

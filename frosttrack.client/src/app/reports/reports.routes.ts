@@ -22,11 +22,25 @@ export const reportRoutes: Route[] = [
         (m) => m.CashbookComponent
       ),
   },
+  // {
+  //   path: 'ledger-book',
+  //   loadComponent: () =>
+  //     import('./components/ledger-book/ledger-book.component').then(
+  //       (m) => m.LedgerBookComponent
+  //     ),
+  // },
   {
-    path: 'ledger-book',
+    path: 'bankbook',
     loadComponent: () =>
-      import('./components/ledger-book/ledger-book.component').then(
-        (m) => m.LedgerBookComponent
+      import('./components/bankbook/bankbook.component').then(
+        (m) => m.BankbookComponent
+      ),
+  },
+  {
+    path: 'general-ledger',
+    loadComponent: () =>
+      import('./components/general-ledger/general-ledger.component').then(
+        (m) => m.GeneralLedgerComponent
       ),
   },
   {

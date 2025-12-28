@@ -18,6 +18,7 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { IProductListResponse } from 'app/administration/models/product.interface';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
+import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
   selector: 'app-daily-stock-book',
@@ -55,10 +56,9 @@ export class DailyStockBookComponent implements OnInit {
     this.layoutService.loadCurrentRoute();
 
     // Initialize form with today's date
-    const today = new Date();
 
     this.reportForm = this.fb.group({
-      reportDate: [today.toISOString().split('T')[0], Validators.required],
+      reportDate: [todayInputFormat(), Validators.required],
       customerId: [null],
       productId: [null],
     });
@@ -130,9 +130,8 @@ export class DailyStockBookComponent implements OnInit {
   }
 
   reset(): void {
-    const today = new Date();
     this.reportForm.reset({
-      reportDate: today.toISOString().split('T')[0],
+      reportDate: todayInputFormat(),
       customerId: null,
       productId: null,
     });

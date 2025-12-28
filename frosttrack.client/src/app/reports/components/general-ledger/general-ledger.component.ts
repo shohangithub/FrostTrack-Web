@@ -9,16 +9,16 @@ import {
 import { NgxPrintModule } from 'ngx-print';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
-import { CashBookService } from '../../services/cashbook.service';
-import { ICashBookReport } from '../../models/cashbook.interface';
+import { GeneralLedgerService } from '../../services/general-ledger.service';
+import { IGeneralLedgerReport } from '../../models/general-ledger.interface';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
-  selector: 'app-cashbook',
-  templateUrl: './cashbook.component.html',
-  styleUrls: ['./cashbook.component.scss'],
+  selector: 'app-general-ledger',
+  templateUrl: './general-ledger.component.html',
+  styleUrls: ['./general-ledger.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -28,22 +28,21 @@ import { todayInputFormat } from 'app/utils/date-utils';
     ReportFooterComponent,
   ],
 })
-export class CashbookComponent implements OnInit {
+export class GeneralLedgerComponent implements OnInit {
   reportForm: UntypedFormGroup;
-  cashBookReport: ICashBookReport | null = null;
+  generalLedgerReport: IGeneralLedgerReport | null = null;
   isLoading = false;
   showReport = false;
   today = new Date();
 
   constructor(
     private fb: UntypedFormBuilder,
-    private cashBookService: CashBookService,
+    private generalLedgerService: GeneralLedgerService,
     private toastr: ToastrService,
     private layoutService: LayoutService
   ) {
     this.layoutService.loadCurrentRoute();
 
-    // Initialize form with today's date
     this.reportForm = this.fb.group({
       reportDate: [todayInputFormat(), Validators.required],
     });
@@ -63,15 +62,15 @@ export class CashbookComponent implements OnInit {
     const formValue = this.reportForm.value;
     const reportDate = new Date(formValue.reportDate);
 
-    this.cashBookService.getCashBook(reportDate).subscribe({
-      next: (data: ICashBookReport) => {
-        this.cashBookReport = data;
+    this.generalLedgerService.getGeneralLedger(reportDate).subscribe({
+      next: (data: IGeneralLedgerReport) => {
+        this.generalLedgerReport = data;
         this.showReport = true;
         this.isLoading = false;
       },
       error: (error: any) => {
-        this.toastr.error('Failed to load cash book report', 'Error');
-        console.error('Error loading cash book:', error);
+        this.toastr.error('Failed to load general ledger report', 'Error');
+        console.error('Error loading general ledger:', error);
         this.isLoading = false;
       },
     });
@@ -82,7 +81,7 @@ export class CashbookComponent implements OnInit {
       reportDate: todayInputFormat(),
     });
 
-    this.cashBookReport = null;
+    this.generalLedgerReport = null;
     this.showReport = false;
   }
 }

@@ -12,6 +12,7 @@ import { ReportFooterComponent } from '@shared/components/reports/report-footer.
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ILedgerBookResponse } from '../../interfaces/ledger-book.interface';
 import { LedgerBookService } from '../../services/ledger-book.service';
+import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
   selector: 'app-ledger-book',
@@ -42,10 +43,8 @@ export class LedgerBookComponent implements OnInit {
   }
 
   initializeForm(): void {
-    const today = new Date();
-
     this.reportForm = this.fb.group({
-      reportDate: [today.toISOString().split('T')[0], Validators.required],
+      reportDate: [todayInputFormat(), Validators.required],
     });
   }
 
@@ -73,9 +72,8 @@ export class LedgerBookComponent implements OnInit {
   }
 
   reset(): void {
-    const today = new Date();
     this.reportForm.reset({
-      reportDate: today.toISOString().split('T')[0],
+      reportDate: todayInputFormat(),
     });
     this.ledgerBookReport = null;
     this.showReport = false;

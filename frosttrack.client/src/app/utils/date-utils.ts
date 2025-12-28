@@ -140,6 +140,19 @@ export function todayInputFormat(): string {
 }
 
 /**
+ * Gets the current date in YYYY-MM-DD format for date inputs
+ * @returns Current date in YYYY-MM-DD format (local timezone)
+ */
+export function dateInputFormat(date: Date): string {
+  const now = date;
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Adds days to a UTC date string
  * @param utcString - UTC ISO string
  * @param days - Number of days to add (can be negative)

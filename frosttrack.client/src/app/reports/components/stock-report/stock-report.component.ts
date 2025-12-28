@@ -21,6 +21,7 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { IProductListResponse } from 'app/administration/models/product.interface';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
+import { dateInputFormat, todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
   selector: 'app-stock-report',
@@ -70,11 +71,8 @@ export class StockReportComponent implements OnInit {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     this.reportForm = this.fb.group({
-      startDate: [
-        firstDayOfMonth.toISOString().split('T')[0],
-        Validators.required,
-      ],
-      endDate: [today.toISOString().split('T')[0], Validators.required],
+      startDate: [dateInputFormat(firstDayOfMonth), Validators.required],
+      endDate: [todayInputFormat(), Validators.required],
       customerId: [null],
       productId: [null],
       reportType: ['all'],

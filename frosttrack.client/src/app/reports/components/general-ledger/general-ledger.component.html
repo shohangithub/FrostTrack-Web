@@ -4,7 +4,7 @@
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card mt-2">
-          <span class="card-label">Cash Book</span>
+          <span class="card-label">General Ledger</span>
           <div class="p-10 mt-2">
             <form
               class="product-form"
@@ -73,7 +73,7 @@
     </div>
 
     <!-- Report Display Section -->
-    @if(showReport && !isLoading && cashBookReport) {
+    @if(showReport && !isLoading && generalLedgerReport) {
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card">
@@ -88,7 +88,7 @@
                   [closeWindow]="true"
                   [previewOnly]="false"
                   [useExistingCss]="true"
-                  printTitle="Cash Book Report"
+                  printTitle="General Ledger Report"
                   printSectionId="print-section-id"
                   ngxPrint
                 >
@@ -105,7 +105,7 @@
                 <div class="invoice-container">
                   <!-- Report Header Component -->
                   <app-report-invoice-header
-                    [Title]="'নগদ বই / Cash Book'"
+                    [Title]="'সাধারণ খাতা / General Ledger'"
                     [InvoiceNumber]="''"
                   ></app-report-invoice-header>
 
@@ -129,58 +129,68 @@
                         <td class="info-label">Opening Balance:</td>
                         <td class="info-value">
                           ৳{{
-                            cashBookReport.openingBalance | number : "1.2-2"
+                            generalLedgerReport.openingBalance
+                              | number : "1.2-2"
                           }}
                         </td>
                         <td class="info-label">Closing Balance:</td>
                         <td class="info-value">
                           ৳{{
-                            cashBookReport.closingBalance | number : "1.2-2"
+                            generalLedgerReport.closingBalance
+                              | number : "1.2-2"
                           }}
                         </td>
                       </tr>
                     </table>
                   </div>
 
-                  <!-- Cash Book Details Section -->
-                  <!-- <div class="section-title">Transaction Head Summary</div> -->
-                  @if(cashBookReport.items.length > 0) {
+                  <!-- General Ledger Details Section -->
+                  <!-- <div class="section-title">
+                    Transaction Details (Cash + Bank)
+                  </div> -->
+                  @if(generalLedgerReport.items.length > 0) {
                   <div class="stored-products-section">
                     <table class="products-table">
                       <thead>
                         <tr>
                           <th>ক্রমিক / SL No.</th>
-                          <th>লেনদেনের ধরন / Transaction Head</th>
-                          <th>সংখ্যা / Count</th>
+                          <th>তারিখ / Date</th>
+                          <th>অ্যাকাউন্ট / Account</th>
+                          <th>ধরন / Type</th>
+                          <th>বিবরণ / Description</th>
+                          <th>পেমেন্ট পদ্ধতি / Payment Method</th>
                           <th>ডেবিট / Debit Tk.</th>
                           <th>ক্রেডিট / Credit Tk.</th>
-                          <th>ব্যালেন্স / Balance Tk.</th>
                         </tr>
                       </thead>
                       <tbody>
                         <!-- Opening Balance Row -->
                         <tr class="opening-row">
-                          <td>-</td>
-                          <td><strong>Opening Balance</strong></td>
-                          <td class="text-center">-</td>
-                          <td class="text-end">-</td>
+                          <td colspan="6"><strong>Opening Balance</strong></td>
                           <td class="text-end">-</td>
                           <td class="text-end">
                             <strong>{{
-                              cashBookReport.openingBalance | number : "1.2-2"
+                              generalLedgerReport.openingBalance
+                                | number : "1.2-2"
                             }}</strong>
                           </td>
                         </tr>
 
-                        <!-- Transaction Head Rows -->
-                        @for (item of cashBookReport.items; track
-                        item.transactionHeadId; let i = $index) {
+                        <!-- Transaction Rows -->
+                        @for (item of generalLedgerReport.items; track item.id;
+                        let i = $index) {
                         <tr>
                           <td>{{ i + 1 }}</td>
-                          <td>{{ item.transactionHeadName }}</td>
-                          <td class="text-center">
-                            {{ item.transactionCount }}
+                          <td>{{ item.date | date : "dd/MM/yyyy HH:mm" }}</td>
+                          <td>
+                            {{ item.accountName }}
+                            <!-- <span class="badge bg-info ms-1">{{
+                              item.accountType
+                            }}</span> -->
                           </td>
+                          <td>{{ item.transactionType }}</td>
+                          <td>{{ item.description }}</td>
+                          <td>{{ item.paymentMethod }}</td>
                           <td class="text-end">
                             @if(item.debitAmount > 0) {
                             {{ item.debitAmount | number : "1.2-2" }} } @else {
@@ -191,31 +201,36 @@
                             {{ item.creditAmount | number : "1.2-2" }} } @else {
                             - }
                           </td>
-                          <td class="text-end">
-                            {{ item.balance | number : "1.2-2" }}
-                          </td>
                         </tr>
                         }
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="3" class="text-end">
+                          <td colspan="6" class="text-end">
                             <strong>Total / Closing Balance:</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              cashBookReport.totalDebit | number : "1.2-2"
+                              generalLedgerReport.totalDebit | number : "1.2-2"
                             }}</strong>
                           </td>
                           <td class="text-end">
                             <strong>{{
-                              cashBookReport.totalCredit | number : "1.2-2"
+                              generalLedgerReport.totalCredit | number : "1.2-2"
                             }}</strong>
                           </td>
-                          <td class="text-end">
-                            <strong>{{
-                              cashBookReport.closingBalance | number : "1.2-2"
-                            }}</strong>
+                        </tr>
+                        <tr class="closing-row">
+                          <td colspan="6" class="text-end">
+                            <strong>Closing Balance:</strong>
+                          </td>
+                          <td colspan="2" class="text-end">
+                            <strong
+                              >৳{{
+                                generalLedgerReport.closingBalance
+                                  | number : "1.2-2"
+                              }}</strong
+                            >
                           </td>
                         </tr>
                       </tfoot>

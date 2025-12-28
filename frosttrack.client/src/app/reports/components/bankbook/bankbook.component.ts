@@ -9,16 +9,16 @@ import {
 import { NgxPrintModule } from 'ngx-print';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
-import { CashBookService } from '../../services/cashbook.service';
-import { ICashBookReport } from '../../models/cashbook.interface';
+import { BankBookService } from '../../services/bankbook.service';
+import { IBankBookReport } from '../../models/bankbook.interface';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
-  selector: 'app-cashbook',
-  templateUrl: './cashbook.component.html',
-  styleUrls: ['./cashbook.component.scss'],
+  selector: 'app-bankbook',
+  templateUrl: './bankbook.component.html',
+  styleUrls: ['./bankbook.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -28,22 +28,21 @@ import { todayInputFormat } from 'app/utils/date-utils';
     ReportFooterComponent,
   ],
 })
-export class CashbookComponent implements OnInit {
+export class BankbookComponent implements OnInit {
   reportForm: UntypedFormGroup;
-  cashBookReport: ICashBookReport | null = null;
+  bankBookReport: IBankBookReport | null = null;
   isLoading = false;
   showReport = false;
   today = new Date();
 
   constructor(
     private fb: UntypedFormBuilder,
-    private cashBookService: CashBookService,
+    private bankBookService: BankBookService,
     private toastr: ToastrService,
     private layoutService: LayoutService
   ) {
     this.layoutService.loadCurrentRoute();
 
-    // Initialize form with today's date
     this.reportForm = this.fb.group({
       reportDate: [todayInputFormat(), Validators.required],
     });
@@ -63,15 +62,15 @@ export class CashbookComponent implements OnInit {
     const formValue = this.reportForm.value;
     const reportDate = new Date(formValue.reportDate);
 
-    this.cashBookService.getCashBook(reportDate).subscribe({
-      next: (data: ICashBookReport) => {
-        this.cashBookReport = data;
+    this.bankBookService.getBankBook(reportDate).subscribe({
+      next: (data: IBankBookReport) => {
+        this.bankBookReport = data;
         this.showReport = true;
         this.isLoading = false;
       },
       error: (error: any) => {
-        this.toastr.error('Failed to load cash book report', 'Error');
-        console.error('Error loading cash book:', error);
+        this.toastr.error('Failed to load bank book report', 'Error');
+        console.error('Error loading bank book:', error);
         this.isLoading = false;
       },
     });
@@ -82,7 +81,7 @@ export class CashbookComponent implements OnInit {
       reportDate: todayInputFormat(),
     });
 
-    this.cashBookReport = null;
+    this.bankBookReport = null;
     this.showReport = false;
   }
 }
