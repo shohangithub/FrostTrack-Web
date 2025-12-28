@@ -25,14 +25,14 @@ public class DashboardController : ControllerBase
         // If periodDays is provided, calculate startDate from endDate or today
         if (periodDays.HasValue)
         {
-            endDate ??= DateTime.UtcNow;
-            startDate = endDate.Value.AddDays(-periodDays.Value);
+            endDate ??= DateTime.Today.AddDays(1).AddSeconds(-1);
+            startDate = endDate.Value.AddDays(-periodDays.Value).Date;
         }
         else
         {
             // Default to last 30 days if no parameters provided
-            endDate ??= DateTime.UtcNow;
-            startDate ??= endDate.Value.AddDays(-30);
+            endDate ??= DateTime.Today.AddDays(1).AddSeconds(-1);
+            startDate ??= endDate.Value.AddDays(-30).Date;
         }
 
         var stats = await _dashboardService.GetDashboardStatsAsync(

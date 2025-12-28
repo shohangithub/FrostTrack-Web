@@ -1,1 +1,158 @@
+// Dashboard Main Component Styles
 
+// Responsive filter section
+.section-body {
+    .row {
+        align-items: center;
+    }
+}
+
+// Period filter dropdown styling
+.form-select-sm {
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+
+    &:focus {
+        border-color: #5a8dee;
+        box-shadow: 0 0 0 0.2rem rgba(90, 141, 238, 0.25);
+    }
+}
+
+// Loading spinner alignment
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+// Card responsive adjustments
+.card-statistic-4 {
+    .card-content {
+        h6 {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            font-size: 0.875rem;
+        }
+    }
+}
+
+// Responsive breakpoints
+@media (max-width: 991px) {
+    .col-6 {
+        &:first-child {
+            margin-bottom: 1rem;
+        }
+    }
+
+    .breadcrumb {
+        margin-bottom: 0.5rem;
+    }
+
+    .d-flex.float-end {
+        float: none !important;
+        justify-content: flex-start !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .section-body .row {
+        .col-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+
+            &:first-child {
+                order: 1;
+            }
+
+            &:last-child {
+                order: 2;
+                margin-top: 1rem;
+            }
+        }
+    }
+
+    .form-select-sm {
+        width: 100% !important;
+        max-width: 200px;
+    }
+
+    .card-statistic-4 {
+        .row {
+            .left-grid-spacing,
+            .right-grid-spacing {
+                padding: 1rem;
+            }
+        }
+    }
+}
+
+@media (max-width: 575px) {
+    .card-statistic-4 {
+        .card-content {
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            h6 {
+                font-size: 0.8rem;
+            }
+        }
+    }
+
+    .page-title {
+        font-size: 1.25rem !important;
+    }
+}
+
+// Chart card styling
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        padding: 1rem 1.25rem;
+
+        h4 {
+            margin-bottom: 0.25rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .text-muted {
+            font-size: 0.875rem;
+        }
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+}
+
+// Loading state
+.text-center.py-5 {
+    padding: 3rem 0 !important;
+
+    .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    p {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+}

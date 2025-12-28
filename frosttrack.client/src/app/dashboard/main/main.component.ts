@@ -28,6 +28,7 @@ import {
 } from '../models/dashboard.interface';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -72,6 +73,7 @@ export type ChartOptions2 = {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     NgbProgressbar,
     NgApexchartsModule,
@@ -150,6 +152,13 @@ export class MainComponent implements OnInit {
         this.toastr.error('Failed to load dashboard data');
         this.isLoading = false;
       });
+  }
+
+  /**
+   * Handle period change from dropdown
+   */
+  onPeriodChange(): void {
+    this.loadDashboardData();
   }
 
   updateCharts(): void {

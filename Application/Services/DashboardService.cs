@@ -29,30 +29,36 @@ public class DashboardService : IDashboardService
     }
 
     public async Task<DashboardStatsResponse> GetDashboardStatsAsync(
-        DateTime startDate, 
-        DateTime endDate, 
-        int? branchId = null, 
+        DateTime startDate,
+        DateTime endDate,
+        int? branchId = null,
         CancellationToken cancellationToken = default)
     {
-        // Ensure dates include full day ranges
-        startDate = startDate.Date;
-        endDate = endDate.Date.AddDays(1).AddSeconds(-1);
+        // Proper UTC time handling
+        var fromLocal = startDate.Date;
+        var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local)
+            .ToUniversalTime();
+
+        var toLocal = endDate.Date.AddDays(1);
+        var toUtc = DateTime.SpecifyKind(toLocal, DateTimeKind.Local)
+            .ToUniversalTime();
 
         // Build base queries filtered by tenant and date range
         var bookingsQuery = _bookingRepository.Query()
-            .Where(x => x.TenantId == _tenantId 
-                && x.BookingDate >= startDate 
-                && x.BookingDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.BookingDate >= fromUtc
+                && x.BookingDate < toUtc);
 
         var deliveriesQuery = _deliveryRepository.Query()
-            .Where(x => x.TenantId == _tenantId 
-                && x.DeliveryDate >= startDate 
-                && x.DeliveryDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.DeliveryDate >= fromUtc
+                && x.DeliveryDate < toUtc);
 
         var transactionsQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(x => x.TenantId == _tenantId 
-                && x.TransactionDate >= startDate 
-                && x.TransactionDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.TransactionDate >= fromUtc
+                && x.TransactionDate < toUtc
+                && !x.IsArchived);
 
         // Apply branch filter if provided
         if (branchId.HasValue)
@@ -90,7 +96,7 @@ public class DashboardService : IDashboardService
             .SumAsync(x => Math.Abs(x.NetAmount), cancellationToken);
 
         var netRevenue = revenueTransactions - expenseTransactions;
-        var periodDays = (endDate.Date - startDate.Date).Days;
+        var periodDays = (endDate.Date - startDate.Date).Days + 1;
 
         return new DashboardStatsResponse(
             TotalBookings: totalBookings,
@@ -109,29 +115,36 @@ public class DashboardService : IDashboardService
     }
 
     public async Task<DashboardTrendsResponse> GetDashboardTrendsAsync(
-        int periodDays, 
-        int? branchId = null, 
+        int periodDays,
+        int? branchId = null,
         CancellationToken cancellationToken = default)
     {
-        var endDate = DateTime.UtcNow.Date;
-        var startDate = endDate.AddDays(-periodDays);
+        var endLocal = DateTime.Now.Date;
+        var startLocal = endLocal.AddDays(-periodDays);
+
+        // Proper UTC time handling
+        var fromUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local)
+            .ToUniversalTime();
+        var toUtc = DateTime.SpecifyKind(endLocal.AddDays(1), DateTimeKind.Local)
+            .ToUniversalTime();
 
         // Base queries
         var bookingsQuery = _bookingRepository.Query()
-            .Where(x => x.TenantId == _tenantId 
-                && x.BookingDate >= startDate 
-                && x.BookingDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.BookingDate >= fromUtc
+                && x.BookingDate < toUtc);
 
         var deliveriesQuery = _deliveryRepository.Query()
-            .Where(x => x.TenantId == _tenantId 
-                && x.DeliveryDate >= startDate 
-                && x.DeliveryDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.DeliveryDate >= fromUtc
+                && x.DeliveryDate < toUtc);
 
         var transactionsQuery = _transactionRepository.Query()
             .Include(t => t.TransactionHead)
-            .Where(x => x.TenantId == _tenantId 
-                && x.TransactionDate >= startDate 
-                && x.TransactionDate <= endDate);
+            .Where(x => x.TenantId == _tenantId
+                && x.TransactionDate >= fromUtc
+                && x.TransactionDate < toUtc
+                && !x.IsArchived);
 
         // Apply branch filter
         if (branchId.HasValue)
@@ -149,19 +162,19 @@ public class DashboardService : IDashboardService
         // Generate date labels
         var dateLabels = new List<string>();
         var groupingDays = periodDays <= 15 ? 1 : periodDays <= 30 ? 2 : periodDays <= 90 ? 7 : 30;
-        
-        // Revenue trend (IN transactions)
+
+        // Revenue trend (IN transactions) - convert to local time for grouping
         var revenueTrend = transactions
             .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
-            .GroupBy(t => t.TransactionDate.Date)
+            .GroupBy(t => t.TransactionDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(g.Key, g.Sum(x => x.NetAmount), g.Count()))
             .OrderBy(d => d.Date)
             .ToList();
 
-        // Expense trend (OUT transactions)
+        // Expense trend (OUT transactions) - convert to local time for grouping
         var expenseTrend = transactions
             .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
-            .GroupBy(t => t.TransactionDate.Date)
+            .GroupBy(t => t.TransactionDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(g.Key, Math.Abs(g.Sum(x => x.NetAmount)), g.Count()))
             .OrderBy(d => d.Date)
             .ToList();
@@ -181,9 +194,9 @@ public class DashboardService : IDashboardService
             netProfitTrend.Add(new DailyTrendData(date, revenue - expense, 0));
         }
 
-        // Booking trend
+        // Booking trend - convert to local time for grouping
         var bookingTrend = bookings
-            .GroupBy(b => b.BookingDate.Date)
+            .GroupBy(b => b.BookingDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(
                 g.Key,
                 g.SelectMany(b => b.BookingDetails).Sum(d => (decimal)d.BookingQuantity * d.BookingRate),
@@ -192,9 +205,9 @@ public class DashboardService : IDashboardService
             .OrderBy(d => d.Date)
             .ToList();
 
-        // Delivery trend
+        // Delivery trend - convert to local time for grouping
         var deliveryTrend = deliveries
-            .GroupBy(d => d.DeliveryDate.Date)
+            .GroupBy(d => d.DeliveryDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(
                 g.Key,
                 g.SelectMany(d => d.DeliveryDetails).Sum(dd => (decimal)dd.DeliveryQuantity * dd.BookingDetail!.BookingRate),
@@ -205,24 +218,27 @@ public class DashboardService : IDashboardService
 
         // Transaction category trends (for stacked bar chart)
         var categoryTrends = new Dictionary<string, List<decimal>>();
-        var transactionTypes = new[] { 
-            UsageFor.BILL_COLLECTION, 
-            UsageFor.SALARY, 
-            UsageFor.TRANSACTION 
+        var transactionTypes = new[] {
+            UsageFor.BILL_COLLECTION,
+            UsageFor.SALARY,
+            UsageFor.TRANSACTION
         };
 
         // Group data by date intervals for better visualization
-        var groupedDates = GenerateDateGroups(startDate, endDate, groupingDays);
-        
+        var groupedDates = GenerateDateGroups(startLocal, endLocal, groupingDays);
+
         foreach (var type in transactionTypes)
         {
             var typeData = new List<decimal>();
             foreach (var dateGroup in groupedDates)
             {
                 var amount = transactions
-                    .Where(t => t.TransactionHead!.UsageFor == type 
-                        && t.TransactionDate >= dateGroup.Start 
-                        && t.TransactionDate < dateGroup.End)
+                    .Where(t => t.TransactionHead!.UsageFor == type)
+                    .Where(t =>
+                    {
+                        var localDate = t.TransactionDate.ToLocalTime().Date;
+                        return localDate >= dateGroup.Start && localDate < dateGroup.End;
+                    })
                     .Sum(t => Math.Abs(t.NetAmount));
                 typeData.Add(amount);
             }
@@ -230,9 +246,9 @@ public class DashboardService : IDashboardService
         }
 
         // Generate labels based on grouping
-        dateLabels = groupedDates.Select(g => 
-            groupingDays == 1 ? g.Start.ToString("MMM dd") : 
-            groupingDays <= 7 ? $"{g.Start:MMM dd}" : 
+        dateLabels = groupedDates.Select(g =>
+            groupingDays == 1 ? g.Start.ToString("MMM dd") :
+            groupingDays <= 7 ? $"{g.Start:MMM dd}" :
             $"{g.Start:MMM dd}-{g.End.AddDays(-1):dd}"
         ).ToList();
 
