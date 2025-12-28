@@ -32,13 +32,13 @@ public class TransactionService : ITransactionService
         // Load TransactionHead to get Type and DisplayType
         var transactionHead = await _transactionHeadRepository.Query()
             .FirstOrDefaultAsync(x => x.Id == request.TransactionHeadId, cancellationToken);
-        
+
         if (transactionHead == null)
             throw new Exception("Transaction head not found!");
 
         var entity = request.Adapt<Transaction>();
         entity.BranchId = _currentUser.BranchId;
-        
+
         // Set default PaymentMethod to CASH if not provided
         if (string.IsNullOrEmpty(entity.PaymentMethod))
         {
@@ -105,8 +105,8 @@ public class TransactionService : ITransactionService
             .Include(x => x.TransactionHead)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        if(result != null && result.TransactionHead != null)
-        result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
+        if (result != null && result.TransactionHead != null)
+            result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
 
         if (result is null) return null;
 
@@ -145,7 +145,7 @@ public class TransactionService : ITransactionService
             .Include(x => x.TransactionHead)
             .FirstOrDefaultAsync(x => x.TransactionCode == transactionCode, cancellationToken);
 
-        if(result != null && result.TransactionHead != null)
+        if (result != null && result.TransactionHead != null)
             result.TransactionHead.Type = string.IsNullOrEmpty(result.TransactionHead.DisplayType) ? result.TransactionHead.Type : result.TransactionHead.DisplayType;
 
         if (result is null) return null;
@@ -170,13 +170,13 @@ public class TransactionService : ITransactionService
         // Load TransactionHead to get Type and DisplayType
         var transactionHead = await _transactionHeadRepository.Query()
             .FirstOrDefaultAsync(x => x.Id == request.TransactionHeadId, cancellationToken);
-        
+
         if (transactionHead == null)
             throw new Exception("Transaction head not found!");
 
         request.Adapt(entity);
         entity.BranchId = _currentUser.BranchId;
-        
+
         // Set default PaymentMethod to CASH if not provided
         if (string.IsNullOrEmpty(entity.PaymentMethod))
         {
@@ -217,7 +217,7 @@ public class TransactionService : ITransactionService
                     x.TransactionHead!.Id,
                     x.TransactionHead!.Name,
                     !string.IsNullOrWhiteSpace(x.TransactionHead!.DisplayType) ? x.TransactionHead!.DisplayType : x.TransactionHead!.Type
-                ),  
+                ),
                 x.BranchId,
                 x.Branch!.Name,
                 x.CustomerId,
@@ -253,7 +253,8 @@ public class TransactionService : ITransactionService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-       Expression<Func<Transaction, bool>> predicate = x => true;
+        Expression<Func<Transaction, bool>> predicate = x => true;
+        predicate = predicate.And(x => !x.IsArchived && x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         if (requestQuery.UsageFor != null)
         {

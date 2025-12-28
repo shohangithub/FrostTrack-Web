@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class initmigrationforfrosttrack : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,6 +22,9 @@ namespace Persistence.Migrations
 
             migrationBuilder.EnsureSchema(
                 name: "payment");
+
+            migrationBuilder.EnsureSchema(
+                name: "finance");
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
@@ -44,9 +47,11 @@ namespace Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BranchId = table.Column<int>(type: "int", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    ProfileImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -335,6 +340,34 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TransactionHeads",
+                schema: "finance",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DisplayType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    UsageFor = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    SortOrder = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsSystem = table.Column<bool>(type: "bit", nullable: false),
+                    ColorCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    IconClass = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true),
+                    LastUpdatedTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionHeads", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -456,6 +489,9 @@ namespace Persistence.Migrations
                     BalanceAfter = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     ReceiptNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     BranchId = table.Column<int>(type: "int", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
@@ -484,7 +520,7 @@ namespace Persistence.Migrations
                     UnitName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BaseUnitId = table.Column<int>(type: "int", nullable: false),
                     ConversionValue = table.Column<float>(type: "real", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
@@ -658,7 +694,8 @@ namespace Persistence.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProductId = table.Column<int>(type: "int", nullable: false),
-                    UnitConversionId = table.Column<int>(type: "int", nullable: false),
+                    UnitId = table.Column<int>(type: "int", nullable: false),
+                    UnitConversionId = table.Column<int>(type: "int", nullable: true),
                     StockQuantity = table.Column<float>(type: "real", nullable: false),
                     LastPurchaseRate = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     BranchId = table.Column<int>(type: "int", nullable: false),
@@ -698,6 +735,9 @@ namespace Persistence.Migrations
                     CustomerId = table.Column<int>(type: "int", nullable: false),
                     BranchId = table.Column<int>(type: "int", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedById = table.Column<int>(type: "int", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
                     CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -928,6 +968,10 @@ namespace Persistence.Migrations
                     BookingRate = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     BaseQuantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     BaseRate = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    LastDeliveryDate = table.Column<DateTime>(type: "datetime", nullable: false),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedById = table.Column<int>(type: "int", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
                     CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -961,20 +1005,39 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Delivery",
-                schema: "product",
+                name: "Transactions",
+                schema: "finance",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DeliveryNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DeliveryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TransactionCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TransactionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TransactionHeadId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EntityName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EntityId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BranchId = table.Column<int>(type: "int", nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ChargeAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    AdjustmentValue = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    DiscountAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    PaidAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    CustomerId = table.Column<int>(type: "int", nullable: true),
+                    BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    EmployeeId = table.Column<int>(type: "int", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    AdjustmentValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    NetAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PaymentReference = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    VendorName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    VendorContact = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BillingPeriodStart = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    BillingPeriodEnd = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AttachmentPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedById = table.Column<int>(type: "int", nullable: true),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedById = table.Column<int>(type: "int", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
                     CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -983,18 +1046,37 @@ namespace Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Delivery", x => x.Id);
+                    table.PrimaryKey("PK_Transactions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Delivery_Booking_BookingId",
+                        name: "FK_Transactions_Booking_BookingId",
                         column: x => x.BookingId,
                         principalSchema: "product",
                         principalTable: "Booking",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Delivery_Branches_BranchId",
+                        name: "FK_Transactions_Branches_BranchId",
                         column: x => x.BranchId,
                         principalTable: "Branches",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transactions_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transactions_Employees_EmployeeId",
+                        column: x => x.EmployeeId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transactions_TransactionHeads_TransactionHeadId",
+                        column: x => x.TransactionHeadId,
+                        principalSchema: "finance",
+                        principalTable: "TransactionHeads",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1188,18 +1270,27 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DeliveryDetail",
+                name: "Delivery",
                 schema: "product",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DeliveryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BookingDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DeliveryUnitId = table.Column<int>(type: "int", nullable: false),
-                    DeliveryQuantity = table.Column<float>(type: "real", nullable: false),
-                    BaseQuantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DeliveryNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeliveryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BranchId = table.Column<int>(type: "int", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ChargeAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     AdjustmentValue = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TransactionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedById = table.Column<int>(type: "int", nullable: true),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedById = table.Column<int>(type: "int", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedById = table.Column<int>(type: "int", nullable: false),
                     CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -1208,26 +1299,25 @@ namespace Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DeliveryDetail", x => x.Id);
+                    table.PrimaryKey("PK_Delivery", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DeliveryDetail_BookingDetail_BookingDetailId",
-                        column: x => x.BookingDetailId,
+                        name: "FK_Delivery_Booking_BookingId",
+                        column: x => x.BookingId,
                         principalSchema: "product",
-                        principalTable: "BookingDetail",
+                        principalTable: "Booking",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DeliveryDetail_Delivery_DeliveryId",
-                        column: x => x.DeliveryId,
-                        principalSchema: "product",
-                        principalTable: "Delivery",
+                        name: "FK_Delivery_Branches_BranchId",
+                        column: x => x.BranchId,
+                        principalTable: "Branches",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DeliveryDetail_UnitConversions_DeliveryUnitId",
-                        column: x => x.DeliveryUnitId,
-                        principalSchema: "lookup",
-                        principalTable: "UnitConversions",
+                        name: "FK_Delivery_Transactions_TransactionId",
+                        column: x => x.TransactionId,
+                        principalSchema: "finance",
+                        principalTable: "Transactions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1272,6 +1362,55 @@ namespace Persistence.Migrations
                     table.ForeignKey(
                         name: "FK_SaleReturnDetails_UnitConversions_ReturnUnitId",
                         column: x => x.ReturnUnitId,
+                        principalSchema: "lookup",
+                        principalTable: "UnitConversions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DeliveryDetail",
+                schema: "product",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DeliveryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BookingDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DeliveryUnitId = table.Column<int>(type: "int", nullable: false),
+                    DeliveryQuantity = table.Column<float>(type: "real", nullable: false),
+                    BaseQuantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BillingCycles = table.Column<int>(type: "int", nullable: false),
+                    ChargeAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    AdjustmentValue = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    IsArchived = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ArchivedById = table.Column<int>(type: "int", nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "datetime", nullable: false),
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true),
+                    LastUpdatedTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeliveryDetail", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DeliveryDetail_BookingDetail_BookingDetailId",
+                        column: x => x.BookingDetailId,
+                        principalSchema: "product",
+                        principalTable: "BookingDetail",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DeliveryDetail_Delivery_DeliveryId",
+                        column: x => x.DeliveryId,
+                        principalSchema: "product",
+                        principalTable: "Delivery",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DeliveryDetail_UnitConversions_DeliveryUnitId",
+                        column: x => x.DeliveryUnitId,
                         principalSchema: "lookup",
                         principalTable: "UnitConversions",
                         principalColumn: "Id",
@@ -1396,6 +1535,12 @@ namespace Persistence.Migrations
                 schema: "product",
                 table: "Delivery",
                 column: "BranchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Delivery_TransactionId",
+                schema: "product",
+                table: "Delivery",
+                column: "TransactionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeliveryDetail_BookingDetailId",
@@ -1638,6 +1783,42 @@ namespace Persistence.Migrations
                 column: "SupplierId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Transactions_BookingId",
+                schema: "finance",
+                table: "Transactions",
+                column: "BookingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_BranchId",
+                schema: "finance",
+                table: "Transactions",
+                column: "BranchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_CustomerId",
+                schema: "finance",
+                table: "Transactions",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_EmployeeId",
+                schema: "finance",
+                table: "Transactions",
+                column: "EmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_TenantId",
+                schema: "finance",
+                table: "Transactions",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_TransactionHeadId",
+                schema: "finance",
+                table: "Transactions",
+                column: "TransactionHeadId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UnitConversions_BaseUnitId",
                 schema: "lookup",
                 table: "UnitConversions",
@@ -1675,9 +1856,6 @@ namespace Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "DeliveryDetail",
                 schema: "product");
-
-            migrationBuilder.DropTable(
-                name: "Employees");
 
             migrationBuilder.DropTable(
                 name: "PaymentMethods",
@@ -1737,8 +1915,8 @@ namespace Persistence.Migrations
                 schema: "product");
 
             migrationBuilder.DropTable(
-                name: "Booking",
-                schema: "product");
+                name: "Transactions",
+                schema: "finance");
 
             migrationBuilder.DropTable(
                 name: "Sales",
@@ -1759,14 +1937,25 @@ namespace Persistence.Migrations
                 schema: "lookup");
 
             migrationBuilder.DropTable(
-                name: "Branches");
+                name: "Booking",
+                schema: "product");
 
             migrationBuilder.DropTable(
-                name: "Customers");
+                name: "Employees");
+
+            migrationBuilder.DropTable(
+                name: "TransactionHeads",
+                schema: "finance");
 
             migrationBuilder.DropTable(
                 name: "BaseUnits",
                 schema: "lookup");
+
+            migrationBuilder.DropTable(
+                name: "Branches");
+
+            migrationBuilder.DropTable(
+                name: "Customers");
 
             migrationBuilder.DropTable(
                 name: "Companies");

@@ -23,19 +23,23 @@ public class ApplicationDbContextInitializer
     private readonly ILogger<ApplicationDbContextInitializer> _logger;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ITenantProvider _tenantProvider;
+    private readonly Guid _tenantId;
 
-    public ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitializer> logger, ApplicationDbContext context, IConfiguration configuration)
+    public ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitializer> logger, ApplicationDbContext context, IConfiguration configuration, ITenantProvider tenantProvider)
     {
         _logger = logger;
         _context = context;
         _configuration = configuration;
+        _tenantProvider = tenantProvider;
+        _tenantId = _tenantProvider.GetTenantId();
     }
 
     public async Task InitializeAsync()
     {
         try
         {
-          //  await _context.Database.MigrateAsync();
+            await _context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {
@@ -65,7 +69,7 @@ public class ApplicationDbContextInitializer
         var defaultTenantId = _configuration.GetSection("DefaultTenant:TenantId").Get<string>();
         var user = _configuration.GetSection("DefaultTenant:User").Get<string>() ?? "ris.shohan@gmail.com";
         var password = _configuration.GetSection("DefaultTenant:Password").Get<string>() ?? "1qazZAQ!";
-        var tenantId = new Guid(defaultTenantId ?? Guid.NewGuid().ToString());
+        // var _tenantId = new Guid(defaultTenantId ?? Guid.NewGuid().ToString());
 
         #region SET COMPANY
         if (!_context.Companies.Any())
@@ -79,7 +83,7 @@ public class ApplicationDbContextInitializer
                 CurrencySymbol = "৳",
                 IsSingleBranch = true,
                 IsActive = true,
-                TenantId = tenantId
+                TenantId = _tenantId
             });
 
             await _context.SaveChangesAsync();
@@ -97,7 +101,7 @@ public class ApplicationDbContextInitializer
             Name = "Main Branch",
             BranchCode = "B-00001",
             IsActive = true,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         //new Branch
         //{
@@ -105,7 +109,7 @@ public class ApplicationDbContextInitializer
         //    Name = "East Branch",
         //    BranchCode = "B-00002",
         //    IsActive = true,
-        //    TenantId = tenantId
+        //    TenantId = _tenantId
         //},
         //new Branch
         //{
@@ -113,7 +117,7 @@ public class ApplicationDbContextInitializer
         //    Name = "West Branch",
         //    BranchCode = "B-00003",
         //    IsActive = true,
-        //    TenantId = tenantId
+        //    TenantId = _tenantId
         //},
         //new Branch
         //{
@@ -121,7 +125,7 @@ public class ApplicationDbContextInitializer
         //    Name = "North Branch",
         //    BranchCode = "B-00004",
         //    IsActive = true,
-        //    TenantId = tenantId
+        //    TenantId = _tenantId
         //},
         //new Branch
         //{
@@ -129,7 +133,7 @@ public class ApplicationDbContextInitializer
         //    Name = "South Branch",
         //    BranchCode = "B-00005",
         //    IsActive = true,
-        //    TenantId = tenantId
+        //    TenantId = _tenantId
         //}
     };
 
@@ -199,7 +203,7 @@ public class ApplicationDbContextInitializer
             NormalizedEmail = user.ToUpper(),
             PasswordHash = "AQAAAAEAACcQAAAAELUblJDKkKsPIPOMNqNyztYnKdfBsD36SP4y3PdlSW/7wbLwZp6kLgPYCSzucgxN2A==", // Hash for "1qazZAQ!"
             IsActive = true,
-            TenantId = tenantId,
+            TenantId = _tenantId,
             BranchId = branchId
         },
         new ApplicationUser
@@ -211,7 +215,7 @@ public class ApplicationDbContextInitializer
             NormalizedEmail = "JOHN.DOE@COMPANY.COM",
             PasswordHash = "AQAAAAEAACcQAAAAELUblJDKkKsPIPOMNqNyztYnKdfBsD36SP4y3PdlSW/7wbLwZp6kLgPYCSzucgxN2A==", // Hash for "1qazZAQ!"
             IsActive = true,
-            TenantId = tenantId,
+            TenantId = _tenantId,
             BranchId = branchId
         },
         new ApplicationUser
@@ -223,7 +227,7 @@ public class ApplicationDbContextInitializer
             NormalizedEmail = "JANE.SMITH@COMPANY.COM",
             PasswordHash = "AQAAAAEAACcQAAAAELUblJDKkKsPIPOMNqNyztYnKdfBsD36SP4y3PdlSW/7wbLwZp6kLgPYCSzucgxN2A==", // Hash for "1qazZAQ!"
             IsActive = true,
-            TenantId = tenantId,
+            TenantId =  _tenantId,
             BranchId = branchId
         },
         new ApplicationUser
@@ -235,7 +239,7 @@ public class ApplicationDbContextInitializer
             NormalizedEmail = "MARK.JONES@COMPANY.COM",
             PasswordHash = "AQAAAAEAACcQAAAAELUblJDKkKsPIPOMNqNyztYnKdfBsD36SP4y3PdlSW/7wbLwZp6kLgPYCSzucgxN2A==", // Hash for "1qazZAQ!"
             IsActive = true,
-            TenantId = tenantId,
+            TenantId = _tenantId,
             BranchId = branchId
         },
         new ApplicationUser
@@ -247,7 +251,7 @@ public class ApplicationDbContextInitializer
             NormalizedEmail = "LISA.BROWN@COMPANY.COM",
             PasswordHash = "AQAAAAEAACcQAAAAELUblJDKkKsPIPOMNqNyztYnKdfBsD36SP4y3PdlSW/7wbLwZp6kLgPYCSzucgxN2A==", // Hash for "1qazZAQ!"
             IsActive = true,
-            TenantId = tenantId,
+            TenantId = _tenantId,
             BranchId = branchId
         }
     };
@@ -306,6 +310,42 @@ public class ApplicationDbContextInitializer
             new TransactionHead
             {
                 Id = Guid.NewGuid(),
+                Code = "CLOSING_BALANCE",
+                Name = "Closing Balance",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "",
+                Description = "Balance carried forward at the end of an accounting period",
+                UsageFor = UsageFor.CLOSING_BALANCE,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 1,
+                ColorCode = "#28a745",
+                IconClass = "fa-money-bill-wave",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId,
+                TenantId = _tenantId
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "OPENING_BALANCE",
+                Name = "Opening Balance",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "",
+                Description = "Initial balance for new accounts",
+                UsageFor = UsageFor.OPENING_BALANCE,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 1,
+                ColorCode = "#28a745",
+                IconClass = "fa-money-bill-wave",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId,
+                TenantId = _tenantId
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
                 Code = "BILL_COLLECTION",
                 Name = "Bill Collection",
                 Type = TransactionHeadTypes.CREDIT,
@@ -318,41 +358,8 @@ public class ApplicationDbContextInitializer
                 ColorCode = "#28a745",
                 IconClass = "fa-money-bill-wave",
                 CreatedTime = DateTime.UtcNow,
-                CreatedById = userId
-            },
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "BOOKING_EXTRA_CHARGE",
-                Name = "Booking Extra Charge",
-                Type = TransactionHeadTypes.CREDIT,
-                DisplayType = "",
-                UsageFor = UsageFor.BOOKING,
-                Description = "Additional charges for booking services",
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 2,
-                ColorCode = "#17a2b8",
-                IconClass = "fa-plus-circle",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId
-            },
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "OFFICE_COST",
-                Name = "Office Cost",
-                Type = TransactionHeadTypes.DEBIT,
-                DisplayType = "",
-                UsageFor = UsageFor.TRANSACTION,
-                Description = "General office and administrative expenses",
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 3,
-                ColorCode = "#dc3545",
-                IconClass = "fa-building",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId
+                CreatedById = userId,
+                TenantId = _tenantId
             },
             new TransactionHead
             {
@@ -369,7 +376,8 @@ public class ApplicationDbContextInitializer
                 ColorCode = "#fd7e14",
                 IconClass = "fa-wallet",
                 CreatedTime = DateTime.UtcNow,
-                CreatedById = userId
+                CreatedById = userId,
+                TenantId = _tenantId
             }
         };
 
@@ -377,11 +385,38 @@ public class ApplicationDbContextInitializer
             _context.TransactionHeads.AddRange(transactionHeads);
             await _context.SaveChangesAsync();
         }
+
+
+        if (!_context.Transactions.Any())
+        {
+            var transactions = new List<Transaction> {
+            new Transaction
+            {
+                Id = Guid.NewGuid(),
+                TransactionCode= "TR-251227-07E615",
+                TransactionDate= DateTime.UtcNow,
+                TransactionHeadId= _context.TransactionHeads.Where(th => th.Code == "OPENING_BALANCE").Select(th => th.Id).FirstOrDefault(),
+                EntityName= "GENERAL",
+                EntityId= Guid.Empty.ToString(),
+                BranchId= branchId,
+                Amount= 0,
+                NetAmount= 0,
+                PaymentMethod= "CASH",
+                Description= "Opening balance entry",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId,
+                TenantId = _tenantId
+            }
+        };
+            _context.Transactions.AddRange(transactions);
+            await _context.SaveChangesAsync();
+        }
+
         #endregion
 
 
         #region SET PRODUCT CATEGORIES
-       
+
         if (!_context.ProductCategories.Any())
         {
             var categories = new List<ProductCategory>
@@ -392,7 +427,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             Description = "It's a general category",
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         // new ProductCategory
         // {
@@ -400,7 +435,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     Description = "Electronic items like phones, laptops, etc.",
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new ProductCategory
         // {
@@ -408,7 +443,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     Description = "Office and home furniture",
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new ProductCategory
         // {
@@ -416,7 +451,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     Description = "Daily consumable goods and food items",
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new ProductCategory
         // {
@@ -424,7 +459,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     Description = "Office and school supplies",
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // }
     };
 
@@ -447,7 +482,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = true,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         new Customer
         {
@@ -458,7 +493,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         new Customer
         {
@@ -469,7 +504,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         new Customer
         {
@@ -480,7 +515,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         new Customer
         {
@@ -491,7 +526,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
-            TenantId = tenantId
+            TenantId = _tenantId
         }
     };
 
@@ -514,7 +549,7 @@ public class ApplicationDbContextInitializer
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = true,
-            TenantId = tenantId
+            TenantId = _tenantId
         },
         // new Supplier
         // {
@@ -524,7 +559,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     IsSystemDefault = false,
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new Supplier
         // {
@@ -534,7 +569,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     IsSystemDefault = false,
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new Supplier
         // {
@@ -544,7 +579,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     IsSystemDefault = false,
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // },
         // new Supplier
         // {
@@ -554,7 +589,7 @@ public class ApplicationDbContextInitializer
         //     CreatedById = userId,
         //     IsActive = true,
         //     IsSystemDefault = false,
-        //     TenantId = tenantId
+        //     TenantId = _tenantId
         // }
     };
 
@@ -575,7 +610,7 @@ public class ApplicationDbContextInitializer
                     Description = "Individual pieces or items",
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new BaseUnit
                 {
@@ -583,7 +618,7 @@ public class ApplicationDbContextInitializer
                     Description = "Weight measurement in kilograms",
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 // new BaseUnit
                 // {
@@ -591,7 +626,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "Weight measurement in grams",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // },
                 // new BaseUnit
                 // {
@@ -599,7 +634,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "Volume measurement in liters",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // },
                 // new BaseUnit
                 // {
@@ -607,7 +642,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "Length measurement in meters",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // }
             };
 
@@ -632,7 +667,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "Single piece",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // },
                 new UnitConversion
                 {
@@ -643,7 +678,7 @@ public class ApplicationDbContextInitializer
                     Description = "1 kilogram",
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new UnitConversion
                 {
@@ -654,7 +689,7 @@ public class ApplicationDbContextInitializer
                     Description = "10 Kgs",
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 // new UnitConversion
                 // {
@@ -665,7 +700,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "10 pieces",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // },
                 // new UnitConversion
                 // {
@@ -676,7 +711,7 @@ public class ApplicationDbContextInitializer
                 //     Description = "6 pieces",
                 //     CreatedById = userId,
                 //     IsActive = true,
-                //     TenantId = tenantId
+                //     TenantId = _tenantId
                 // }
             };
 
@@ -709,7 +744,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 75.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -721,7 +756,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 150.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -733,7 +768,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 40.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -745,7 +780,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 300.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -757,7 +792,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 120.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -769,7 +804,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 90.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -781,7 +816,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 100.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -793,7 +828,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 130.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -805,7 +840,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 160.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
                 new Product
                 {
@@ -817,7 +852,7 @@ public class ApplicationDbContextInitializer
                     BookingRate = 140.00m,
                     CreatedById = userId,
                     IsActive = true,
-                    TenantId = tenantId
+                    TenantId = _tenantId
                 },
 
             };
@@ -850,7 +885,7 @@ public class ApplicationDbContextInitializer
                     InvoiceAmount = 500.00m,
                     PaidAmount = 500.00m,
                     CreatedById = userId,
-                    TenantId = tenantId,
+                    TenantId = _tenantId,
                     PurchaseDetails = new List<PurchaseDetail>
                     {
                         new PurchaseDetail
@@ -861,7 +896,7 @@ public class ApplicationDbContextInitializer
                             PurchaseQuantity = 10.0f,
                             PurchaseAmount = 500.00m,
                             CreatedById = userId,
-                            TenantId = tenantId
+                            TenantId = _tenantId
                         }
                     }
                 },
@@ -880,7 +915,7 @@ public class ApplicationDbContextInitializer
                     InvoiceAmount = 750.00m,
                     PaidAmount = 750.00m,
                     CreatedById = userId,
-                    TenantId = tenantId,
+                    TenantId = _tenantId,
                     PurchaseDetails = new List<PurchaseDetail>
                     {
                         new PurchaseDetail
@@ -891,7 +926,7 @@ public class ApplicationDbContextInitializer
                             PurchaseQuantity = 5.0f,
                             PurchaseAmount = 500.00m,
                             CreatedById = userId,
-                            TenantId = tenantId
+                            TenantId = _tenantId
                         },
                         new PurchaseDetail
                         {
@@ -901,7 +936,7 @@ public class ApplicationDbContextInitializer
                             PurchaseQuantity = 10.0f,
                             PurchaseAmount = 250.00m,
                             CreatedById = userId,
-                            TenantId = tenantId
+                            TenantId = _tenantId
                         }
                     }
                 }
@@ -914,70 +949,70 @@ public class ApplicationDbContextInitializer
 
         #region SET STOCKS
 
-    //     if (!_context.Stocks.Any())
-    //     {
-    //         var _unitConversionId = _context.UnitConversions.Select(u => u.Id).FirstOrDefault();
-    //         var _branchId = _context.Branches.Select(b => b.Id).FirstOrDefault();
-    //         var _userId = _context.Users.Select(u => u.Id).FirstOrDefault();
+        //     if (!_context.Stocks.Any())
+        //     {
+        //         var _unitConversionId = _context.UnitConversions.Select(u => u.Id).FirstOrDefault();
+        //         var _branchId = _context.Branches.Select(b => b.Id).FirstOrDefault();
+        //         var _userId = _context.Users.Select(u => u.Id).FirstOrDefault();
 
-    //         var stocks = new List<Stock>
-    // {
-    //     new Stock
-    //     {
-    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[0],
-    //         UnitId = unitConversionId,
-    //         StockQuantity = 100,
-    //         LastPurchaseRate = 50.00m,
-    //         BranchId = branchId,
-    //         CreatedById = userId,
-    //         TenantId = tenantId
-    //     },
-    //     new Stock
-    //     {
-    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[1],
-    //         UnitId = _unitConversionId,
-    //         StockQuantity = 250,
-    //         LastPurchaseRate = 20.50m,
-    //         BranchId = _branchId,
-    //         CreatedById = _userId,
-    //         TenantId = tenantId,
-    //     },
-    //     new Stock
-    //     {
-    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[2],
-    //         UnitId = _unitConversionId,
-    //         StockQuantity = 75,
-    //         LastPurchaseRate = 15.75m,
-    //         BranchId = _branchId,
-    //         CreatedById = _userId,
-    //         TenantId = tenantId,
-    //     },
-    //     new Stock
-    //     {
-    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[3],
-    //         UnitId = _unitConversionId,
-    //         StockQuantity = 500,
-    //         LastPurchaseRate = 5.25m,
-    //         BranchId = _branchId,
-    //         CreatedById = _userId,
-    //         TenantId = tenantId
-    //     },
-    //     new Stock
-    //     {
-    //         ProductId = _context.Products.Select(p => p.Id).ToArray()[4],
-    //         UnitId = _unitConversionId,
-    //         StockQuantity = 300,
-    //         LastPurchaseRate = 32.00m,
-    //         BranchId = _branchId,
-    //         CreatedById = _userId,
-    //         TenantId = tenantId
-    //     }
-    // };
+        //         var stocks = new List<Stock>
+        // {
+        //     new Stock
+        //     {
+        //         ProductId = _context.Products.Select(p => p.Id).ToArray()[0],
+        //         UnitId = unitConversionId,
+        //         StockQuantity = 100,
+        //         LastPurchaseRate = 50.00m,
+        //         BranchId = branchId,
+        //         CreatedById = userId,
+        //         TenantId = _tenantId
+        //     },
+        //     new Stock
+        //     {
+        //         ProductId = _context.Products.Select(p => p.Id).ToArray()[1],
+        //         UnitId = _unitConversionId,
+        //         StockQuantity = 250,
+        //         LastPurchaseRate = 20.50m,
+        //         BranchId = _branchId,
+        //         CreatedById = _userId,
+        //         TenantId = _tenantId,
+        //     },
+        //     new Stock
+        //     {
+        //         ProductId = _context.Products.Select(p => p.Id).ToArray()[2],
+        //         UnitId = _unitConversionId,
+        //         StockQuantity = 75,
+        //         LastPurchaseRate = 15.75m,
+        //         BranchId = _branchId,
+        //         CreatedById = _userId,
+        //         TenantId = _tenantId,
+        //     },
+        //     new Stock
+        //     {
+        //         ProductId = _context.Products.Select(p => p.Id).ToArray()[3],
+        //         UnitId = _unitConversionId,
+        //         StockQuantity = 500,
+        //         LastPurchaseRate = 5.25m,
+        //         BranchId = _branchId,
+        //         CreatedById = _userId,
+        //         TenantId = _tenantId
+        //     },
+        //     new Stock
+        //     {
+        //         ProductId = _context.Products.Select(p => p.Id).ToArray()[4],
+        //         UnitId = _unitConversionId,
+        //         StockQuantity = 300,
+        //         LastPurchaseRate = 32.00m,
+        //         BranchId = _branchId,
+        //         CreatedById = _userId,
+        //         TenantId = _tenantId
+        //     }
+        // };
 
-    //         _context.Stocks.AddRange(stocks);
-    //         await _context.SaveChangesAsync();
-    //     }
-        
+        //         _context.Stocks.AddRange(stocks);
+        //         await _context.SaveChangesAsync();
+        //     }
+
         #endregion
 
 
@@ -1004,7 +1039,7 @@ public class ApplicationDbContextInitializer
         //             InvoiceAmount = 600.00m,
         //             PaidAmount = 600.00m,
         //             CreatedById = userId,
-        //             TenantId = tenantId,
+        //             TenantId = _tenantId,
         //             SalesDetails = new List<SalesDetail>
         //             {
         //                 new SalesDetail
@@ -1015,7 +1050,7 @@ public class ApplicationDbContextInitializer
         //                     SalesQuantity = 5.0f,
         //                     SalesAmount = 375.00m,
         //                     CreatedById = userId,
-        //                     TenantId = tenantId
+        //                     TenantId = _tenantId
         //                 },
         //                 new SalesDetail
         //                 {
@@ -1025,7 +1060,7 @@ public class ApplicationDbContextInitializer
         //                     SalesQuantity = 1.5f,
         //                     SalesAmount = 225.00m,
         //                     CreatedById = userId,
-        //                     TenantId = tenantId
+        //                     TenantId = _tenantId
         //                 }
         //             }
         //         },
@@ -1045,7 +1080,7 @@ public class ApplicationDbContextInitializer
         //             InvoiceAmount = 380.00m,
         //             PaidAmount = 380.00m,
         //             CreatedById = userId,
-        //             TenantId = tenantId,
+        //             TenantId = _tenantId,
         //             SalesDetails = new List<SalesDetail>
         //             {
         //                 new SalesDetail
@@ -1056,7 +1091,7 @@ public class ApplicationDbContextInitializer
         //                     SalesQuantity = 10.0f,
         //                     SalesAmount = 400.00m,
         //                     CreatedById = userId,
-        //                     TenantId = tenantId
+        //                     TenantId = _tenantId
         //                 }
         //             }
         //         }
@@ -1088,7 +1123,7 @@ public class ApplicationDbContextInitializer
         //             IconClass = "fa fa-money-bill-wave",
         //             BranchId = branchId,
         //             CreatedById = userId,
-        //             TenantId = tenantId
+        //             TenantId = _tenantId
         //         },
         //         new PaymentMethod
         //         {
@@ -1106,7 +1141,7 @@ public class ApplicationDbContextInitializer
         //             IconClass = "fa fa-university",
         //             BranchId = branchId,
         //             CreatedById = userId,
-        //             TenantId = tenantId
+        //             TenantId = _tenantId
         //         },
         //         new PaymentMethod
         //         {
@@ -1124,7 +1159,7 @@ public class ApplicationDbContextInitializer
         //             IconClass = "fa fa-credit-card",
         //             BranchId = branchId,
         //             CreatedById = userId,
-        //             TenantId = tenantId
+        //             TenantId = _tenantId
         //         },
         //         new PaymentMethod
         //         {
@@ -1142,7 +1177,7 @@ public class ApplicationDbContextInitializer
         //             IconClass = "fa fa-mobile-alt",
         //             BranchId = branchId,
         //             CreatedById = userId,
-        //             TenantId = tenantId
+        //             TenantId = _tenantId
         //         },
         //         new PaymentMethod
         //         {
@@ -1160,7 +1195,7 @@ public class ApplicationDbContextInitializer
         //             IconClass = "fa fa-money-check",
         //             BranchId = branchId,
         //             CreatedById = userId,
-        //             TenantId = tenantId
+        //             TenantId = _tenantId
         //         }
         //     };
 

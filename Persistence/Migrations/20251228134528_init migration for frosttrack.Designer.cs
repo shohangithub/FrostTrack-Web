@@ -12,8 +12,8 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251218153204_AddBillingCyclesToDeliveryDetail")]
-    partial class AddBillingCyclesToDeliveryDetail
+    [Migration("20251228134528_init migration for frosttrack")]
+    partial class initmigrationforfrosttrack
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -326,6 +326,12 @@ namespace Persistence.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(10, 2)");
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchivedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("BalanceAfter")
                         .HasColumnType("decimal(10, 2)");
 
@@ -345,6 +351,9 @@ namespace Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
 
                     b.Property<int?>("LastUpdatedById")
@@ -429,6 +438,12 @@ namespace Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnOrder(0);
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
 
@@ -447,6 +462,9 @@ namespace Persistence.Migrations
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
@@ -476,6 +494,12 @@ namespace Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnOrder(0);
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("BaseQuantity")
                         .HasColumnType("decimal(18,2)");
 
@@ -503,6 +527,9 @@ namespace Persistence.Migrations
 
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("LastDeliveryDate")
                         .HasColumnType("datetime");
@@ -862,7 +889,18 @@ namespace Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TransactionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -870,6 +908,8 @@ namespace Persistence.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("BranchId");
+
+                    b.HasIndex("TransactionId");
 
                     b.ToTable("Delivery", "product");
                 });
@@ -883,6 +923,12 @@ namespace Persistence.Migrations
 
                     b.Property<decimal>("AdjustmentValue")
                         .HasColumnType("decimal(5, 2)");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("BaseQuantity")
                         .HasColumnType("decimal(18,2)");
@@ -910,6 +956,9 @@ namespace Persistence.Migrations
 
                     b.Property<int>("DeliveryUnitId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
@@ -2522,9 +2571,16 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entitites.Transaction", "Transaction")
+                        .WithMany()
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Booking");
 
                     b.Navigation("Branch");
+
+                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("Domain.Entitites.DeliveryDetail", b =>
@@ -2538,7 +2594,7 @@ namespace Persistence.Migrations
                     b.HasOne("Domain.Entitites.Delivery", "Delivery")
                         .WithMany("DeliveryDetails")
                         .HasForeignKey("DeliveryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entitites.UnitConversion", "DeliveryUnit")
