@@ -8,11 +8,13 @@ namespace Application.Services
     public class CashBookService : ICashBookService
     {
         private readonly IRepository<Transaction, Guid> _transactionRepository;
-
+        private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
         public CashBookService(
-            IRepository<Transaction, Guid> transactionRepository)
+            IRepository<Transaction, Guid> transactionRepository,
+            IRepository<BankTransaction, long> bankTransactionRepository)
         {
             _transactionRepository = transactionRepository;
+            _bankTransactionRepository = bankTransactionRepository;
         }
 
         public async Task<CashBookResponse> GetCashBookAsync(DateTime reportDate, CancellationToken cancellationToken = default)
@@ -28,6 +30,7 @@ namespace Application.Services
                 .ToUniversalTime();
 
             var dateWithUTCTime = reportDate.GetDateUtcTime();
+            var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
 
             var lastOpeningBalance = await _transactionRepository.Query()
@@ -36,7 +39,7 @@ namespace Application.Services
                     t.PaymentMethod == PaymentMethods.CASH &&
                     !t.IsArchived &&
                     t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
-                     && t.TransactionDate < dateWithUTCTime
+                     && t.TransactionDate < toDate
                     )
                 .OrderByDescending(t => t.TransactionDate)
                 .Select(t => new
@@ -49,7 +52,7 @@ namespace Application.Services
 
             var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
 
-            var previousAmount = await _transactionRepository.Query()
+            var previousCashAmount = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
                 .Where(t =>
                     t.PaymentMethod == PaymentMethods.CASH &&
@@ -59,13 +62,23 @@ namespace Application.Services
                     t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .SumAsync(t => t.NetAmount, cancellationToken);
 
-            var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousAmount;
+            // Calculate opening balance from bank
+            var previousBankAmount = await _bankTransactionRepository.Query()
+                .Where(bt =>
+                    bt.IsActive &&
+                    bt.TransactionDate >= openingDate &&
+                    bt.TransactionDate < fromUtc)
+                .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
+
+            var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
+            // var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousAmount;
 
             // Get cash transactions for the report date
             var transactions = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
                 .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && t.PaymentMethod == PaymentMethods.CASH && t.IsArchived == false && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .ToListAsync(cancellationToken);
+
 
             // Group by transaction head and sum amounts
             var groupedTransactions = transactions
@@ -108,6 +121,39 @@ namespace Application.Services
                     Balance = runningBalance
                 });
             }
+
+            // Get bank transactions
+            var bankTransactions = await _bankTransactionRepository.Query()
+                .Include(bt => bt.Bank)
+                .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsArchived)
+                .GroupBy(bt => bt.TransactionType)
+                .Select(g => new
+                {
+                    TransactionType = g.Key,
+                    Count = g.Count(),
+                    TotalAmount = g.Sum(bt => g.Key == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount)
+                })
+                .ToListAsync(cancellationToken);
+            foreach (var bankGroup in bankTransactions)
+            {
+                var isCredit = bankGroup.TransactionType == BankTransactionTypes.Withdraw;
+                var debitAmount = isCredit ? 0 : bankGroup.TotalAmount;
+                var creditAmount = isCredit ? bankGroup.TotalAmount : 0;
+
+                runningBalance += creditAmount + debitAmount;
+
+                items.Add(new CashBookItemResponse
+                {
+                    TransactionHeadId = Guid.Empty,
+                    TransactionHeadName = $"Bank Transaction - {bankGroup.TransactionType}",
+                    TransactionType = bankGroup.TransactionType.ToString(),
+                    TransactionCount = bankGroup.Count,
+                    DebitAmount = -1 * debitAmount,
+                    CreditAmount = creditAmount,
+                    Balance = runningBalance
+                });
+            }
+
 
             var totalDebit = items.Sum(i => i.DebitAmount);
             var totalCredit = items.Sum(i => i.CreditAmount);

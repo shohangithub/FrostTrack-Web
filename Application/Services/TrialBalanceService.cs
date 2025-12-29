@@ -30,6 +30,7 @@ public class TrialBalanceService : ITrialBalanceService
             .ToUniversalTime();
 
         var dateWithUTCTime = reportDate.GetDateUtcTime();
+        var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
         var lastOpeningBalance = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
@@ -37,7 +38,7 @@ public class TrialBalanceService : ITrialBalanceService
                 t.TenantId == _tenantId &&
                 !t.IsArchived &&
                 t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
-                 && t.TransactionDate < dateWithUTCTime
+                 && t.TransactionDate < toDate
                 )
             .OrderByDescending(t => t.TransactionDate)
             .Select(t => new
@@ -105,14 +106,14 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = $"{g.Key.BankName} - {g.Key.TransactionType}",
                 AccountType = "Bank Transaction",
-                DebitAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
+                DebitAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
                               .Sum(bt => bt.Amount),
-                CreditAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
+                CreditAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
                                .Sum(bt => bt.Amount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
+                Balance = g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
                            .Sum(bt => bt.Amount) -
-                          g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
+                          g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
                            .Sum(bt => bt.Amount)
             })
             .ToList();

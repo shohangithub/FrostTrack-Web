@@ -29,6 +29,7 @@ public class GeneralLedgerService : IGeneralLedgerService
             .ToUniversalTime();
 
         var dateWithUTCTime = reportDate.GetDateUtcTime();
+        var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
         // Get last opening balance
         var lastOpeningBalance = await _transactionRepository.Query()
@@ -36,7 +37,7 @@ public class GeneralLedgerService : IGeneralLedgerService
             .Where(t =>
                 !t.IsArchived &&
                 t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
-                t.TransactionDate < dateWithUTCTime)
+                t.TransactionDate < toDate)
             .OrderByDescending(t => t.TransactionDate)
             .Select(t => new
             {
@@ -64,7 +65,7 @@ public class GeneralLedgerService : IGeneralLedgerService
                 bt.IsActive &&
                 bt.TransactionDate >= openingDate &&
                 bt.TransactionDate < fromUtc)
-            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
+            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
 
         var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
 
@@ -78,13 +79,6 @@ public class GeneralLedgerService : IGeneralLedgerService
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                 t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .OrderBy(t => t.CreatedTime)
-            .ToListAsync(cancellationToken);
-
-        // Get bank transactions
-        var bankTransactions = await _bankTransactionRepository.Query()
-            .Include(bt => bt.Bank)
-            .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive)
-            .OrderBy(bt => bt.CreatedTime)
             .ToListAsync(cancellationToken);
 
         var items = new List<GeneralLedgerItemResponse>();
@@ -117,14 +111,21 @@ public class GeneralLedgerService : IGeneralLedgerService
             });
         }
 
+
+        // Get bank transactions
+        var bankTransactions = await _bankTransactionRepository.Query()
+            .Include(bt => bt.Bank)
+            .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive)
+            .OrderBy(bt => bt.CreatedTime)
+            .ToListAsync(cancellationToken);
         // Add bank transactions
         foreach (var bankTransaction in bankTransactions)
         {
-            var isCredit = bankTransaction.TransactionType == BankTransactionTypes.Deposit;
+            var isCredit = bankTransaction.TransactionType == BankTransactionTypes.Withdraw;
             var debitAmount = isCredit ? 0 : bankTransaction.Amount;
             var creditAmount = isCredit ? bankTransaction.Amount : 0;
 
-            totalDebit += debitAmount;
+            totalDebit += -1 * debitAmount;
             totalCredit += creditAmount;
 
             items.Add(new GeneralLedgerItemResponse
@@ -154,7 +155,7 @@ public class GeneralLedgerService : IGeneralLedgerService
             OpeningBalance = openingBalance,
             Items = items,
             TotalDebit = (-1) * totalDebit,
-            TotalCredit = totalCredit,
+            TotalCredit = totalCredit + openingBalance,
             ClosingBalance = closingBalance
         };
     }
