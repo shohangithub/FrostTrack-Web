@@ -50,7 +50,7 @@ public class TrialBalanceService : ITrialBalanceService
 
         var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
 
-        var previousAmount = await _transactionRepository.Query()
+        var previousCashAmount = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t =>
                 t.TenantId == _tenantId &&
@@ -60,7 +60,15 @@ public class TrialBalanceService : ITrialBalanceService
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .SumAsync(t => t.NetAmount, cancellationToken);
 
-        var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousAmount;
+        // Calculate opening balance from bank
+        var previousBankAmount = await _bankTransactionRepository.Query()
+            .Where(bt =>
+                bt.IsActive &&
+                bt.TransactionDate >= openingDate &&
+                bt.TransactionDate < fromUtc)
+            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
+
+        var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
 
         // Fetch cash transactions for the report date
         var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
