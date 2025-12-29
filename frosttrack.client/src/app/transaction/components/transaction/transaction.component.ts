@@ -19,8 +19,8 @@ import { ModalOption } from 'app/config/modal-option';
 import { Subject } from 'rxjs';
 import { ITransactionHeadLookup } from 'app/common/models/transaction-head.interface';
 import { TransactionHeadService } from 'app/common/services/transaction-head.service';
-import { TransactionHeadComponent } from 'app/common/components/transaction-head/transaction-head.component';
 import { TransactionReceiptPrintComponent } from '../transaction-receipt-print/transaction-receipt-print.component';
+import { AddTransactionHeadComponent } from 'app/common/components/transaction-head/add-transaction-head/add-transaction-head.component';
 
 @Component({
   selector: 'app-transaction',
@@ -142,8 +142,8 @@ export class TransactionComponent implements OnInit {
 
   addTransactionHead(): void {
     const modalRef = this.modalService.open(
-      TransactionHeadComponent,
-      ModalOption.xl
+      AddTransactionHeadComponent,
+      ModalOption.lg
     );
     modalRef.result.then(
       (result: string) => {
