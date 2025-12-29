@@ -26,13 +26,13 @@ public class DashboardController : ControllerBase
         if (periodDays.HasValue)
         {
             endDate ??= DateTime.Today.AddDays(1).AddSeconds(-1);
-            startDate = endDate.Value.AddDays(-periodDays.Value).Date;
+            startDate = endDate.Value.Date.AddDays(-periodDays.Value + 1).Date;
         }
         else
         {
             // Default to last 30 days if no parameters provided
             endDate ??= DateTime.Today.AddDays(1).AddSeconds(-1);
-            startDate ??= endDate.Value.AddDays(-30).Date;
+            startDate ??= endDate.Value.Date.AddDays(-29).Date;
         }
 
         var stats = await _dashboardService.GetDashboardStatsAsync(

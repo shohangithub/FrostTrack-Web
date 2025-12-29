@@ -120,7 +120,7 @@ public class DashboardService : IDashboardService
         CancellationToken cancellationToken = default)
     {
         var endLocal = DateTime.Now.Date;
-        var startLocal = endLocal.AddDays(-periodDays);
+        var startLocal = endLocal.AddDays(-periodDays + 1);
 
         // Proper UTC time handling
         var fromUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local)
