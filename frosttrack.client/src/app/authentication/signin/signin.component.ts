@@ -43,6 +43,9 @@ export class SigninComponent implements OnInit {
 
   ngOnInit() {
     // Check if user is already logged in with valid token
+    this.authService.currentUserSubject.next(
+      JSON.parse(localStorage.getItem('currentUser') || '{}') || null
+    );
     const currentUser = this.authService.currentUserValue;
     if (currentUser && currentUser.token) {
       const isExpired = this.jwtHelper.isTokenExpired(currentUser.token);
