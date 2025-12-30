@@ -52,7 +52,14 @@ public class BookingService : IBookingService
 
         var entity = request.Adapt<Booking>();
         entity.BranchId = _currentUser.BranchId;
-        entity.BookingDate = DateTime.UtcNow;
+
+
+
+        entity.BookingDate = request.BookingDate.Kind == DateTimeKind.Utc
+    ? request.BookingDate
+    : request.BookingDate.ToUniversalTime();
+
+
         _defaultValueInjector.InjectCreatingAudit<Booking, Guid>(entity);
         if (entity.BookingDetails != null && entity.BookingDetails.Any())
         {
@@ -136,6 +143,8 @@ public class BookingService : IBookingService
         existingData.BranchId = _currentUser.BranchId;
         existingData.CustomerId = request.CustomerId;
         existingData.Notes = request.Notes;
+        existingData.BookingDate = request.BookingDate.Kind == DateTimeKind.Utc
+        ? request.BookingDate : request.BookingDate.ToUniversalTime();
 
         _defaultValueInjector.InjectUpdatingAudit<Booking, Guid>(existingData);
 
@@ -338,7 +347,7 @@ public class BookingService : IBookingService
 
         // Get all transactions for this booking
         var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type  == TransactionHeadTypes.CREDIT)
+            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .ToListAsync(cancellationToken);
 
         // Get all deliveries for this booking
