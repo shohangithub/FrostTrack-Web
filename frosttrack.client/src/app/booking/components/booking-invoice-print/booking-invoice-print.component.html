@@ -102,6 +102,7 @@
                   <app-report-invoice-header
                     [Title]="'বুকিং স্লিপ'"
                     [InvoiceNumber]="bookingInvoice.bookingNumber"
+                    [ReferenceNumber]="bookingInvoice.referenceNumber"
                   ></app-report-invoice-header>
 
                   <!-- Barcode Section -->
@@ -116,27 +117,11 @@
                     ></app-barcode>
                   </div> -->
 
-                  <!-- Reference Number Section -->
-                  <div
-                    class="reference-number-section"
-                    *ngIf="bookingInvoice.referenceNumber"
-                  >
-                    <div
-                      style="
-                        text-align: center;
-                        margin: 5px 0;
-                        font-weight: bold;
-                      "
-                    >
-                      Reference Number: {{ bookingInvoice.referenceNumber }}
-                    </div>
-                  </div>
-
                   <!-- Booking Number and Date Section -->
                   <div class="booking-info-box">
                     <table class="info-table">
                       <tr>
-                        <td class="info-label">পণ্যের মালিকানার নাম :</td>
+                        <td class="info-label">পণ্যের মালিকের নাম :</td>
                         <td class="info-value">
                           {{ bookingInvoice.customer.customerName || "" }}
                         </td>
