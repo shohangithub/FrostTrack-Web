@@ -5,6 +5,7 @@ public class BankTransactionService : IBankTransactionService
     private readonly IRepository<BankTransaction, long> _repository;
     private readonly IRepository<Bank, int> _bankRepository;
     private readonly IRepository<Company, int> _companyRepository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -16,7 +17,8 @@ public class BankTransactionService : IBankTransactionService
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService,
-        IRepository<Company, int> companyRepository)
+        IRepository<Company, int> companyRepository,
+        ICodeGenerationService codeGenerationService)
     {
         _repository = repository;
         _bankRepository = bankRepository;
@@ -25,6 +27,7 @@ public class BankTransactionService : IBankTransactionService
         _tenantId = _tenantProvider.GetTenantId();
         _currentUser = userContextService.GetCurrentUser();
         _companyRepository = companyRepository;
+        _codeGenerationService = codeGenerationService;
     }
 
     public async Task<BankTransactionResponse> AddAsync(BankTransactionRequest bankTransaction, CancellationToken cancellationToken = default)
@@ -95,18 +98,11 @@ public class BankTransactionService : IBankTransactionService
 
     public async Task<string> GenerateCode(CancellationToken cancellationToken = default)
     {
-        return CodeGenerator.GenerateTransactionCode("BT");
-        // var codeGenDependOn = await _companyRepository.Query().Select(x => x.CodeGeneration).FirstOrDefaultAsync();
-        // if (codeGenDependOn == ECodeGeneration.Branch)
-        // {
-        //     var maxId = await _repository.Query().Where(x => x.BranchId == _currentUser.BranchId).MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0;
-        //     return $"TXN-{_currentUser.BranchId:D3}-{maxId + 1:D6}";
-        // }
-        // else
-        // {
-        //     var maxId = await _repository.Query().MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0;
-        //     return $"TXN-{maxId + 1:D6}";
-        // }
+        return await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "BT",
+            bt => bt.TransactionNumber,
+            cancellationToken);
     }
 
     public async Task<BankTransactionResponse> GetByIdAsync(long id, CancellationToken cancellationToken = default)

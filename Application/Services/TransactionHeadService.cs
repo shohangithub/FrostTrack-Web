@@ -5,11 +5,16 @@ namespace Application.Services;
 public class TransactionHeadService : ITransactionHeadService
 {
     private readonly IRepository<TransactionHead, Guid> _repository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
 
-    public TransactionHeadService(IRepository<TransactionHead, Guid> repository, DefaultValueInjector defaultValueInjector)
+    public TransactionHeadService(
+        IRepository<TransactionHead, Guid> repository,
+        ICodeGenerationService codeGenerationService,
+        DefaultValueInjector defaultValueInjector)
     {
         _repository = repository;
+        _codeGenerationService = codeGenerationService;
         _defaultValueInjector = defaultValueInjector;
     }
 
@@ -19,7 +24,11 @@ public class TransactionHeadService : ITransactionHeadService
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var entity = request.Adapt<TransactionHead>();
-        entity.Code = CodeGenerator.GenerateTransactionCode("TH");    
+        entity.Code = await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "TH",
+            th => th.Code,
+            cancellationToken);
         entity.UsageFor = UsageFor.TRANSACTION;
         entity.IsSystem = false; // User-created heads are not system heads
         _defaultValueInjector.InjectCreatingAudit<TransactionHead, Guid>(entity);

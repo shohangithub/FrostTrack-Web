@@ -6,6 +6,7 @@ public class ProductReceiveService : IProductReceiveService
     private readonly IProductReceiveRepository _productReceiveRepository;
     private readonly IStockRepository _stockRepository;
     private readonly IRepository<Company, int> _companyRepository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -18,7 +19,8 @@ public class ProductReceiveService : IProductReceiveService
         IUserContextService userContextService,
         IRepository<Company, int> companyRepository,
         IStockRepository stockRepository,
-        IProductReceiveRepository productReceiveRepository)
+        IProductReceiveRepository productReceiveRepository,
+        ICodeGenerationService codeGenerationService)
     {
         _repository = repository;
         _defaultValueInjector = defaultValueInjector;
@@ -28,6 +30,7 @@ public class ProductReceiveService : IProductReceiveService
         _companyRepository = companyRepository;
         _stockRepository = stockRepository;
         _productReceiveRepository = productReceiveRepository;
+        _codeGenerationService = codeGenerationService;
     }
 
     public async Task<ProductReceiveResponse> AddAsync(ProductReceiveRequest request, CancellationToken cancellationToken = default)
@@ -190,53 +193,10 @@ public class ProductReceiveService : IProductReceiveService
 
     public async Task<string> GenerateReceiveNumber(CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(CodeGenerator.GenerateTransactionCode("BK"));
-        // var currentDate = DateTime.Now;
-        // var year = currentDate.Year.ToString()?.Remove(0, 2);
-        // var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
-        // var dateString = $"{year}{month}";
-        // var dependOn = await _companyRepository.Query().Select(x => x.CodeGeneration).FirstOrDefaultAsync();
-
-        // if (dependOn == ECodeGeneration.Branch)
-        // {
-        //     var code = long.Parse((await _repository.Query()
-        //         .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
-        //         .OrderByDescending(x => x.BookingNumber)
-        //         .Select(x => x.BookingNumber)
-        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
-
-        //     var range = code / 10;
-
-        //     if (range == 0)
-        //         return $"B{dateString}0000{code}";
-        //     else if (range <= 9)
-        //         return $"B{dateString}000{code}";
-        //     else if (range <= 99)
-        //         return $"B{dateString}00{code}";
-        //     else if (range <= 999)
-        //         return $"B{dateString}0{code}";
-        //     else
-        //         return $"B{dateString}{code}";
-        // }
-        // else
-        // {
-        //     var code = long.Parse((await _repository.Query()
-        //         .OrderByDescending(x => x.BookingNumber)
-        //         .Select(x => x.BookingNumber)
-        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 5) ?? "0") + 1;
-
-        //     var range = code / 10;
-
-        //     if (range == 0)
-        //         return $"B{dateString}0000{code}";
-        //     else if (range <= 9)
-        //         return $"B{dateString}000{code}";
-        //     else if (range <= 99)
-        //         return $"B{dateString}00{code}";
-        //     else if (range <= 999)
-        //         return $"B{dateString}0{code}";
-        //     else
-        //         return $"B{dateString}{code}";
-        // }
+        return await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "RCV",
+            b => b.BookingNumber,
+            cancellationToken);
     }
 }

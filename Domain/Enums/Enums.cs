@@ -47,11 +47,13 @@ public enum ECustomerType
     Wholesale
 }
 
-[DefaultValue(ECodeGeneration.Company)]
+[DefaultValue(ECodeGeneration.Auto)]
 public enum ECodeGeneration
 {
-    Company = 1,
-    Branch
+    Auto = 0,      // GUID-based (default, backward compatible)
+    DailyCount = 1, // Sequential daily reset
+    Company = 2,    // Company-wide sequential
+    Branch = 3      // Branch-level sequential
 }
 
 public static class SalesType

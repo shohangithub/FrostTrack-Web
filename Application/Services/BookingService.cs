@@ -8,6 +8,7 @@ public class BookingService : IBookingService
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -22,7 +23,8 @@ public class BookingService : IBookingService
         IRepository<UnitConversion, int> unitConversionRepository,
         IBookingRepository bookingRepository,
         IRepository<Delivery, Guid> deliveryRepository,
-        IRepository<Transaction, Guid> transactionRepository)
+        IRepository<Transaction, Guid> transactionRepository,
+        ICodeGenerationService codeGenerationService)
     {
         _repository = repository;
         _defaultValueInjector = defaultValueInjector;
@@ -34,6 +36,7 @@ public class BookingService : IBookingService
         _bookingRepository = bookingRepository;
         _deliveryRepository = deliveryRepository;
         _transactionRepository = transactionRepository;
+        _codeGenerationService = codeGenerationService;
     }
 
     public async Task<BookingResponse> AddAsync(BookingRequest request, CancellationToken cancellationToken = default)
@@ -262,50 +265,11 @@ public class BookingService : IBookingService
 
     public async Task<string> GenerateBookingNumber(CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(CodeGenerator.GenerateTransactionCode("BK"));
-        // var currentDate = DateTime.Now;
-        // var year = currentDate.Year.ToString()?.Remove(0, 2);
-        // var month = currentDate.Month / 10 == 0 ? "0" + currentDate.Month : currentDate.Month.ToString();
-        // var dateString = $"{year}{month}";
-        // var dependOn = await _companyRepository.Query().Select(x => x.CodeGeneration).FirstOrDefaultAsync();
-
-        // if (dependOn == ECodeGeneration.Branch)
-        // {
-        //     var code = long.Parse((await _repository.Query()
-        //         .Where(x => x.BranchId == _currentUser.BranchId && x.BookingDate.Month == currentDate.Month)
-        //         .OrderByDescending(x => x.BookingNumber)
-        //         .Select(x => x.BookingNumber)
-        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 6) ?? "0") + 1;
-
-        //     if (code < 10)
-        //         return $"BK{dateString}0000{code}";
-        //     else if (code < 100)
-        //         return $"BK{dateString}000{code}";
-        //     else if (code < 1000)
-        //         return $"BK{dateString}00{code}";
-        //     else if (code < 10000)
-        //         return $"BK{dateString}0{code}";
-        //     else
-        //         return $"BK{dateString}{code}";
-        // }
-        // else
-        // {
-        //     var code = long.Parse((await _repository.Query()
-        //         .OrderByDescending(x => x.BookingNumber)
-        //         .Select(x => x.BookingNumber)
-        //         .FirstOrDefaultAsync(cancellationToken))?.Remove(0, 6) ?? "0") + 1;
-
-        //     if (code < 10)
-        //         return $"BK{dateString}0000{code}";
-        //     else if (code < 100)
-        //         return $"BK{dateString}000{code}";
-        //     else if (code < 1000)
-        //         return $"BK{dateString}00{code}";
-        //     else if (code < 10000)
-        //         return $"BK{dateString}0{code}";
-        //     else
-        //         return $"BK{dateString}{code}";
-        // }
+        return await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "BK",
+            b => b.BookingNumber,
+            cancellationToken);
     }
 
     public async Task<BookingInvoiceWithDeliveryResponse?> GetInvoiceWithDeliveryAsync(Guid id, CancellationToken cancellationToken = default)

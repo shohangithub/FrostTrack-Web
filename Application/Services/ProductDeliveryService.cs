@@ -10,6 +10,7 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly ITransactionService _transactionService;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -24,6 +25,7 @@ public class DeliveryService : IDeliveryService
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         ITransactionService transactionService,
+        ICodeGenerationService codeGenerationService,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService)
@@ -36,6 +38,7 @@ public class DeliveryService : IDeliveryService
         _transactionRepository = transactionRepository;
         _transactionHeadRepository = transactionHeadRepository;
         _transactionService = transactionService;
+        _codeGenerationService = codeGenerationService;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
@@ -105,13 +108,35 @@ public class DeliveryService : IDeliveryService
             // Get BILL_COLLECTION transaction head
             var transactionHead = await _transactionHeadRepository.Query()
                 .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.CREDIT && th.UsageFor == UsageFor.BILL_COLLECTION && th.IsActive);
-            
+
             if (transactionHead == null)
                 throw new Exception("BILL_COLLECTION transaction head not found");
 
+            // Generate sequential transaction code
+            var currentDate = DateTime.UtcNow;
+            var datePart = currentDate.ToString("yyMMdd");
+            var prefix = "DEL";
+
+            var lastCode = await _transactionRepository.Query()
+                .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+                .OrderByDescending(x => x.TransactionCode)
+                .Select(x => x.TransactionCode)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            int nextSequence = 1;
+
+            if (!string.IsNullOrEmpty(lastCode))
+            {
+                var parts = lastCode.Split('-');
+                if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                {
+                    nextSequence = lastSequence + 1;
+                }
+            }
+
             var transactionRequest = new TransactionRequest(
                 Id: Guid.NewGuid(),
-                TransactionCode: CodeGenerator.GenerateTransactionCode("DEL"),
+                TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence),
                 TransactionDate: DateTime.UtcNow,
                 TransactionHeadId: transactionHead.Id,
                 EntityName: TransactionEntityNames.DELIVERY,
@@ -137,7 +162,7 @@ public class DeliveryService : IDeliveryService
             );
 
             var transaction = await _transactionService.AddAsync(transactionRequest, CancellationToken.None);
-            
+
             // Update delivery with transaction ID
             entity.TransactionId = transaction.Id;
             await _repository.UpdateAsync(entity, CancellationToken.None);
@@ -304,13 +329,10 @@ public class DeliveryService : IDeliveryService
 
     public async Task<string> GenerateDeliveryNumberAsync()
     {
-        // var lastNumber = await _repository.Query()
-        //     .OrderByDescending(x => x.Id)
-        //     .Select(x => x.DeliveryNumber)
-        //     .FirstOrDefaultAsync();
-
-        //return GenerateNextNumber(lastNumber, "DEL");
-        return await Task.FromResult(CodeGenerator.GenerateTransactionCode("DEL"));
+        return await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "DEL",
+            d => d.DeliveryNumber);
     }
 
     public async Task<List<CustomerStockResponse>> GetCustomerStockAsync(int customerId)
@@ -411,7 +433,7 @@ public class DeliveryService : IDeliveryService
             var deliveryUnit = await _unitConversionRepository.Query()
                 .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId);
 
-            var deliveryBaseQty = deliveryUnit != null 
+            var deliveryBaseQty = deliveryUnit != null
                 ? (decimal)(detail.DeliveryQuantity * deliveryUnit.ConversionValue)
                 : (decimal)detail.DeliveryQuantity;
 
@@ -421,7 +443,7 @@ public class DeliveryService : IDeliveryService
                 var availableInDeliveryUnit = deliveryUnit != null && deliveryUnit.ConversionValue > 0
                     ? remainingBaseQty / (decimal)deliveryUnit.ConversionValue
                     : remainingBaseQty;
-                
+
                 throw new Exception($"Insufficient stock for product. Available: {availableInDeliveryUnit:F2} (in selected unit), Requested: {detail.DeliveryQuantity}");
             }
         }
@@ -453,7 +475,7 @@ public class DeliveryService : IDeliveryService
             var deliveryUnit = await _unitConversionRepository.Query()
                 .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId);
 
-            var deliveryBaseQty = deliveryUnit != null 
+            var deliveryBaseQty = deliveryUnit != null
                 ? (decimal)(detail.DeliveryQuantity * deliveryUnit.ConversionValue)
                 : (decimal)detail.DeliveryQuantity;
 
@@ -463,7 +485,7 @@ public class DeliveryService : IDeliveryService
                 var availableInDeliveryUnit = deliveryUnit != null && deliveryUnit.ConversionValue > 0
                     ? remainingBaseQty / (decimal)deliveryUnit.ConversionValue
                     : remainingBaseQty;
-                
+
                 throw new Exception($"Insufficient stock for product. Available: {availableInDeliveryUnit:F2} (in selected unit), Requested: {detail.DeliveryQuantity}");
             }
         }
@@ -544,7 +566,7 @@ public class DeliveryService : IDeliveryService
 
             // Convert remaining base quantity back to booking unit
             var bookingUnitConversion = detail.BookingUnit?.ConversionValue ?? 1;
-            var remainingQty = bookingUnitConversion > 0 
+            var remainingQty = bookingUnitConversion > 0
                 ? (float)(remainingBaseQty / (decimal)bookingUnitConversion)
                 : 0;
 
@@ -634,7 +656,7 @@ public class DeliveryService : IDeliveryService
             var totalDelivered = bookingUnitConversion > 0
                 ? (float)(totalDeliveredBaseQty / (decimal)bookingUnitConversion)
                 : 0;
-            
+
             var remainingQty = bookingUnitConversion > 0
                 ? (float)(remainingBaseQty / (decimal)bookingUnitConversion)
                 : 0;
@@ -673,7 +695,7 @@ public class DeliveryService : IDeliveryService
 
         // Sum up all bill collection transactions for these deliveries
         var totalPaid = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BILL_COLLECTION
+            .Where(t => t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
                      && t.EntityName == TransactionEntityNames.DELIVERY
                      && deliveries.Contains(t.EntityId))
             .SumAsync(t => t.Amount);
@@ -807,7 +829,7 @@ public class DeliveryService : IDeliveryService
         //     .SumAsync(t => t.Amount);
 
         // Calculate Total Paid Amount (from all transactions for this booking)
-        response.TotalPaidAmount =  entity.PaymentStatus == PaymentStatuses.PAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount) : 0;
+        response.TotalPaidAmount = entity.PaymentStatus == PaymentStatuses.PAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount) : 0;
 
         // Sum up all extra charge transactions for this booking
         // var totalExtraCharge = await _transactionRepository.Query().Include(t => t.TransactionHead)
@@ -816,7 +838,7 @@ public class DeliveryService : IDeliveryService
         //              && t.TransactionDate <= entity.DeliveryDate)
         //     .SumAsync(t => t.Amount);
 
-      
+
 
         response.ExtraCharge = 0;
         //// Calculate Extra Charge (total charge amount from all deliveries for this booking)

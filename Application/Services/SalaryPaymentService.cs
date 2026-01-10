@@ -13,6 +13,7 @@ public class SalaryPaymentService : ISalaryPaymentService
     private readonly IRepository<Employee, int> _employeeRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly ITenantProvider _tenantProvider;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly CurrentUser _currentUser;
@@ -21,6 +22,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         IRepository<Employee, int> employeeRepository,
         IRepository<Transaction, Guid> transactionRepository,
          IRepository<TransactionHead, Guid> transactionHeadRepository,
+        ICodeGenerationService codeGenerationService,
         ITenantProvider tenantProvider,
         DefaultValueInjector defaultValueInjector,
         IUserContextService userContextService)
@@ -28,6 +30,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         _employeeRepository = employeeRepository;
         _transactionRepository = transactionRepository;
         _transactionHeadRepository = transactionHeadRepository;
+        _codeGenerationService = codeGenerationService;
         _tenantProvider = tenantProvider;
         _defaultValueInjector = defaultValueInjector;
         _currentUser = userContextService.GetCurrentUser();
@@ -69,9 +72,13 @@ public class SalaryPaymentService : ISalaryPaymentService
 
     public async Task<SalaryPaymentResponse> CreateSalaryPaymentAsync(SalaryPaymentRequest request, CancellationToken cancellationToken = default)
     {
-        // Validate the request
+        // Generate transaction code
+        var nextCode = await _codeGenerationService.GenerateCodeAsync(
+            _transactionRepository.Query(),
+            "SAL",
+            t => t.TransactionCode,
+            cancellationToken);
 
-        var nextCode = CodeGenerator.GenerateTransactionCode("SAL");
         var validator = new SalaryPaymentValidator(_employeeRepository, _transactionRepository, nextCode);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
@@ -87,7 +94,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var period = $"{request.Month:D2}/{request.Year}";
 
         var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(th =>th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
+            .FirstOrDefaultAsync(th => th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
         if (transactionHead == null)
         {
             throw new Exception("Salary Transaction Head not configured");
@@ -102,8 +109,8 @@ public class SalaryPaymentService : ISalaryPaymentService
             EntityName = "Employee",
             EntityId = employee.Id.ToString(),
             EmployeeId = employee.Id, // Add explicit EmployeeId
-            Amount = (-1)*netAmount,
-            NetAmount = (-1)*netAmount,
+            Amount = (-1) * netAmount,
+            NetAmount = (-1) * netAmount,
             PaymentMethod = request.PaymentMethod,
             Description = $"Salary payment for {period}",
             Note = string.IsNullOrEmpty(request.Note) ? null : request.Note,

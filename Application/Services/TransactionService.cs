@@ -4,6 +4,7 @@ public class TransactionService : ITransactionService
 {
     private readonly IRepository<Transaction, Guid> _repository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
+    private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
@@ -14,7 +15,8 @@ public class TransactionService : ITransactionService
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        ICodeGenerationService codeGenerationService)
     {
         _repository = repository;
         _transactionHeadRepository = transactionHeadRepository;
@@ -22,6 +24,7 @@ public class TransactionService : ITransactionService
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
         _currentUser = userContextService.GetCurrentUser();
+        _codeGenerationService = codeGenerationService;
     }
 
     public async Task<TransactionResponse> AddAsync(TransactionRequest request, CancellationToken cancellationToken = default)
@@ -320,38 +323,11 @@ public class TransactionService : ITransactionService
 
     public async Task<string> GenerateTransactionCode(CancellationToken cancellationToken = default)
     {
-        // var currentDate = DateTime.Now;
-        // var year = currentDate.Year.ToString().Substring(2, 2);
-        // var month = currentDate.Month.ToString("D2");
-        // var dateString = $"{year}{month}";
-
-        // var lastTransaction = await _repository.Query()
-        //     .Where(x => x.TransactionDate.Year == currentDate.Year && x.TransactionDate.Month == currentDate.Month)
-        //     .OrderByDescending(x => x.TransactionCode)
-        //     .Select(x => x.TransactionCode)
-        //     .FirstOrDefaultAsync(cancellationToken);
-
-        // long code = 1;
-        // if (!string.IsNullOrEmpty(lastTransaction) && lastTransaction.Length > 6)
-        // {
-        //     var lastCodePart = lastTransaction.Substring(6);
-        //     if (long.TryParse(lastCodePart, out long lastCode))
-        //     {
-        //         code = lastCode + 1;
-        //     }
-        // }
-
-        // if (code < 10)
-        //     return $"TC{dateString}0000{code}";
-        // else if (code < 100)
-        //     return $"TC{dateString}000{code}";
-        // else if (code < 1000)
-        //     return $"TC{dateString}00{code}";
-        // else if (code < 10000)
-        //     return $"TC{dateString}0{code}";
-        // else
-        //     return $"TC{dateString}{code}";
-        return CodeGenerator.GenerateTransactionCode();
+        return await _codeGenerationService.GenerateCodeAsync(
+            _repository.Query(),
+            "TR",
+            t => t.TransactionCode,
+            cancellationToken);
     }
 
     public async Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)

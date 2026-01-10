@@ -22,6 +22,8 @@ public static class DependencyInjection
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddMemoryCache();
+        services.AddScoped<ICodeGenerationService, CodeGenerationService>();
 
         services.AddScoped<IUserTokenService, UserTokenService>();
         services.AddScoped<IUserService<int>, UserService>();
