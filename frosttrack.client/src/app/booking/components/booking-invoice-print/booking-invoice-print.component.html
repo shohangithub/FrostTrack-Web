@@ -116,6 +116,22 @@
                     ></app-barcode>
                   </div> -->
 
+                  <!-- Reference Number Section -->
+                  <div
+                    class="reference-number-section"
+                    *ngIf="bookingInvoice.referenceNumber"
+                  >
+                    <div
+                      style="
+                        text-align: center;
+                        margin: 5px 0;
+                        font-weight: bold;
+                      "
+                    >
+                      Reference Number: {{ bookingInvoice.referenceNumber }}
+                    </div>
+                  </div>
+
                   <!-- Booking Number and Date Section -->
                   <div class="booking-info-box">
                     <table class="info-table">
@@ -159,6 +175,7 @@
                           <th>সংখ্যা</th>
                           <th>পরিমাণ (কেজি)</th>
                           <th>ভাড়ার হার<br />(প্রতি মাস)</th>
+                          <th>মজুরি খরচ</th>
                           <th>মোট ভাড়া</th>
                         </tr>
                       </thead>
@@ -184,6 +201,9 @@
                           </td> -->
                           <td class="text-center">
                             {{ item.bookingRate | number : "1.2-2" }}
+                          </td>
+                          <td class="text-center">
+                            {{ item.labourCharge | number : "1.2-2" }}
                           </td>
                           <td class="text-center">
                             {{

@@ -12,7 +12,7 @@
               <span class="card-label">Booking Information</span>
               <div class="card-body-narrow">
                 <div class="row">
-                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                     <div class="form-group row">
                       <label for="bookingNumber" class="col-sm-4 col-form-label"
                         >Booking Number:</label
@@ -50,6 +50,23 @@
                       </div>
                     </div>
                   </div>
+                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                    <div class="form-group row">
+                      <label
+                        for="referenceNumber"
+                        class="col-sm-4 col-form-label"
+                        >Ref. Number:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="referenceNumber"
+                          formControlName="referenceNumber"
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                   <div class="form-group row">
                     <label for="branch" class="col-sm-4 col-form-label"
@@ -80,12 +97,13 @@
                     </div>
                   </div>
                 </div> -->
-                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+
+                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                     <div class="form-group row">
-                      <label for="bookingDate" class="col-sm-4 col-form-label"
+                      <label for="bookingDate" class="col-sm-3 col-form-label"
                         >Date:</label
                       >
-                      <div class="col-sm-8">
+                      <div class="col-sm-9">
                         <input
                           type="date"
                           class="form-control form-control-sm"
@@ -351,6 +369,21 @@
                             </div>
                           </div>
                         </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label"
+                              >Labour Charge:</label
+                            >
+                            <div class="col-sm-9">
+                              <input
+                                type="number"
+                                class="form-control form-control-sm"
+                                formControlName="labourCharge"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+                        </div>
                         <div
                           class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end"
                         >
@@ -393,6 +426,9 @@
                               <th scope="col" class="text-center">Unit</th>
                               <th scope="col" class="text-center">Bill Type</th>
                               <th scope="col" class="text-center">Quantity</th>
+                              <th scope="col" class="text-center">
+                                Labour Charge
+                              </th>
                               <th scope="col" class="text-center">Total</th>
                               <th scope="col" class="text-center">Action</th>
                             </tr>
@@ -414,9 +450,12 @@
                                 {{ row.bookingQuantity }}
                               </td>
                               <td class="text-center">
+                                {{ row.labourCharge }}
+                              </td>
+                              <td class="text-center">
                                 {{
-                                  row.bookingQuantity * row.bookingRate
-                                    | number : "1.2-2"
+                                  row.bookingQuantity * row.bookingRate +
+                                    row.labourCharge | number : "1.2-2"
                                 }}
                               </td>
 
@@ -440,6 +479,9 @@
                               </th>
                               <th class="text-center fw-bold">
                                 {{ getTotalQuantity() | number : "1.2-2" }}
+                              </th>
+                              <th class="text-center fw-bold">
+                                {{ getTotalLabourCharge() | number : "1.2-2" }}
                               </th>
                               <th class="text-center fw-bold">
                                 {{ getTotalAmount() | number : "1.2-2" }}

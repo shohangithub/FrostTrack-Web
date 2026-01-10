@@ -161,6 +161,7 @@ public class BookingService : IBookingService
            .Select(x => new BookingListResponse(
                 x.Id,
                 x.BookingNumber,
+                x.ReferenceNumber,
                 x.BookingDate,
                 x.CustomerId,
                 x.Customer!,
@@ -179,6 +180,7 @@ public class BookingService : IBookingService
                     d.BookingRate,
                     d.BaseQuantity,
                     d.BaseRate,
+                    d.LabourCharge,
                     d.LastDeliveryDate))
                ))
            .ToListAsync(cancellationToken);
@@ -211,6 +213,7 @@ public class BookingService : IBookingService
         Expression<Func<Booking, BookingListResponse>>? selector = x => new BookingListResponse(
             x.Id,
             x.BookingNumber,
+            x.ReferenceNumber,
             x.BookingDate,
             x.CustomerId,
             x.Customer!,
@@ -229,6 +232,7 @@ public class BookingService : IBookingService
                 d.BookingRate,
                 d.BaseQuantity,
                 d.BaseRate,
+                d.LabourCharge,
                 d.LastDeliveryDate))
             );
 

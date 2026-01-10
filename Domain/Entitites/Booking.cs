@@ -4,6 +4,7 @@ namespace Domain.Entitites;
 public class Booking : AuditableEntity<Guid>
 {
     public required string BookingNumber { get; set; }
+    public string? ReferenceNumber { get; set; }
     public required DateTime BookingDate { get; set; }
     public required int CustomerId { get; set; }
     public Customer? Customer { get; set; }

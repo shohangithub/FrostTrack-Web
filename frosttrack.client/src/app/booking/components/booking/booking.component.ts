@@ -172,6 +172,7 @@ export class BookingComponent implements OnInit {
     this.register = this.fb.group({
       id: ['00000000-0000-0000-0000-000000000000'],
       bookingNumber: ['', [Validators.required]],
+      referenceNumber: [''],
       branchId: [this.selectedBranch, [Validators.required]],
       bookingDate: [new Date().systemFormat(), [Validators.required]],
       customer: [null, [Validators.required]],
@@ -190,6 +191,7 @@ export class BookingComponent implements OnInit {
       bookingUnit: [null, [Validators.required]],
       billType: [BILL_TYPE.Monthly, [Validators.required]],
       bookingQuantity: [null, [Validators.required]],
+      labourCharge: [0],
     });
   }
 
@@ -201,6 +203,7 @@ export class BookingComponent implements OnInit {
         this.register.setValue({
           id: response.id,
           bookingNumber: response.bookingNumber,
+          referenceNumber: response.referenceNumber || '',
           branchId: response.branchId,
           bookingDate: new Date(response.bookingDate).systemFormat(),
           notes: response.notes || '',
@@ -225,6 +228,7 @@ export class BookingComponent implements OnInit {
             bookingQuantity: [detail.bookingQuantity, [Validators.required]],
             baseQuantity: [detail.baseQuantity],
             baseRate: [detail.baseRate],
+            labourCharge: [detail.labourCharge || 0],
           });
           this.BookingDetails.push(item);
         }
@@ -339,6 +343,9 @@ export class BookingComponent implements OnInit {
         childForm
           ?.get('billType')
           ?.setValue(existingProduct.billType || BILL_TYPE.Monthly);
+        childForm
+          ?.get('labourCharge')
+          ?.setValue(existingProduct.labourCharge || 0);
       } else {
         childForm
           ?.get('bookingUnit')
@@ -371,7 +378,17 @@ export class BookingComponent implements OnInit {
     const items = this.BookingDetails.value || [];
     return items.reduce(
       (sum: number, item: any) =>
-        sum + (item.bookingQuantity || 0) * (item.bookingRate || 0),
+        sum +
+        (item.bookingQuantity || 0) * (item.bookingRate || 0) +
+        (item.labourCharge || 0),
+      0
+    );
+  }
+
+  getTotalLabourCharge(): number {
+    const items = this.BookingDetails.value || [];
+    return items.reduce(
+      (sum: number, item: any) => sum + (item.labourCharge || 0),
       0
     );
   }
@@ -394,6 +411,7 @@ export class BookingComponent implements OnInit {
       existingProduct.bookingRate = formData.bookingRate;
       existingProduct.bookingQuantity = formData.bookingQuantity;
       existingProduct.billType = formData.billType;
+      existingProduct.labourCharge = formData.labourCharge || 0;
       this.BookingDetails.setValue(cardData);
     } else {
       const item = this.fb.group({
@@ -406,6 +424,7 @@ export class BookingComponent implements OnInit {
         billType: [formData.billType, [Validators.required]],
         bookingRate: [formData.bookingRate, [Validators.required]],
         bookingQuantity: [formData.bookingQuantity, [Validators.required]],
+        labourCharge: [formData.labourCharge || 0],
       });
       this.BookingDetails.push(item);
     }

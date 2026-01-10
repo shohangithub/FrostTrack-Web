@@ -5,6 +5,7 @@ namespace Application.ReponseDTO;
 public record BookingResponse(
         Guid Id,
         string BookingNumber,
+        string? ReferenceNumber,
         DateTime BookingDate,
         int CustomerId,
         Customer Customer,
@@ -26,6 +27,7 @@ public record BookingDetailResponse(
        decimal BookingRate,
        decimal BaseQuantity,
        decimal BaseRate,
+       decimal LabourCharge,
        DateTime LastDeliveryDate
   );
 
@@ -41,12 +43,14 @@ public record BookingDetailListResponse(
        decimal BookingRate,
        decimal BaseQuantity,
        decimal BaseRate,
+       decimal LabourCharge,
        DateTime LastDeliveryDate
   );
 
 public record BookingListResponse(
         Guid Id,
         string BookingNumber,
+        string? ReferenceNumber,
         DateTime BookingDate,
         int CustomerId,
         Customer Customer,

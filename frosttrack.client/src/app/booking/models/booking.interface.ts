@@ -6,6 +6,7 @@ import { IUnitConversionResponse } from 'app/common/models/unit-conversion.inter
 export interface IBookingRequest {
   id: string;
   bookingNumber: string;
+  referenceNumber?: string;
   bookingDate: string;
   customerId: number;
   branchId: number;
@@ -22,12 +23,14 @@ export interface IBookingDetailRequest {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  labourCharge: number;
   lastDeliveryDate?: string;
 }
 
 export interface IBookingResponse {
   id: string;
   bookingNumber: string;
+  referenceNumber?: string;
   bookingDate: string;
   customerId: number;
   customer: ICustomerListResponse;
@@ -49,12 +52,14 @@ export interface IBookingDetailResponse {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  labourCharge: number;
   lastDeliveryDate?: string;
 }
 
 export interface IBookingListResponse {
   id: string;
   bookingNumber: string;
+  referenceNumber?: string;
   bookingDate: string;
   customerId: number;
   customer: ICustomerListResponse;
@@ -77,12 +82,14 @@ export interface IBookingDetailListResponse {
   bookingRate: number;
   baseQuantity: number;
   baseRate: number;
+  labourCharge: number;
   lastDeliveryDate?: string;
 }
 
 export interface IBookingInvoiceWithDeliveryResponse {
   id: string;
   bookingNumber: string;
+  referenceNumber?: string;
   bookingDate: string;
   customerId: number;
   customer: ICustomerListResponse;
