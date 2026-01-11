@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IUserTokenService, UserTokenService>();
         services.AddScoped<IUserService<int>, UserService>();
         services.AddScoped<IAssignClaimService, AssignClaimService>();
+        services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IBranchService, BranchService>();
         services.AddScoped<IProductCategoryService, ProductCategoryService>();
         services.AddScoped<IBaseUnitService, BaseUnitService>();

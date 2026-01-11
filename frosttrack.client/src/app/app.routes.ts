@@ -96,6 +96,11 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'system',
+        loadChildren: () =>
+          import('./system/system.routes').then((m) => m.SYSTEM_ROUTE),
+      },
+      {
         path: 'advance-table',
         loadChildren: () =>
           import('./advance-table/advance-table.routes').then(

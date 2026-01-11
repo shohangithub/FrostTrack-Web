@@ -894,6 +894,17 @@ export const ROUTES: RouteInfo[] = [
         badgeClass: '',
         submenu: [],
       },
+      {
+        path: '/system/company',
+        title: 'Company',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
     ],
   },
   {

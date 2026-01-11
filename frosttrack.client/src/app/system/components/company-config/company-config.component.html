@@ -1,0 +1,178 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Company Configuration
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="activeModal.close(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if(isLoading){
+  <app-form-shimmer [height]="150"></app-form-shimmer>
+  } @else{
+  <!-- Form for Add/Edit Company -->
+  <form class="register-form" [formGroup]="register" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Company Name <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Company Name"
+          formControlName="name"
+          required
+        />
+        @if (!register.get('name')?.valid && register.get('name')?.touched) {
+        <small class="form-text text-danger"> Company Name is required </small>
+        }
+      </div>
+
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Business Currency</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="USD, EUR, BDT, etc."
+          formControlName="businessCurrency"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Currency Symbol</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="$, €, ৳, etc."
+          formControlName="currencySymbol"
+        />
+      </div>
+
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Logo URL</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Logo URL"
+          formControlName="logoUrl"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Description</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Company Description"
+          formControlName="description"
+          rows="2"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Code Generation Mode <span class="text-danger">*</span></label>
+        <select
+          class="form-control form-control-sm"
+          formControlName="codeGeneration"
+          required
+        >
+          <option value="0">Auto (GUID-based)</option>
+          <option value="1">Daily Count (Sequential)</option>
+          <option value="2">Company Based</option>
+          <option value="3">Branch Based</option>
+        </select>
+        <small class="form-text text-muted">
+          Controls how transaction codes are generated system-wide
+        </small>
+      </div>
+
+      <div
+        class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2 d-flex align-items-center gap-3 pt-4"
+      >
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="autoInvoicePrint"
+            formControlName="autoInvoicePrint"
+          />
+          <label class="form-check-label" for="autoInvoicePrint">
+            Auto Invoice Print
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="isSingleBranch"
+            formControlName="isSingleBranch"
+          />
+          <label class="form-check-label" for="isSingleBranch">
+            Single Branch
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="isActive"
+            formControlName="isActive"
+          />
+          <label class="form-check-label" for="isActive"> Active </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Invoice Header</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Invoice Header Text"
+          formControlName="invoiceHeader"
+          rows="2"
+        ></textarea>
+      </div>
+
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <label>Invoice Footer</label>
+        <textarea
+          class="form-control form-control-sm"
+          placeholder="Invoice Footer Text"
+          formControlName="invoiceFooter"
+          rows="2"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!register.valid"
+      >
+        {{ isEditing ? "Save" : "Submit" }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="activeModal.close(false)"
+      >
+        Close
+      </button>
+    </div>
+  </form>
+  }
+</div>
