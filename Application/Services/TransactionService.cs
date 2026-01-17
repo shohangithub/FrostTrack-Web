@@ -116,6 +116,21 @@ public class TransactionService : ITransactionService
         var response = result.Adapt<TransactionResponse>();
         // Manually map EmployeeName from Employee object
         response = response with { EmployeeName = result.Employee?.EmployeeName };
+
+        // Fetch related labour charge if this is a BILL_COLLECTION for deliveries
+        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && result.EntityName == "DELIVERY")
+        {
+            var labourCharge = await _repository.Query()
+                .Where(t => t.TransactionCode == result.TransactionCode + "-L" &&
+                           t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
+                           t.EntityName == "DELIVERY" &&
+                           t.EntityId == result.EntityId)
+                .Select(t => (decimal?)t.NetAmount)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            response = response with { RelatedLabourCharge = labourCharge };
+        }
+
         return response;
     }
 
@@ -230,7 +245,8 @@ public class TransactionService : ITransactionService
                 x.NetAmount,
                 x.PaymentMethod,
                 x.Description,
-                x.VendorName
+                x.VendorName,
+                null
             ))
             .ToListAsync(cancellationToken);
         return response;
@@ -302,7 +318,17 @@ public class TransactionService : ITransactionService
             x.NetAmount,
             x.PaymentMethod,
             x.Description,
-            x.VendorName
+            x.VendorName,
+            // Find related labour charge transaction for this BILL_COLLECTION
+            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && x.EntityName == "DELIVERY"
+                ? _repository.Query()
+                    .Where(t => t.TransactionCode == x.TransactionCode + "-L" &&
+                               t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
+                               t.EntityName == "DELIVERY" &&
+                               t.EntityId == x.EntityId)
+                    .Select(t => (decimal?)t.NetAmount)
+                    .FirstOrDefault()
+                : null
         );
 
         var query = _repository.Query()

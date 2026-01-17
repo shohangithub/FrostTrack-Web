@@ -27,6 +27,7 @@ export interface ITransactionListResponse {
   category?: string | null;
   description: string;
   vendorName?: string | null;
+  relatedLabourCharge?: number | null;
 }
 
 export interface ITransactionRequest {

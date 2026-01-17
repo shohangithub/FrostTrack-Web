@@ -115,7 +115,7 @@ public class BillCollectionService : IBillCollectionService
         var paidAmount = await _transactionRepository.Query()
             .Where(t => t.BookingId == bookingId &&
                        t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION &&
-                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT )
+                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .SumAsync(t => t.Amount, cancellationToken);
 
         return paidAmount;
@@ -220,22 +220,33 @@ public class BillCollectionService : IBillCollectionService
         if (transactionHead == null)
             throw new Exception("BILL_COLLECTION transaction head not found");
 
+        // Get LABOUR_CHARGE transaction head
+        var labourChargeHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.LABOUR_CHARGE && x.IsActive, cancellationToken);
+
+        if (labourChargeHead == null)
+            throw new Exception("LABOUR_CHARGE transaction head not found");
+
         // Get deliveries and verify they are all unpaid
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.Booking)
             .ThenInclude(b => b!.Customer)
+            .Include(d => d.DeliveryDetails)
             .Where(d => request.DeliveryIds.Contains(d.Id) && d.PaymentStatus == PaymentStatuses.UNPAID)
             .ToListAsync(cancellationToken);
 
         if (deliveries.Count != request.DeliveryIds.Count)
             throw new Exception("Some deliveries are not found or already paid");
 
-        // Validate amount matches sum of delivery charges
-        var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
-        if (Math.Abs(totalCharges - request.Amount) > 0.01m)
-            throw new Exception($"Payment amount ({request.Amount}) does not match total delivery charges ({totalCharges})");
+        // Calculate total charges including labour
+        var totalCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.AdjustmentValue));
+        var totalLabourCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
+        var grandTotal = totalCharges + totalLabourCharges;
 
-        // Create transaction entity
+        if (Math.Abs(grandTotal - request.Amount) > 0.01m)
+            throw new Exception($"Payment amount ({request.Amount}) does not match total delivery charges ({grandTotal})");
+
+        // Create main transaction for delivery charges
         var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
         var firstDelivery = deliveries.FirstOrDefault();
         var customer = await _bookingRepository.Query()
@@ -244,7 +255,7 @@ public class BillCollectionService : IBillCollectionService
             .Select(b => b.Customer)
             .FirstOrDefaultAsync(cancellationToken);
         var customerName = customer?.CustomerName ?? "N/A";
-        
+
         var entity = new Transaction
         {
             Id = Guid.NewGuid(),
@@ -254,7 +265,7 @@ public class BillCollectionService : IBillCollectionService
             BranchId = request.BranchId,
             BookingId = deliveries.FirstOrDefault()?.BookingId,
             CustomerId = deliveries.FirstOrDefault()?.Booking?.CustomerId,
-            Amount = request.Amount,
+            Amount = totalCharges,
             PaymentMethod = request.PaymentMethod,
             PaymentReference = request.PaymentReference,
             Note = request.Note,
@@ -263,11 +274,39 @@ public class BillCollectionService : IBillCollectionService
             Description = $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}",
             DiscountAmount = 0,
             AdjustmentValue = 0,
-            NetAmount = request.Amount
+            NetAmount = totalCharges
         };
 
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
         await _transactionRepository.AddAsync(entity, cancellationToken);
+
+        // Create separate transaction for labour charges if any
+        if (totalLabourCharges > 0)
+        {
+            var labourEntity = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                TransactionCode = request.TransactionCode + "-L",
+                TransactionDate = request.TransactionDate,
+                TransactionHeadId = labourChargeHead.Id,
+                BranchId = request.BranchId,
+                BookingId = deliveries.FirstOrDefault()?.BookingId,
+                CustomerId = deliveries.FirstOrDefault()?.Booking?.CustomerId,
+                Amount = totalLabourCharges,
+                PaymentMethod = request.PaymentMethod,
+                PaymentReference = request.PaymentReference,
+                Note = request.Note,
+                EntityName = "DELIVERY",
+                EntityId = string.Join(",", request.DeliveryIds),
+                Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
+                DiscountAmount = 0,
+                AdjustmentValue = 0,
+                NetAmount = totalLabourCharges
+            };
+
+            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);
+            await _transactionRepository.AddAsync(labourEntity, cancellationToken);
+        }
 
         // Mark all deliveries as paid
         foreach (var delivery in deliveries)

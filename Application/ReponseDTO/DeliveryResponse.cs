@@ -13,6 +13,7 @@ public class DeliveryResponse
     public string? BranchName { get; set; }
     public string? Notes { get; set; }
     public decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
     public decimal AdjustmentValue { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
@@ -73,7 +74,9 @@ public class BookingForDeliveryResponse
 {
     public Guid Id { get; set; }
     public string BookingNumber { get; set; } = string.Empty;
-    public DateTime BookingDate { get; set; }    public string? ReferenceNumber { get; set; }    public int CustomerId { get; set; }
+    public DateTime BookingDate { get; set; }
+    public string? ReferenceNumber { get; set; }
+    public int CustomerId { get; set; }
     public string? CustomerName { get; set; }
     public int BranchId { get; set; }
     public string? BranchName { get; set; }

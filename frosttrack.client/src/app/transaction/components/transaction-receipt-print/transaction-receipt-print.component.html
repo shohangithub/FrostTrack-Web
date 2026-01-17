@@ -1,59 +1,61 @@
 <section class="main-content">
   <div class="section-body">
-    @if(!isPrintFromRoute && !hideSearchForm) {
-    <div class="row clearfix">
-      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card mt-2">
-          <span class="card-label">Transaction Money Receipt</span>
-          <div class="p-10 mt-2">
-            <form
-              class="product-form"
-              [formGroup]="criteriaForm"
-              (ngSubmit)="getTransactionData()"
-            >
-              <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <label for="transaction" class="col-sm-3 col-form-label"
-                      >Find Transaction:</label
-                    >
-                    <div class="col-sm-9">
-                      <div class="input-group input-group-select">
-                        <ng-select
-                          [items]="transactionList"
-                          bindLabel="text"
-                          bindValue="value"
-                          placeholder="Select Transaction"
-                          formControlName="transactionId"
-                          [loading]="isTransactionLoading"
-                          (change)="getTransactionData()"
-                        >
-                        </ng-select>
-                        <div class="input-group-append">
-                          <button
-                            type="submit"
-                            class="btn btn-primary px-2"
-                            [disabled]="!criteriaForm.valid"
+    @if (!isPrintFromRoute && !hideSearchForm) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card mt-2">
+            <span class="card-label">Transaction Money Receipt</span>
+            <div class="p-10 mt-2">
+              <form
+                class="product-form"
+                [formGroup]="criteriaForm"
+                (ngSubmit)="getTransactionData()"
+              >
+                <div class="row">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="form-group row">
+                      <label for="transaction" class="col-sm-3 col-form-label"
+                        >Find Transaction:</label
+                      >
+                      <div class="col-sm-9">
+                        <div class="input-group input-group-select">
+                          <ng-select
+                            [items]="transactionList"
+                            bindLabel="text"
+                            bindValue="value"
+                            placeholder="Select Transaction"
+                            formControlName="transactionId"
+                            [loading]="isTransactionLoading"
+                            (change)="getTransactionData()"
                           >
-                            Show Receipt
-                          </button>
+                          </ng-select>
+                          <div class="input-group-append">
+                            <button
+                              type="submit"
+                              class="btn btn-primary px-2"
+                              [disabled]="!criteriaForm.valid"
+                            >
+                              Show Receipt
+                            </button>
+                          </div>
                         </div>
                       </div>
+                      @if (
+                        !criteriaForm.get("transactionId")?.valid &&
+                        criteriaForm.get("transactionId")?.touched
+                      ) {
+                        <small class="form-text text-danger text-end">
+                          Transaction is required
+                        </small>
+                      }
                     </div>
-                    @if (!criteriaForm.get('transactionId')?.valid &&
-                    criteriaForm.get('transactionId')?.touched) {
-                    <small class="form-text text-danger text-end">
-                      Transaction is required
-                    </small>
-                    }
                   </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     }
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -62,10 +64,10 @@
           <div class="row no-print mb-3">
             <div class="col-12">
               <div class="d-flex gap-2 justify-content-end">
-                @if(isPrintFromRoute) {
-                <button type="button" class="btn" (click)="goBack()">
-                  <i class="fas fa-arrow-left"></i> Back
-                </button>
+                @if (isPrintFromRoute) {
+                  <button type="button" class="btn" (click)="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                  </button>
                 }
                 <button
                   type="button"
@@ -99,30 +101,30 @@
                   <div class="booking-info-box">
                     <table class="info-table">
                       <tr>
-                        @if(transactionReceipt.customerName) {
-                        <td class="info-label">
-                          গ্রাহকের নাম / Customer Name:
-                        </td>
-                        <td class="info-value">
-                          {{ transactionReceipt.customerName || "" }}
-                        </td>
-                        } @else if(transactionReceipt.employeeName) {
-                        <td class="info-label">
-                          কর্মচারীর নাম / Employee Name:
-                        </td>
-                        <td class="info-value">
-                          {{ transactionReceipt.employeeName || "" }}
-                        </td>
-                        } @else if(transactionReceipt.vendorName) {
-                        <td class="info-label">প্রদানকারী / Vendor Name:</td>
-                        <td class="info-value">
-                          {{ transactionReceipt.vendorName || "" }}
-                        </td>
+                        @if (transactionReceipt.customerName) {
+                          <td class="info-label">
+                            গ্রাহকের নাম / Customer Name:
+                          </td>
+                          <td class="info-value">
+                            {{ transactionReceipt.customerName || "" }}
+                          </td>
+                        } @else if (transactionReceipt.employeeName) {
+                          <td class="info-label">
+                            কর্মচারীর নাম / Employee Name:
+                          </td>
+                          <td class="info-value">
+                            {{ transactionReceipt.employeeName || "" }}
+                          </td>
+                        } @else if (transactionReceipt.vendorName) {
+                          <td class="info-label">প্রদানকারী / Vendor Name:</td>
+                          <td class="info-value">
+                            {{ transactionReceipt.vendorName || "" }}
+                          </td>
                         } @else {
-                        <td class="info-label">বিবরণ / Description:</td>
-                        <td class="info-value">
-                          {{ transactionReceipt.description || "" }}
-                        </td>
+                          <td class="info-label">বিবরণ / Description:</td>
+                          <td class="info-value">
+                            {{ transactionReceipt.description || "" }}
+                          </td>
                         }
                         <td class="info-label">রসিদ নম্বর / Receipt No:</td>
                         <td class="info-value">
@@ -138,7 +140,7 @@
                         <td class="info-value">
                           {{
                             transactionReceipt.transactionDate
-                              | date : "dd/MM/yyyy"
+                              | date: "dd/MM/yyyy"
                           }}
                         </td>
                       </tr>
@@ -158,15 +160,15 @@
                           {{ transactionReceipt.branchName || "" }}
                         </td>
                       </tr> -->
-                      @if(transactionReceipt.paymentReference) {
-                      <tr>
-                        <td class="info-label">
-                          পেমেন্ট রেফারেন্স / Payment Reference:
-                        </td>
-                        <td class="info-value" colspan="3">
-                          {{ transactionReceipt.paymentReference || "" }}
-                        </td>
-                      </tr>
+                      @if (transactionReceipt.paymentReference) {
+                        <tr>
+                          <td class="info-label">
+                            পেমেন্ট রেফারেন্স / Payment Reference:
+                          </td>
+                          <td class="info-value" colspan="3">
+                            {{ transactionReceipt.paymentReference || "" }}
+                          </td>
+                        </tr>
                       }
                     </table>
                   </div>
@@ -187,30 +189,42 @@
                           <td class="text-center">
                             {{
                               Math.abs(transactionReceipt.amount)
-                                | number : "1.2-2"
+                                | number: "1.2-2"
                             }}
                           </td>
                         </tr>
-                        @if(transactionReceipt.discountAmount !== 0) {
-                        <tr>
-                          <td>ছাড় / Discount</td>
-                          <td class="text-center">
-                            {{
-                              Math.abs(transactionReceipt.discountAmount)
-                                | number : "1.2-2"
-                            }}
-                          </td>
-                        </tr>
-                        } @if(transactionReceipt.adjustmentValue !== 0) {
-                        <tr>
-                          <td>সমন্বয় / Adjustment</td>
-                          <td class="text-center">
-                            {{
-                              transactionReceipt.adjustmentValue
-                                | number : "1.2-2"
-                            }}
-                          </td>
-                        </tr>
+                        @if (transactionReceipt.relatedLabourCharge) {
+                          <tr>
+                            <td>লেবার চার্জ / Labour Charge</td>
+                            <td class="text-center">
+                              {{
+                                Math.abs(transactionReceipt.relatedLabourCharge)
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+                        }
+                        @if (transactionReceipt.discountAmount !== 0) {
+                          <tr>
+                            <td>ছাড় / Discount</td>
+                            <td class="text-center">
+                              {{
+                                Math.abs(transactionReceipt.discountAmount)
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+                        }
+                        @if (transactionReceipt.adjustmentValue !== 0) {
+                          <tr>
+                            <td>সমন্বয় / Adjustment</td>
+                            <td class="text-center">
+                              {{
+                                transactionReceipt.adjustmentValue
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
                         }
                       </tbody>
                       <tfoot>
@@ -220,8 +234,10 @@
                           </td>
                           <td class="text-center fw-bold">
                             {{
-                              Math.abs(transactionReceipt.netAmount)
-                                | number : "1.2-2"
+                              Math.abs(
+                                transactionReceipt.netAmount +
+                                  (transactionReceipt.relatedLabourCharge || 0)
+                              ) | number: "1.2-2"
                             }}
                           </td>
                         </tr>
@@ -233,16 +249,21 @@
                   <div class="amount-words">
                     <strong>কথায় পরিমাণ / Amount in Words:</strong>
                     <span class="ms-2">{{
-                      convertToWords(Math.abs(transactionReceipt.netAmount))
+                      convertToWords(
+                        Math.abs(
+                          transactionReceipt.netAmount +
+                            (transactionReceipt.relatedLabourCharge || 0)
+                        )
+                      )
                     }}</span>
                   </div>
 
                   <!-- Notes Section -->
-                  @if(transactionReceipt.note) {
-                  <div class="notes-section">
-                    <strong>মন্তব্য / Notes:</strong>
-                    <p>{{ transactionReceipt.note }}</p>
-                  </div>
+                  @if (transactionReceipt.note) {
+                    <div class="notes-section">
+                      <strong>মন্তব্য / Notes:</strong>
+                      <p>{{ transactionReceipt.note }}</p>
+                    </div>
                   }
 
                   <!-- Signature Section -->
@@ -287,10 +308,10 @@
               <div class="alert alert-warning">
                 <h5>Transaction Not Found</h5>
                 <p>The requested transaction could not be found.</p>
-                @if(isPrintFromRoute) {
-                <button class="btn btn-primary" (click)="goBack()">
-                  <i class="fas fa-arrow-left me-1"></i>Go Back
-                </button>
+                @if (isPrintFromRoute) {
+                  <button class="btn btn-primary" (click)="goBack()">
+                    <i class="fas fa-arrow-left me-1"></i>Go Back
+                  </button>
                 }
               </div>
             </div>

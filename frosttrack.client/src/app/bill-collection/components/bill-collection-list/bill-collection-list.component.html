@@ -41,12 +41,12 @@
                             <i class="material-icons">local_shipping</i>
                           </button>
                           @if (canDelete && isRowSelected) {
-                          <button
-                            class="btn btn-icon icon-left btn-danger rounded-button"
-                            (click)="deleteMultiple()"
-                          >
-                            <i class="material-icons">delete</i>
-                          </button>
+                            <button
+                              class="btn btn-icon icon-left btn-danger rounded-button"
+                              (click)="deleteMultiple()"
+                            >
+                              <i class="material-icons">delete</i>
+                            </button>
                           }
                         </div>
                       </div>
@@ -100,7 +100,7 @@
                 [flexGrow]="1"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                  {{ row.transactionDate | date: "dd/MM/yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -121,8 +121,17 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <span class="text-success fw-bold">
-                    {{ row.netAmount | number : "1.2-2" }}
+                    {{
+                      row.netAmount + (row.relatedLabourCharge || 0)
+                        | number: "1.2-2"
+                    }}
                   </span>
+                  @if (row.relatedLabourCharge) {
+                    <small class="d-block text-muted">
+                      Charge: {{ row.netAmount | number: "1.2-2" }}<br />
+                      Labour: {{ row.relatedLabourCharge | number: "1.2-2" }}
+                    </small>
+                  }
                 </ng-template>
               </ngx-datatable-column>
 
@@ -154,13 +163,13 @@
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <span>
                     @if (canEdit) {
-                    <button
-                      class="btn btn-tbl-edit h-auto"
-                      (click)="edit(row.id)"
-                      title="Edit"
-                    >
-                      <i class="fas fa-pen"></i>
-                    </button>
+                      <button
+                        class="btn btn-tbl-edit h-auto"
+                        (click)="edit(row.id)"
+                        title="Edit"
+                      >
+                        <i class="fas fa-pen"></i>
+                      </button>
                     }
                     <button
                       class="btn btn-tbl-info h-auto"
@@ -177,13 +186,13 @@
                       <i class="fas fa-eye"></i>
                     </button> -->
                     @if (canDelete) {
-                    <button
-                      class="btn btn-tbl-delete h-auto"
-                      (click)="delete(row.id)"
-                      title="Delete"
-                    >
-                      <i class="far fa-trash-alt"></i>
-                    </button>
+                      <button
+                        class="btn btn-tbl-delete h-auto"
+                        (click)="delete(row.id)"
+                        title="Delete"
+                      >
+                        <i class="far fa-trash-alt"></i>
+                      </button>
                     }
                   </span>
                 </ng-template>

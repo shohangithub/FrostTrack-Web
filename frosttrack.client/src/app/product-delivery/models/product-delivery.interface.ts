@@ -41,6 +41,7 @@ export interface IDeliveryResponse {
   branchId: number;
   notes?: string;
   chargeAmount: number;
+  labourCharge: number;
   adjustmentValue: number;
   discountAmount: number;
   paidAmount: number;

@@ -45,58 +45,60 @@
                       </div>
                     </div>
                     <!-- Search by Customer -->
-                    @if (searchMode === 'customer') {
-                    <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
-                      <div class="form-group row">
-                        <label for="customerId" class="col-sm-3 col-form-label"
-                          >Customer:</label
-                        >
-                        <div class="col-sm-9">
-                          <ng-select
-                            id="customerId"
-                            formControlName="customerId"
-                            [items]="customers"
-                            bindLabel="customerName"
-                            bindValue="id"
-                            [loading]="customerLoading"
-                            [clearable]="true"
-                            [disabled]="isEditing"
-                            placeholder="Select customer"
-                            class="ng-select-sm"
+                    @if (searchMode === "customer") {
+                      <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                        <div class="form-group row">
+                          <label
+                            for="customerId"
+                            class="col-sm-3 col-form-label"
+                            >Customer:</label
                           >
-                          </ng-select>
+                          <div class="col-sm-9">
+                            <ng-select
+                              id="customerId"
+                              formControlName="customerId"
+                              [items]="customers"
+                              bindLabel="customerName"
+                              bindValue="id"
+                              [loading]="customerLoading"
+                              [clearable]="true"
+                              [disabled]="isEditing"
+                              placeholder="Select customer"
+                              class="ng-select-sm"
+                            >
+                            </ng-select>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     }
                     <!-- Search by Delivery Code -->
-                    @if (searchMode === 'code') {
-                    <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
-                      <div class="form-group row">
-                        <label class="col-sm-3 col-form-label"
-                          >Delivery Code:</label
-                        >
-                        <div class="col-sm-9">
-                          <ng-select
-                            id="deliveryCode"
-                            [(ngModel)]="selectedDeliveryCode"
-                            [ngModelOptions]="{ standalone: true }"
-                            [items]="deliveryCodes"
-                            bindLabel="text"
-                            bindValue="value"
-                            [loading]="deliveryCodesLoading"
-                            [clearable]="true"
-                            [disabled]="isEditing"
-                            (change)="
-                              onDeliveryCodeSelect(selectedDeliveryCode || '')
-                            "
-                            placeholder="Select delivery code"
-                            class="ng-select-sm"
+                    @if (searchMode === "code") {
+                      <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                        <div class="form-group row">
+                          <label class="col-sm-3 col-form-label"
+                            >Delivery Code:</label
                           >
-                          </ng-select>
+                          <div class="col-sm-9">
+                            <ng-select
+                              id="deliveryCode"
+                              [(ngModel)]="selectedDeliveryCode"
+                              [ngModelOptions]="{ standalone: true }"
+                              [items]="deliveryCodes"
+                              bindLabel="text"
+                              bindValue="value"
+                              [loading]="deliveryCodesLoading"
+                              [clearable]="true"
+                              [disabled]="isEditing"
+                              (change)="
+                                onDeliveryCodeSelect(selectedDeliveryCode || '')
+                              "
+                              placeholder="Select delivery code"
+                              class="ng-select-sm"
+                            >
+                            </ng-select>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     }
                   </div>
 
@@ -203,85 +205,97 @@
 
               <!-- Unpaid Deliveries Table -->
               @if (unpaidDeliveries.length > 0) {
-              <div class="card mb-3">
-                <span class="card-label">
-                  Unpaid Deliveries
-                  <span class="badge bg-info text-white ms-2"
-                    >{{ selectedCount }} selected</span
-                  >
-                </span>
-                <div class="card-body">
-                  <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-hover">
-                      <thead class="table-light">
-                        <tr>
-                          <th class="text-center" style="width: 50px">
-                            <input
-                              type="checkbox"
-                              [checked]="
-                                selectedCount === unpaidDeliveries.length
+                <div class="card mb-3">
+                  <span class="card-label">
+                    Unpaid Deliveries
+                    <span class="badge bg-info text-white ms-2"
+                      >{{ selectedCount }} selected</span
+                    >
+                  </span>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-sm table-bordered table-hover">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="text-center" style="width: 50px">
+                              <input
+                                type="checkbox"
+                                [checked]="
+                                  selectedCount === unpaidDeliveries.length
+                                "
+                                (change)="toggleSelectAll()"
+                              />
+                            </th>
+                            <th>Delivery Code</th>
+                            <th>Delivery Date</th>
+                            <th>Booking Number</th>
+                            <th>Customer</th>
+                            <th class="text-end">Charge</th>
+                            <th class="text-end">Labour</th>
+                            <th class="text-end">Adjustment</th>
+                            <th class="text-end">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (
+                            delivery of unpaidDeliveries;
+                            track delivery.id
+                          ) {
+                            <tr
+                              [class.table-active]="
+                                isDeliverySelected(delivery.id)
                               "
-                              (change)="toggleSelectAll()"
-                            />
-                          </th>
-                          <th>Delivery Code</th>
-                          <th>Delivery Date</th>
-                          <th>Booking Number</th>
-                          <th>Customer</th>
-                          <th class="text-end">Charge</th>
-                          <th class="text-end">Adjustment</th>
-                          <th class="text-end">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (delivery of unpaidDeliveries; track delivery.id) {
-                        <tr
-                          [class.table-active]="isDeliverySelected(delivery.id)"
-                        >
-                          <td class="text-center">
-                            <input
-                              type="checkbox"
-                              [checked]="isDeliverySelected(delivery.id)"
-                              (change)="toggleDeliverySelection(delivery.id)"
-                            />
-                          </td>
-                          <td>{{ delivery.deliveryNumber }}</td>
-                          <td>
-                            {{ delivery.deliveryDate | date : "dd/MM/yyyy" }}
-                          </td>
-                          <td>{{ delivery.bookingNumber }}</td>
-                          <td>{{ delivery.customerName }}</td>
-                          <td class="text-end">
-                            {{ delivery.chargeAmount | number : "1.2-2" }}
-                          </td>
-                          <td class="text-end">
-                            {{ delivery.adjustmentValue | number : "1.2-2" }}
-                          </td>
-                          <td class="text-end">
-                            <strong>{{
-                              delivery.chargeAmount + delivery.adjustmentValue
-                                | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot class="table-light">
-                        <tr>
-                          <td colspan="7" class="text-end">
-                            <strong>Total Selected Amount:</strong>
-                          </td>
-                          <td class="text-end">
-                            <strong class="text-primary">{{
-                              selectedTotal | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                            >
+                              <td class="text-center">
+                                <input
+                                  type="checkbox"
+                                  [checked]="isDeliverySelected(delivery.id)"
+                                  (change)="
+                                    toggleDeliverySelection(delivery.id)
+                                  "
+                                />
+                              </td>
+                              <td>{{ delivery.deliveryNumber }}</td>
+                              <td>
+                                {{ delivery.deliveryDate | date: "dd/MM/yyyy" }}
+                              </td>
+                              <td>{{ delivery.bookingNumber }}</td>
+                              <td>{{ delivery.customerName }}</td>
+                              <td class="text-end">
+                                {{ delivery.chargeAmount | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ delivery.labourCharge | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ delivery.adjustmentValue | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
+                                  delivery.chargeAmount +
+                                    delivery.labourCharge +
+                                    delivery.adjustmentValue | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        <tfoot class="table-light">
+                          <tr>
+                            <td colspan="8" class="text-end">
+                              <strong>Total Selected Amount:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong class="text-primary">{{
+                                selectedTotal | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
-              </div>
               }
 
               <!-- Note Section -->

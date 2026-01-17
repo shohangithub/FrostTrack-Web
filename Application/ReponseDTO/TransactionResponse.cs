@@ -32,7 +32,8 @@ public record TransactionResponse(
     string? VendorContact,
     DateTime? BillingPeriodStart,
     DateTime? BillingPeriodEnd,
-    string? AttachmentPath
+    string? AttachmentPath,
+    decimal? RelatedLabourCharge = null
 );
 
 public record TransactionListResponse(
@@ -50,7 +51,8 @@ public record TransactionListResponse(
     decimal NetAmount,
     string PaymentMethod,
     string Description,
-    string? VendorName
+    string? VendorName,
+    decimal? RelatedLabourCharge = null
 );
 
 public record TransactionSummaryResponse(

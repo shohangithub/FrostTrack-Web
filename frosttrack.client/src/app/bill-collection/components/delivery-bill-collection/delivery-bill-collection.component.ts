@@ -71,7 +71,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -166,7 +166,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
         this.unpaidDeliveries = deliveries;
         // Select all deliveries by default
         deliveries.forEach((delivery) =>
-          this.selectedDeliveries.add(delivery.id)
+          this.selectedDeliveries.add(delivery.id),
         );
         this.updateTotalAmount();
         this.deliveryLoading = false;
@@ -240,7 +240,10 @@ export class DeliveryBillCollectionComponent implements OnInit {
   updateTotalAmount() {
     const total = this.unpaidDeliveries
       .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce((sum, d) => sum + d.chargeAmount + d.adjustmentValue, 0);
+      .reduce(
+        (sum, d) => sum + d.chargeAmount + d.labourCharge + d.adjustmentValue,
+        0,
+      );
 
     this.billCollectionForm.patchValue({ amount: total });
   }
@@ -259,7 +262,10 @@ export class DeliveryBillCollectionComponent implements OnInit {
   get selectedTotal(): number {
     return this.unpaidDeliveries
       .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce((sum, d) => sum + d.chargeAmount + d.adjustmentValue, 0);
+      .reduce(
+        (sum, d) => sum + d.chargeAmount + d.labourCharge + d.adjustmentValue,
+        0,
+      );
   }
 
   get selectedCount(): number {
