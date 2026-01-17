@@ -98,7 +98,10 @@ public class DeliveryService : IDeliveryService
 
         await _repository.AddAsync(entity, CancellationToken.None);
 
-        // Create transaction if requested
+        // Calculate total labour charge from delivery details
+        var totalLabourCharge = entity.DeliveryDetails?.Sum(d => d.LabourCharge) ?? 0;
+
+        // Create transactions if requested
         if (request.CreateTransaction && request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0)
         {
             var booking = await _bookingRepository.Query()
@@ -117,54 +120,108 @@ public class DeliveryService : IDeliveryService
             var datePart = currentDate.ToString("yyMMdd");
             var prefix = "DEL";
 
-            var lastCode = await _transactionRepository.Query()
-                .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
-                .OrderByDescending(x => x.TransactionCode)
-                .Select(x => x.TransactionCode)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            int nextSequence = 1;
-
-            if (!string.IsNullOrEmpty(lastCode))
+            // Transaction 1: Charge Amount
+            var chargeAmount = request.TransactionAmount.Value - totalLabourCharge;
+            if (chargeAmount > 0)
             {
-                var parts = lastCode.Split('-');
-                if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                var lastCode1 = await _transactionRepository.Query()
+                    .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+                    .OrderByDescending(x => x.TransactionCode)
+                    .Select(x => x.TransactionCode)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                int nextSequence1 = 1;
+                if (!string.IsNullOrEmpty(lastCode1))
                 {
-                    nextSequence = lastSequence + 1;
+                    var parts = lastCode1.Split('-');
+                    if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                    {
+                        nextSequence1 = lastSequence + 1;
+                    }
                 }
+
+                var chargeTransactionRequest = new TransactionRequest(
+                    Id: Guid.NewGuid(),
+                    TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence1),
+                    TransactionDate: DateTime.UtcNow,
+                    TransactionHeadId: transactionHead.Id,
+                    EntityName: TransactionEntityNames.DELIVERY,
+                    EntityId: entity.Id.ToString(),
+                    BranchId: entity.BranchId,
+                    CustomerId: booking?.CustomerId,
+                    BookingId: request.BookingId,
+                    Amount: chargeAmount,
+                    DiscountAmount: 0,
+                    AdjustmentValue: 0,
+                    NetAmount: chargeAmount,
+                    PaymentMethod: request.PaymentMethod ?? PaymentMethods.CASH,
+                    PaymentReference: null,
+                    Category: null,
+                    SubCategory: null,
+                    Description: $"Charge Payment for Delivery {entity.DeliveryNumber}",
+                    Note: request.TransactionNotes,
+                    VendorName: null,
+                    VendorContact: null,
+                    BillingPeriodStart: null,
+                    BillingPeriodEnd: null,
+                    AttachmentPath: null
+                );
+
+                var chargeTransaction = await _transactionService.AddAsync(chargeTransactionRequest, CancellationToken.None);
+
+                // Update delivery with transaction ID (charge transaction)
+                entity.TransactionId = chargeTransaction.Id;
             }
 
-            var transactionRequest = new TransactionRequest(
-                Id: Guid.NewGuid(),
-                TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence),
-                TransactionDate: DateTime.UtcNow,
-                TransactionHeadId: transactionHead.Id,
-                EntityName: TransactionEntityNames.DELIVERY,
-                EntityId: entity.Id.ToString(),
-                BranchId: entity.BranchId,
-                CustomerId: booking?.CustomerId,
-                BookingId: request.BookingId,
-                Amount: request.TransactionAmount.Value,
-                DiscountAmount: 0,
-                AdjustmentValue: 0,
-                NetAmount: request.TransactionAmount.Value,
-                PaymentMethod: request.PaymentMethod ?? PaymentMethods.CASH,
-                PaymentReference: null,
-                Category: null,
-                SubCategory: null,
-                Description: $"Payment for Delivery {entity.DeliveryNumber}",
-                Note: request.TransactionNotes,
-                VendorName: null,
-                VendorContact: null,
-                BillingPeriodStart: null,
-                BillingPeriodEnd: null,
-                AttachmentPath: null
-            );
+            // Transaction 2: Labour Charge (if exists)
+            if (totalLabourCharge > 0)
+            {
+                var lastCode2 = await _transactionRepository.Query()
+                    .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+                    .OrderByDescending(x => x.TransactionCode)
+                    .Select(x => x.TransactionCode)
+                    .FirstOrDefaultAsync(cancellationToken);
 
-            var transaction = await _transactionService.AddAsync(transactionRequest, CancellationToken.None);
+                int nextSequence2 = 1;
+                if (!string.IsNullOrEmpty(lastCode2))
+                {
+                    var parts = lastCode2.Split('-');
+                    if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                    {
+                        nextSequence2 = lastSequence + 1;
+                    }
+                }
 
-            // Update delivery with transaction ID
-            entity.TransactionId = transaction.Id;
+                var labourTransactionRequest = new TransactionRequest(
+                    Id: Guid.NewGuid(),
+                    TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence2),
+                    TransactionDate: DateTime.UtcNow,
+                    TransactionHeadId: transactionHead.Id,
+                    EntityName: TransactionEntityNames.DELIVERY,
+                    EntityId: entity.Id.ToString(),
+                    BranchId: entity.BranchId,
+                    CustomerId: booking?.CustomerId,
+                    BookingId: request.BookingId,
+                    Amount: totalLabourCharge,
+                    DiscountAmount: 0,
+                    AdjustmentValue: 0,
+                    NetAmount: totalLabourCharge,
+                    PaymentMethod: request.PaymentMethod ?? PaymentMethods.CASH,
+                    PaymentReference: null,
+                    Category: null,
+                    SubCategory: null,
+                    Description: $"Labour Charge for Delivery {entity.DeliveryNumber}",
+                    Note: request.TransactionNotes,
+                    VendorName: null,
+                    VendorContact: null,
+                    BillingPeriodStart: null,
+                    BillingPeriodEnd: null,
+                    AttachmentPath: null
+                );
+
+                await _transactionService.AddAsync(labourTransactionRequest, CancellationToken.None);
+            }
+
             await _repository.UpdateAsync(entity, CancellationToken.None);
         }
 
@@ -208,6 +265,7 @@ public class DeliveryService : IDeliveryService
                     DeliveryQuantity = d.DeliveryQuantity,
                     BaseQuantity = d.BaseQuantity,
                     ChargeAmount = d.ChargeAmount,
+                    LabourCharge = d.LabourCharge,
                     AdjustmentValue = d.AdjustmentValue,
                     BillingCycles = d.BillingCycles
                 };
@@ -316,6 +374,7 @@ public class DeliveryService : IDeliveryService
                 DeliveryQuantity = d.DeliveryQuantity,
                 BaseQuantity = d.BaseQuantity,
                 ChargeAmount = d.ChargeAmount,
+                LabourCharge = d.LabourCharge,
                 AdjustmentValue = d.AdjustmentValue
             }).ToList()
         });
@@ -543,6 +602,7 @@ public class DeliveryService : IDeliveryService
         {
             Id = booking.Id,
             BookingNumber = booking.BookingNumber,
+            ReferenceNumber = booking.ReferenceNumber,
             BookingDate = booking.BookingDate,
             CustomerId = booking.CustomerId,
             CustomerName = booking.Customer?.CustomerName,
@@ -797,6 +857,7 @@ public class DeliveryService : IDeliveryService
             {
                 BookingId = entity.BookingId,
                 BookingNumber = entity.Booking.BookingNumber,
+                ReferenceNumber = entity.Booking.ReferenceNumber,
                 BookingDate = entity.Booking.BookingDate,
                 LastDeliveryDate = lastDeliveryDate,
                 TotalBookingAmount = totalBookingAmount
@@ -816,6 +877,7 @@ public class DeliveryService : IDeliveryService
             DeliveryQuantity = d.DeliveryQuantity,
             BaseQuantity = d.BaseQuantity,
             ChargeAmount = d.ChargeAmount,
+            LabourCharge = d.LabourCharge,
             BookingRate = d.BookingDetail?.BookingRate ?? 0,
             BillingCycles = d.BillingCycles,
             BillType = d.BookingDetail?.BillType ?? ""
@@ -829,7 +891,7 @@ public class DeliveryService : IDeliveryService
         //     .SumAsync(t => t.Amount);
 
         // Calculate Total Paid Amount (from all transactions for this booking)
-        response.TotalPaidAmount = entity.PaymentStatus == PaymentStatuses.PAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount) : 0;
+        response.TotalPaidAmount = entity.PaymentStatus == PaymentStatuses.PAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.LabourCharge) : 0;
 
         // Sum up all extra charge transactions for this booking
         // var totalExtraCharge = await _transactionRepository.Query().Include(t => t.TransactionHead)
@@ -850,7 +912,7 @@ public class DeliveryService : IDeliveryService
         //response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
 
         // Calculate Due Amount
-        response.DueAmount = entity.PaymentStatus == PaymentStatuses.UNPAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount) : 0;
+        response.DueAmount = entity.PaymentStatus == PaymentStatuses.UNPAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.LabourCharge) : 0;
 
         return response;
     }

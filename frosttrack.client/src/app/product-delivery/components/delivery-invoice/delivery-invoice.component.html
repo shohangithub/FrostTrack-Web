@@ -59,7 +59,7 @@
                     </td>
                     <td class="info-label">ডেলিভারীর তারিখ :</td>
                     <td class="info-value">
-                      {{ deliveryInvoice.deliveryDate | date : "dd/MM/yyyy" }}
+                      {{ deliveryInvoice.deliveryDate | date: "dd/MM/yyyy" }}
                     </td>
                   </tr>
                   <tr>
@@ -67,15 +67,12 @@
                     <td class="info-value">
                       {{
                         deliveryInvoice.booking?.bookingDate
-                          | date : "dd/MM/yyyy"
+                          | date: "dd/MM/yyyy"
                       }}
                     </td>
-                    <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ:</td>
-                    <td class="info-value">
-                      {{
-                        deliveryInvoice.booking?.lastDeliveryDate
-                          | date : "dd/MM/yyyy"
-                      }}
+                    <td class="info-label">রেফারেন্স নম্বর:</td>
+                    <td class="info-value" style="font-weight: bold">
+                      {{ deliveryInvoice.booking?.referenceNumber || "N/A" }}
                     </td>
                   </tr>
                   <tr>
@@ -98,6 +95,8 @@
                       <th>একক</th>
                       <th>সংখ্যা</th>
                       <th>ক্যালকুলেশন</th>
+                      <th>ভাড়া</th>
+                      <th>লেবার চার্জ</th>
                       <th>সর্বমোট</th>
                     </tr>
                   </thead>
@@ -114,26 +113,35 @@
                         {{ item.deliveryUnitName }}
                       </td>
                       <td class="text-center">
-                        {{ item.deliveryQuantity | number : "1.2-2" }}
+                        {{ item.deliveryQuantity | number: "1.2-2" }}
                       </td>
                       <td class="text-center">
                         <small>
-                          {{ item.deliveryQuantity | number : "1.2-2" }} ×
-                          {{ item.bookingRate | number : "1.2-2" }} ×
+                          {{ item.deliveryQuantity | number: "1.2-2" }} ×
+                          {{ item.bookingRate | number: "1.2-2" }} ×
                           {{ item.billingCycles }}
                           {{ getBillTypeCycleLabel(item.billType) }}
                         </small>
                       </td>
+                      <td class="text-center">
+                        {{ item.chargeAmount | number: "1.2-2" }}
+                      </td>
+                      <td class="text-center">
+                        {{ item.labourCharge | number: "1.2-2" }}
+                      </td>
                       <td class="text-center fw-bold">
-                        {{ item.chargeAmount | number : "1.2-2" }}
+                        {{
+                          item.chargeAmount + item.labourCharge
+                            | number: "1.2-2"
+                        }}
                       </td>
                     </tr>
                   </tbody>
                   <tfoot>
                     <tr class="total-row">
-                      <td colspan="5" class="text-end fw-bold">সর্বমোট :</td>
+                      <td colspan="7" class="text-end fw-bold">সর্বমোট :</td>
                       <td class="text-center fw-bold">
-                        {{ getTotalAmount() | number : "1.2-2" }}
+                        {{ getTotalAmount() | number: "1.2-2" }}
                       </td>
                     </tr>
                   </tfoot>
@@ -152,15 +160,15 @@
               <div class="summary-section">
                 <table class="summary-table">
                   <tr>
-                    <td class="summary-label">মোট বুকিং চার্জ:</td>
+                    <td class="summary-label">মোট ভাড়া:</td>
                     <td class="summary-value text-end">
-                      {{ deliveryInvoice.chargeAmount | number : "1.2-2" }}
+                      {{ deliveryInvoice.chargeAmount | number: "1.2-2" }}
                     </td>
                   </tr>
                   <tr>
-                    <td class="summary-label">মোট পরিশোধিত চার্জ:</td>
+                    <td class="summary-label">মোট পরিশোধিত ভাড়া:</td>
                     <td class="summary-value text-end">
-                      {{ deliveryInvoice.totalPaidAmount | number : "1.2-2" }}
+                      {{ deliveryInvoice.totalPaidAmount | number: "1.2-2" }}
                     </td>
                   </tr>
                   <!-- <tr>
@@ -175,13 +183,13 @@
                           {{ deliveryInvoice.chargeAmount | number : "1.2-2" }}
                         </td>
                       </tr> -->
-                  @if(deliveryInvoice.adjustmentValue !== 0) {
-                  <tr>
-                    <td class="summary-label">সমন্বয় (Adjustment):</td>
-                    <td class="summary-value text-end">
-                      {{ deliveryInvoice.adjustmentValue | number : "1.2-2" }}
-                    </td>
-                  </tr>
+                  @if (deliveryInvoice.adjustmentValue !== 0) {
+                    <tr>
+                      <td class="summary-label">সমন্বয় (Adjustment):</td>
+                      <td class="summary-value text-end">
+                        {{ deliveryInvoice.adjustmentValue | number: "1.2-2" }}
+                      </td>
+                    </tr>
                   }
                   <tr class="summary-total">
                     <td class="summary-label">
@@ -189,7 +197,7 @@
                     </td>
                     <td class="summary-value text-end">
                       <strong>{{
-                        deliveryInvoice.dueAmount | number : "1.2-2"
+                        deliveryInvoice.dueAmount | number: "1.2-2"
                       }}</strong>
                     </td>
                   </tr>
@@ -197,11 +205,11 @@
               </div>
 
               <!-- Notes Section -->
-              @if(deliveryInvoice.notes) {
-              <div class="notes-section">
-                <strong>Notes:</strong>
-                <p>{{ deliveryInvoice.notes }}</p>
-              </div>
+              @if (deliveryInvoice.notes) {
+                <div class="notes-section">
+                  <strong>Notes:</strong>
+                  <p>{{ deliveryInvoice.notes }}</p>
+                </div>
               }
 
               <!-- Signature Section -->

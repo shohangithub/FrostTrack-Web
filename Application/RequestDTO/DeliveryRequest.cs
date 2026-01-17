@@ -24,6 +24,7 @@ public class CreateDeliveryDetailRequest
     public required float DeliveryQuantity { get; set; }
     public required decimal BaseQuantity { get; set; }
     public required decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
     public required decimal AdjustmentValue { get; set; }
 }
 
@@ -45,6 +46,7 @@ public class UpdateDeliveryDetailRequest
     public required float DeliveryQuantity { get; set; }
     public required decimal BaseQuantity { get; set; }
     public required decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
     public required decimal AdjustmentValue { get; set; }
     public int BillingCycles { get; set; } = 1;
 }

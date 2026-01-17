@@ -28,6 +28,7 @@ export interface IBookingForDeliveryResponse {
   id: string;
   bookingNumber: string;
   bookingDate: Date;
+  referenceNumber?: string;
   customerId: number;
   customerName?: string;
   branchId: number;
@@ -142,6 +143,7 @@ export interface IDeliveryInvoiceResponse {
 export interface IBookingInvoiceInfo {
   bookingId: string;
   bookingNumber: string;
+  referenceNumber?: string;
   bookingDate: Date;
   lastDeliveryDate: Date;
   totalBookingAmount: number;
@@ -156,6 +158,7 @@ export interface IDeliveryInvoiceDetailResponse {
   deliveryQuantity: number;
   baseQuantity: number;
   chargeAmount: number;
+  labourCharge: number;
   bookingRate: number;
   billingCycles: number;
   billType: string;

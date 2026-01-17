@@ -46,7 +46,7 @@ export class DeliveryInvoiceComponent implements OnInit, OnChanges {
     private router: Router,
     private deliveryService: DeliveryService,
     private toastr: ToastrService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -130,7 +130,7 @@ export class DeliveryInvoiceComponent implements OnInit, OnChanges {
     if (!this.deliveryInvoice?.deliveryDetails) return 0;
     return this.deliveryInvoice.deliveryDetails.reduce(
       (total, detail) => total + detail.deliveryQuantity,
-      0
+      0,
     );
   }
 
@@ -138,15 +138,15 @@ export class DeliveryInvoiceComponent implements OnInit, OnChanges {
     if (!this.deliveryInvoice?.deliveryDetails) return 0;
     return this.deliveryInvoice.deliveryDetails.reduce(
       (total, detail) => total + detail.baseQuantity,
-      0
+      0,
     );
   }
 
   getTotalAmount(): number {
     if (!this.deliveryInvoice?.deliveryDetails) return 0;
     return this.deliveryInvoice.deliveryDetails.reduce(
-      (total, detail) => total + detail.chargeAmount,
-      0
+      (total, detail) => total + detail.chargeAmount + detail.labourCharge,
+      0,
     );
   }
 

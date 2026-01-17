@@ -62,7 +62,7 @@ export class DeliveryComponent implements OnInit {
     private deliveryService: DeliveryService,
     private toastr: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
@@ -169,13 +169,13 @@ export class DeliveryComponent implements OnInit {
       next: (dueAmount) => {
         this.deliveryForm.patchValue(
           { totalPreviousPayments: dueAmount },
-          { emitEvent: false }
+          { emitEvent: false },
         );
       },
       error: () => {
         this.deliveryForm.patchValue(
           { totalPreviousPayments: 0 },
-          { emitEvent: false }
+          { emitEvent: false },
         );
       },
     });
@@ -207,6 +207,7 @@ export class DeliveryComponent implements OnInit {
           ], // No required, allow 0
           baseQuantity: [detail.baseQuantity],
           chargeAmount: [0, [Validators.min(0)]],
+          labourCharge: [null, [Validators.min(0)]],
           availableUnits: [detail.availableUnits],
           convertedRemainingQty: [detail.remainingQuantity], // Initialize with booking unit remaining qty
         });
@@ -218,6 +219,10 @@ export class DeliveryComponent implements OnInit {
         detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
           this.calculateBaseQuantity(detailForm);
           this.calculateItemCharge(detailForm);
+          this.calculateTotalCharge();
+        });
+
+        detailForm.get('labourCharge')?.valueChanges.subscribe(() => {
           this.calculateTotalCharge();
         });
 
@@ -266,7 +271,7 @@ export class DeliveryComponent implements OnInit {
       cycleCount = this.calculateBillingCycles(
         bookingDate,
         deliveryDate,
-        billType
+        billType,
       );
 
       // Calculate charge: quantity × rate × cycle_count
@@ -279,14 +284,14 @@ export class DeliveryComponent implements OnInit {
         totalCharge: totalCharge,
         billingCycles: cycleCount,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
   }
 
   calculateBillingCycles(
     bookingDate: string | Date,
     deliveryDate: string | Date,
-    billType: string
+    billType: string,
   ): number {
     const start = new Date(bookingDate);
     const end = new Date(deliveryDate);
@@ -359,18 +364,25 @@ export class DeliveryComponent implements OnInit {
 
   calculateTotalCharge() {
     let total = 0;
+    let totalLabour = 0;
     this.deliveryDetails.controls.forEach((control) => {
       const charge = control.get('totalCharge')?.value || 0;
-      total += charge;
+      const labour = control.get('labourCharge')?.value || 0;
+      total += Number(charge);
+      totalLabour += Number(labour);
     });
 
-    this.deliveryForm.patchValue({ chargeAmount: total }, { emitEvent: false });
+    const grandTotal = total + totalLabour;
+    this.deliveryForm.patchValue(
+      { chargeAmount: grandTotal },
+      { emitEvent: false },
+    );
 
-    // Update transaction amount with charge amount if transaction is enabled
+    // Update transaction amount with grand total (charge + labour) if transaction is enabled
     if (this.deliveryForm.get('createTransaction')?.value) {
       this.deliveryForm.patchValue(
-        { transactionAmount: total > 0 ? total : 0 },
-        { emitEvent: false }
+        { transactionAmount: grandTotal > 0 ? grandTotal : 0 },
+        { emitEvent: false },
       );
     }
   }
@@ -400,7 +412,7 @@ export class DeliveryComponent implements OnInit {
     if (!bookingUnit) {
       detailForm.patchValue(
         { convertedRemainingQty: remainingQty },
-        { emitEvent: false }
+        { emitEvent: false },
       );
       return;
     }
@@ -413,7 +425,7 @@ export class DeliveryComponent implements OnInit {
     if (!deliveryUnit) {
       detailForm.patchValue(
         { convertedRemainingQty: remainingQty },
-        { emitEvent: false }
+        { emitEvent: false },
       );
       return;
     }
@@ -422,7 +434,7 @@ export class DeliveryComponent implements OnInit {
     const convertedQty = remainingBaseQty / deliveryUnit.conversionRate;
     detailForm.patchValue(
       { convertedRemainingQty: convertedQty },
-      { emitEvent: false }
+      { emitEvent: false },
     );
   }
 
@@ -451,8 +463,8 @@ export class DeliveryComponent implements OnInit {
         detail.get('convertedRemainingQty')?.value || 0;
       this.toastr.warning(
         `Delivery quantity cannot exceed remaining quantity (${convertedRemainingQty.toFixed(
-          2
-        )})`
+          2,
+        )})`,
       );
 
       detail.patchValue({ deliveryQuantity: convertedRemainingQty });
@@ -503,7 +515,7 @@ export class DeliveryComponent implements OnInit {
       (control) => {
         const deliveryQty = control.get('deliveryQuantity')?.value || 0;
         return deliveryQty > 0;
-      }
+      },
     );
 
     if (!hasDeliveryQuantity) {
@@ -546,7 +558,7 @@ export class DeliveryComponent implements OnInit {
         // Update baseQuantity field for payload
         control.patchValue(
           { baseQuantity: deliveryBaseQty },
-          { emitEvent: false }
+          { emitEvent: false },
         );
 
         // Validate that delivery base quantity doesn't exceed remaining base quantity
@@ -557,8 +569,8 @@ export class DeliveryComponent implements OnInit {
             `Item ${
               i + 1
             }: Delivery quantity (${deliveryQty}) cannot exceed remaining quantity (${convertedRemainingQty.toFixed(
-              2
-            )})`
+              2,
+            )})`,
           );
           return;
         }
@@ -608,6 +620,7 @@ export class DeliveryComponent implements OnInit {
           baseQuantity: d.baseQuantity,
           billingCycles: d.billingCycles || 1,
           chargeAmount: d.totalCharge || 0, // Use totalCharge which is calculated
+          labourCharge: d.labourCharge || 0,
           adjustmentValue: 0,
         })),
       createTransaction: formData.createTransaction,
@@ -631,7 +644,7 @@ export class DeliveryComponent implements OnInit {
       next: (response: any) => {
         const isEditMode = !!id;
         this.toastr.success(
-          `Delivery ${isEditMode ? 'updated' : 'created'} successfully`
+          `Delivery ${isEditMode ? 'updated' : 'created'} successfully`,
         );
         this.isSubmitting = false;
 
@@ -668,7 +681,7 @@ export class DeliveryComponent implements OnInit {
         // First load booking to get full details with remaining quantities
         if (delivery.bookingId) {
           const selectedBooking = this.bookings.find(
-            (b) => b.value === delivery.bookingId
+            (b) => b.value === delivery.bookingId,
           );
           if (selectedBooking) {
             this.deliveryService
@@ -691,7 +704,7 @@ export class DeliveryComponent implements OnInit {
                       notes: delivery.notes || '',
                       chargeAmount: delivery.chargeAmount,
                     },
-                    { emitEvent: false }
+                    { emitEvent: false },
                   );
 
                   // Populate delivery quantities from existing delivery
@@ -699,12 +712,12 @@ export class DeliveryComponent implements OnInit {
                     const index = this.deliveryDetails.controls.findIndex(
                       (ctrl) =>
                         ctrl.get('bookingDetailId')?.value ===
-                        detail.bookingDetailId
+                        detail.bookingDetailId,
                     );
 
                     if (index !== -1) {
                       const detailForm = this.deliveryDetails.at(
-                        index
+                        index,
                       ) as FormGroup;
 
                       // Use the billing cycles and rates from the saved delivery
@@ -722,7 +735,7 @@ export class DeliveryComponent implements OnInit {
                             detail.billType ||
                             detailForm.get('billType')?.value,
                         },
-                        { emitEvent: false }
+                        { emitEvent: false },
                       );
 
                       // Recalculate converted remaining quantity for selected unit

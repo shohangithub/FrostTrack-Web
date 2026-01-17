@@ -95,8 +95,8 @@
                             type="text"
                             class="form-control form-control-sm"
                             [value]="
-                              (bookingData?.bookingDate
-                                | date : 'dd/MM/yyyy') || ''
+                              (bookingData?.bookingDate | date: 'dd/MM/yyyy') ||
+                              ''
                             "
                             readonly
                           />
@@ -106,16 +106,13 @@
                     <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                       <div class="form-group row">
                         <label class="col-sm-4 col-form-label"
-                          >D. Last Date:</label
+                          >Reference No:</label
                         >
                         <div class="col-sm-8">
                           <input
                             type="text"
                             class="form-control form-control-sm"
-                            [value]="
-                              (bookingData?.lastDeliveryDate
-                                | date : 'dd/MM/yyyy') || ''
-                            "
+                            [value]="bookingData?.referenceNumber || ''"
                             readonly
                           />
                         </div>
@@ -128,30 +125,31 @@
           </div>
 
           <!-- Billing Period Info Box -->
-          @if(bookingData) {
-          <div class="row mb-3">
-            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-              <div class="alert alert-info py-2">
-                <small>
-                  <i class="fas fa-info-circle me-2"></i>
-                  <strong>Billing Period:</strong>
-                  From
-                  <strong>{{
-                    bookingData.bookingDate | date : "dd/MM/yyyy"
-                  }}</strong>
-                  to
-                  <strong>{{
-                    deliveryForm.get("deliveryDate")?.value
-                      | date : "dd/MM/yyyy"
-                  }}</strong>
-                  <span class="ms-2">|</span>
-                  <span class="ms-2"
-                    ><strong>Formula:</strong> Qty × Rate × Billing Cycles</span
-                  >
-                </small>
+          @if (bookingData) {
+            <div class="row mb-3">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="alert alert-info py-2">
+                  <small>
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Billing Period:</strong>
+                    From
+                    <strong>{{
+                      bookingData.bookingDate | date: "dd/MM/yyyy"
+                    }}</strong>
+                    to
+                    <strong>{{
+                      deliveryForm.get("deliveryDate")?.value
+                        | date: "dd/MM/yyyy"
+                    }}</strong>
+                    <span class="ms-2">|</span>
+                    <span class="ms-2"
+                      ><strong>Formula:</strong> Qty × Rate × Billing
+                      Cycles</span
+                    >
+                  </small>
+                </div>
               </div>
             </div>
-          </div>
           }
 
           <div class="row">
@@ -197,59 +195,71 @@
                               >
                                 Bill
                               </th>
+                              <th
+                                scope="col"
+                                style="width: 10%"
+                                class="text-center"
+                              >
+                                Labour
+                              </th>
                             </tr>
                           </thead>
                           <tbody formArrayName="deliveryDetails">
-                            @for (detail of deliveryDetails.controls; let i =
-                            $index; track i) {
-                            <tr [formGroupName]="i">
-                              <td class="text-center">{{ i + 1 }}</td>
-                              <td>
-                                <small>{{
-                                  detail.get("productName")?.value
-                                }}</small>
-                              </td>
-                              <td class="text-center">
-                                {{
-                                  detail.get("bookingQuantity")?.value
-                                    | number : "1.2-2"
-                                }}
-                              </td>
-                              <td class="text-center">
-                                {{
-                                  detail.get("totalDeliveredQuantity")?.value
-                                    | number : "1.2-2"
-                                }}
-                              </td>
-                              <td class="text-center">
-                                <span class="badge bg-warning text-dark">
+                            @for (
+                              detail of deliveryDetails.controls;
+                              let i = $index;
+                              track i
+                            ) {
+                              <tr [formGroupName]="i">
+                                <td class="text-center">{{ i + 1 }}</td>
+                                <td>
+                                  <small>{{
+                                    detail.get("productName")?.value
+                                  }}</small>
+                                </td>
+                                <td class="text-center">
                                   {{
-                                    detail.get("remainingQuantity")?.value
-                                      | number : "1.2-2"
+                                    detail.get("bookingQuantity")?.value
+                                      | number: "1.2-2"
                                   }}
-                                </span>
-                              </td>
-                              <td>
-                                <ng-select
-                                  formControlName="deliveryUnitId"
-                                  [items]="detail.get('availableUnits')?.value"
-                                  bindLabel="unitName"
-                                  bindValue="id"
-                                  [clearable]="false"
-                                  class="ng-select-sm"
-                                  (change)="onUnitChange(i)"
-                                >
-                                </ng-select>
-                              </td>
-                              <td>
-                                <input
-                                  type="text"
-                                  class="form-control form-control-sm text-end"
-                                  formControlName="deliveryQuantity"
-                                  (blur)="validateQuantity(i)"
-                                />
-                              </td>
-                              <!-- <td class="text-center">
+                                </td>
+                                <td class="text-center">
+                                  {{
+                                    detail.get("totalDeliveredQuantity")?.value
+                                      | number: "1.2-2"
+                                  }}
+                                </td>
+                                <td class="text-center">
+                                  <span class="badge bg-warning text-dark">
+                                    {{
+                                      detail.get("remainingQuantity")?.value
+                                        | number: "1.2-2"
+                                    }}
+                                  </span>
+                                </td>
+                                <td>
+                                  <ng-select
+                                    formControlName="deliveryUnitId"
+                                    [items]="
+                                      detail.get('availableUnits')?.value
+                                    "
+                                    bindLabel="unitName"
+                                    bindValue="id"
+                                    [clearable]="false"
+                                    class="ng-select-sm"
+                                    (change)="onUnitChange(i)"
+                                  >
+                                  </ng-select>
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    class="form-control form-control-sm text-end"
+                                    formControlName="deliveryQuantity"
+                                    (blur)="validateQuantity(i)"
+                                  />
+                                </td>
+                                <!-- <td class="text-center">
                                   <span class="badge bg-info text-white">
                                     {{
                                       detail.get("convertedRemainingQty")?.value
@@ -257,67 +267,79 @@
                                     }}
                                   </span>
                                 </td> -->
-                              <td class="text-center">
-                                <small
-                                  class="text-muted"
-                                  style="font-size: 11px"
-                                >
-                                  @if(detail.get('deliveryQuantity')?.value > 0)
-                                  {
-                                  <div>
-                                    {{
-                                      detail.get("deliveryQuantity")?.value
-                                        | number : "1.2-2"
-                                    }}
-                                    ×
-                                    {{
-                                      detail.get("bookingRate")?.value
-                                        | number : "1.2-2"
-                                    }}
-                                    × {{ detail.get("billingCycles")?.value }}
-                                    <span
-                                      class="badge bg-info text-white ms-1"
-                                      title="{{
-                                        getBillTypeLabel(
-                                          detail.get('billType')?.value
-                                        )
-                                      }}"
-                                    >
-                                      {{ detail.get("billingCycles")?.value }}
-                                      {{
-                                        getBillTypeCycleLabel(
-                                          detail.get("billType")?.value
-                                        )
-                                      }}
-                                    </span>
-                                  </div>
-                                  }
-                                </small>
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  class="form-control form-control-sm text-end fw-bold"
-                                  formControlName="totalCharge"
-                                  readonly
-                                />
-                              </td>
-                            </tr>
+                                <td class="text-center">
+                                  <small
+                                    class="text-muted"
+                                    style="font-size: 11px"
+                                  >
+                                    @if (
+                                      detail.get("deliveryQuantity")?.value > 0
+                                    ) {
+                                      <div>
+                                        {{
+                                          detail.get("deliveryQuantity")?.value
+                                            | number: "1.2-2"
+                                        }}
+                                        ×
+                                        {{
+                                          detail.get("bookingRate")?.value
+                                            | number: "1.2-2"
+                                        }}
+                                        ×
+                                        {{ detail.get("billingCycles")?.value }}
+                                        <span
+                                          class="badge bg-info text-white ms-1"
+                                          title="{{
+                                            getBillTypeLabel(
+                                              detail.get('billType')?.value
+                                            )
+                                          }}"
+                                        >
+                                          {{
+                                            detail.get("billingCycles")?.value
+                                          }}
+                                          {{
+                                            getBillTypeCycleLabel(
+                                              detail.get("billType")?.value
+                                            )
+                                          }}
+                                        </span>
+                                      </div>
+                                    }
+                                  </small>
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    class="form-control form-control-sm text-end fw-bold"
+                                    formControlName="totalCharge"
+                                    readonly
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    class="form-control form-control-sm text-end"
+                                    formControlName="labourCharge"
+                                    placeholder="0.00"
+                                  />
+                                </td>
+                              </tr>
                             } @empty {
-                            <tr>
-                              <td colspan="10" class="text-center text-muted">
-                                No items available for delivery
-                              </td>
-                            </tr>
+                              <tr>
+                                <td colspan="11" class="text-center text-muted">
+                                  No items available for delivery
+                                </td>
+                              </tr>
                             }
                           </tbody>
                           <tfoot *ngIf="deliveryDetails.length > 0">
                             <tr>
-                              <td colspan="10" class="text-end fw-bold">
-                                Subtotal: &nbsp;
+                              <td colspan="11" class="text-end fw-bold">
+                                Grand Total: &nbsp;
                                 {{
                                   deliveryForm.get("chargeAmount")?.value
-                                    | number : "1.2-2"
+                                    | number: "1.2-2"
                                 }}
                               </td>
                             </tr>
@@ -375,7 +397,7 @@
                             class="form-control form-control-sm text-end"
                             [value]="
                               deliveryForm.get('chargeAmount')?.value
-                                | number : '1.2-2'
+                                | number: '1.2-2'
                             "
                             readonly
                           />
@@ -391,7 +413,7 @@
                             class="form-control form-control-sm text-end fw-bold text-danger"
                             [value]="
                               deliveryForm.get('totalPreviousPayments')?.value
-                                | number : '1.2-2'
+                                | number: '1.2-2'
                             "
                             readonly
                           />
@@ -407,7 +429,7 @@
                             class="form-control form-control-sm text-end fw-bold"
                             [value]="
                               deliveryForm.get('remainingBalance')?.value
-                                | number : '1.2-2'
+                                | number: '1.2-2'
                             "
                             readonly
                           />
@@ -509,8 +531,8 @@
 </section>
 
 <!-- Hidden Invoice Component for Printing -->
-@if(showInvoice && invoiceId) {
-<div style="position: absolute; left: -9999px">
-  <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
-</div>
+@if (showInvoice && invoiceId) {
+  <div style="position: absolute; left: -9999px">
+    <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
+  </div>
 }

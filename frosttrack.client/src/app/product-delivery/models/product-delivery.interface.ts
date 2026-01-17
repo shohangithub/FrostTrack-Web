@@ -25,6 +25,7 @@ export interface IDeliveryDetailRequest {
   deliveryQuantity: number;
   baseQuantity: number;
   chargeAmount: number;
+  labourCharge: number;
   adjustmentValue: number;
 }
 
@@ -59,6 +60,7 @@ export interface IDeliveryDetailResponse {
   deliveryQuantity: number;
   baseQuantity: number;
   chargeAmount: number;
+  labourCharge: number;
   adjustmentValue: number;
 }
 

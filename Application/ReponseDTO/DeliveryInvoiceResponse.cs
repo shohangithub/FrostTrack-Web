@@ -33,6 +33,7 @@ public class BookingInvoiceInfo
 {
     public Guid BookingId { get; set; }
     public string BookingNumber { get; set; } = string.Empty;
+    public string? ReferenceNumber { get; set; }
     public DateTime BookingDate { get; set; }
     public DateTime LastDeliveryDate { get; set; }
     public decimal TotalBookingAmount { get; set; }
@@ -48,6 +49,7 @@ public class DeliveryInvoiceDetailResponse
     public float DeliveryQuantity { get; set; }
     public decimal BaseQuantity { get; set; }
     public decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
     public decimal BookingRate { get; set; }
     public int BillingCycles { get; set; }
     public string BillType { get; set; } = string.Empty;

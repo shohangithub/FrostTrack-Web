@@ -25,5 +25,6 @@ public record DeliveryDetailRequest
     public decimal BaseQuantity { get; init; }
     public int BillingCycles { get; init; } = 1;
     public decimal ChargeAmount { get; init; }
+    public decimal LabourCharge { get; init; }
     public decimal AdjustmentValue { get; init; }
 }

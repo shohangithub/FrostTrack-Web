@@ -55,13 +55,14 @@ public class DeliveryDetailResponse
     public float DeliveryQuantity { get; set; }
     public decimal BaseQuantity { get; set; }
     public decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
     public decimal AdjustmentValue { get; set; }
 
     // For tracking remaining quantity
     public float BookingQuantity { get; set; }
     public float TotalDeliveredQuantity { get; set; }
     public float RemainingQuantity { get; set; }
-    
+
     // For recalculating charges on edit
     public int BillingCycles { get; set; }
     public decimal BookingRate { get; set; }
@@ -72,8 +73,7 @@ public class BookingForDeliveryResponse
 {
     public Guid Id { get; set; }
     public string BookingNumber { get; set; } = string.Empty;
-    public DateTime BookingDate { get; set; }
-    public int CustomerId { get; set; }
+    public DateTime BookingDate { get; set; }    public string? ReferenceNumber { get; set; }    public int CustomerId { get; set; }
     public string? CustomerName { get; set; }
     public int BranchId { get; set; }
     public string? BranchName { get; set; }
