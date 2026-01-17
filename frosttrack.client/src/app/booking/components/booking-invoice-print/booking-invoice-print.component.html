@@ -1,59 +1,61 @@
 <section class="main-content">
   <div class="section-body">
-    @if(!isPrintFromRoute) {
-    <div class="row clearfix">
-      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card mt-2">
-          <span class="card-label">Booking Invoices</span>
-          <div class="p-10 mt-2">
-            <form
-              class="product-form"
-              [formGroup]="criteriaForm"
-              (ngSubmit)="getBookingData()"
-            >
-              <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <label for="booking" class="col-sm-3 col-form-label"
-                      >Find Booking:</label
-                    >
-                    <div class="col-sm-9">
-                      <div class="input-group input-group-select">
-                        <ng-select
-                          [items]="bookingList"
-                          bindLabel="text"
-                          bindValue="value"
-                          placeholder="Select Booking"
-                          formControlName="bookingId"
-                          [loading]="isBookingLoading"
-                          (change)="getBookingData()"
-                        >
-                        </ng-select>
-                        <div class="input-group-append">
-                          <button
-                            type="submit"
-                            class="btn btn-primary px-2"
-                            [disabled]="!criteriaForm.valid"
+    @if (!isPrintFromRoute) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card mt-2">
+            <span class="card-label">Booking Invoices</span>
+            <div class="p-10 mt-2">
+              <form
+                class="product-form"
+                [formGroup]="criteriaForm"
+                (ngSubmit)="getBookingData()"
+              >
+                <div class="row">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="form-group row">
+                      <label for="booking" class="col-sm-3 col-form-label"
+                        >Find Booking:</label
+                      >
+                      <div class="col-sm-9">
+                        <div class="input-group input-group-select">
+                          <ng-select
+                            [items]="bookingList"
+                            bindLabel="text"
+                            bindValue="value"
+                            placeholder="Select Booking"
+                            formControlName="bookingId"
+                            [loading]="isBookingLoading"
+                            (change)="getBookingData()"
                           >
-                            Show Invoice
-                          </button>
+                          </ng-select>
+                          <div class="input-group-append">
+                            <button
+                              type="submit"
+                              class="btn btn-primary px-2"
+                              [disabled]="!criteriaForm.valid"
+                            >
+                              Show Invoice
+                            </button>
+                          </div>
                         </div>
                       </div>
+                      @if (
+                        !criteriaForm.get("bookingId")?.valid &&
+                        criteriaForm.get("bookingId")?.touched
+                      ) {
+                        <small class="form-text text-danger text-end">
+                          Booking is required
+                        </small>
+                      }
                     </div>
-                    @if (!criteriaForm.get('bookingId')?.valid &&
-                    criteriaForm.get('bookingId')?.touched) {
-                    <small class="form-text text-danger text-end">
-                      Booking is required
-                    </small>
-                    }
                   </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     }
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -62,10 +64,10 @@
           <div class="row no-print mb-3">
             <div class="col-12">
               <div class="d-flex gap-2 justify-content-end">
-                @if(isPrintFromRoute) {
-                <button type="button" class="btn" (click)="goBack()">
-                  <i class="fas fa-arrow-left me-1"></i>Go Back
-                </button>
+                @if (isPrintFromRoute) {
+                  <button type="button" class="btn" (click)="goBack()">
+                    <i class="fas fa-arrow-left me-1"></i>Go Back
+                  </button>
                 }
                 <!--  <button type="button" class="btn" (click)="downloadPDF()">
                   <i class="fas fa-download me-1"></i>PDF Download
@@ -127,7 +129,7 @@
                         </td>
                         <td class="info-label">জমাদানের তারিখ :</td>
                         <td class="info-value">
-                          {{ bookingInvoice.bookingDate | date : "dd/MM/yyyy" }}
+                          {{ bookingInvoice.bookingDate | date: "dd/MM/yyyy" }}
                         </td>
                       </tr>
                       <tr>
@@ -137,7 +139,7 @@
                         </td>
                         <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ:</td>
                         <td class="info-value">
-                          {{ getLastDeliveryDate() | date : "dd/MM/yyyy" }}
+                          {{ getLastDeliveryDate() | date: "dd/MM/yyyy" }}
                         </td>
                       </tr>
                       <tr>
@@ -155,13 +157,20 @@
                     <table class="products-table">
                       <thead>
                         <tr>
-                          <th>পণ্যের নাম/খাত</th>
-                          <th>গ্রহণকৃত একক</th>
+                          <th>পণ্যের নাম</th>
+                          <th>
+                            গ্রহণকৃত <br />
+                            একক
+                          </th>
                           <th>সংখ্যা</th>
-                          <th>পরিমাণ (কেজি)</th>
+                          <th>
+                            পরিমাণ <br />
+                            (কেজি)
+                          </th>
                           <th>ভাড়ার হার<br />(প্রতি মাস)</th>
-                          <th>মজুরি খরচ</th>
                           <th>মোট ভাড়া</th>
+                          <th>লেবার চার্জ</th>
+                          <th>সর্বমোট</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -176,29 +185,67 @@
                             {{ item.bookingUnit.unitName || "" }}
                           </td>
                           <td class="text-center">
-                            {{ item.bookingQuantity | number : "1.0-0" }}
+                            {{ item.bookingQuantity | number: "1.0-0" }}
                           </td>
                           <td class="text-center">
-                            {{ item.baseQuantity | number : "1.2-2" }}
+                            {{ item.baseQuantity | number: "1.2-2" }}
                           </td>
                           <!-- <td class="text-center">
                             {{ item.bookingQuantity | number : "1.0-0" }}
                           </td> -->
                           <td class="text-center">
-                            {{ item.bookingRate | number : "1.2-2" }}
-                          </td>
-                          <td class="text-center">
-                            {{ item.labourCharge | number : "1.2-2" }}
+                            {{ item.bookingRate | number: "1.2-2" }}
                           </td>
                           <td class="text-center">
                             {{
                               item.bookingQuantity * item.bookingRate
-                                | number : "1.2-2"
+                                | number: "1.2-2"
+                            }}
+                          </td>
+                          <td class="text-center">
+                            {{ item.labourCharge | number: "1.2-2" }}
+                          </td>
+                          <td class="text-center">
+                            {{
+                              item.bookingQuantity * item.bookingRate +
+                                item.labourCharge | number: "1.2-2"
                             }}
                           </td>
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+
+                  <!-- Signature Section -->
+                  <div
+                    class="signature-section"
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      margin-top: 45px;
+                      padding: 10px 0;
+                    "
+                  >
+                    <div style="text-align: center; flex: 1">
+                      <div
+                        style="
+                          border-bottom: 1px solid #000;
+                          width: 200px;
+                          margin: 0 auto 5px;
+                        "
+                      ></div>
+                      <div>মালিক/প্রতিনিধির স্বাক্ষর</div>
+                    </div>
+                    <div style="text-align: center; flex: 1">
+                      <div
+                        style="
+                          border-bottom: 1px solid #000;
+                          width: 200px;
+                          margin: 0 auto 5px;
+                        "
+                      ></div>
+                      <div>কর্তৃপক্ষের স্বাক্ষর</div>
+                    </div>
                   </div>
 
                   <!-- ডেলিভারী পণ্যের বিবরণ (Delivery Product Details) -->
@@ -207,19 +254,23 @@
                     <table class="delivery-table">
                       <thead>
                         <tr>
-                          <th>তারিখ</th>
-                          <th>সংখ্যা</th>
+                          <th style="width: 60px">তারিখ</th>
+                          <th style="width: 60px">সংখ্যা</th>
                           <th>আদায়কৃত ভাড়া</th>
-                          <th>বিস্তারিত কর্তৃপক্ষীয় দস্তখত</th>
+                          <th>লেবার চার্জ</th>
+                          <th style="width: 80px">মোট</th>
                           <th>অবশিষ্ট পণ্য</th>
-                          <th>ডেলিভারীর সময়</th>
-                          <th>স্বাক্ষর</th>
+                          <th style="width: 60px">ডেলিভারীর সময়</th>
+                          <th>কর্তৃপক্ষের স্বাক্ষর</th>
+                          <th>গ্রহণকারীর স্বাক্ষর</th>
                         </tr>
                       </thead>
                       <tbody>
                         <!-- Empty rows for delivery records -->
                         <tr *ngFor="let row of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]">
                           <td style="height: 40px"></td>
+                          <td></td>
+                          <td></td>
                           <td></td>
                           <td></td>
                           <td></td>
@@ -233,8 +284,7 @@
 
                   <!-- Footer Note -->
                   <div class="footer-note">
-                    (বিশেষ দ্রষ্টব্য: অপর পৃষ্ঠায় দস্তখত করিয়া রশিদটি বুঝিয়া
-                    নিবেন।)
+                    (সকল শর্তাবলী পড়িয়া ও বুঝিয়া স্বাক্ষর করিয়া নিলাম)
                   </div>
 
                   <!-- Report Footer Component -->
