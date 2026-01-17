@@ -101,42 +101,11 @@
                   <div class="booking-info-box">
                     <table class="info-table">
                       <tr>
-                        @if (transactionReceipt.customerName) {
-                          <td class="info-label">
-                            গ্রাহকের নাম / Customer Name:
-                          </td>
-                          <td class="info-value">
-                            {{ transactionReceipt.customerName || "" }}
-                          </td>
-                        } @else if (transactionReceipt.employeeName) {
-                          <td class="info-label">
-                            কর্মচারীর নাম / Employee Name:
-                          </td>
-                          <td class="info-value">
-                            {{ transactionReceipt.employeeName || "" }}
-                          </td>
-                        } @else if (transactionReceipt.vendorName) {
-                          <td class="info-label">প্রদানকারী / Vendor Name:</td>
-                          <td class="info-value">
-                            {{ transactionReceipt.vendorName || "" }}
-                          </td>
-                        } @else {
-                          <td class="info-label">বিবরণ / Description:</td>
-                          <td class="info-value">
-                            {{ transactionReceipt.description || "" }}
-                          </td>
-                        }
-                        <td class="info-label">রসিদ নম্বর / Receipt No:</td>
+                        <td class="info-label">রসিদ নম্বর:</td>
                         <td class="info-value">
                           {{ transactionReceipt.transactionCode || "" }}
                         </td>
-                      </tr>
-                      <tr>
-                        <td class="info-label">লেনদেনের ধরন / Type:</td>
-                        <td class="info-value">
-                          {{ transactionReceipt.transactionHead?.name || "" }}
-                        </td>
-                        <td class="info-label">তারিখ / Date:</td>
+                        <td class="info-label">তারিখ:</td>
                         <td class="info-value">
                           {{
                             transactionReceipt.transactionDate
@@ -144,6 +113,25 @@
                           }}
                         </td>
                       </tr>
+                      <tr>
+                        @if (transactionReceipt.customerName) {
+                          <td class="info-label">গ্রাহকের নাম:</td>
+                          <td class="info-value">
+                            {{ transactionReceipt.customerName || "" }}
+                          </td>
+                        } @else if (transactionReceipt.employeeName) {
+                          <td class="info-label">কর্মচারীর নাম:</td>
+                          <td class="info-value">
+                            {{ transactionReceipt.employeeName || "" }}
+                          </td>
+                        } @else if (transactionReceipt.vendorName) {
+                          <td class="info-label">প্রদানকারী:</td>
+                          <td class="info-value">
+                            {{ transactionReceipt.vendorName || "" }}
+                          </td>
+                        }
+                      </tr>
+
                       <!-- <tr>
                         <td class="info-label">
                           পেমেন্ট পদ্ধতি / Payment Method:
@@ -162,9 +150,7 @@
                       </tr> -->
                       @if (transactionReceipt.paymentReference) {
                         <tr>
-                          <td class="info-label">
-                            পেমেন্ট রেফারেন্স / Payment Reference:
-                          </td>
+                          <td class="info-label">পেমেন্ট রেফারেন্স:</td>
                           <td class="info-value" colspan="3">
                             {{ transactionReceipt.paymentReference || "" }}
                           </td>
@@ -174,13 +160,18 @@
                   </div>
 
                   <!-- Transaction Details -->
-                  <div class="section-title">লেনদেনের বিবরণ</div>
+                  <div class="section-title" style="text-decoration: none">
+                    {{
+                      transactionReceipt.transactionHead?.name || "বিবরণ"
+                        | uppercase
+                    }}
+                  </div>
                   <div class="stored-products-section">
                     <table class="products-table">
                       <thead>
                         <tr>
-                          <th>বিবরণ / Description</th>
-                          <th>পরিমাণ / Amount</th>
+                          <th>বিবরণ</th>
+                          <th>পরিমাণ</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -195,7 +186,7 @@
                         </tr>
                         @if (transactionReceipt.relatedLabourCharge) {
                           <tr>
-                            <td>লেবার চার্জ / Labour Charge</td>
+                            <td>লেবার চার্জ</td>
                             <td class="text-center">
                               {{
                                 Math.abs(transactionReceipt.relatedLabourCharge)
@@ -206,7 +197,7 @@
                         }
                         @if (transactionReceipt.discountAmount !== 0) {
                           <tr>
-                            <td>ছাড় / Discount</td>
+                            <td>ছাড়</td>
                             <td class="text-center">
                               {{
                                 Math.abs(transactionReceipt.discountAmount)
@@ -217,7 +208,7 @@
                         }
                         @if (transactionReceipt.adjustmentValue !== 0) {
                           <tr>
-                            <td>সমন্বয় / Adjustment</td>
+                            <td>সমন্বয়</td>
                             <td class="text-center">
                               {{
                                 transactionReceipt.adjustmentValue
@@ -229,9 +220,7 @@
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td class="text-end fw-bold">
-                            মোট পরিমাণ / Total Amount:
-                          </td>
+                          <td class="text-end fw-bold">মোট পরিমাণ:</td>
                           <td class="text-center fw-bold">
                             {{
                               Math.abs(
@@ -247,7 +236,7 @@
 
                   <!-- Amount in Words -->
                   <div class="amount-words">
-                    <strong>কথায় পরিমাণ / Amount in Words:</strong>
+                    <strong>কথায় পরিমাণ:</strong>
                     <span class="ms-2">{{
                       convertToWords(
                         Math.abs(
@@ -261,7 +250,7 @@
                   <!-- Notes Section -->
                   @if (transactionReceipt.note) {
                     <div class="notes-section">
-                      <strong>মন্তব্য / Notes:</strong>
+                      <strong>মন্তব্য:</strong>
                       <p>{{ transactionReceipt.note }}</p>
                     </div>
                   }
@@ -277,20 +266,10 @@
                             : "প্রদানকারীর স্বাক্ষর"
                         }}
                       </div>
-                      <div class="signature-sublabel">
-                        {{
-                          transactionReceipt.transactionHead?.type === "CREDIT"
-                            ? "(Received By)"
-                            : "(Paid By)"
-                        }}
-                      </div>
                     </div>
                     <div class="signature-box">
                       <div class="signature-line"></div>
                       <div class="signature-label">কর্তৃপক্ষের স্বাক্ষর</div>
-                      <div class="signature-sublabel">
-                        (Authorized Signature)
-                      </div>
                     </div>
                   </div>
 
