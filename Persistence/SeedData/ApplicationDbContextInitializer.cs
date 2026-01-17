@@ -361,6 +361,24 @@ public class ApplicationDbContextInitializer
                 CreatedById = userId,
                 TenantId = _tenantId
             },
+              new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "LABOUR_CHARGE",
+                Name = "Labour Charge",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "",
+                Description = "Charges for labour services provided",
+                UsageFor = UsageFor.LABOUR_CHARGE,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 1,
+                ColorCode = "#28a745",
+                IconClass = "fa-money-bill-wave",
+                CreatedTime = DateTime.UtcNow,
+                CreatedById = userId,
+                TenantId = _tenantId
+            },
             new TransactionHead
             {
                 Id = Guid.NewGuid(),

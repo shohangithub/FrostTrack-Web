@@ -176,6 +176,12 @@ public class DeliveryService : IDeliveryService
             // Transaction 2: Labour Charge (if exists)
             if (totalLabourCharge > 0)
             {
+                // Get LABOUR_CHARGE transaction head
+                var transactionHeadForLabourCharge = await _transactionHeadRepository.Query()
+                    .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.CREDIT && th.UsageFor == UsageFor.LABOUR_CHARGE && th.IsActive);
+                if (transactionHeadForLabourCharge == null)
+                    throw new Exception("LABOUR_CHARGE transaction head not found");
+
                 var lastCode2 = await _transactionRepository.Query()
                     .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
                     .OrderByDescending(x => x.TransactionCode)
@@ -196,7 +202,7 @@ public class DeliveryService : IDeliveryService
                     Id: Guid.NewGuid(),
                     TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence2),
                     TransactionDate: DateTime.UtcNow,
-                    TransactionHeadId: transactionHead.Id,
+                    TransactionHeadId: transactionHeadForLabourCharge.Id,
                     EntityName: TransactionEntityNames.DELIVERY,
                     EntityId: entity.Id.ToString(),
                     BranchId: entity.BranchId,
