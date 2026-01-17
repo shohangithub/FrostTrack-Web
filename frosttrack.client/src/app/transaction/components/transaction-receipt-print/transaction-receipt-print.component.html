@@ -116,17 +116,17 @@
                       <tr>
                         @if (transactionReceipt.customerName) {
                           <td class="info-label">গ্রাহকের নাম:</td>
-                          <td class="info-value">
+                          <td class="info-value" colspan="3">
                             {{ transactionReceipt.customerName || "" }}
                           </td>
                         } @else if (transactionReceipt.employeeName) {
                           <td class="info-label">কর্মচারীর নাম:</td>
-                          <td class="info-value">
+                          <td class="info-value" colspan="3">
                             {{ transactionReceipt.employeeName || "" }}
                           </td>
                         } @else if (transactionReceipt.vendorName) {
                           <td class="info-label">প্রদানকারী:</td>
-                          <td class="info-value">
+                          <td class="info-value" colspan="3">
                             {{ transactionReceipt.vendorName || "" }}
                           </td>
                         }
