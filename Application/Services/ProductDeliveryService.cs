@@ -1003,6 +1003,32 @@ public class DeliveryService : IDeliveryService
         return deliveries;
     }
 
+    public async Task<List<DeliveryResponse>> GetAllDeliveriesAsync()
+    {
+        var deliveries = await _repository.Query()
+            .OrderByDescending(x => x.DeliveryDate)
+            .Select(x => new DeliveryResponse
+            {
+                Id = x.Id,
+                DeliveryNumber = x.DeliveryNumber,
+                DeliveryDate = x.DeliveryDate,
+                BookingId = x.BookingId,
+                BookingNumber = x.Booking.BookingNumber,
+                CustomerId = x.Booking.CustomerId,
+                CustomerName = x.Booking.Customer.CustomerName,
+                BranchId = x.BranchId,
+                ChargeAmount = x.ChargeAmount,
+                LabourCharge = x.DeliveryDetails.Sum(dd => dd.LabourCharge),
+                AdjustmentValue = x.AdjustmentValue,
+                PaymentStatus = x.PaymentStatus,
+                PaymentDate = x.PaymentDate,
+                TransactionId = x.TransactionId
+            })
+            .ToListAsync();
+
+        return deliveries;
+    }
+
     public async Task<List<DeliveryResponse>> GetDeliveriesByTransactionIdAsync(Guid transactionId)
     {
         var deliveries = await _repository.Query()

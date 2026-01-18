@@ -19,17 +19,17 @@ import { ErrorHandlerService } from '@core/service/error-handler.service';
 export class DeliveryService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/delivery`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IDeliveryListResponse>> {
     return this.get<PaginationResult<IDeliveryListResponse>>(
-      getApiEndpoint(pagination, this.path + `/get-with-pagination`)
+      getApiEndpoint(pagination, this.path + `/get-with-pagination`),
     );
   }
 
@@ -58,24 +58,24 @@ export class DeliveryService extends BaseService {
   }
 
   getCustomerStockByCustomerId(
-    customerId: number
+    customerId: number,
   ): Observable<ICustomerStockResponse[]> {
     return this.get<ICustomerStockResponse[]>(
-      this.path + '/customer-stock/' + customerId
+      this.path + '/customer-stock/' + customerId,
     );
   }
 
   getUnpaidDeliveriesByCustomer(
-    customerId: number
+    customerId: number,
   ): Observable<IDeliveryResponse[]> {
     return this.get<IDeliveryResponse[]>(
-      this.path + '/unpaid-by-customer/' + customerId
+      this.path + '/unpaid-by-customer/' + customerId,
     );
   }
 
   getUnpaidDeliveryByCode(deliveryCode: string): Observable<IDeliveryResponse> {
     return this.get<IDeliveryResponse>(
-      this.path + '/unpaid-by-code/' + deliveryCode
+      this.path + '/unpaid-by-code/' + deliveryCode,
     );
   }
 
@@ -83,11 +83,15 @@ export class DeliveryService extends BaseService {
     return this.get<IDeliveryResponse[]>(this.path + '/unpaid-all');
   }
 
+  getAllDeliveries(): Observable<IDeliveryResponse[]> {
+    return this.get<IDeliveryResponse[]>(this.path + '/all');
+  }
+
   getDeliveriesByTransactionId(
-    transactionId: string
+    transactionId: string,
   ): Observable<IDeliveryResponse[]> {
     return this.get<IDeliveryResponse[]>(
-      this.path + '/by-transaction/' + transactionId
+      this.path + '/by-transaction/' + transactionId,
     );
   }
 }

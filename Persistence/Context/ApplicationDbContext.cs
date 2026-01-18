@@ -37,6 +37,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<BookingDetail> BookingDetails { get; set; }
     public DbSet<Delivery> Deliveries { get; set; }
     public DbSet<DeliveryDetail> DeliveryDetails { get; set; }
+    public DbSet<DeliveryChallan> DeliveryChallans { get; set; }
+    public DbSet<DeliveryChallanItem> DeliveryChallanItems { get; set; }
     public DbSet<SupplierPayment> SupplierPayments { get; set; }
     public DbSet<SupplierPaymentDetail> SupplierPaymentDetails { get; set; }
     public DbSet<Sales> Sales { get; set; }
@@ -406,9 +408,34 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<DeliveryChallan>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+
+            entity.HasOne(x => x.Branch)
+                  .WithMany()
+                  .HasForeignKey(x => x.BranchId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(x => x.ChallanItems)
+                  .WithOne(x => x.DeliveryChallan)
+                  .HasForeignKey(x => x.DeliveryChallanId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DeliveryChallanItem>(entity =>
+        {
+            entity.HasOne(x => x.Delivery)
+                  .WithMany()
+                  .HasForeignKey(x => x.DeliveryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
         //// Apply TransactionHead configuration
         //modelBuilder.ApplyConfiguration(new TransactionHeadConfiguration());
-        
+
         // Apply DeliveryDetail configuration for cascade delete
         modelBuilder.ApplyConfiguration(new DeliveryDetailConfiguration());
     }

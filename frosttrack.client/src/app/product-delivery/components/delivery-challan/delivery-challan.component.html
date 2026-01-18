@@ -1,0 +1,358 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card mt-2">
+          <span class="card-label">
+            {{ isEditMode ? "Edit" : "Add" }} Delivery Challan
+          </span>
+          <div class="p-10 mt-2">
+            @if (isLoading) {
+              <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            } @else {
+              <form [formGroup]="challanForm" (ngSubmit)="onSubmit()">
+                <!-- Basic Information -->
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="challanNumber"
+                        >Challan Number
+                        <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="text"
+                        id="challanNumber"
+                        class="form-control"
+                        formControlName="challanNumber"
+                        readonly
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="challanDate"
+                        >Challan Date <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="date"
+                        id="challanDate"
+                        class="form-control"
+                        formControlName="challanDate"
+                        [class.is-invalid]="
+                          challanForm.get('challanDate')?.invalid &&
+                          challanForm.get('challanDate')?.touched
+                        "
+                      />
+                      @if (
+                        challanForm.get("challanDate")?.invalid &&
+                        challanForm.get("challanDate")?.touched
+                      ) {
+                        <small class="form-text text-danger"
+                          >Challan date is required</small
+                        >
+                      }
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="status"
+                        >Status <span class="text-danger">*</span></label
+                      >
+                      <ng-select
+                        id="status"
+                        [items]="statusOptions"
+                        bindLabel="label"
+                        bindValue="value"
+                        formControlName="status"
+                        [clearable]="false"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Vehicle Information -->
+                <h6 class="mt-3 mb-2">Vehicle Information</h6>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="vehicleNumber"
+                        >Vehicle Number
+                        <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="text"
+                        id="vehicleNumber"
+                        class="form-control text-uppercase"
+                        formControlName="vehicleNumber"
+                        placeholder="e.g., ABC-1234"
+                        [class.is-invalid]="
+                          challanForm.get('vehicleNumber')?.invalid &&
+                          challanForm.get('vehicleNumber')?.touched
+                        "
+                      />
+                      @if (
+                        challanForm.get("vehicleNumber")?.invalid &&
+                        challanForm.get("vehicleNumber")?.touched
+                      ) {
+                        <small class="form-text text-danger"
+                          >Valid vehicle number is required</small
+                        >
+                      }
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="vehicleType">Vehicle Type</label>
+                      <ng-select
+                        id="vehicleType"
+                        [items]="vehicleTypes"
+                        bindLabel="label"
+                        bindValue="value"
+                        formControlName="vehicleType"
+                        placeholder="Select vehicle type"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="driverName">Driver Name</label>
+                      <input
+                        type="text"
+                        id="driverName"
+                        class="form-control"
+                        formControlName="driverName"
+                        placeholder="Enter driver name"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="form-group">
+                      <label for="driverContact">Driver Contact</label>
+                      <input
+                        type="text"
+                        id="driverContact"
+                        class="form-control"
+                        formControlName="driverContact"
+                        placeholder="e.g., +8801XXXXXXXXX"
+                        [class.is-invalid]="
+                          challanForm.get('driverContact')?.invalid &&
+                          challanForm.get('driverContact')?.touched
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="row">
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-group">
+                      <label for="transportCompany">Transport Company</label>
+                      <input
+                        type="text"
+                        id="transportCompany"
+                        class="form-control"
+                        formControlName="transportCompany"
+                        placeholder="Enter transport company"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-group">
+                      <label for="destination">Destination</label>
+                      <input
+                        type="text"
+                        id="destination"
+                        class="form-control"
+                        formControlName="destination"
+                        placeholder="Enter destination"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-group">
+                      <label for="remarks">Remarks</label>
+                      <input
+                        type="text"
+                        id="remarks"
+                        class="form-control"
+                        formControlName="remarks"
+                        placeholder="Additional remarks"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Timing Information (optional, shown for In Transit/Delivered) -->
+                @if (challanForm.get("status")?.value !== "Pending") {
+                  <div class="row">
+                    <div class="col-lg-3 col-md-6">
+                      <div class="form-group">
+                        <label for="dispatchTime">Dispatch Time</label>
+                        <input
+                          type="datetime-local"
+                          id="dispatchTime"
+                          class="form-control"
+                          formControlName="dispatchTime"
+                        />
+                      </div>
+                    </div>
+
+                    @if (challanForm.get("status")?.value === "Delivered") {
+                      <div class="col-lg-3 col-md-6">
+                        <div class="form-group">
+                          <label for="deliveryTime">Delivery Time</label>
+                          <input
+                            type="datetime-local"
+                            id="deliveryTime"
+                            class="form-control"
+                            formControlName="deliveryTime"
+                          />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Delivery Selection -->
+                <h6 class="mt-3 mb-2">Select Deliveries</h6>
+                <div class="row">
+                  <div class="col-12">
+                    <div class="form-group">
+                      <ng-select
+                        [items]="availableDeliveries"
+                        bindLabel="deliveryNumber"
+                        placeholder="Search and select delivery"
+                        (change)="onDeliverySelect($event)"
+                        [clearable]="true"
+                      >
+                        <ng-template ng-option-tmp let-item="item">
+                          <div>
+                            <strong>{{ item.deliveryNumber }}</strong> -
+                            {{ item.customerName }}
+                            <br />
+                            <small
+                              >Date:
+                              {{ item.deliveryDate | date: "dd/MM/yyyy" }} |
+                              Amount: ৳{{
+                                item.chargeAmount | number: "1.2-2"
+                              }}</small
+                            >
+                          </div>
+                        </ng-template>
+                      </ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Selected Deliveries Table -->
+                @if (selectedDeliveries.length > 0) {
+                  <div class="table-responsive mt-3">
+                    <table class="table table-bordered table-hover">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width: 50px">#</th>
+                          <th>Delivery No</th>
+                          <th>Date</th>
+                          <th>Booking No</th>
+                          <th>Customer</th>
+                          <th class="text-end">Amount</th>
+                          <th style="width: 80px">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (
+                          delivery of selectedDeliveries;
+                          track delivery.id;
+                          let i = $index
+                        ) {
+                          <tr>
+                            <td class="text-center">{{ i + 1 }}</td>
+                            <td>{{ delivery.deliveryNumber }}</td>
+                            <td>
+                              {{ delivery.deliveryDate | date: "dd/MM/yyyy" }}
+                            </td>
+                            <td>{{ delivery.bookingNumber }}</td>
+                            <td>{{ delivery.customerName }}</td>
+                            <td class="text-end">
+                              ৳{{ delivery.chargeAmount | number: "1.2-2" }}
+                            </td>
+                            <td class="text-center">
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-danger"
+                                (click)="removeDelivery(delivery.id)"
+                                title="Remove"
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                      <tfoot class="table-light">
+                        <tr>
+                          <td colspan="5" class="text-end">
+                            <strong>Total:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong
+                              >৳{{ getTotalAmount() | number: "1.2-2" }}</strong
+                            >
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                }
+
+                <!-- Form Actions -->
+                <div class="row mt-4">
+                  <div class="col-12 text-end">
+                    <button
+                      type="button"
+                      class="btn btn-secondary me-2"
+                      (click)="cancel()"
+                      [disabled]="isSubmitting"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      [disabled]="
+                        isSubmitting ||
+                        challanForm.invalid ||
+                        selectedDeliveries.length === 0
+                      "
+                    >
+                      @if (isSubmitting) {
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                        ></span>
+                      }
+                      {{ isEditMode ? "Update" : "Create" }} Challan
+                    </button>
+                  </div>
+                </div>
+              </form>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

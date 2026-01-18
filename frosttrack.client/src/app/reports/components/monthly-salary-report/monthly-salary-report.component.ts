@@ -16,7 +16,6 @@ import { ISalaryPaymentList } from 'app/salary-payment/models/salary-payment.int
 import { ILookup } from '@core/models/lookup';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
-import { MonthYearTextPipe } from 'app/utils/pipes/month-year-text';
 
 @Component({
   selector: 'app-monthly-salary-report',
@@ -27,7 +26,6 @@ import { MonthYearTextPipe } from 'app/utils/pipes/month-year-text';
     CommonModule,
     NgSelectModule,
     NgxPrintModule,
-    MonthYearTextPipe,
     ReactiveFormsModule,
     ReportFooterComponent,
     ReportInvoiceHeaderComponent,

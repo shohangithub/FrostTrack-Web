@@ -140,6 +140,13 @@ public class DeliveryController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("all")]
+    public async Task<ActionResult<List<DeliveryResponse>>> GetAllDeliveries()
+    {
+        var result = await _service.GetAllDeliveriesAsync();
+        return Ok(result);
+    }
+
     [HttpGet("by-transaction/{transactionId}")]
     public async Task<ActionResult<List<DeliveryResponse>>> GetDeliveriesByTransactionId(Guid transactionId)
     {
