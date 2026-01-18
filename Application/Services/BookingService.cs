@@ -309,7 +309,8 @@ public class BookingService : IBookingService
                 BookingRate = bd.BookingRate,
                 BaseQuantity = bd.BaseQuantity,
                 BaseRate = bd.BaseRate,
-                LastDeliveryDate = bd.LastDeliveryDate
+                LastDeliveryDate = bd.LastDeliveryDate,
+                LabourCharge = bd.LabourCharge
             }).ToList()
         };
 
@@ -345,7 +346,8 @@ public class BookingService : IBookingService
                 DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
                 DeliveryQuantity = dd.DeliveryQuantity,
                 BaseQuantity = dd.BaseQuantity,
-                ChargeAmount = dd.ChargeAmount
+                ChargeAmount = dd.ChargeAmount,
+                LabourCharge = dd.LabourCharge
             }).ToList()
         }).ToList();
 

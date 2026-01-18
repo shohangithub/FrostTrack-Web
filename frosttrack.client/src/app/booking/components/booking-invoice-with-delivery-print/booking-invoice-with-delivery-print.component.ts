@@ -53,7 +53,7 @@ export class BookingInvoiceWithDeliveryPrintComponent implements OnInit {
     private router: Router,
     private bookingService: BookingService,
     private toastr: ToastrService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -115,7 +115,7 @@ export class BookingInvoiceWithDeliveryPrintComponent implements OnInit {
     if (!this.bookingInvoice?.bookingDetails) return 0;
     return this.bookingInvoice.bookingDetails.reduce(
       (total: number, detail: any) => total + detail.bookingQuantity,
-      0
+      0,
     );
   }
 
@@ -124,7 +124,7 @@ export class BookingInvoiceWithDeliveryPrintComponent implements OnInit {
     return this.bookingInvoice.bookingDetails.reduce(
       (total: number, detail: any) =>
         total + detail.bookingQuantity * detail.bookingRate,
-      0
+      0,
     );
   }
 
@@ -137,26 +137,39 @@ export class BookingInvoiceWithDeliveryPrintComponent implements OnInit {
     return lastDeliveryDate ? new Date(lastDeliveryDate) : null;
   }
 
-  getRemainingQuantity(productId: number): number {
+  getRemainingQuantity(productId: number, currentDeliveryId: string): number {
     if (!this.bookingInvoice) return 0;
 
     // Find total booked quantity for this product
     const bookedDetail = this.bookingInvoice.bookingDetails.find(
-      (bd) => bd.productId === productId
+      (bd) => bd.productId === productId,
     );
     if (!bookedDetail) return 0;
 
-    // Calculate total delivered quantity for this product
-    const totalDelivered = this.bookingInvoice.deliveries.reduce(
-      (sum, delivery) => {
-        const deliveredDetail = delivery.deliveryDetails.find(
-          (dd) => dd.productId === productId
-        );
-        return sum + (deliveredDetail?.deliveryQuantity || 0);
-      },
-      0
-    );
+    // Calculate total delivered quantity for this product up to and including current delivery
+    let totalDelivered = 0;
+    for (const delivery of this.bookingInvoice.deliveries) {
+      const deliveredDetail = delivery.deliveryDetails.find(
+        (dd) => dd.productId === productId,
+      );
+      if (deliveredDetail) {
+        totalDelivered += deliveredDetail.deliveryQuantity;
+      }
+
+      // Stop after processing the current delivery
+      if (delivery.id === currentDeliveryId) {
+        break;
+      }
+    }
 
     return bookedDetail.bookingQuantity - totalDelivered;
+  }
+
+  getTotalLabourCharge(deliveryDetails: any[]): number {
+    if (!deliveryDetails) return 0;
+    return deliveryDetails.reduce(
+      (total: number, detail: any) => total + (detail.labourCharge || 0),
+      0,
+    );
   }
 }

@@ -118,4 +118,5 @@ export interface IDeliveryDetailInfoResponse {
   deliveryQuantity: number;
   baseQuantity: number;
   chargeAmount: number;
+  labourCharge: number;
 }

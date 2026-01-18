@@ -30,6 +30,7 @@ public class BookingDetailWithDeliveryResponse
     public decimal BaseQuantity { get; set; }
     public decimal BaseRate { get; set; }
     public DateTime LastDeliveryDate { get; set; }
+    public decimal LabourCharge { get; set; }
 }
 
 public class DeliveryInfoResponse
@@ -52,4 +53,5 @@ public class DeliveryDetailInfoResponse
     public float DeliveryQuantity { get; set; }
     public decimal BaseQuantity { get; set; }
     public decimal ChargeAmount { get; set; }
+    public decimal LabourCharge { get; set; }
 }

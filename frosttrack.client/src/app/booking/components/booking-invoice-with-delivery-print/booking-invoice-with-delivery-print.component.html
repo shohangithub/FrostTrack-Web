@@ -39,11 +39,13 @@
                         </div>
                       </div>
                     </div>
-                    @if (!criteriaForm.get('bookingId')?.valid &&
-                    criteriaForm.get('bookingId')?.touched) {
-                    <small class="form-text text-danger text-end">
-                      Booking is required
-                    </small>
+                    @if (
+                      !criteriaForm.get("bookingId")?.valid &&
+                      criteriaForm.get("bookingId")?.touched
+                    ) {
+                      <small class="form-text text-danger text-end">
+                        Booking is required
+                      </small>
                     }
                   </div>
                 </div>
@@ -90,6 +92,7 @@
                   <app-report-invoice-header
                     [Title]="'বুকিং স্লিপ'"
                     [InvoiceNumber]="bookingInvoice.bookingNumber"
+                    [ReferenceNumber]="bookingInvoice.referenceNumber"
                   ></app-report-invoice-header>
 
                   <!-- Booking Number and Date Section -->
@@ -98,27 +101,27 @@
                       <tr>
                         <td class="info-label">পণ্যের মালিকের নাম :</td>
                         <td class="info-value">
-                          {{ bookingInvoice.customer.customerName }}
+                          {{ bookingInvoice.customer.customerName || "" }}
                         </td>
                         <td class="info-label">জমাদানের তারিখ :</td>
                         <td class="info-value">
-                          {{ bookingInvoice.bookingDate | date : "dd/MM/yyyy" }}
+                          {{ bookingInvoice.bookingDate | date: "dd/MM/yyyy" }}
                         </td>
                       </tr>
                       <tr>
                         <td class="info-label">মোবাইল/ফোন</td>
                         <td class="info-value">
-                          {{ bookingInvoice.customer.customerMobile }}
+                          {{ bookingInvoice.customer.customerMobile || "" }}
                         </td>
                         <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ:</td>
                         <td class="info-value">
-                          {{ getLastDeliveryDate() | date : "dd/MM/yyyy" }}
+                          {{ getLastDeliveryDate() | date: "dd/MM/yyyy" }}
                         </td>
                       </tr>
                       <tr>
                         <td class="info-label">প্রতিষ্ঠান/ঠিকানা :</td>
                         <td class="info-value" colspan="3">
-                          {{ bookingInvoice.customer.address }}
+                          {{ bookingInvoice.customer.address || "" }}
                         </td>
                       </tr>
                     </table>
@@ -130,12 +133,20 @@
                     <table class="products-table">
                       <thead>
                         <tr>
-                          <th>পণ্যের নাম/খাত</th>
-                          <th>গ্রহণকৃত একক</th>
+                          <th>পণ্যের নাম</th>
+                          <th>
+                            গ্রহণকৃত <br />
+                            একক
+                          </th>
                           <th>সংখ্যা</th>
-                          <th>পরিমাণ (কেজি)</th>
+                          <th>
+                            পরিমাণ <br />
+                            (কেজি)
+                          </th>
                           <th>ভাড়ার হার<br />(প্রতি মাস)</th>
                           <th>মোট ভাড়া</th>
+                          <th>লেবার চার্জ</th>
+                          <th>সর্বমোট</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -145,28 +156,75 @@
                             let i = index
                           "
                         >
-                          <td>{{ item.product.productName }}</td>
+                          <td>{{ item.product.productName || "" }}</td>
                           <td class="text-center">
-                            {{ item.bookingUnit.unitName }}
+                            {{ item.bookingUnit.unitName || "" }}
                           </td>
                           <td class="text-center">
-                            {{ item.bookingQuantity | number : "1.0-0" }}
+                            {{ item.bookingQuantity | number: "1.0-0" }}
                           </td>
                           <td class="text-center">
-                            {{ item.baseQuantity | number : "1.2-2" }}
+                            {{ item.baseQuantity | number: "1.2-2" }}
                           </td>
                           <td class="text-center">
-                            {{ item.bookingRate | number : "1.2-2" }}
+                            {{ item.bookingRate | number: "1.2-2" }}
                           </td>
                           <td class="text-center">
                             {{
                               item.bookingQuantity * item.bookingRate
-                                | number : "1.2-2"
+                                | number: "1.2-2"
+                            }}
+                          </td>
+                          <td class="text-center">
+                            {{ item.labourCharge | number: "1.2-2" }}
+                          </td>
+                          <td class="text-center">
+                            {{
+                              item.bookingQuantity * item.bookingRate +
+                                item.labourCharge | number: "1.2-2"
                             }}
                           </td>
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+
+                  <!-- Signature Section -->
+                  <div
+                    class="footer-note"
+                    style="font-weight: bold; margin-top: 20px"
+                  >
+                    ( সকল শর্তাবলী মানিয়া স্বাক্ষর করিলাম )
+                  </div>
+                  <div
+                    class="signature-section"
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      margin-top: 25px;
+                      padding-top: 10px;
+                    "
+                  >
+                    <div style="text-align: center; flex: 1">
+                      <div
+                        style="
+                          border-bottom: 1px solid #000;
+                          width: 200px;
+                          margin: 0 auto 5px;
+                        "
+                      ></div>
+                      <div>মালিক/প্রতিনিধির স্বাক্ষর</div>
+                    </div>
+                    <div style="text-align: center; flex: 1">
+                      <div
+                        style="
+                          border-bottom: 1px solid #000;
+                          width: 200px;
+                          margin: 0 auto 5px;
+                        "
+                      ></div>
+                      <div>কর্তৃপক্ষের স্বাক্ষর</div>
+                    </div>
                   </div>
 
                   <!-- ডেলিভারী পণ্যের বিবরণ (Delivery Product Details) -->
@@ -175,14 +233,16 @@
                     <table class="delivery-table">
                       <thead>
                         <tr>
-                          <th>তারিখ</th>
-                          <th>পণ্যের নাম</th>
-                          <th>সংখ্যা</th>
-                          <th>একক</th>
+                          <th style="width: 120px">তারিখ ও সময়</th>
+                          <th style="width: 80px">সংখ্যা</th>
+                          <th style="width: 60px">একক</th>
                           <th>পরিমাণ (কেজি)</th>
                           <th>আদায়কৃত ভাড়া</th>
+                          <th>লেবার চার্জ</th>
+                          <th style="width: 80px">মোট</th>
                           <th>অবশিষ্ট পণ্য</th>
-                          <th>স্বাক্ষর</th>
+                          <th>কর্তৃপক্ষের স্বাক্ষর</th>
+                          <th>গ্রহণকারীর স্বাক্ষর</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -199,16 +259,28 @@
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
+                              style="padding: 2px; white-space: nowrap"
                             >
-                              {{ delivery.deliveryDate | date : "dd/MM/yyyy" }}
+                              {{
+                                delivery.deliveryDate
+                                  | date: "dd/MM/yyyy hh:mm:ss a"
+                              }}
                             </td>
-                            <td>{{ detail.productName }}</td>
                             <td class="text-center">
-                              {{ detail.deliveryQuantity | number : "1.2-2" }}
+                              {{ detail.deliveryQuantity | number: "1.2-2" }}
                             </td>
-                            <td>{{ detail.deliveryUnitName }}</td>
                             <td class="text-center">
-                              {{ detail.baseQuantity | number : "1.2-2" }}
+                              {{ detail.deliveryUnitName }}
+                            </td>
+                            <td class="text-center">
+                              {{ detail.baseQuantity | number: "1.2-2" }}
+                            </td>
+                            <td
+                              *ngIf="isFirst"
+                              [attr.rowspan]="delivery.deliveryDetails.length"
+                              class="text-center"
+                            >
+                              {{ delivery.chargeAmount | number: "1.2-2" }}
                             </td>
                             <td
                               *ngIf="isFirst"
@@ -216,16 +288,35 @@
                               class="text-center"
                             >
                               {{
-                                delivery.chargeAmount + delivery.adjustmentValue
-                                  | number : "1.2-2"
+                                getTotalLabourCharge(delivery.deliveryDetails)
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                            <td
+                              *ngIf="isFirst"
+                              [attr.rowspan]="delivery.deliveryDetails.length"
+                              class="text-center"
+                            >
+                              {{
+                                delivery.chargeAmount +
+                                  getTotalLabourCharge(
+                                    delivery.deliveryDetails
+                                  ) +
+                                  delivery.adjustmentValue | number: "1.2-2"
                               }}
                             </td>
                             <td class="text-center">
                               {{
-                                getRemainingQuantity(detail.productId)
-                                  | number : "1.2-2"
+                                getRemainingQuantity(
+                                  detail.productId,
+                                  delivery.id
+                                ) | number: "1.2-2"
                               }}
                             </td>
+                            <td
+                              *ngIf="isFirst"
+                              [attr.rowspan]="delivery.deliveryDetails.length"
+                            ></td>
                             <td
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
@@ -240,9 +331,13 @@
                           "
                         >
                           <tr
-                            *ngFor="let row of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+                            *ngFor="
+                              let row of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                            "
                           >
                             <td style="height: 40px"></td>
+                            <td></td>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -257,9 +352,8 @@
                   </div>
 
                   <!-- Footer Note -->
-                  <div class="footer-note">
-                    (বিশেষ দ্রষ্টব্য: অপর পৃষ্ঠায় দস্তখত করিয়া রশিদটি বুঝিয়া
-                    নিবেন।)
+                  <div class="footer-note" style="text-align: right">
+                    ( অপর পৃষ্ঠায় শর্তাবলী উল্লেখিত )
                   </div>
 
                   <!-- Report Footer Component -->
