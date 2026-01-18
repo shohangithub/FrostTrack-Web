@@ -5,21 +5,28 @@ export const reportRoutes: Route[] = [
     path: 'stock',
     loadComponent: () =>
       import('./components/stock-report/stock-report.component').then(
-        (m) => m.StockReportComponent
+        (m) => m.StockReportComponent,
       ),
   },
   {
     path: 'daily-stock-book',
     loadComponent: () =>
       import('./components/daily-stock-book/daily-stock-book.component').then(
-        (m) => m.DailyStockBookComponent
+        (m) => m.DailyStockBookComponent,
+      ),
+  },
+  {
+    path: 'monthly-salary-report',
+    loadComponent: () =>
+      import('./components/monthly-salary-report/monthly-salary-report.component').then(
+        (m) => m.MonthlySalaryReportComponent,
       ),
   },
   {
     path: 'cashbook',
     loadComponent: () =>
       import('./components/cashbook/cashbook.component').then(
-        (m) => m.CashbookComponent
+        (m) => m.CashbookComponent,
       ),
   },
   // {
@@ -33,28 +40,28 @@ export const reportRoutes: Route[] = [
     path: 'bankbook',
     loadComponent: () =>
       import('./components/bankbook/bankbook.component').then(
-        (m) => m.BankbookComponent
+        (m) => m.BankbookComponent,
       ),
   },
   {
     path: 'general-ledger',
     loadComponent: () =>
       import('./components/general-ledger/general-ledger.component').then(
-        (m) => m.GeneralLedgerComponent
+        (m) => m.GeneralLedgerComponent,
       ),
   },
   {
     path: 'trial-balance',
     loadComponent: () =>
       import('./trial-balance/trial-balance.component').then(
-        (m) => m.TrialBalanceComponent
+        (m) => m.TrialBalanceComponent,
       ),
   },
   {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./balance-sheet/balance-sheet.component').then(
-        (m) => m.BalanceSheetComponent
+        (m) => m.BalanceSheetComponent,
       ),
   },
 ];
