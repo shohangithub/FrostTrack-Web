@@ -95,4 +95,18 @@ public class BookingController : ControllerBase
 
         return invoice;
     }
+
+    [HttpGet("customer-due-summary")]
+    public async Task<ActionResult<IEnumerable<CustomerDueSummaryResponse>>> GetCustomerDueSummary(CancellationToken cancellationToken)
+    {
+        var dueSummary = await _bookingService.GetCustomerDueSummaryAsync(cancellationToken);
+        return Ok(dueSummary);
+    }
+
+    [HttpGet("customer-due-detail/{customerId}")]
+    public async Task<ActionResult<IEnumerable<CustomerDueDetailResponse>>> GetCustomerDueDetail(int customerId, CancellationToken cancellationToken)
+    {
+        var dueDetail = await _bookingService.GetCustomerDueDetailAsync(customerId, cancellationToken);
+        return Ok(dueDetail);
+    }
 }

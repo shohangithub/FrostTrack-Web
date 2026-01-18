@@ -120,3 +120,44 @@ export interface IDeliveryDetailInfoResponse {
   chargeAmount: number;
   labourCharge: number;
 }
+
+// Customer Due Interfaces
+export interface ICustomerDueSummaryResponse {
+  customerId: number;
+  customerName: string;
+  customerMobile: string;
+  customerAddress: string;
+  totalBookings: number;
+  totalAmount: number;
+  totalPaid: number;
+  totalDue: number;
+  oldestBookingDate: string;
+  daysSinceOldestBooking: number;
+  status: 'normal' | 'warning' | 'danger';
+}
+
+export interface ICustomerDueDetailResponse {
+  bookingId: string;
+  bookingNumber: string;
+  bookingDate: string;
+  referenceNumber?: string;
+  totalAmount: number;
+  totalPaid: number;
+  totalDue: number;
+  daysSinceBooking: number;
+  status: 'normal' | 'warning' | 'danger';
+  deliveries: ICustomerDueDeliveryResponse[];
+}
+
+export interface ICustomerDueDeliveryResponse {
+  deliveryId: string;
+  deliveryNumber: string;
+  deliveryDate: string;
+  chargeAmount: number;
+  labourCharge: number;
+  adjustmentValue: number;
+  discountAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  deliveryDetails: IDeliveryDetailInfoResponse[];
+}

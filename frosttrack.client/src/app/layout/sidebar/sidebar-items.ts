@@ -167,6 +167,17 @@ export const ROUTES: RouteInfo[] = [
         badgeClass: '',
         submenu: [],
       },
+      {
+        path: '/booking/customer-due-list',
+        title: 'Customer Due List',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
     ],
   },
   {

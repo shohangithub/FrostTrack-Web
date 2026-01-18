@@ -1,0 +1,431 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Customer Due List</span>
+          <div class="p-10">
+            <!-- Filter and Search Section -->
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                <div class="row m-0">
+                  <div class="col-lg-4 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            [(ngModel)]="searchText"
+                            (keyup)="onSearch($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <!-- <div class="table-search-area">
+                    <div style="position: relative">
+                      <label
+                        for="search-input"
+                        style="
+                          position: absolute;
+                          left: 10px;
+                          top: 50%;
+                          transform: translateY(-50%);
+                          margin: 0;
+                          z-index: 1;
+                        "
+                      >
+                        <i class="material-icons search-icon">search</i>
+                      </label>
+                      <input
+                        id="search-input"
+                        placeholder="Search by customer name or mobile"
+                        type="text"
+                        class="browser-default search-field"
+                        [(ngModel)]="searchText"
+                        (keyup)="onSearch($event)"
+                        aria-label="Search box"
+                        style="padding-left: 40px; width: 100%"
+                      />
+                    </div>
+                  </div> -->
+                    </div>
+                  </div>
+                  <div class="col-lg-4 d-flex align-items-center pl-2">
+                    <select
+                      class="form-control"
+                      [(ngModel)]="selectedStatus"
+                      (change)="onStatusFilter($event)"
+                      style="height: 40px"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="normal">Normal</option>
+                      <option value="warning">Warning (25+ days)</option>
+                      <option value="danger">Danger (30+ days)</option>
+                    </select>
+                    <div class="col-lg-4 col-md-4 col-sm-6 text-end">
+                      <button
+                        class="btn btn-primary"
+                        (click)="fetchData()"
+                        [disabled]="loadingIndicator"
+                        style="height: 40px"
+                      >
+                        <i
+                          class="material-icons"
+                          style="vertical-align: middle; font-size: 18px"
+                          >refresh</i
+                        >
+                        <span style="vertical-align: middle">Refresh</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- <div class="col-lg-3 col-md-3 col-sm-6">
+                <select
+                  class="form-control"
+                  [(ngModel)]="selectedStatus"
+                  (change)="onStatusFilter($event)"
+                  style="height: 40px"
+                >
+                  <option value="all">All Status</option>
+                  <option value="normal">Normal</option>
+                  <option value="warning">Warning (25+ days)</option>
+                  <option value="danger">Danger (30+ days)</option>
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-3 col-sm-6 text-end">
+                <button
+                  class="btn btn-primary"
+                  (click)="fetchData()"
+                  [disabled]="loadingIndicator"
+                  style="height: 40px"
+                >
+                  <i
+                    class="material-icons"
+                    style="vertical-align: middle; font-size: 18px"
+                    >refresh</i
+                  >
+                  <span style="vertical-align: middle">Refresh</span>
+                </button>
+              </div>
+            </div> -->
+
+            <!-- Summary Statistics -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                  <div class="card-body">
+                    <h6>Total Customers</h6>
+                    <h3>{{ filteredData.length }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-success text-white">
+                  <div class="card-body">
+                    <h6>Total Amount</h6>
+                    <h3>{{ getTotalAmount() | number: "1.2-2" }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                  <div class="card-body">
+                    <h6>Total Paid</h6>
+                    <h3>{{ getTotalPaid() | number: "1.2-2" }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                  <div class="card-body">
+                    <h6>Total Due</h6>
+                    <h3>{{ getTotalDue() | number: "1.2-2" }}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Due Table -->
+            <ngx-datatable
+              #table
+              class="material expandable"
+              [rows]="filteredData"
+              [loadingIndicator]="loadingIndicator"
+              columnMode="force"
+              [headerHeight]="50"
+              [footerHeight]="50"
+              rowHeight="auto"
+              [scrollbarH]="scrollBarHorizontal"
+              [reorderable]="reorderable"
+            >
+              <!-- Row Detail Template -->
+              <ngx-datatable-row-detail
+                #myDetailRow
+                (toggle)="onDetailToggle($event)"
+              >
+                <ng-template
+                  let-row="row"
+                  let-expanded="expanded"
+                  ngx-datatable-row-detail-template
+                >
+                  <div class="detail-container" style="padding: 20px">
+                    <h5>Booking Details for {{ row.customerName }}</h5>
+
+                    @for (
+                      booking of getCustomerDetails(row.customerId);
+                      track booking.bookingId
+                    ) {
+                      <div class="booking-detail-card mb-3">
+                        <div class="card">
+                          <div
+                            class="card-header"
+                            [ngClass]="{
+                              'bg-danger text-white':
+                                booking.status === 'danger',
+                              'bg-warning': booking.status === 'warning',
+                              'bg-light': booking.status === 'normal',
+                            }"
+                          >
+                            <div class="row">
+                              <div class="col-md-3">
+                                <strong>Booking #:</strong>
+                                {{ booking.bookingNumber }}
+                              </div>
+                              <div class="col-md-3">
+                                <strong>Date:</strong>
+                                {{ booking.bookingDate | date: "dd/MM/yyyy" }}
+                              </div>
+                              <div class="col-md-2">
+                                <strong>Days:</strong>
+                                {{ booking.daysSinceBooking }}
+                              </div>
+                              <div class="col-md-2">
+                                <strong>Due:</strong>
+                                {{ booking.totalDue | number: "1.2-2" }}
+                              </div>
+                              <div class="col-md-2">
+                                <span
+                                  [ngClass]="getStatusClass(booking.status)"
+                                >
+                                  {{ getStatusText(booking.status) }}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="card-body">
+                            <h6>Deliveries:</h6>
+                            <table class="table table-sm table-bordered">
+                              <thead>
+                                <tr>
+                                  <th>Delivery #</th>
+                                  <th>Date</th>
+                                  <th>Products</th>
+                                  <th class="text-end">Charge</th>
+                                  <th class="text-end">Labour</th>
+                                  <th class="text-end">Adjustment</th>
+                                  <th class="text-end">Discount</th>
+                                  <th class="text-end">Paid</th>
+                                  <th class="text-end">Due</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (
+                                  delivery of booking.deliveries;
+                                  track delivery.deliveryId
+                                ) {
+                                  <tr>
+                                    <td>{{ delivery.deliveryNumber }}</td>
+                                    <td>
+                                      {{
+                                        delivery.deliveryDate
+                                          | date: "dd/MM/yyyy"
+                                      }}
+                                    </td>
+                                    <td>
+                                      <div class="small">
+                                        @for (
+                                          detail of delivery.deliveryDetails;
+                                          track detail.id
+                                        ) {
+                                          <div>
+                                            {{ detail.productName }}:
+                                            {{ detail.deliveryQuantity }}
+                                            {{ detail.deliveryUnitName }}
+                                          </div>
+                                        }
+                                      </div>
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                        delivery.chargeAmount | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                        delivery.labourCharge | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                        delivery.adjustmentValue
+                                          | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                        delivery.discountAmount
+                                          | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                        delivery.paidAmount | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      <strong>{{
+                                        delivery.dueAmount | number: "1.2-2"
+                                      }}</strong>
+                                    </td>
+                                  </tr>
+                                }
+                                @if (booking.deliveries.length === 0) {
+                                  <tr>
+                                    <td colspan="9" class="text-center">
+                                      No deliveries yet
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                              <tfoot>
+                                <tr class="table-active">
+                                  <th colspan="8" class="text-end">
+                                    Booking Total Due:
+                                  </th>
+                                  <th class="text-end">
+                                    {{ booking.totalDue | number: "1.2-2" }}
+                                  </th>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    }
+
+                    @if (getCustomerDetails(row.customerId).length === 0) {
+                      <div class="alert alert-info">
+                        Loading booking details...
+                      </div>
+                    }
+                  </div>
+                </ng-template>
+              </ngx-datatable-row-detail>
+              <!-- Customer Name -->
+              <ngx-datatable-column name="Customer Name" prop="customerName">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div>
+                    <strong>{{ row.customerName }}</strong>
+                    <div class="small text-muted">{{ row.customerMobile }}</div>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Total Bookings -->
+              <ngx-datatable-column
+                name="Bookings"
+                prop="totalBookings"
+                [width]="100"
+              >
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <div class="text-center">{{ value }}</div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Total Amount -->
+              <ngx-datatable-column name="Total Amount" prop="totalAmount">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <div class="text-end">{{ value | number: "1.2-2" }}</div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Total Paid -->
+              <ngx-datatable-column name="Paid" prop="totalPaid">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <div class="text-end">{{ value | number: "1.2-2" }}</div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Total Due -->
+              <ngx-datatable-column name="Due" prop="totalDue">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  <div class="text-end">
+                    <strong class="text-danger">{{
+                      value | number: "1.2-2"
+                    }}</strong>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Oldest Booking Date -->
+              <ngx-datatable-column
+                name="Oldest Booking"
+                prop="oldestBookingDate"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div>
+                    {{ row.oldestBookingDate | date: "dd/MM/yyyy" }}
+                    <div class="small text-muted">
+                      {{ row.daysSinceOldestBooking }} days ago
+                    </div>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Status -->
+              <ngx-datatable-column name="Status" prop="status" [width]="150">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span [ngClass]="getStatusClass(row.status)">
+                    {{ getStatusText(row.status) }}
+                  </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <!-- Actions -->
+              <ngx-datatable-column
+                name="Actions"
+                [sortable]="false"
+                [width]="60"
+              >
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-center">
+                    <button
+                      class="btn btn-tbl-info h-auto"
+                      (click)="printCustomerDue(row.customerId)"
+                    >
+                      <i class="fas fa-print"></i>
+                    </button>
+                  </span>
+                  <!-- <button
+                    class="tbl-action-btn tbl-action-btn-primary"
+                    (click)="printCustomerDue(row.customerId)"
+                    title="Print Customer Due Statement"
+                  >
+                    <i class="material-icons">print</i>
+                  </button> -->
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

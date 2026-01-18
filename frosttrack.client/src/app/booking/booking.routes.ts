@@ -10,49 +10,63 @@ export const BOOKING_ROUTE: Route[] = [
     path: 'list',
     loadComponent: () =>
       import('./components/booking-list/booking-list.component').then(
-        (m) => m.BookingListComponent
+        (m) => m.BookingListComponent,
       ),
   },
   {
     path: 'add',
     loadComponent: () =>
       import('./components/booking/booking.component').then(
-        (m) => m.BookingComponent
+        (m) => m.BookingComponent,
       ),
   },
   {
     path: 'edit/:id',
     loadComponent: () =>
       import('./components/booking/booking.component').then(
-        (m) => m.BookingComponent
+        (m) => m.BookingComponent,
       ),
   },
   {
     path: 'record/:id',
     loadComponent: () =>
       import('./components/booking-record/booking-record.component').then(
-        (m) => m.BookingRecordComponent
+        (m) => m.BookingRecordComponent,
       ),
   },
   {
     path: 'invoice-print',
     loadComponent: () =>
-      import(
-        './components/booking-invoice-print/booking-invoice-print.component'
-      ).then((m) => m.BookingInvoicePrintComponent),
+      import('./components/booking-invoice-print/booking-invoice-print.component').then(
+        (m) => m.BookingInvoicePrintComponent,
+      ),
   },
   {
     path: 'invoice-print/:id/:backurl',
     loadComponent: () =>
-      import(
-        './components/booking-invoice-print/booking-invoice-print.component'
-      ).then((m) => m.BookingInvoicePrintComponent),
+      import('./components/booking-invoice-print/booking-invoice-print.component').then(
+        (m) => m.BookingInvoicePrintComponent,
+      ),
   },
   {
     path: 'invoice-with-delivery-print',
     loadComponent: () =>
-      import(
-        './components/booking-invoice-with-delivery-print/booking-invoice-with-delivery-print.component'
-      ).then((m) => m.BookingInvoiceWithDeliveryPrintComponent),
+      import('./components/booking-invoice-with-delivery-print/booking-invoice-with-delivery-print.component').then(
+        (m) => m.BookingInvoiceWithDeliveryPrintComponent,
+      ),
+  },
+  {
+    path: 'customer-due-list',
+    loadComponent: () =>
+      import('./components/customer-due-list/customer-due-list.component').then(
+        (m) => m.CustomerDueListComponent,
+      ),
+  },
+  {
+    path: 'customer-due-print/:id',
+    loadComponent: () =>
+      import('./components/customer-due-print/customer-due-print.component').then(
+        (m) => m.CustomerDuePrintComponent,
+      ),
   },
 ];

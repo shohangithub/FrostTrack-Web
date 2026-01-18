@@ -9,6 +9,8 @@ import {
   IBookingListResponse,
   IBookingRequest,
   IBookingResponse,
+  ICustomerDueSummaryResponse,
+  ICustomerDueDetailResponse,
 } from '../models/booking.interface';
 import { ILookup } from '../../core/models/lookup';
 import { CodeResponse } from '../../core/models/code-response';
@@ -19,17 +21,17 @@ import { ErrorHandlerService } from '../../core/service/error-handler.service';
 export class BookingService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/booking`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IBookingListResponse>> {
     return this.get<PaginationResult<IBookingListResponse>>(
-      getApiEndpoint(pagination, this.path + `/get-with-pagination`)
+      getApiEndpoint(pagination, this.path + `/get-with-pagination`),
     );
   }
 
@@ -63,5 +65,19 @@ export class BookingService extends BaseService {
 
   getInvoiceWithDelivery(id: string): Observable<any> {
     return this.get<any>(this.path + `/invoice-with-delivery/${id}`);
+  }
+
+  getCustomerDueSummary(): Observable<ICustomerDueSummaryResponse[]> {
+    return this.get<ICustomerDueSummaryResponse[]>(
+      this.path + '/customer-due-summary',
+    );
+  }
+
+  getCustomerDueDetail(
+    customerId: number,
+  ): Observable<ICustomerDueDetailResponse[]> {
+    return this.get<ICustomerDueDetailResponse[]>(
+      this.path + `/customer-due-detail/${customerId}`,
+    );
   }
 }
