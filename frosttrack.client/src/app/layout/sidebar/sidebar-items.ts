@@ -228,7 +228,7 @@ export const ROUTES: RouteInfo[] = [
 
   {
     path: 'product-delivery/challan',
-    title: 'Delivery',
+    title: 'Challan',
     iconType: 'feather',
     icon: 'truck',
     class: 'menu-toggle',
