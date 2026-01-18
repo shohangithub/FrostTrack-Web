@@ -29,25 +29,25 @@
                               formControlName="transactionCode"
                               readonly
                             />
-                            @if(!isEditing){
-                            <div
-                              class="input-group-append"
-                              style="cursor: pointer"
-                              (click)="generateTransactionCode()"
-                            >
-                              <span
-                                class="input-group-text input-group-text-append"
-                                id="basic-addon1"
-                                ><i
-                                  class="fas"
-                                  [ngClass]="
-                                    isGeneratingCode
-                                      ? 'fa-spinner fa-spin'
-                                      : 'fa-sync'
-                                  "
-                                ></i
-                              ></span>
-                            </div>
+                            @if (!isEditing) {
+                              <div
+                                class="input-group-append"
+                                style="cursor: pointer"
+                                (click)="generateTransactionCode()"
+                              >
+                                <span
+                                  class="input-group-text input-group-text-append"
+                                  id="basic-addon1"
+                                  ><i
+                                    class="fas"
+                                    [ngClass]="
+                                      isGeneratingCode
+                                        ? 'fa-spinner fa-spin'
+                                        : 'fa-sync'
+                                    "
+                                  ></i
+                                ></span>
+                              </div>
                             }
                           </div>
                         </div>
@@ -118,7 +118,7 @@
                             class="form-control form-control-sm"
                             [value]="
                               (selectedBooking?.bookingDate
-                                | date : 'dd/MM/yyyy') || ''
+                                | date: 'dd-MMM-yyyy') || ''
                             "
                             readonly
                           />
@@ -136,7 +136,7 @@
                             class="form-control form-control-sm"
                             [value]="
                               (selectedBooking?.lastDeliveryDate
-                                | date : 'dd/MM/yyyy') || ''
+                                | date: 'dd-MMM-yyyy') || ''
                             "
                             readonly
                           />
@@ -166,7 +166,7 @@
                             type="text"
                             class="form-control form-control-sm text-end"
                             [value]="
-                              selectedBooking?.totalAmount | number : '1.2-2'
+                              selectedBooking?.totalAmount | number: '1.2-2'
                             "
                             readonly
                           />
@@ -183,7 +183,7 @@
                             type="text"
                             class="form-control form-control-sm text-end"
                             [value]="
-                              selectedBooking?.paidAmount | number : '1.2-2'
+                              selectedBooking?.paidAmount | number: '1.2-2'
                             "
                             readonly
                           />
@@ -202,7 +202,7 @@
                             type="text"
                             class="form-control form-control-sm text-end fw-bold text-danger"
                             [value]="
-                              selectedBooking?.dueAmount | number : '1.2-2'
+                              selectedBooking?.dueAmount | number: '1.2-2'
                             "
                             readonly
                           />
@@ -223,12 +223,14 @@
                             (blur)="validateAmount()"
                             step="0.01"
                           />
-                          @if (billCollectionForm.get('amount')?.invalid &&
-                          billCollectionForm.get('amount')?.touched) {
-                          <small class="text-danger"
-                            >Amount is required and must be greater than
-                            0</small
-                          >
+                          @if (
+                            billCollectionForm.get("amount")?.invalid &&
+                            billCollectionForm.get("amount")?.touched
+                          ) {
+                            <small class="text-danger"
+                              >Amount is required and must be greater than
+                              0</small
+                            >
                           }
                         </div>
                       </div>
@@ -324,11 +326,11 @@
 </section>
 
 <!-- Hidden receipt component for inline printing -->
-@if(showReceipt && receiptId) {
-<div style="position: absolute; left: -9999px">
-  <app-bill-collection-receipt-print
-    [preloadedTransactionId]="receiptId"
-    [hideSearchForm]="true"
-  ></app-bill-collection-receipt-print>
-</div>
+@if (showReceipt && receiptId) {
+  <div style="position: absolute; left: -9999px">
+    <app-bill-collection-receipt-print
+      [preloadedTransactionId]="receiptId"
+      [hideSearchForm]="true"
+    ></app-bill-collection-receipt-print>
+  </div>
 }

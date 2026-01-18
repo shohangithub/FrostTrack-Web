@@ -28,11 +28,13 @@
                           reportForm.get('reportDate')?.touched
                         "
                       />
-                      @if(reportForm.get('reportDate')?.invalid &&
-                      reportForm.get('reportDate')?.touched) {
-                      <small class="form-text text-danger"
-                        >Report date is required</small
-                      >
+                      @if (
+                        reportForm.get("reportDate")?.invalid &&
+                        reportForm.get("reportDate")?.touched
+                      ) {
+                        <small class="form-text text-danger"
+                          >Report date is required</small
+                        >
                       }
                     </div>
                   </div>
@@ -46,21 +48,22 @@
                         class="btn btn-primary px-2"
                         [disabled]="isLoading || reportForm.invalid"
                       >
-                        @if(isLoading) {
-                        <span
-                          class="spinner-border spinner-border-sm me-2"
-                          role="status"
-                        ></span>
-                        } Show Report
+                        @if (isLoading) {
+                          <span
+                            class="spinner-border spinner-border-sm me-2"
+                            role="status"
+                          ></span>
+                        }
+                        Show Report
                       </button>
-                      @if(showReport) {
-                      <button
-                        type="button"
-                        class="btn btn-secondary ms-2 px-2"
-                        (click)="resetReport()"
-                      >
-                        Clear
-                      </button>
+                      @if (showReport) {
+                        <button
+                          type="button"
+                          class="btn btn-secondary ms-2 px-2"
+                          (click)="resetReport()"
+                        >
+                          Clear
+                        </button>
                       }
                     </div>
                   </div>
@@ -73,59 +76,59 @@
     </div>
 
     <!-- Report Display Section -->
-    @if(showReport && !isLoading && trialBalanceData) {
-    <div class="row clearfix">
-      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card">
-          <!-- Action Buttons (No Print) -->
-          <div class="row no-print mb-3">
-            <div class="col-12">
-              <div class="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  class="btn"
-                  [openNewTab]="true"
-                  [closeWindow]="true"
-                  [previewOnly]="false"
-                  [useExistingCss]="true"
-                  printTitle="Trial Balance Report"
-                  printSectionId="print-section-id"
-                  ngxPrint
-                >
-                  <i class="fas fa-print me-1"></i>Print
-                </button>
+    @if (showReport && !isLoading && trialBalanceData) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card">
+            <!-- Action Buttons (No Print) -->
+            <div class="row no-print mb-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button
+                    type="button"
+                    class="btn"
+                    [openNewTab]="true"
+                    [closeWindow]="true"
+                    [previewOnly]="false"
+                    [useExistingCss]="true"
+                    printTitle="Trial Balance Report"
+                    printSectionId="print-section-id"
+                    ngxPrint
+                  >
+                    <i class="fas fa-print me-1"></i>Print
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div id="print-section-id" class="print-section-container">
-            <div class="card invoice-card">
-              <div class="card-body p-0">
-                <!-- Report Print Area -->
-                <div class="invoice-container">
-                  <!-- Report Header Component -->
-                  <app-report-invoice-header
-                    [Title]="'রেওয়ামিল / Trial Balance'"
-                    [InvoiceNumber]="''"
-                  ></app-report-invoice-header>
+            <div id="print-section-id" class="print-section-container">
+              <div class="card invoice-card">
+                <div class="card-body p-0">
+                  <!-- Report Print Area -->
+                  <div class="invoice-container">
+                    <!-- Report Header Component -->
+                    <app-report-invoice-header
+                      [Title]="'রেওয়ামিল / Trial Balance'"
+                      [InvoiceNumber]="''"
+                    ></app-report-invoice-header>
 
-                  <!-- Report Information Section -->
-                  <div class="booking-info-box">
-                    <table class="info-table">
-                      <tr>
-                        <td class="info-label">Report Date:</td>
-                        <td class="info-value">
-                          {{
-                            reportForm.get("reportDate")?.value
-                              | date : "dd/MM/yyyy"
-                          }}
-                        </td>
-                        <td class="info-label">Generated On:</td>
-                        <td class="info-value">
-                          {{ today | date : "dd/MM/yyyy HH:mm" }}
-                        </td>
-                      </tr>
-                      <!-- <tr>
+                    <!-- Report Information Section -->
+                    <div class="booking-info-box">
+                      <table class="info-table">
+                        <tr>
+                          <td class="info-label">Report Date:</td>
+                          <td class="info-value">
+                            {{
+                              reportForm.get("reportDate")?.value
+                                | date: "dd-MMM-yyyy"
+                            }}
+                          </td>
+                          <td class="info-label">Generated On:</td>
+                          <td class="info-value">
+                            {{ today | date: "dd-MMM-yyyy HH:mm a" }}
+                          </td>
+                        </tr>
+                        <!-- <tr>
                         <td class="info-label">Opening Balance:</td>
                         <td class="info-value">
                           ৳{{
@@ -139,92 +142,99 @@
                           }}
                         </td>
                       </tr> -->
-                    </table>
-                  </div>
+                      </table>
+                    </div>
 
-                  <!-- Trial Balance Details Section -->
-                  <div class="section-title">Account Details</div>
-                  @if(trialBalanceData.items.length > 0) {
-                  <div class="stored-products-section">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th>ক্রমিক / SL No.</th>
-                          <th>হিসাবের নাম / Account Name</th>
-                          <th>হিসাবের ধরন / Account Type</th>
-                          <!-- <th>সংখ্যা / Count</th> -->
-                          <th>ডেবিট / Debit Tk.</th>
-                          <th>ক্রেডিট / Credit Tk.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          *ngFor="
-                            let item of trialBalanceData.items;
-                            let i = index
-                          "
-                        >
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ item.accountName }}</td>
-                          <td>{{ item.accountType }}</td>
-                          <!-- <td class="text-center">
+                    <!-- Trial Balance Details Section -->
+                    <div class="section-title">Account Details</div>
+                    @if (trialBalanceData.items.length > 0) {
+                      <div class="stored-products-section">
+                        <table class="products-table">
+                          <thead>
+                            <tr>
+                              <th>ক্রমিক / SL No.</th>
+                              <th>হিসাবের নাম / Account Name</th>
+                              <th>হিসাবের ধরন / Account Type</th>
+                              <!-- <th>সংখ্যা / Count</th> -->
+                              <th>ডেবিট / Debit Tk.</th>
+                              <th>ক্রেডিট / Credit Tk.</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              *ngFor="
+                                let item of trialBalanceData.items;
+                                let i = index
+                              "
+                            >
+                              <td class="text-center">{{ i + 1 }}</td>
+                              <td>{{ item.accountName }}</td>
+                              <td>{{ item.accountType }}</td>
+                              <!-- <td class="text-center">
                             {{ item.transactionCount }}
                           </td> -->
-                          <td class="text-end">
-                            @if(item.debitAmount > 0) {
-                            {{ item.debitAmount | number : "1.2-2" }}
-                            } @else { - }
-                          </td>
-                          <td class="text-end">
-                            @if(item.creditAmount > 0) {
-                            {{ item.creditAmount | number : "1.2-2" }}
-                            } @else { - }
-                          </td>
-                        </tr>
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="3" class="text-end">
-                            <strong>Total:</strong>
-                          </td>
-                          <td class="text-end">
-                            <strong>{{
-                              trialBalanceData.totalDebit | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                          <td class="text-end">
-                            <strong>{{
-                              trialBalanceData.totalCredit | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                        </tr>
-                        <tr class="total-row">
-                          <td colspan="3" class="text-end">
-                            <strong>Balance:</strong>
-                          </td>
-                          <td colspan="2" class="text-center">
-                            <strong>{{
-                              trialBalanceData.totalDebit -
-                                trialBalanceData.totalCredit | number : "1.2-2"
-                            }}</strong>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  } @else {
-                  <div class="no-data-message">No transactions available</div>
-                  }
+                              <td class="text-end">
+                                @if (item.debitAmount > 0) {
+                                  {{ item.debitAmount | number: "1.2-2" }}
+                                } @else {
+                                  -
+                                }
+                              </td>
+                              <td class="text-end">
+                                @if (item.creditAmount > 0) {
+                                  {{ item.creditAmount | number: "1.2-2" }}
+                                } @else {
+                                  -
+                                }
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr class="total-row">
+                              <td colspan="3" class="text-end">
+                                <strong>Total:</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
+                                  trialBalanceData.totalDebit | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
+                                  trialBalanceData.totalCredit | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                            </tr>
+                            <tr class="total-row">
+                              <td colspan="3" class="text-end">
+                                <strong>Balance:</strong>
+                              </td>
+                              <td colspan="2" class="text-center">
+                                <strong>{{
+                                  trialBalanceData.totalDebit -
+                                    trialBalanceData.totalCredit
+                                    | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    } @else {
+                      <div class="no-data-message">
+                        No transactions available
+                      </div>
+                    }
 
-                  <!-- Report Footer Component -->
-                  <app-report-footer></app-report-footer>
+                    <!-- Report Footer Component -->
+                    <app-report-footer></app-report-footer>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     }
   </div>
 </section>

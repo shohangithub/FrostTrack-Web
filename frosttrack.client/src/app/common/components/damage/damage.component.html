@@ -90,7 +90,7 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="Date" prop="damageDate" [width]="120">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.damageDate | date : "dd/MM/yyyy" }}
+                  {{ row.damageDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
@@ -122,7 +122,7 @@
                 [width]="100"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.unitCost | number : "1.2-2" }}
+                  {{ row.unitCost | number: "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
@@ -131,7 +131,7 @@
                 [width]="120"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.totalCost | number : "1.2-2" }}
+                  {{ row.totalCost | number: "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="Reason" prop="reason">
@@ -141,12 +141,14 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="Status" prop="status" [width]="100">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  @if (row.status==='Active') {
-                  <div class="badge-outline col-green">{{ row.status }}</div>
-                  } @if (row.status==='Inactive') {
-                  <div class="badge-outline col-red">{{ row.status }}</div>
-                  } @if (row.status==='Pending') {
-                  <div class="badge-outline col-indigo">{{ row.status }}</div>
+                  @if (row.status === "Active") {
+                    <div class="badge-outline col-green">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Inactive") {
+                    <div class="badge-outline col-red">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Pending") {
+                    <div class="badge-outline col-indigo">{{ row.status }}</div>
                   }
                 </ng-template>
               </ngx-datatable-column>

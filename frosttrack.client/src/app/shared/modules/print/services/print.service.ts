@@ -66,7 +66,7 @@ export class PrintService {
       showTerms: true,
       reportTitle: 'Report',
       reportNumberPrefix: 'RPT',
-      reportDateFormat: 'dd/MM/yyyy',
+      reportDateFormat: 'dd-MMM-yyyy',
       primaryColor: '#007bff',
       secondaryColor: '#6c757d',
       textColor: '#212529',
@@ -86,18 +86,20 @@ export class PrintService {
       });
     }
 
-    return this.http.get<IPrintSettings>(`${this.apiUrl}/settings/${branchId}`).pipe(
-      map((settings: any) => {
-        const printSettings = settings as IPrintSettings;
-        // Cache the settings
-        this.printSettingsCache.set(branchId, printSettings);
-        return printSettings;
-      }),
-      catchError(() => {
-        // Return default settings if API call fails
-        return of({ ...this.defaultSettings, branchId });
-      })
-    );
+    return this.http
+      .get<IPrintSettings>(`${this.apiUrl}/settings/${branchId}`)
+      .pipe(
+        map((settings: any) => {
+          const printSettings = settings as IPrintSettings;
+          // Cache the settings
+          this.printSettingsCache.set(branchId, printSettings);
+          return printSettings;
+        }),
+        catchError(() => {
+          // Return default settings if API call fails
+          return of({ ...this.defaultSettings, branchId });
+        }),
+      );
   }
 
   /**
@@ -113,7 +115,7 @@ export class PrintService {
             this.printSettingsCache.set(settings.branchId, settings);
           }
           return result;
-        })
+        }),
       );
   }
 
@@ -122,13 +124,13 @@ export class PrintService {
    */
   async printReport(
     printable: IPrintable,
-    format: PrintFormat = PrintFormat.HTML
+    format: PrintFormat = PrintFormat.HTML,
   ): Promise<IPrintResult> {
     try {
       this.printJobSubject.next('processing');
 
       const settings = await this.getPrintSettings(
-        printable.data.branchId || 1
+        printable.data.branchId || 1,
       ).toPromise();
       const mergedSettings = {
         ...settings,
@@ -137,7 +139,7 @@ export class PrintService {
 
       const htmlContent = await this.generateReportHtml(
         printable,
-        mergedSettings
+        mergedSettings,
       );
 
       switch (format) {
@@ -167,7 +169,7 @@ export class PrintService {
    */
   async generatePreview(printable: IPrintable): Promise<IPrintPreviewData> {
     const settings = await this.getPrintSettings(
-      printable.data.branchId || 1
+      printable.data.branchId || 1,
     ).toPromise();
     const mergedSettings = {
       ...settings,
@@ -176,7 +178,7 @@ export class PrintService {
 
     const htmlContent = await this.generateReportHtml(
       printable,
-      mergedSettings
+      mergedSettings,
     );
 
     return {
@@ -192,7 +194,7 @@ export class PrintService {
    */
   private async generateReportHtml(
     printable: IPrintable,
-    settings: IPrintSettings
+    settings: IPrintSettings,
   ): Promise<string> {
     const templateName =
       printable.templateName || this.getDefaultTemplate(printable.type);
@@ -209,7 +211,7 @@ export class PrintService {
    */
   private async getTemplate(
     templateName: string,
-    reportType: PrintReportType
+    reportType: PrintReportType,
   ): Promise<string> {
     // For now, return a basic template - this will be extended with template service
     return this.getBasicTemplate(reportType);
@@ -327,7 +329,7 @@ export class PrintService {
   private replaceTemplateVariables(
     template: string,
     data: any,
-    settings: IPrintSettings
+    settings: IPrintSettings,
   ): string {
     let html = template;
 
@@ -369,13 +371,13 @@ export class PrintService {
    */
   private async printAsHtml(
     htmlContent: string,
-    _settings: IPrintSettings
+    _settings: IPrintSettings,
   ): Promise<IPrintResult> {
     try {
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         throw new Error(
-          'Could not open print window. Please check popup blocker settings.'
+          'Could not open print window. Please check popup blocker settings.',
         );
       }
 
@@ -406,7 +408,7 @@ export class PrintService {
    */
   private async printAsPdf(
     htmlContent: string,
-    settings: IPrintSettings
+    settings: IPrintSettings,
   ): Promise<IPrintResult> {
     try {
       // Create a temporary div to render the HTML
@@ -462,7 +464,7 @@ export class PrintService {
    */
   private async printAsImage(
     htmlContent: string,
-    settings: IPrintSettings
+    settings: IPrintSettings,
   ): Promise<IPrintResult> {
     try {
       // Create a temporary div to render the HTML

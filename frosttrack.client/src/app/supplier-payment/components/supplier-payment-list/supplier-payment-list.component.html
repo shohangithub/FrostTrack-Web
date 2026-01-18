@@ -79,7 +79,7 @@
               <!-- Payment Date Column -->
               <ngx-datatable-column name="paymentDate" prop="paymentDate">
                 <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{ value | date : "dd/MM/yyyy" }}
+                  {{ value | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -101,10 +101,12 @@
               <ngx-datatable-column name="party" prop="party">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @if (row.supplier) {
-                  {{ row.supplier.supplierName }}
+                    {{ row.supplier.supplierName }}
                   } @else if (row.customer) {
-                  {{ row.customer.customerName }}
-                  } @else { - }
+                    {{ row.customer.customerName }}
+                  } @else {
+                    -
+                  }
                 </ng-template>
               </ngx-datatable-column>
 
@@ -118,7 +120,7 @@
               <!-- Payment Amount Column -->
               <ngx-datatable-column name="paymentAmount" prop="paymentAmount">
                 <ng-template let-value="value" ngx-datatable-cell-template>
-                  <strong>{{ value | number : "1.2-2" }}</strong>
+                  <strong>{{ value | number: "1.2-2" }}</strong>
                 </ng-template>
               </ngx-datatable-column>
 
@@ -126,8 +128,10 @@
               <ngx-datatable-column name="bank" prop="bank">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @if (row.bank) {
-                  {{ row.bank.text }}
-                  } @else { - }
+                    {{ row.bank.text }}
+                  } @else {
+                    -
+                  }
                 </ng-template>
               </ngx-datatable-column>
 
@@ -135,11 +139,13 @@
               <ngx-datatable-column name="checkDetails" prop="checkDetails">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @if (row.checkNumber) {
-                  <small>
-                    Check: {{ row.checkNumber }}<br />
-                    Date: {{ row.checkDate | date : "dd/MM/yyyy" }}
-                  </small>
-                  } @else { - }
+                    <small>
+                      Check: {{ row.checkNumber }}<br />
+                      Date: {{ row.checkDate | date: "dd-MMM-yyyy" }}
+                    </small>
+                  } @else {
+                    -
+                  }
                 </ng-template>
               </ngx-datatable-column>
 

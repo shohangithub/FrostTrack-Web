@@ -59,7 +59,7 @@
                     </td>
                     <td class="info-label">ডেলিভারীর তারিখ :</td>
                     <td class="info-value">
-                      {{ deliveryInvoice.deliveryDate | date: "dd/MM/yyyy" }}
+                      {{ deliveryInvoice.deliveryDate | date: "dd-MMM-yyyy" }}
                     </td>
                   </tr>
                   <tr>
@@ -67,7 +67,7 @@
                     <td class="info-value">
                       {{
                         deliveryInvoice.booking?.bookingDate
-                          | date: "dd/MM/yyyy"
+                          | date: "dd-MMM-yyyy"
                       }}
                     </td>
                     <td class="info-label">রেফারেন্স নম্বর:</td>

@@ -257,7 +257,9 @@
                               </td>
                               <td>{{ delivery.deliveryNumber }}</td>
                               <td>
-                                {{ delivery.deliveryDate | date: "dd/MM/yyyy" }}
+                                {{
+                                  delivery.deliveryDate | date: "dd-MMM-yyyy"
+                                }}
                               </td>
                               <td>{{ delivery.bookingNumber }}</td>
                               <td>{{ delivery.customerName }}</td>

@@ -95,8 +95,8 @@
                             type="text"
                             class="form-control form-control-sm"
                             [value]="
-                              (bookingData?.bookingDate | date: 'dd/MM/yyyy') ||
-                              ''
+                              (bookingData?.bookingDate
+                                | date: 'dd-MMM-yyyy') || ''
                             "
                             readonly
                           />
@@ -134,12 +134,12 @@
                     <strong>Billing Period:</strong>
                     From
                     <strong>{{
-                      bookingData.bookingDate | date: "dd/MM/yyyy"
+                      bookingData.bookingDate | date: "dd-MMM-yyyy"
                     }}</strong>
                     to
                     <strong>{{
                       deliveryForm.get("deliveryDate")?.value
-                        | date: "dd/MM/yyyy"
+                        | date: "dd-MMM-yyyy"
                     }}</strong>
                     <span class="ms-2">|</span>
                     <span class="ms-2"

@@ -111,7 +111,7 @@
                       'bg-danger':
                         row.transactionHead?.type === 'DEBIT' ||
                         row.transactionHead?.type === 'EXPENSE' ||
-                        row.transactionHead?.type === 'OUT'
+                        row.transactionHead?.type === 'OUT',
                     }"
                   >
                     {{
@@ -129,7 +129,7 @@
                 [flexGrow]="1"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.transactionDate | date : "dd/MM/yyyy" }}
+                  {{ row.transactionDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -139,7 +139,7 @@
                 [flexGrow]="1"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.netAmount | number : "1.2-2" }}
+                  {{ row.netAmount | number: "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -156,11 +156,11 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @if (row.isDeleted) {
-                  <span class="badge bg-danger">Deleted</span>
+                    <span class="badge bg-danger">Deleted</span>
                   } @else if (row.isArchived) {
-                  <span class="badge bg-warning">Archived</span>
+                    <span class="badge bg-warning">Archived</span>
                   } @else {
-                  <span class="badge bg-success">Active</span>
+                    <span class="badge bg-success">Active</span>
                   }
                 </ng-template>
               </ngx-datatable-column>

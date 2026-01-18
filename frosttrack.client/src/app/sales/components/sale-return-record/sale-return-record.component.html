@@ -77,7 +77,7 @@
                 [width]="120"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.returnDate | date : "dd/MM/yyyy" }}
+                  {{ row.returnDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -100,7 +100,7 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <span class="badge badge-success">
-                    {{ row.returnAmount | number : "1.2-2" }}
+                    {{ row.returnAmount | number: "1.2-2" }}
                   </span>
                 </ng-template>
               </ngx-datatable-column>

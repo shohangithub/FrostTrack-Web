@@ -92,13 +92,13 @@ export interface IPaymentReceiptData {
           <div class="row">
             <span class="col-label">Payment Date:</span>
             <span class="col-value">{{
-              receiptData.paymentDate | date : 'dd/MM/yyyy'
+              receiptData.paymentDate | date: 'dd-MMM-yyyy'
             }}</span>
           </div>
           <div class="row">
             <span class="col-label">Print Date:</span>
             <span class="col-value">{{
-              receiptData.printDateTime | date : 'dd/MM/yyyy HH:mm'
+              receiptData.printDateTime | date: 'dd-MMM-yyyy HH:mm a'
             }}</span>
           </div>
           <div class="row">
@@ -161,7 +161,7 @@ export interface IPaymentReceiptData {
               <td><strong>Check Date:</strong></td>
               <td>
                 {{
-                  receiptData.paymentDetails?.checkDate | date : 'dd/MM/yyyy'
+                  receiptData.paymentDetails?.checkDate | date: 'dd-MMM-yyyy'
                 }}
               </td>
             </tr>
@@ -225,8 +225,7 @@ export interface IPaymentReceiptData {
               <td><strong>Previous Due Amount:</strong></td>
               <td class="text-right">
                 {{
-                  receiptData.previousDue
-                    | currency : 'USD' : 'symbol' : '1.2-2'
+                  receiptData.previousDue | currency: 'USD' : 'symbol' : '1.2-2'
                 }}
               </td>
             </tr>
@@ -235,7 +234,7 @@ export interface IPaymentReceiptData {
               <td class="text-right">
                 <strong>{{
                   receiptData.paymentAmount
-                    | currency : 'USD' : 'symbol' : '1.2-2'
+                    | currency: 'USD' : 'symbol' : '1.2-2'
                 }}</strong>
               </td>
             </tr>
@@ -244,7 +243,7 @@ export interface IPaymentReceiptData {
               <td class="text-right">
                 {{
                   receiptData.remainingDue
-                    | currency : 'USD' : 'symbol' : '1.2-2'
+                    | currency: 'USD' : 'symbol' : '1.2-2'
                 }}
               </td>
             </tr>

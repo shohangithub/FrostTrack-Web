@@ -208,7 +208,7 @@ Format values for printing:
 {{ amount | printFormat:'currency':'USD':2 }}
 
 <!-- Date formatting -->
-{{ date | printFormat:'date':'dd/MM/yyyy' }}
+{{ date | printFormat:'date':'dd-MMM-yyyy' }}
 
 <!-- Phone formatting -->
 {{ phone | printFormat:'phone':'US' }}

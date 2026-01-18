@@ -15,10 +15,10 @@ export class PrintFormatPipe implements PipeTransform {
         return this.formatCurrency(value, args[0] || 'USD', args[1] || 2);
 
       case 'date':
-        return this.formatDate(value, args[0] || 'dd/MM/yyyy');
+        return this.formatDate(value, args[0] || 'dd-MMM-yyyy');
 
       case 'datetime':
-        return this.formatDateTime(value, args[0] || 'dd/MM/yyyy HH:mm');
+        return this.formatDateTime(value, args[0] || 'dd-MMM-yyyy HH:mm a');
 
       case 'number':
         return this.formatNumber(value, args[0] || 2);
@@ -61,7 +61,7 @@ export class PrintFormatPipe implements PipeTransform {
   private formatCurrency(
     value: number,
     currency: string = 'USD',
-    decimals: number = 2
+    decimals: number = 2,
   ): string {
     try {
       return new Intl.NumberFormat('en-US', {
@@ -77,7 +77,7 @@ export class PrintFormatPipe implements PipeTransform {
 
   private formatDate(
     value: string | Date,
-    format: string = 'dd/MM/yyyy'
+    format: string = 'dd-MMM-yyyy',
   ): string {
     try {
       const date = new Date(value);
@@ -107,7 +107,7 @@ export class PrintFormatPipe implements PipeTransform {
 
   private formatDateTime(
     value: string | Date,
-    format: string = 'dd/MM/yyyy HH:mm'
+    format: string = 'dd-MMM-yyyy HH:mm a',
   ): string {
     return this.formatDate(value, format);
   }
@@ -136,13 +136,13 @@ export class PrintFormatPipe implements PipeTransform {
         if (cleaned.length === 10) {
           return `(${cleaned.slice(0, 3)}) ${cleaned.slice(
             3,
-            6
+            6,
           )}-${cleaned.slice(6)}`;
         }
         if (cleaned.length === 11 && cleaned[0] === '1') {
           return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(
             4,
-            7
+            7,
           )}-${cleaned.slice(7)}`;
         }
         break;
@@ -151,7 +151,7 @@ export class PrintFormatPipe implements PipeTransform {
         if (cleaned.length > 10) {
           return `+${cleaned.slice(0, -10)} ${cleaned.slice(
             -10,
-            -7
+            -7,
           )} ${cleaned.slice(-7, -4)} ${cleaned.slice(-4)}`;
         }
         break;

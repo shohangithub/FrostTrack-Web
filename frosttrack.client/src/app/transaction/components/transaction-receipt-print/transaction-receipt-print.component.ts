@@ -18,6 +18,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
+import { MonthYearTextPipe } from 'app/utils/pipes/month-year-text';
 
 /**
  * Reusable Transaction Receipt Print Component
@@ -58,6 +59,7 @@ import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
     DatePipe,
     DecimalPipe,
     CommonModule,
+    MonthYearTextPipe,
     NgSelectModule,
     ReactiveFormsModule,
     ReportInvoiceHeaderComponent,
@@ -95,7 +97,7 @@ export class TransactionReceiptPrintComponent implements OnInit {
     private router: Router,
     private transactionService: TransactionService,
     private toastr: ToastrService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -213,7 +215,7 @@ export class TransactionReceiptPrintComponent implements OnInit {
   }
 
   convertToWords(amount: number): string {
-    if (amount === 0) return 'Zero only';
+    if (amount === 0) return 'Zero taka only';
 
     let words = '';
     const num = Math.floor(Math.abs(amount));
@@ -228,7 +230,7 @@ export class TransactionReceiptPrintComponent implements OnInit {
       words += this.convertIntegerToWords(decimal) + ' Paisa';
     }
 
-    return words + ' only';
+    return words + ' taka only';
   }
 
   public convertIntegerToWords(num: number): string {

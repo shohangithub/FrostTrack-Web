@@ -196,17 +196,17 @@
                           <td class="info-value">
                             {{
                               reportForm.get("startDate")?.value
-                                | date: "dd/MM/yyyy"
+                                | date: "dd-MMM-yyyy"
                             }}
                             -
                             {{
                               reportForm.get("endDate")?.value
-                                | date: "dd/MM/yyyy"
+                                | date: "dd-MMM-yyyy"
                             }}
                           </td>
                           <td class="info-label">Generated On:</td>
                           <td class="info-value">
-                            {{ today | date: "dd/MM/yyyy HH:mm" }}
+                            {{ today | date: "dd-MMM-yyyy HH:mm a" }}
                           </td>
                         </tr>
                         @if (reportForm.get("transactionType")?.value) {
@@ -288,7 +288,7 @@
                               <td class="text-center">
                                 {{
                                   transaction.transactionDate
-                                    | date: "dd/MM/yyyy"
+                                    | date: "dd-MMM-yyyy"
                                 }}
                               </td>
                               <td>{{ transaction.transactionNumber }}</td>

@@ -105,7 +105,7 @@
                         </td>
                         <td class="info-label">জমাদানের তারিখ :</td>
                         <td class="info-value">
-                          {{ bookingInvoice.bookingDate | date: "dd/MM/yyyy" }}
+                          {{ bookingInvoice.bookingDate | date: "dd-MMM-yyyy" }}
                         </td>
                       </tr>
                       <tr>
@@ -115,7 +115,7 @@
                         </td>
                         <td class="info-label">ডেলিভারী নেওয়ার শেষ তারিখ:</td>
                         <td class="info-value">
-                          {{ getLastDeliveryDate() | date: "dd/MM/yyyy" }}
+                          {{ getLastDeliveryDate() | date: "dd-MMM-yyyy" }}
                         </td>
                       </tr>
                       <tr>
@@ -263,7 +263,7 @@
                             >
                               {{
                                 delivery.deliveryDate
-                                  | date: "dd/MM/yyyy hh:mm:ss a"
+                                  | date: "dd-MMM-yyyy hh:mm:ss a"
                               }}
                             </td>
                             <td class="text-center">
@@ -310,7 +310,7 @@
                                 getRemainingQuantity(
                                   detail.productId,
                                   delivery.id
-                                ) | number: "1.2-2"
+                                ) | number
                               }}
                             </td>
                             <td

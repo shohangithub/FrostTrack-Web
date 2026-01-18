@@ -467,11 +467,11 @@ namespace Application.Services
             info.AppendLine("</div>");
             info.AppendLine("<div class='row'>");
             info.AppendLine("<span class='col-label'>Payment Date:</span>");
-            info.AppendLine($"<span class='col-value'>{paymentData.PaymentDate:dd/MM/yyyy}</span>");
+            info.AppendLine($"<span class='col-value'>{paymentData.PaymentDate:dd-MMM-yyyy}</span>");
             info.AppendLine("</div>");
             info.AppendLine("<div class='row'>");
             info.AppendLine("<span class='col-label'>Print Date:</span>");
-            info.AppendLine($"<span class='col-value'>{paymentData.PrintDateTime:dd/MM/yyyy HH:mm}</span>");
+            info.AppendLine($"<span class='col-value'>{paymentData.PrintDateTime:dd-MMM-yyyy HH:mm a a}</span>");
             info.AppendLine("</div>");
             info.AppendLine("<div class='row'>");
             info.AppendLine("<span class='col-label'>Payment Type:</span>");
@@ -552,7 +552,7 @@ namespace Application.Services
                 {
                     details.AppendLine("<tr>");
                     details.AppendLine("<td><strong>Check Date:</strong></td>");
-                    details.AppendLine($"<td>{paymentData.PaymentDetails.CheckDate.Value:dd/MM/yyyy}</td>");
+                    details.AppendLine($"<td>{paymentData.PaymentDetails.CheckDate.Value:dd-MMM-yyyy}</td>");
                     details.AppendLine("</tr>");
                 }
             }
@@ -937,7 +937,7 @@ namespace Application.Services
             info.AppendLine("<div class='info-column'>");
             info.AppendLine("<div class='info-row'>");
             info.AppendLine("<span class='info-label'>Booking Date:</span>");
-            info.AppendLine($"<span class='info-value'>{bookingData.BookingDate:dd/MM/yyyy}</span>");
+            info.AppendLine($"<span class='info-value'>{bookingData.BookingDate:dd-MMM-yyyy}</span>");
             info.AppendLine("</div>");
             info.AppendLine("<div class='info-row'>");
             info.AppendLine("<span class='info-label'>Branch:</span>");
@@ -945,7 +945,7 @@ namespace Application.Services
             info.AppendLine("</div>");
             info.AppendLine("<div class='info-row'>");
             info.AppendLine("<span class='info-label'>Print Date:</span>");
-            info.AppendLine($"<span class='info-value'>{bookingData.PrintDateTime:dd/MM/yyyy HH:mm}</span>");
+            info.AppendLine($"<span class='info-value'>{bookingData.PrintDateTime:dd-MMM-yyyy HH:mm a}</span>");
             info.AppendLine("</div>");
             info.AppendLine("</div>");
 

@@ -109,7 +109,7 @@
                         <td class="info-value">
                           {{
                             transactionReceipt.transactionDate
-                              | date: "dd/MM/yyyy"
+                              | date: "dd-MMM-yyyy"
                           }}
                         </td>
                       </tr>
@@ -176,7 +176,18 @@
                       </thead>
                       <tbody>
                         <tr>
-                          <td>{{ transactionReceipt.description }}</td>
+                          <td>
+                            @if (
+                              transactionReceipt.transactionHead?.name ===
+                              "Salary Payment"
+                            ) {
+                              {{
+                                transactionReceipt.description | monthYearText
+                              }}
+                            } @else {
+                              {{ transactionReceipt.description | titlecase }}
+                            }
+                          </td>
                           <td class="text-center">
                             {{
                               Math.abs(transactionReceipt.amount)
