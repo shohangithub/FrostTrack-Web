@@ -1,240 +1,299 @@
 <section class="main-content">
   <div class="section-body">
-    <div class="row clearfix">
-      <div class="col-lg-12">
-        <div class="card mt-2">
-          <span class="card-label">
-            {{ isEditMode ? "Edit" : "Add" }} Delivery Challan
-          </span>
-          <div class="p-10 mt-2">
-            @if (isLoading) {
-              <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </div>
-            } @else {
-              <form [formGroup]="challanForm" (ngSubmit)="onSubmit()">
-                <!-- Basic Information -->
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="challanNumber"
-                        >Challan Number
-                        <span class="text-danger">*</span></label
-                      >
-                      <input
-                        type="text"
-                        id="challanNumber"
-                        class="form-control"
-                        formControlName="challanNumber"
-                        readonly
-                      />
+    <div class="row">
+      <form
+        class="register-form"
+        [formGroup]="challanForm"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="container mt-2">
+          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="card mb-3">
+              <span class="card-label"
+                >{{ isEditMode ? "Edit" : "Add" }} Delivery Challan</span
+              >
+              <div class="card-body">
+                @if (isLoading) {
+                  <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
                     </div>
                   </div>
-
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="challanDate"
-                        >Challan Date <span class="text-danger">*</span></label
-                      >
-                      <input
-                        type="date"
-                        id="challanDate"
-                        class="form-control"
-                        formControlName="challanDate"
-                        [class.is-invalid]="
-                          challanForm.get('challanDate')?.invalid &&
-                          challanForm.get('challanDate')?.touched
-                        "
-                      />
-                      @if (
-                        challanForm.get("challanDate")?.invalid &&
-                        challanForm.get("challanDate")?.touched
-                      ) {
-                        <small class="form-text text-danger"
-                          >Challan date is required</small
-                        >
-                      }
-                    </div>
-                  </div>
-
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="status"
-                        >Status <span class="text-danger">*</span></label
-                      >
-                      <ng-select
-                        id="status"
-                        [items]="statusOptions"
-                        bindLabel="label"
-                        bindValue="value"
-                        formControlName="status"
-                        [clearable]="false"
-                      ></ng-select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Vehicle Information -->
-                <h6 class="mt-3 mb-2">Vehicle Information</h6>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="vehicleNumber"
-                        >Vehicle Number
-                        <span class="text-danger">*</span></label
-                      >
-                      <input
-                        type="text"
-                        id="vehicleNumber"
-                        class="form-control text-uppercase"
-                        formControlName="vehicleNumber"
-                        placeholder="e.g., ABC-1234"
-                        [class.is-invalid]="
-                          challanForm.get('vehicleNumber')?.invalid &&
-                          challanForm.get('vehicleNumber')?.touched
-                        "
-                      />
-                      @if (
-                        challanForm.get("vehicleNumber")?.invalid &&
-                        challanForm.get("vehicleNumber")?.touched
-                      ) {
-                        <small class="form-text text-danger"
-                          >Valid vehicle number is required</small
-                        >
-                      }
-                    </div>
-                  </div>
-
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="vehicleType">Vehicle Type</label>
-                      <ng-select
-                        id="vehicleType"
-                        [items]="vehicleTypes"
-                        bindLabel="label"
-                        bindValue="value"
-                        formControlName="vehicleType"
-                        placeholder="Select vehicle type"
-                        [clearable]="true"
-                      ></ng-select>
-                    </div>
-                  </div>
-
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="driverName">Driver Name</label>
-                      <input
-                        type="text"
-                        id="driverName"
-                        class="form-control"
-                        formControlName="driverName"
-                        placeholder="Enter driver name"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="form-group">
-                      <label for="driverContact">Driver Contact</label>
-                      <input
-                        type="text"
-                        id="driverContact"
-                        class="form-control"
-                        formControlName="driverContact"
-                        placeholder="e.g., +8801XXXXXXXXX"
-                        [class.is-invalid]="
-                          challanForm.get('driverContact')?.invalid &&
-                          challanForm.get('driverContact')?.touched
-                        "
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="row">
-                  <div class="col-lg-4 col-md-6">
-                    <div class="form-group">
-                      <label for="transportCompany">Transport Company</label>
-                      <input
-                        type="text"
-                        id="transportCompany"
-                        class="form-control"
-                        formControlName="transportCompany"
-                        placeholder="Enter transport company"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="col-lg-4 col-md-6">
-                    <div class="form-group">
-                      <label for="destination">Destination</label>
-                      <input
-                        type="text"
-                        id="destination"
-                        class="form-control"
-                        formControlName="destination"
-                        placeholder="Enter destination"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="col-lg-4 col-md-6">
-                    <div class="form-group">
-                      <label for="remarks">Remarks</label>
-                      <input
-                        type="text"
-                        id="remarks"
-                        class="form-control"
-                        formControlName="remarks"
-                        placeholder="Additional remarks"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Timing Information (optional, shown for In Transit/Delivered) -->
-                @if (challanForm.get("status")?.value !== "Pending") {
+                } @else {
+                  <!-- Basic Information -->
                   <div class="row">
-                    <div class="col-lg-3 col-md-6">
-                      <div class="form-group">
-                        <label for="dispatchTime">Dispatch Time</label>
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="challanNumber"
+                          class="col-sm-4 col-form-label"
+                          >Challan Number:</label
+                        >
+                        <div class="col-sm-8">
+                          <div class="input-group">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="challanNumber"
+                              formControlName="challanNumber"
+                              readonly
+                            />
+                            @if (!isEditMode) {
+                              <div
+                                class="input-group-append"
+                                style="cursor: pointer"
+                                (click)="generateChallanNumber()"
+                              >
+                                <span
+                                  class="input-group-text input-group-text-append"
+                                  id="basic-addon5"
+                                  ><i class="fas fa-sync"></i
+                                ></span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                      <div class="form-group row">
+                        <label for="challanDate" class="col-sm-4 col-form-label"
+                          >Challan Date:</label
+                        >
+                        <div class="col-sm-8">
+                          <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            id="challanDate"
+                            formControlName="challanDate"
+                            [class.is-invalid]="
+                              challanForm.get('challanDate')?.invalid &&
+                              challanForm.get('challanDate')?.touched
+                            "
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                      <div class="form-group row">
+                        <label for="status" class="col-sm-4 col-form-label"
+                          >Status:</label
+                        >
+                        <div class="col-sm-8">
+                          <ng-select
+                            id="status"
+                            [items]="statusOptions"
+                            bindLabel="label"
+                            bindValue="value"
+                            formControlName="status"
+                            [clearable]="false"
+                          ></ng-select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Vehicle Information -->
+            <div class="card mb-3">
+              <span class="card-label">Vehicle Information</span>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="vehicleNumber" class="col-sm-4 col-form-label"
+                        >Vehicle No:</label
+                      >
+                      <div class="col-sm-8">
                         <input
-                          type="datetime-local"
-                          id="dispatchTime"
-                          class="form-control"
-                          formControlName="dispatchTime"
+                          type="text"
+                          class="form-control form-control-sm text-uppercase"
+                          id="vehicleNumber"
+                          formControlName="vehicleNumber"
+                          placeholder="e.g., ABC-1234"
+                          [class.is-invalid]="
+                            challanForm.get('vehicleNumber')?.invalid &&
+                            challanForm.get('vehicleNumber')?.touched
+                          "
+                        />
+                        @if (
+                          challanForm.get("vehicleNumber")?.invalid &&
+                          challanForm.get("vehicleNumber")?.touched
+                        ) {
+                          <small class="form-text text-danger"
+                            >Valid vehicle number is required</small
+                          >
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="vehicleType" class="col-sm-4 col-form-label"
+                        >Vehicle Type:</label
+                      >
+                      <div class="col-sm-8">
+                        <ng-select
+                          id="vehicleType"
+                          [items]="vehicleTypes"
+                          bindLabel="label"
+                          bindValue="value"
+                          formControlName="vehicleType"
+                          placeholder="Select type"
+                          [clearable]="true"
+                        ></ng-select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="driverName" class="col-sm-4 col-form-label"
+                        >Driver Name:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="driverName"
+                          formControlName="driverName"
+                          placeholder="Enter driver name"
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    @if (challanForm.get("status")?.value === "Delivered") {
-                      <div class="col-lg-3 col-md-6">
-                        <div class="form-group">
-                          <label for="deliveryTime">Delivery Time</label>
+                <div class="row mt-2">
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="driverContact" class="col-sm-4 col-form-label"
+                        >Contact:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="driverContact"
+                          formControlName="driverContact"
+                          placeholder="e.g., 01XXXXXXXXX"
+                          [class.is-invalid]="
+                            challanForm.get('driverContact')?.invalid &&
+                            challanForm.get('driverContact')?.touched
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label
+                        for="transportCompany"
+                        class="col-sm-4 col-form-label"
+                        >Trans. Company:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="transportCompany"
+                          formControlName="transportCompany"
+                          placeholder="Enter transport company"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="form-group row">
+                      <label for="destination" class="col-sm-4 col-form-label"
+                        >Destination:</label
+                      >
+                      <div class="col-sm-8">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="destination"
+                          formControlName="destination"
+                          placeholder="Enter destination"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="form-group row">
+                      <label for="remarks" class="col-sm-2 col-form-label"
+                        >Remarks:</label
+                      >
+                      <div class="col-sm-12">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="remarks"
+                          formControlName="remarks"
+                          placeholder="Additional remarks"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                @if (challanForm.get("status")?.value !== "Pending") {
+                  <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label
+                          for="dispatchTime"
+                          class="col-sm-4 col-form-label"
+                          >Dispatch Time:</label
+                        >
+                        <div class="col-sm-8">
                           <input
                             type="datetime-local"
-                            id="deliveryTime"
-                            class="form-control"
-                            formControlName="deliveryTime"
+                            class="form-control form-control-sm"
+                            id="dispatchTime"
+                            formControlName="dispatchTime"
                           />
+                        </div>
+                      </div>
+                    </div>
+                    @if (challanForm.get("status")?.value === "Delivered") {
+                      <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group row">
+                          <label
+                            for="deliveryTime"
+                            class="col-sm-4 col-form-label"
+                            >Delivery Time:</label
+                          >
+                          <div class="col-sm-8">
+                            <input
+                              type="datetime-local"
+                              class="form-control form-control-sm"
+                              id="deliveryTime"
+                              formControlName="deliveryTime"
+                            />
+                          </div>
                         </div>
                       </div>
                     }
                   </div>
                 }
+              </div>
+            </div>
 
-                <!-- Delivery Selection -->
-                <h6 class="mt-3 mb-2">Select Deliveries</h6>
+            <!-- Delivery Selection -->
+            <div class="card mb-3">
+              <span class="card-label">Select Deliveries</span>
+              <div class="card-body">
                 <div class="row">
                   <div class="col-12">
                     <div class="form-group">
                       <ng-select
                         [items]="availableDeliveries"
                         bindLabel="deliveryNumber"
-                        placeholder="Search and select delivery"
+                        placeholder="Search and select delivery invoice"
                         (change)="onDeliverySelect($event)"
                         [clearable]="true"
                       >
@@ -257,19 +316,20 @@
                   </div>
                 </div>
 
-                <!-- Selected Deliveries Table -->
                 @if (selectedDeliveries.length > 0) {
                   <div class="table-responsive mt-3">
-                    <table class="table table-bordered table-hover">
+                    <table class="table table-bordered table-hover table-sm">
                       <thead class="table-light">
                         <tr>
-                          <th style="width: 50px">#</th>
+                          <th style="width: 40px" class="text-center">#</th>
                           <th>Delivery No</th>
                           <th>Date</th>
                           <th>Booking No</th>
                           <th>Customer</th>
-                          <th class="text-end">Amount</th>
-                          <th style="width: 80px">Action</th>
+                          <th class="text-end">Amount (৳)</th>
+                          <th style="width: 60px" class="text-center">
+                            Action
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -287,17 +347,17 @@
                             <td>{{ delivery.bookingNumber }}</td>
                             <td>{{ delivery.customerName }}</td>
                             <td class="text-end">
-                              ৳{{ delivery.chargeAmount | number: "1.2-2" }}
+                              {{ delivery.chargeAmount | number: "1.2-2" }}
                             </td>
                             <td class="text-center">
-                              <button
-                                type="button"
-                                class="btn btn-sm btn-danger"
-                                (click)="removeDelivery(delivery.id)"
-                                title="Remove"
-                              >
-                                <i class="fas fa-times"></i>
-                              </button>
+                              <span class="text-center">
+                                <button
+                                  class="btn btn-tbl-delete h-auto"
+                                  (click)="removeDelivery(delivery.id)"
+                                >
+                                  <i class="far fa-trash-alt"></i>
+                                </button>
+                              </span>
                             </td>
                           </tr>
                         }
@@ -305,12 +365,12 @@
                       <tfoot class="table-light">
                         <tr>
                           <td colspan="5" class="text-end">
-                            <strong>Total:</strong>
+                            <strong>Total Amount:</strong>
                           </td>
                           <td class="text-end">
-                            <strong
-                              >৳{{ getTotalAmount() | number: "1.2-2" }}</strong
-                            >
+                            <strong>{{
+                              getTotalAmount() | number: "1.2-2"
+                            }}</strong>
                           </td>
                           <td></td>
                         </tr>
@@ -319,7 +379,6 @@
                   </div>
                 }
 
-                <!-- Form Actions -->
                 <div class="row mt-4">
                   <div class="col-12 text-end">
                     <button
@@ -348,11 +407,11 @@
                     </button>
                   </div>
                 </div>
-              </form>
-            }
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </section>

@@ -106,6 +106,15 @@ public class DeliveryChallanService : IDeliveryChallanService
         var challan = await _repository.Query()
             .Include(x => x.ChallanItems)
             .ThenInclude(x => x.Delivery)
+            .ThenInclude(x => x.DeliveryDetails)
+            .ThenInclude(x => x.BookingDetail)
+            .ThenInclude(x => x.Product)
+            .Include(x => x.ChallanItems)
+            .ThenInclude(x => x.Delivery)
+            .ThenInclude(x => x.DeliveryDetails)
+            .ThenInclude(x => x.DeliveryUnit)
+            .Include(x => x.ChallanItems)
+            .ThenInclude(x => x.Delivery)
             .ThenInclude(x => x.Booking)
             .ThenInclude(x => x.Customer)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
@@ -319,7 +328,12 @@ public class DeliveryChallanService : IDeliveryChallanService
                 item.Delivery?.Booking?.BookingNumber ?? "",
                 item.Delivery?.Booking?.Customer?.CustomerName ?? "",
                 item.Delivery?.ChargeAmount ?? 0,
-                item.Notes
+                item.Notes,
+                item.Delivery?.DeliveryDetails?.Select(detail => new DeliveryChallanItemDetailResponse(
+                    detail.BookingDetail?.Product?.ProductName ?? "",
+                    detail.DeliveryQuantity,
+                    detail.DeliveryUnit?.UnitName ?? ""
+                )).ToList() ?? new List<DeliveryChallanItemDetailResponse>()
             )).ToList()
         );
     }

@@ -27,7 +27,14 @@ public record DeliveryChallanItemResponse(
     string BookingNumber,
     string CustomerName,
     decimal ChargeAmount,
-    string? Notes
+    string? Notes,
+    List<DeliveryChallanItemDetailResponse> DeliveryDetails
+);
+
+public record DeliveryChallanItemDetailResponse(
+    string ProductName,
+    float Quantity,
+    string UnitName
 );
 
 public record DeliveryChallanListResponse(

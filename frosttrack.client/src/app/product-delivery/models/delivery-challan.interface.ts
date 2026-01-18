@@ -44,6 +44,13 @@ export interface IDeliveryChallanItemResponse {
   customerName: string;
   chargeAmount: number;
   notes?: string;
+  deliveryDetails: IDeliveryChallanItemDetailResponse[];
+}
+
+export interface IDeliveryChallanItemDetailResponse {
+  productName: string;
+  quantity: number;
+  unitName: string;
 }
 
 export interface IDeliveryChallanListResponse {

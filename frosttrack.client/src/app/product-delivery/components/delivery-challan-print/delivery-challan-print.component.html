@@ -122,52 +122,61 @@
                   <div class="section-title">ডেলিভারী তালিকা</div>
 
                   <div class="deliveries-section">
-                    <table class="deliveries-table">
-                      <thead>
-                        <tr>
-                          <th style="width: 50px">ক্রম</th>
-                          <th style="width: 120px">ডেলিভারী নং</th>
-                          <th style="width: 100px">তারিখ</th>
-                          <th style="width: 120px">বুকিং নং</th>
-                          <th>গ্রাহকের নাম</th>
-                          <th class="text-end" style="width: 120px">
-                            পরিমাণ (৳)
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (
-                          item of challan.challanItems;
-                          track item.id;
-                          let i = $index
+                    @for (
+                      item of challan.challanItems;
+                      track item.id;
+                      let i = $index
+                    ) {
+                      <div class="delivery-item-card">
+                        <div class="delivery-header">
+                          <div class="delivery-info">
+                            <strong>{{ i + 1 }}. ডেলিভারী নং:</strong>
+                            {{ item.deliveryNumber }} | <strong>তারিখ:</strong>
+                            {{ item.deliveryDate | date: "dd/MM/yyyy" }} |
+                            <strong>বুকিং নং:</strong> {{ item.bookingNumber }}
+                          </div>
+                          <div class="customer-info">
+                            <strong>গ্রাহক:</strong> {{ item.customerName }}
+                          </div>
+                        </div>
+
+                        @if (
+                          item.deliveryDetails &&
+                          item.deliveryDetails.length > 0
                         ) {
-                          <tr>
-                            <td class="text-center">{{ i + 1 }}</td>
-                            <td>{{ item.deliveryNumber }}</td>
-                            <td>
-                              {{ item.deliveryDate | date: "dd/MM/yyyy" }}
-                            </td>
-                            <td>{{ item.bookingNumber }}</td>
-                            <td>{{ item.customerName }}</td>
-                            <td class="text-end">
-                              {{ item.chargeAmount | number: "1.2-2" }}
-                            </td>
-                          </tr>
+                          <table class="products-table">
+                            <thead>
+                              <tr>
+                                <th style="width: 50px">ক্রম</th>
+                                <th>পণ্যের নাম</th>
+                                <th class="text-end" style="width: 120px">
+                                  পরিমাণ
+                                </th>
+                                <th style="width: 80px">একক</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (
+                                detail of item.deliveryDetails;
+                                track detail;
+                                let j = $index
+                              ) {
+                                <tr>
+                                  <td class="text-center">{{ j + 1 }}</td>
+                                  <td>{{ detail.productName }}</td>
+                                  <td class="text-end">
+                                    {{ detail.quantity | number: "1.2-2" }}
+                                  </td>
+                                  <td class="text-center">
+                                    {{ detail.unitName }}
+                                  </td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
                         }
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colspan="5" class="text-end">
-                            <strong>মোট:</strong>
-                          </td>
-                          <td class="text-end">
-                            <strong>{{
-                              getTotalAmount() | number: "1.2-2"
-                            }}</strong>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                      </div>
+                    }
                   </div>
 
                   <!-- Signatures -->
@@ -187,12 +196,12 @@
                   </div>
 
                   <!-- Footer Note -->
-                  <div class="footer-note">
+                  <!-- <div class="footer-note">
                     <p>
                       এই চালানটি স্বয়ংক্রিয়ভাবে তৈরি করা হয়েছে -
                       {{ "now" | date: "dd/MM/yyyy HH:mm" }}
                     </p>
-                  </div>
+                  </div> -->
 
                   <!-- Report Footer -->
                   <app-report-footer></app-report-footer>

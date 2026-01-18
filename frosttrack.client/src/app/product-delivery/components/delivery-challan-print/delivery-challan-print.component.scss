@@ -85,48 +85,67 @@ $font-size: 11px;
 .deliveries-section {
     margin-bottom: 15px;
 
-    .deliveries-table {
-        width: 100%;
-        border-collapse: collapse !important;
+    .delivery-item-card {
+        border: 2px solid #000 !important;
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+        background-color: #fff;
 
-        thead th {
-            border: 1px solid #000 !important;
-            padding: 6px 8px;
-            font-size: $font-size;
-            background-color: #f0f0f0;
-            font-weight: bold;
-            text-align: center;
-            color: #000;
+        .delivery-header {
+            border-bottom: 1px solid #000 !important;
+            padding: 8px 10px;
+            background-color: #f5f5f5;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+
+            .delivery-info {
+                font-size: 11px;
+                font-weight: bold;
+                margin-bottom: 4px;
+                color: #000;
+            }
+
+            .customer-info {
+                font-size: 11px;
+                color: #000;
+            }
         }
 
-        tbody td {
-            border: 1px solid #000 !important;
-            padding: 6px 8px;
-            font-size: $font-size;
-            text-align: left;
-            vertical-align: middle;
-            color: #000;
-        }
+        .products-table {
+            width: 100%;
+            border-collapse: collapse !important;
+            margin: 0;
 
-        tfoot td {
-            border: 1px solid #000 !important;
-            padding: 8px;
-            font-size: $font-size;
-            background-color: #f0f0f0;
-            color: #000;
-            font-weight: bold;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
+            thead th {
+                border: 1px solid #000 !important;
+                border-top: none !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                background-color: #f9f9f9;
+                font-weight: bold;
+                text-align: center;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-        .text-center {
-            text-align: center;
-        }
+            tbody td {
+                border: 1px solid #000 !important;
+                border-top: 1px solid #000 !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                text-align: left;
+                vertical-align: middle;
+                color: #000;
+            }
 
-        .text-end {
-            text-align: right;
+            .text-center {
+                text-align: center;
+            }
+
+            .text-end {
+                text-align: right;
+            }
         }
     }
 }
@@ -135,7 +154,7 @@ $font-size: 11px;
 .signature-section {
     display: flex;
     justify-content: space-between;
-    margin-top: 40px;
+    margin-top: 80px;
     margin-bottom: 20px;
 
     .signature-box {
@@ -199,6 +218,17 @@ $font-size: 11px;
         page-break-inside: avoid;
     }
 
+    .delivery-item-card {
+        border: 2px solid #000 !important;
+        page-break-inside: avoid;
+        margin-bottom: 12px;
+
+        .delivery-header {
+            border-bottom: 1px solid #000 !important;
+            background-color: #f5f5f5 !important;
+        }
+    }
+
     table {
         border-collapse: collapse !important;
     }
@@ -213,7 +243,10 @@ $font-size: 11px;
         background-color: #f9f9f9 !important;
     }
 
-    th,
+    thead th {
+        background-color: #f9f9f9 !important;
+    }
+
     tfoot td {
         background-color: #f0f0f0 !important;
     }

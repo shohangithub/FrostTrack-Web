@@ -28,6 +28,7 @@ export class DeliveryChallanListComponent implements OnInit {
   isLoading = false;
   searchText = '';
   selectedStatus = 'All';
+  scrollBarHorizontal = window.innerWidth < 1200;
 
   statusOptions = ['All', 'Pending', 'In Transit', 'Delivered', 'Cancelled'];
 
@@ -39,6 +40,9 @@ export class DeliveryChallanListComponent implements OnInit {
     private toastr: ToastrService,
     private layoutService: LayoutService,
   ) {
+    window.onresize = () => {
+      this.scrollBarHorizontal = window.innerWidth < 1200;
+    };
     this.layoutService.loadCurrentRoute();
 
     this.searchSubject.pipe(debounceTime(300)).subscribe((searchValue) => {

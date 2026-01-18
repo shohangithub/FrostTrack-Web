@@ -1,48 +1,61 @@
 <section class="main-content">
   <div class="section-body">
     <div class="row clearfix">
-      <div class="col-lg-12">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card mt-2">
           <span class="card-label">Delivery Challan List</span>
-          <div class="p-10 mt-2">
-            <!-- Filters and Search -->
-            <div class="row mb-3">
-              <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="form-group">
-                  <label>Status Filter</label>
-                  <select
-                    class="form-control"
-                    [(ngModel)]="selectedStatus"
-                    (change)="onStatusChange()"
-                  >
-                    @for (status of statusOptions; track status) {
-                      <option [value]="status">{{ status }}</option>
-                    }
-                  </select>
+          <div class="p-10">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="search-input">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            placeholder="Search"
+                            type="text"
+                            class="browser-default search-field"
+                            [(ngModel)]="searchText"
+                            (input)="onSearchChange($any($event.target).value)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                      <div class="header-buttons-left"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div class="col-lg-6 col-md-8">
-                <div class="form-group">
-                  <label>Search</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    placeholder="Search by challan no, vehicle, driver, destination..."
-                    [(ngModel)]="searchText"
-                    (input)="onSearchChange($any($event.target).value)"
-                  />
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-6 p-0">
+                    <div class="form-group">
+                      <label>Filter by Status</label>
+                      <select
+                        class="form-select form-control-sm"
+                        [(ngModel)]="selectedStatus"
+                        (change)="onStatusChange()"
+                      >
+                        @for (status of statusOptions; track status) {
+                          <option [value]="status">{{ status }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-lg-6 p-0 text-end">
+                    <button
+                      type="button"
+                      class="btn btn-primary rounded-button"
+                      (click)="addNew()"
+                    >
+                      <i class="material-icons">add</i>Create Challan
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div class="col-lg-3 col-md-12 text-end">
-                <button
-                  type="button"
-                  class="btn btn-primary mt-4"
-                  (click)="addNew()"
-                >
-                  <i class="fas fa-plus me-1"></i>Create Challan
-                </button>
               </div>
             </div>
 
@@ -54,111 +67,109 @@
                 </div>
               </div>
             } @else {
-              <div class="table-responsive">
-                <ngx-datatable
-                  class="material"
-                  [rows]="filteredChallans"
-                  [columnMode]="'force'"
-                  [headerHeight]="50"
-                  [footerHeight]="50"
-                  [rowHeight]="'auto'"
-                  [limit]="10"
-                  [scrollbarH]="true"
+              <ngx-datatable
+                #table
+                class="material"
+                [rows]="filteredChallans"
+                [columnMode]="'force'"
+                [headerHeight]="60"
+                [footerHeight]="80"
+                [rowHeight]="'auto'"
+                [limit]="10"
+                [scrollbarH]="scrollBarHorizontal"
+              >
+                <!-- Challan Number -->
+                <ngx-datatable-column name="Challan No" [width]="120">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <strong>{{ row.challanNumber }}</strong>
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Date -->
+                <ngx-datatable-column name="Date" [width]="100">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.challanDate | date: "dd/MM/yyyy" }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Vehicle -->
+                <ngx-datatable-column name="Vehicle" [width]="110">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.vehicleNumber }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Driver -->
+                <ngx-datatable-column name="Driver" [width]="120">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.driverName || "-" }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Destination -->
+                <ngx-datatable-column name="Destination" [width]="120">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    {{ row.destination || "-" }}
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Deliveries -->
+                <ngx-datatable-column name="Deliveries" [width]="90">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <span class="badge bg-primary">{{
+                      row.totalDeliveries
+                    }}</span>
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Amount -->
+                <ngx-datatable-column name="Total Amount" [width]="120">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <div class="text-end">
+                      ৳{{ row.totalAmount | number: "1.2-2" }}
+                    </div>
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Status -->
+                <ngx-datatable-column name="Status" [width]="100">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <span [ngClass]="getStatusClass(row.status)">
+                      {{ row.status }}
+                    </span>
+                  </ng-template>
+                </ngx-datatable-column>
+
+                <!-- Actions -->
+                <ngx-datatable-column
+                  name="Actions"
+                  [sortable]="false"
+                  [width]="150"
                 >
-                  <!-- Challan Number -->
-                  <ngx-datatable-column name="Challan No" [width]="120">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      <strong>{{ row.challanNumber }}</strong>
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Date -->
-                  <ngx-datatable-column name="Date" [width]="100">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      {{ row.challanDate | date: "dd/MM/yyyy" }}
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Vehicle -->
-                  <ngx-datatable-column name="Vehicle" [width]="110">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      {{ row.vehicleNumber }}
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Driver -->
-                  <ngx-datatable-column name="Driver" [width]="120">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      {{ row.driverName || "-" }}
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Destination -->
-                  <ngx-datatable-column name="Destination" [width]="120">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      {{ row.destination || "-" }}
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Deliveries -->
-                  <ngx-datatable-column name="Deliveries" [width]="90">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      <span class="badge bg-primary">{{
-                        row.totalDeliveries
-                      }}</span>
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Amount -->
-                  <ngx-datatable-column name="Total Amount" [width]="120">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      <div class="text-end">
-                        ৳{{ row.totalAmount | number: "1.2-2" }}
-                      </div>
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Status -->
-                  <ngx-datatable-column name="Status" [width]="100">
-                    <ng-template let-row="row" ngx-datatable-cell-template>
-                      <span [ngClass]="getStatusClass(row.status)">
-                        {{ row.status }}
-                      </span>
-                    </ng-template>
-                  </ngx-datatable-column>
-
-                  <!-- Actions -->
-                  <ngx-datatable-column
-                    name="Actions"
-                    [sortable]="false"
-                    [width]="150"
-                  >
-                    <ng-template let-row="row" ngx-datatable-cell-template>
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <span class="text-center">
                       <button
-                        class="tbl-action-btn tbl-action-btn-primary"
+                        class="btn btn-tbl-info h-auto"
                         (click)="print(row.id)"
-                        title="Print Challan"
                       >
-                        <i class="material-icons">print</i>
+                        <i class="fas fa-print"></i>
                       </button>
                       <button
-                        class="tbl-action-btn tbl-action-btn-secondary"
+                        class="btn btn-tbl-edit h-auto"
                         (click)="edit(row.id)"
-                        title="Edit"
                       >
-                        <i class="material-icons">edit</i>
+                        <i class="fas fa-pen"></i>
                       </button>
                       <button
-                        class="tbl-action-btn tbl-action-btn-danger"
+                        class="btn btn-tbl-delete h-auto"
                         (click)="delete(row.id)"
-                        title="Delete"
                       >
-                        <i class="material-icons">delete</i>
+                        <i class="far fa-trash-alt"></i>
                       </button>
-                    </ng-template>
-                  </ngx-datatable-column>
-                </ngx-datatable>
-              </div>
+                    </span>
+                  </ng-template>
+                </ngx-datatable-column>
+              </ngx-datatable>
             }
           </div>
         </div>
