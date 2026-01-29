@@ -584,6 +584,8 @@ public class DeliveryService : IDeliveryService
 
     public async Task<BookingForDeliveryResponse> GetBookingForDeliveryAsync(string bookingNumber)
     {
+        Guid guid = Guid.TryParse(bookingNumber, out var g) ? g : Guid.Empty;
+
         var booking = await _bookingRepository.Query()
             .Include(b => b.Customer)
             .Include(b => b.Branch)
@@ -593,7 +595,7 @@ public class DeliveryService : IDeliveryService
                 .ThenInclude(bd => bd.BookingUnit)
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.DeliveryDetails)
-            .FirstOrDefaultAsync(b => b.BookingNumber == bookingNumber);
+            .FirstOrDefaultAsync(b => b.Id == guid);
 
         if (booking == null)
             throw new Exception($"Booking with number '{bookingNumber}' not found");
@@ -744,7 +746,7 @@ public class DeliveryService : IDeliveryService
         return await _bookingRepository.Query()
             .Where(b => b.TenantId == _tenantId)
             .OrderByDescending(b => b.CreatedTime)
-            .Select(b => new Lookup<Guid>(b.Id, b.BookingNumber))
+            .Select(b => new Lookup<Guid>(b.Id, b.BookingNumber + " - " + b.Customer.CustomerName))
             .ToListAsync();
     }
 

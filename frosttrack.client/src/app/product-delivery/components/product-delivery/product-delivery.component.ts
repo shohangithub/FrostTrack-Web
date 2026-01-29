@@ -147,21 +147,23 @@ export class DeliveryComponent implements OnInit {
     if (!selectedBooking) return;
 
     this.isLoading = true;
-    this.deliveryService.getBookingForDelivery(selectedBooking.text).subscribe({
-      next: (booking) => {
-        this.bookingData = booking;
-        this.populateDeliveryDetails(booking);
+    this.deliveryService
+      .getBookingForDelivery(selectedBooking.value)
+      .subscribe({
+        next: (booking) => {
+          this.bookingData = booking;
+          this.populateDeliveryDetails(booking);
 
-        // Fetch booking due amount
-        this.fetchBookingDue(bookingId);
+          // Fetch booking due amount
+          this.fetchBookingDue(bookingId);
 
-        this.isLoading = false;
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.toastr.error(err.error?.message || 'Booking not found');
-      },
-    });
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Booking not found');
+        },
+      });
   }
 
   fetchBookingDue(bookingId: string) {
