@@ -52,7 +52,7 @@ public class DeliveryService : IDeliveryService
 
         var entity = request.Adapt<Delivery>();
         entity.BranchId = _currentUser.BranchId;
-        entity.DeliveryDate = DateTime.UtcNow;
+       // entity.DeliveryDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
 
