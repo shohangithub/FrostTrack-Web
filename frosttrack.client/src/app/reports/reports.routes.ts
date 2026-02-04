@@ -16,6 +16,20 @@ export const reportRoutes: Route[] = [
       ),
   },
   {
+    path: 'datewise-booking-report',
+    loadComponent: () =>
+      import('./components/datewise-booking-report/datewise-booking-report.component').then(
+        (m) => m.DatewiseBookingReportComponent,
+      ),
+  },
+  {
+    path: 'datewise-delivery-report',
+    loadComponent: () =>
+      import('./components/datewise-delivery-report/datewise-delivery-report.component').then(
+        (m) => m.DatewiseDeliveryReportComponent,
+      ),
+  },
+  {
     path: 'monthly-salary-report',
     loadComponent: () =>
       import('./components/monthly-salary-report/monthly-salary-report.component').then(

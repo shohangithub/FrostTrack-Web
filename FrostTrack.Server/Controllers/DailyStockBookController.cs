@@ -1,4 +1,5 @@
 using Application.Contractors;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FrostTrack.Server.Controllers;
@@ -22,10 +23,12 @@ public class DailyStockBookController : ControllerBase
         CancellationToken cancellationToken)
     {
         // Default to today if no date provided
-        var date = reportDate ?? DateTime.UtcNow.Date;
+        //  var dates = reportDate.Value.Date.ToUniversalTime();
+        var utcDate = DateTime.SpecifyKind(reportDate.Value.Date, DateTimeKind.Utc);
+
 
         var result = await _dailyStockBookService.GetDailyStockBookAsync(
-            date,
+            utcDate,
             customerId,
             productId,
             cancellationToken);
