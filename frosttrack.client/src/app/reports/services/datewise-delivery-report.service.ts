@@ -21,11 +21,11 @@ export class DatewiseDeliveryReportService {
     let params = new HttpParams();
 
     if (fromDate) {
-      params = params.set('fromDate', fromDate.toISOString());
+      params = params.set('fromDate', fromDate.toLocaleDateString());
     }
 
     if (toDate) {
-      params = params.set('toDate', toDate.toISOString());
+      params = params.set('toDate', toDate.toLocaleDateString());
     }
 
     if (customerId) {

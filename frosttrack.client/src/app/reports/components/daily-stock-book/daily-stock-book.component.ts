@@ -51,7 +51,7 @@ export class DailyStockBookComponent implements OnInit {
     private customerService: CustomerService,
     private productService: ProductService,
     private toastr: ToastrService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.layoutService.loadCurrentRoute();
 
@@ -109,7 +109,7 @@ export class DailyStockBookComponent implements OnInit {
       .getDailyStockBook(
         this.reportDate,
         formValue.customerId,
-        formValue.productId
+        formValue.productId,
       )
       .subscribe({
         next: (data) => {
@@ -142,35 +142,35 @@ export class DailyStockBookComponent implements OnInit {
   getTotalPreviousStock(): number {
     return this.stockBookItems.reduce(
       (sum, item) => sum + item.previousStock,
-      0
+      0,
     );
   }
 
   getTotalBooking(): number {
     return this.stockBookItems.reduce(
       (sum, item) => sum + item.totalBooking,
-      0
+      0,
     );
   }
 
   getTotalDelivery(): number {
     return this.stockBookItems.reduce(
       (sum, item) => sum + item.totalDelivery,
-      0
+      0,
     );
   }
 
   getTotalCurrentStock(): number {
     return this.stockBookItems.reduce(
       (sum, item) => sum + item.currentStock,
-      0
+      0,
     );
   }
 
   getTotalReceivedRent(): number {
     return this.stockBookItems.reduce(
       (sum, item) => sum + item.receivedRent,
-      0
+      0,
     );
   }
 

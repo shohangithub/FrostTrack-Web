@@ -23,12 +23,10 @@ public class DailyStockBookController : ControllerBase
         CancellationToken cancellationToken)
     {
         // Default to today if no date provided
-        //  var dates = reportDate.Value.Date.ToUniversalTime();
-        var utcDate = DateTime.SpecifyKind(reportDate.Value.Date, DateTimeKind.Utc);
-
-
+         var dates = reportDate.Value.Date.ToUniversalTime();
+       
         var result = await _dailyStockBookService.GetDailyStockBookAsync(
-            utcDate,
+            dates,
             customerId,
             productId,
             cancellationToken);

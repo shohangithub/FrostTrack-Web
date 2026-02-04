@@ -23,9 +23,15 @@ public class DatewiseBookingReportController : ControllerBase
         CancellationToken cancellationToken)
     {
         // Default to today if no dates provided
-        var startDate = fromDate ?? DateTime.UtcNow.Date;
-        var endDate = toDate ?? DateTime.UtcNow.Date;
+        if (fromDate == null || toDate == null)
+        {
+            var today = DateTime.UtcNow.Date;
+            fromDate ??= today;
+            toDate ??= today;
+        }
 
+        var startDate = fromDate.Value.Date.ToUniversalTime();
+        var endDate = toDate.Value.Date.ToUniversalTime();
         var result = await _datewiseBookingReportService.GetDatewiseBookingReportAsync(
             startDate,
             endDate,

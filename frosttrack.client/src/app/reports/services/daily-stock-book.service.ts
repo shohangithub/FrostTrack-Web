@@ -15,12 +15,12 @@ export class DailyStockBookService {
   getDailyStockBook(
     reportDate?: Date,
     customerId?: number,
-    productId?: number
+    productId?: number,
   ): Observable<IDailyStockBookItem[]> {
     let params = new HttpParams();
 
     if (reportDate) {
-      params = params.set('reportDate', reportDate.toISOString());
+      params = params.set('reportDate', reportDate.toLocaleDateString());
     }
 
     if (customerId) {
