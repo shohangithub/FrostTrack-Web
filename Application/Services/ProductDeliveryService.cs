@@ -289,6 +289,7 @@ public class DeliveryService : IDeliveryService
     public async Task<bool> DeleteAsync(Guid id)
     {
         var result = await _repository.DeletableQuery(x => x.Id == id).ExecuteDeleteAsync();
+        var result1 = await _transactionRepository.DeletableQuery(x => x.EntityName == TransactionEntityNames.DELIVERY && x.EntityId == id.ToString()).ExecuteDeleteAsync();
         return result > 0;
     }
 
