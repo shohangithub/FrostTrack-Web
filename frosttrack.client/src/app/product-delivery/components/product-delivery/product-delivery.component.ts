@@ -687,7 +687,7 @@ export class DeliveryComponent implements OnInit {
           );
           if (selectedBooking) {
             this.deliveryService
-              .getBookingForDelivery(selectedBooking.text)
+              .getBookingForDelivery(selectedBooking.value)
               .subscribe({
                 next: (booking) => {
                   this.bookingData = booking;
