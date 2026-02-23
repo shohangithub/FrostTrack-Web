@@ -84,21 +84,26 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (item of row.deliveryDetails; track item; let idx =
-                        $index) {
-                        <tr>
-                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
-                          <td class="text-center">{{ item.productName }}</td>
-                          <td class="text-center">
-                            {{ item.deliveryUnitName || "N/A" }}
-                          </td>
-                          <td class="text-center">
-                            {{ item.deliveryQuantity | number : "1.2-2" }}
-                          </td>
-                          <!-- <td class="text-center">
+                        @for (
+                          item of row.deliveryDetails;
+                          track item;
+                          let idx = $index
+                        ) {
+                          <tr>
+                            <th class="text-center" scope="row">
+                              {{ idx + 1 }}
+                            </th>
+                            <td class="text-center">{{ item.productName }}</td>
+                            <td class="text-center">
+                              {{ item.deliveryUnitName || "N/A" }}
+                            </td>
+                            <td class="text-center">
+                              {{ item.deliveryQuantity | number: "1.2-2" }}
+                            </td>
+                            <!-- <td class="text-center">
                             {{ item.chargeAmount | number : "1.2-2" }}
                           </td> -->
-                        </tr>
+                          </tr>
                         }
                       </tbody>
                       <tfoot>
@@ -109,7 +114,7 @@
                           <th class="text-center fw-bold">
                             {{
                               getRowTotalQuantity(row.deliveryDetails)
-                                | number : "1.2-2"
+                                | number: "1.2-2"
                             }}
                           </th>
                           <!-- <th class="text-center fw-bold">
@@ -163,7 +168,7 @@
                 [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.deliveryDate | date : "dd-MMM-yyyy" }}
+                  {{ row.deliveryDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -193,7 +198,7 @@
                 [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.chargeAmount | number : "1.2-2" }}
+                  {{ row.chargeAmount | number: "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -215,21 +220,21 @@
                     >
                       <i class="fas fa-print"></i>
                     </button>
-                    @if(canEdit) {
-                    <button
+                    <!-- @if(canEdit) { -->
+                    <!-- <button
                       class="btn btn-tbl-edit h-auto"
                       (click)="editRow(row)"
                     >
                       <i class="fas fa-pen"></i>
-                    </button>
-                    } @if(canDelete) {
+                    </button> -->
+                    <!-- } @if(canDelete) { -->
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>
-                    }
+                    <!-- } -->
                   </span>
                 </ng-template>
               </ngx-datatable-column>
@@ -242,8 +247,8 @@
 </section>
 
 <!-- Hidden Invoice Component for Printing -->
-@if(showInvoice && invoiceId) {
-<div style="position: absolute; left: -9999px">
-  <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
-</div>
+@if (showInvoice && invoiceId) {
+  <div style="position: absolute; left: -9999px">
+    <app-delivery-invoice [invoiceId]="invoiceId"></app-delivery-invoice>
+  </div>
 }
