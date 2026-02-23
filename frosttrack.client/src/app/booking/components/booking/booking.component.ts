@@ -116,7 +116,7 @@ export class BookingComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private layoutService: LayoutService,
-    private unitConversionService: UnitConversionService
+    private unitConversionService: UnitConversionService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -179,7 +179,7 @@ export class BookingComponent implements OnInit {
       notes: [''],
       BookingDetails: this.fb.array([]),
     });
-    if (!this.isEditing) this.generateCode();
+    // if (!this.isEditing) this.generateCode();
   }
 
   initProductForm() {
@@ -337,8 +337,8 @@ export class BookingComponent implements OnInit {
           ?.get('bookingUnit')
           ?.setValue(
             this.productUnits.find(
-              (x) => x.value == existingProduct.bookingUnitId
-            ) || null
+              (x) => x.value == existingProduct.bookingUnitId,
+            ) || null,
           );
         childForm
           ?.get('billType')
@@ -351,7 +351,7 @@ export class BookingComponent implements OnInit {
           ?.get('bookingUnit')
           ?.setValue(
             this.productUnits.find((x) => x.value == product.defaultUnitId) ||
-              null
+              null,
           );
         childForm?.get('bookingRate')?.setValue(product.bookingRate || 0);
         childForm?.get('bookingQuantity')?.setValue(null);
@@ -370,7 +370,7 @@ export class BookingComponent implements OnInit {
     const items = this.BookingDetails.value || [];
     return items.reduce(
       (sum: number, item: any) => sum + (item.bookingQuantity || 0),
-      0
+      0,
     );
   }
 
@@ -381,7 +381,7 @@ export class BookingComponent implements OnInit {
         sum +
         (item.bookingQuantity || 0) * (item.bookingRate || 0) +
         (item.labourCharge || 0),
-      0
+      0,
     );
   }
 
@@ -389,7 +389,7 @@ export class BookingComponent implements OnInit {
     const items = this.BookingDetails.value || [];
     return items.reduce(
       (sum: number, item: any) => sum + (item.labourCharge || 0),
-      0
+      0,
     );
   }
 
@@ -401,7 +401,7 @@ export class BookingComponent implements OnInit {
     const formData = this.productForm.value;
     const cardData: Array<any> = this.BookingDetails.value;
     const existingProduct = cardData.find(
-      (x) => x.productId === formData.product.id
+      (x) => x.productId === formData.product.id,
     );
     if (existingProduct) {
       existingProduct.bookingUnitId =
@@ -444,12 +444,12 @@ export class BookingComponent implements OnInit {
       formData.customerId = formData.customer?.id;
       const payload: IBookingRequest = { ...formData };
 
-      // Only validate booking number for new bookings, not when editing
-      if (!this.isEditing && payload.bookingNumber !== this.generatedCode) {
-        this.toastr.error('Booking number is mismatched !');
-        this.isSubmitted = false;
-        return;
-      }
+      // // Only validate booking number for new bookings, not when editing
+      // if (!this.isEditing && payload.bookingNumber !== this.generatedCode) {
+      //   this.toastr.error('Booking number is mismatched !');
+      //   this.isSubmitted = false;
+      //   return;
+      // }
 
       if (formData.id === '00000000-0000-0000-0000-000000000000') {
         this.BookingService.create(payload).subscribe({
@@ -515,7 +515,7 @@ export class BookingComponent implements OnInit {
     setTimeout(() => {
       console.log(
         'Attempting to trigger print, invoiceComponent:',
-        this.invoiceComponent
+        this.invoiceComponent,
       );
       if (this.invoiceComponent) {
         this.invoiceComponent.triggerPrint();
@@ -547,7 +547,7 @@ export class BookingComponent implements OnInit {
   addProduct() {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -575,7 +575,7 @@ export class BookingComponent implements OnInit {
   addCustomer() {
     const modalRef = this.modalService.open(
       AddCustomerComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -601,7 +601,7 @@ export class BookingComponent implements OnInit {
   addUnit() {
     const modalRef = this.modalService.open(
       AddBaseUnitComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {

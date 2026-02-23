@@ -12,7 +12,7 @@
               <span class="card-label">Booking Information</span>
               <div class="card-body-narrow">
                 <div class="row">
-                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <!-- <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
                     <div class="form-group row">
                       <label for="bookingNumber" class="col-sm-4 col-form-label"
                         >Booking Number:</label
@@ -49,20 +49,24 @@
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  </div> -->
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
-                      <label
-                        for="referenceNumber"
-                        class="col-sm-4 col-form-label"
-                        >Ref. Number:</label
+                      <label for="bookingNumber" class="col-sm-4 col-form-label"
+                        >Booking Number:</label
                       >
                       <div class="col-sm-8">
-                        <input
+                        <!-- <input
                           type="text"
                           class="form-control form-control-sm"
                           id="referenceNumber"
                           formControlName="referenceNumber"
+                        /> -->
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          id="bookingNumber"
+                          formControlName="bookingNumber"
                         />
                       </div>
                     </div>
@@ -98,7 +102,7 @@
                   </div>
                 </div> -->
 
-                  <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                  <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                     <div class="form-group row">
                       <label for="bookingDate" class="col-sm-3 col-form-label"
                         >Date:</label
@@ -147,11 +151,13 @@
                               </div>
                             </div>
                           </div>
-                          @if (!register.get('customer')?.valid &&
-                          register.get('customer')?.touched) {
-                          <small class="form-text text-danger">
-                            Customer is required
-                          </small>
+                          @if (
+                            !register.get("customer")?.valid &&
+                            register.get("customer")?.touched
+                          ) {
+                            <small class="form-text text-danger">
+                              Customer is required
+                            </small>
                           }
                         </div>
                       </div>
@@ -167,7 +173,11 @@
                               type="text"
                               class="form-control form-control-sm"
                               id="customerMobile"
-                              [value]="register.get('customer')?.value?.['customerMobile']??''"
+                              [value]="
+                                register.get('customer')?.value?.[
+                                  'customerMobile'
+                                ] ?? ''
+                              "
                               readonly
                             />
                           </div>
@@ -186,7 +196,10 @@
                               class="form-control"
                               id="customerAddress"
                               style="height: 50px !important"
-                              [value]="register.get('customer')?.value?.['address']??''"
+                              [value]="
+                                register.get('customer')?.value?.['address'] ??
+                                ''
+                              "
                               readonly
                             ></textarea>
                           </div>
@@ -247,11 +260,13 @@
                                 </div>
                               </div>
                             </div>
-                            @if (!productForm.get('product')?.valid &&
-                            productForm.get('product')?.touched) {
-                            <small class="form-text text-danger text-end">
-                              Product is required
-                            </small>
+                            @if (
+                              !productForm.get("product")?.valid &&
+                              productForm.get("product")?.touched
+                            ) {
+                              <small class="form-text text-danger text-end">
+                                Product is required
+                              </small>
                             }
                           </div>
                         </div>
@@ -282,11 +297,13 @@
                                 </div>
                               </div>
                             </div>
-                            @if (!productForm.get('bookingUnit')?.valid &&
-                            productForm.get('bookingUnit')?.touched) {
-                            <small class="form-text text-danger">
-                              Unit is required
-                            </small>
+                            @if (
+                              !productForm.get("bookingUnit")?.valid &&
+                              productForm.get("bookingUnit")?.touched
+                            ) {
+                              <small class="form-text text-danger">
+                                Unit is required
+                              </small>
                             }
                           </div>
                         </div>
@@ -306,11 +323,13 @@
                               >
                               </ng-select>
                             </div>
-                            @if (!productForm.get('billType')?.valid &&
-                            productForm.get('billType')?.touched) {
-                            <small class="form-text text-danger">
-                              Bill type is required
-                            </small>
+                            @if (
+                              !productForm.get("billType")?.valid &&
+                              productForm.get("billType")?.touched
+                            ) {
+                              <small class="form-text text-danger">
+                                Bill type is required
+                              </small>
                             }
                           </div>
                         </div>
@@ -342,13 +361,15 @@
                                 formControlName="bookingQuantity"
                               />
                             </div>
-                            @if ((!productForm.get('bookingRate')?.valid &&
-                            productForm.get('bookingRate')?.touched)
-                            ||(!productForm.get('bookingQuantity')?.valid &&
-                            productForm.get('bookingQuantity')?.touched) ) {
-                            <small class="form-text text-danger text-end">
-                              Rate & quantity is required
-                            </small>
+                            @if (
+                              (!productForm.get("bookingRate")?.valid &&
+                                productForm.get("bookingRate")?.touched) ||
+                              (!productForm.get("bookingQuantity")?.valid &&
+                                productForm.get("bookingQuantity")?.touched)
+                            ) {
+                              <small class="form-text text-danger text-end">
+                                Rate & quantity is required
+                              </small>
                             }
                           </div>
                         </div>
@@ -362,7 +383,7 @@
                                 type="text"
                                 class="form-control form-control-sm bg-light fw-bold"
                                 [value]="
-                                  getCalculatedAmount() | number : '1.2-2'
+                                  getCalculatedAmount() | number: '1.2-2'
                                 "
                                 readonly
                               />
@@ -434,42 +455,49 @@
                             </tr>
                           </thead>
                           <tbody>
-                            @for (row of register.get('BookingDetails')?.value;
-                            track row; let idx = $index) {
-                            <tr>
-                              <th class="text-center" scope="row">
-                                {{ idx + 1 }}
-                              </th>
-                              <td class="text-center">{{ row.productName }}</td>
-                              <td class="text-center">{{ row.bookingRate }}</td>
-                              <td class="text-center">
-                                {{ row.bookingUnitName }}
-                              </td>
-                              <td class="text-center">{{ row.billType }}</td>
-                              <td class="text-center">
-                                {{ row.bookingQuantity }}
-                              </td>
-                              <td class="text-center">
-                                {{ row.labourCharge }}
-                              </td>
-                              <td class="text-center">
-                                {{
-                                  row.bookingQuantity * row.bookingRate +
-                                    row.labourCharge | number : "1.2-2"
-                                }}
-                              </td>
+                            @for (
+                              row of register.get("BookingDetails")?.value;
+                              track row;
+                              let idx = $index
+                            ) {
+                              <tr>
+                                <th class="text-center" scope="row">
+                                  {{ idx + 1 }}
+                                </th>
+                                <td class="text-center">
+                                  {{ row.productName }}
+                                </td>
+                                <td class="text-center">
+                                  {{ row.bookingRate }}
+                                </td>
+                                <td class="text-center">
+                                  {{ row.bookingUnitName }}
+                                </td>
+                                <td class="text-center">{{ row.billType }}</td>
+                                <td class="text-center">
+                                  {{ row.bookingQuantity }}
+                                </td>
+                                <td class="text-center">
+                                  {{ row.labourCharge }}
+                                </td>
+                                <td class="text-center">
+                                  {{
+                                    row.bookingQuantity * row.bookingRate +
+                                      row.labourCharge | number: "1.2-2"
+                                  }}
+                                </td>
 
-                              <td class="text-center">
-                                <a
-                                  data-toggle="tooltip"
-                                  title=""
-                                  data-original-title="Delete"
-                                  (click)="removeFromCart(idx)"
-                                >
-                                  <i class="far fa-trash-alt m-1"></i>
-                                </a>
-                              </td>
-                            </tr>
+                                <td class="text-center">
+                                  <a
+                                    data-toggle="tooltip"
+                                    title=""
+                                    data-original-title="Delete"
+                                    (click)="removeFromCart(idx)"
+                                  >
+                                    <i class="far fa-trash-alt m-1"></i>
+                                  </a>
+                                </td>
+                              </tr>
                             }
                           </tbody>
                           <tfoot>
@@ -478,13 +506,13 @@
                                 Total:
                               </th>
                               <th class="text-center fw-bold">
-                                {{ getTotalQuantity() | number : "1.2-2" }}
+                                {{ getTotalQuantity() | number: "1.2-2" }}
                               </th>
                               <th class="text-center fw-bold">
-                                {{ getTotalLabourCharge() | number : "1.2-2" }}
+                                {{ getTotalLabourCharge() | number: "1.2-2" }}
                               </th>
                               <th class="text-center fw-bold">
-                                {{ getTotalAmount() | number : "1.2-2" }}
+                                {{ getTotalAmount() | number: "1.2-2" }}
                               </th>
                               <th></th>
                             </tr>
@@ -507,14 +535,15 @@
                       <div
                         class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2"
                       >
-                        @if(!isEditing){
-                        <button
-                          type="button"
-                          class="btn btn-light"
-                          (click)="initFormData()"
-                        >
-                          Clear</button
-                        >}
+                        @if (!isEditing) {
+                          <button
+                            type="button"
+                            class="btn btn-light"
+                            (click)="initFormData()"
+                          >
+                            Clear
+                          </button>
+                        }
                         <button
                           type="submit"
                           class="btn btn-primary mx-2"
@@ -529,8 +558,8 @@
                             isSubmitted
                               ? "Processing..."
                               : isEditing
-                              ? "Update"
-                              : "Save"
+                                ? "Update"
+                                : "Save"
                           }}
                         </button>
                         <button
@@ -548,8 +577,8 @@
                             isSubmitted
                               ? "Processing..."
                               : isEditing
-                              ? "Update & Print"
-                              : "Save & Print"
+                                ? "Update & Print"
+                                : "Save & Print"
                           }}
                         </button>
                       </div>
@@ -608,10 +637,10 @@
 </section>
 
 <!-- Hidden Invoice Component for Printing -->
-@if(showInvoice && invoiceId) {
-<div style="position: absolute; left: -9999px">
-  <app-booking-invoice-print
-    [invoiceId]="invoiceId"
-  ></app-booking-invoice-print>
-</div>
+@if (showInvoice && invoiceId) {
+  <div style="position: absolute; left: -9999px">
+    <app-booking-invoice-print
+      [invoiceId]="invoiceId"
+    ></app-booking-invoice-print>
+  </div>
 }
