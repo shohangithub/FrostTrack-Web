@@ -184,60 +184,62 @@ export class DeliveryComponent implements OnInit {
   }
 
   populateDeliveryDetails(booking: IBookingForDeliveryResponse) {
-    this.deliveryDetails.clear();
+    if (this.deliveryDetails.length > 0) this.deliveryDetails.clear();
 
-    booking.bookingDetails.forEach((detail) => {
-      if (detail.remainingQuantity > 0) {
-        const detailForm = this.fb.group({
-          bookingDetailId: [detail.id, Validators.required],
-          productId: [detail.productId],
-          productName: [detail.productName],
-          bookingUnitId: [detail.bookingUnitId],
-          bookingQuantity: [detail.bookingQuantity],
-          totalDeliveredQuantity: [detail.totalDeliveredQuantity],
-          remainingQuantity: [detail.remainingQuantity],
-          billType: [detail.billType], // Add billType
-          bookingRate: [detail.bookingRate], // Add bookingRate
-          baseRate: [detail.baseRate], // Add baseRate for calculation
-          bookingDate: [booking.bookingDate], // Add bookingDate for cycle calculation
-          billingCycles: [0], // Number of billing cycles
-          totalCharge: [0], // Will be calculated based on delivery quantity
-          deliveryUnitId: [detail.bookingUnitId, Validators.required],
-          deliveryQuantity: [
-            null,
-            [Validators.min(0), Validators.max(detail.remainingQuantity)],
-          ], // No required, allow 0
-          baseQuantity: [detail.baseQuantity],
-          chargeAmount: [0, [Validators.min(0)]],
-          labourCharge: [null, [Validators.min(0)]],
-          availableUnits: [detail.availableUnits],
-          convertedRemainingQty: [detail.remainingQuantity], // Initialize with booking unit remaining qty
-        });
+    setTimeout(() => {
+      booking.bookingDetails.forEach((detail) => {
+        if (detail.remainingQuantity > 0) {
+          const detailForm = this.fb.group({
+            bookingDetailId: [detail.id, Validators.required],
+            productId: [detail.productId],
+            productName: [detail.productName],
+            bookingUnitId: [detail.bookingUnitId],
+            bookingQuantity: [detail.bookingQuantity],
+            totalDeliveredQuantity: [detail.totalDeliveredQuantity],
+            remainingQuantity: [detail.remainingQuantity],
+            billType: [detail.billType], // Add billType
+            bookingRate: [detail.bookingRate], // Add bookingRate
+            baseRate: [detail.baseRate], // Add baseRate for calculation
+            bookingDate: [booking.bookingDate], // Add bookingDate for cycle calculation
+            billingCycles: [0], // Number of billing cycles
+            totalCharge: [0], // Will be calculated based on delivery quantity
+            deliveryUnitId: [detail.bookingUnitId, Validators.required],
+            deliveryQuantity: [
+              null,
+              [Validators.min(0), Validators.max(detail.remainingQuantity)],
+            ], // No required, allow 0
+            baseQuantity: [detail.baseQuantity],
+            chargeAmount: [0, [Validators.min(0)]],
+            labourCharge: [null, [Validators.min(0)]],
+            availableUnits: [detail.availableUnits],
+            convertedRemainingQty: [detail.remainingQuantity], // Initialize with booking unit remaining qty
+          });
 
-        // Calculate initial converted remaining quantity
-        this.calculateConvertedRemainingQty(detailForm);
-
-        // Watch for unit or quantity changes to calculate charge
-        detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
-          this.calculateBaseQuantity(detailForm);
-          this.calculateItemCharge(detailForm);
-          this.calculateTotalCharge();
-        });
-
-        detailForm.get('labourCharge')?.valueChanges.subscribe(() => {
-          this.calculateTotalCharge();
-        });
-
-        detailForm.get('deliveryUnitId')?.valueChanges.subscribe(() => {
+          // Calculate initial converted remaining quantity
           this.calculateConvertedRemainingQty(detailForm);
-          this.calculateBaseQuantity(detailForm);
-          this.calculateItemCharge(detailForm);
-          this.calculateTotalCharge();
-        });
 
-        this.deliveryDetails.push(detailForm);
-      }
-    });
+          // Watch for unit or quantity changes to calculate charge
+          detailForm.get('deliveryQuantity')?.valueChanges.subscribe(() => {
+            this.calculateBaseQuantity(detailForm);
+            this.calculateItemCharge(detailForm);
+            this.calculateTotalCharge();
+          });
+
+          detailForm.get('labourCharge')?.valueChanges.subscribe(() => {
+            this.calculateTotalCharge();
+          });
+
+          detailForm.get('deliveryUnitId')?.valueChanges.subscribe(() => {
+            this.calculateConvertedRemainingQty(detailForm);
+            this.calculateBaseQuantity(detailForm);
+            this.calculateItemCharge(detailForm);
+            this.calculateTotalCharge();
+          });
+
+          this.deliveryDetails.push(detailForm);
+        }
+      });
+    }, 50);
 
     // Calculate initial totals after all details are loaded
     setTimeout(() => {
