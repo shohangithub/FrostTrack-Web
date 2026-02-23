@@ -51,6 +51,7 @@ export interface IBookingDetailForDeliveryResponse {
   baseRate: number;
   totalCharge: number; // Charge per delivery unit calculated from BillType
   totalDeliveredQuantity: number;
+  labourCharge: number;
   remainingQuantity: number;
   lastDeliveryDate: Date;
   availableUnits: IUnitConversionResponse[];

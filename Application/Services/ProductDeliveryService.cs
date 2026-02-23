@@ -325,6 +325,7 @@ public class DeliveryService : IDeliveryService
                 detail.BillingCycles = deliveryDetail.BillingCycles;
                 detail.BookingRate = deliveryDetail.BookingDetail.BookingRate;
                 detail.BillType = deliveryDetail.BookingDetail.BillType;
+                detail.LabourCharge = deliveryDetail.LabourCharge;
             }
         }
 
