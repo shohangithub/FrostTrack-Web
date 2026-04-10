@@ -42,6 +42,9 @@ public class Transaction : AuditableEntity<Guid>
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal NetAmount { get; set; } // Amount - Discount + Adjustment
 
+    // Salary-specific back-reference (set when transaction is a salary payment)
+    public SalaryPayment? SalaryPayment { get; set; }
+
     // Payment details
     public required string PaymentMethod { get; set; } // CASH, BANK_TRANSFER, CHEQUE, etc.
     public string? PaymentReference { get; set; } // Cheque/Transaction number

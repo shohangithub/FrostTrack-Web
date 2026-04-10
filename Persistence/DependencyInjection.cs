@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Domain;
 using Persistence.Repositories;
 using Persistence.SeedData;
-using Application.Services.Common;
 using Application.Contractors;
-using System.Text;
+using Application.Services.Common;
+using Domain;
 
 namespace Persistence;
 
@@ -73,6 +73,9 @@ public static class DependencyInjection
         services.AddScoped<IRepository<BankTransaction, long>, Repository<BankTransaction, long>>();
         services.AddScoped<IRepository<Transaction, Guid>, Repository<Transaction, Guid>>();
         services.AddScoped<IRepository<TransactionHead, Guid>, Repository<TransactionHead, Guid>>();
+        services.AddScoped<IRepository<SalaryPayment, int>, Repository<SalaryPayment, int>>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ISalesRepository, SalesRepository>();

@@ -62,6 +62,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PrintSettings> PrintSettings { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<TransactionHead> TransactionHeads { get; set; }
+    public DbSet<SalaryPayment> SalaryPayments { get; set; }
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
 
@@ -405,6 +406,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.HasOne(x => x.TransactionHead)
                   .WithMany()
                   .HasForeignKey(x => x.TransactionHeadId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // 1-to-1 with SalaryPayment
+            entity.HasOne(x => x.SalaryPayment)
+                  .WithOne(sp => sp.Transaction)
+                  .HasForeignKey<SalaryPayment>(sp => sp.TransactionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SalaryPayment>(entity =>
+        {
+            entity.ToTable("SalaryPayments", "finance");
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.TransactionId).IsUnique();
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+
+            entity.HasOne(x => x.Employee)
+                  .WithMany()
+                  .HasForeignKey(x => x.EmployeeId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

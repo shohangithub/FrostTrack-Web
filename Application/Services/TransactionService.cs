@@ -106,6 +106,7 @@ public class TransactionService : ITransactionService
             .Include(x => x.Booking)
             .Include(x => x.Employee)
             .Include(x => x.TransactionHead)
+            .Include(x => x.SalaryPayment)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (result != null && result.TransactionHead != null)
@@ -116,6 +117,16 @@ public class TransactionService : ITransactionService
         var response = result.Adapt<TransactionResponse>();
         // Manually map EmployeeName from Employee object
         response = response with { EmployeeName = result.Employee?.EmployeeName };
+
+        // For salary payments, populate bonus/deduction from the SalaryPayment record
+        if (result.TransactionHead?.UsageFor == UsageFor.SALARY && result.SalaryPayment != null)
+        {
+            response = response with
+            {
+                Bonus = result.SalaryPayment.Bonus,
+                Deduction = result.SalaryPayment.Deduction
+            };
+        }
 
         // Fetch related labour charge if this is a BILL_COLLECTION for deliveries
         if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && result.EntityName == "DELIVERY")

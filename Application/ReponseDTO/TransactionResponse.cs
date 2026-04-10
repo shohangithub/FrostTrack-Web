@@ -33,7 +33,9 @@ public record TransactionResponse(
     DateTime? BillingPeriodStart,
     DateTime? BillingPeriodEnd,
     string? AttachmentPath,
-    decimal? RelatedLabourCharge = null
+    decimal? RelatedLabourCharge = null,
+    decimal? Bonus = null,
+    decimal? Deduction = null
 );
 
 public record TransactionListResponse(

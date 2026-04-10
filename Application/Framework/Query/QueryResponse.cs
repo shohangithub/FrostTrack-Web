@@ -35,4 +35,11 @@ public struct PaginationResult<T>
         var items = query.Skip(pageIndex * pageSize).Take(pageSize).ToList();
         return new(items, pageIndex, pageSize, totalCount);
     }
+
+    /// <summary>
+    /// Creates a PaginationResult from already-fetched, already-paginated data.
+    /// Use this when you have manually applied Skip/Take and know the full totalCount.
+    /// </summary>
+    public static PaginationResult<T> Create(List<T> data, int pageIndex, int pageSize, int totalData)
+        => new(data, pageIndex, pageSize, totalData);
 }

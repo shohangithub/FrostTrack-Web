@@ -1,4 +1,5 @@
 ﻿using Application.Services;
+using Application.Validators;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -64,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IBankBookService, BankBookService>();
         services.AddScoped<IGeneralLedgerService, GeneralLedgerService>();
         services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
+        services.AddScoped<SalaryPaymentValidator>();
         services.AddScoped<ITrialBalanceService, TrialBalanceService>();
         services.AddScoped<IBalanceSheetService, BalanceSheetService>();
         services.AddScoped<IDashboardService, DashboardService>();

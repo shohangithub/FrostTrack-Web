@@ -9,22 +9,14 @@ namespace Application.Validators;
 public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
 {
     private readonly IRepository<Employee, int> _employeeRepository;
-    private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<SalaryPayment, int> _salaryPaymentRepository;
 
     public SalaryPaymentValidator(
         IRepository<Employee, int> employeeRepository,
-        IRepository<Transaction, Guid> transactionRepository,
-        string transactionCode)
+        IRepository<SalaryPayment, int> salaryPaymentRepository)
     {
         _employeeRepository = employeeRepository;
-        _transactionRepository = transactionRepository;
-
-
-        RuleFor(x => transactionCode)
-            .NotEmpty().WithMessage("Transaction code is required")
-            .MaximumLength(50).WithMessage("Transaction code cannot exceed 50 characters")
-            .MustAsync(BeUniqueTransactionCode).WithMessage("Transaction code already exists");
-
+        _salaryPaymentRepository = salaryPaymentRepository;
 
         RuleFor(x => x.EmployeeId)
             .GreaterThan(0).WithMessage("Employee is required")
@@ -64,14 +56,6 @@ public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
         return employee != null && employee.IsActive;
     }
 
-
-    private async Task<bool> BeUniqueTransactionCode(string transactionCode, CancellationToken cancellationToken)
-    {
-        var exists = await _transactionRepository.Query()
-            .AnyAsync(x => x.TransactionCode == transactionCode, cancellationToken);
-        return !exists;
-    }
-
     private bool BeValidPaymentMethod(string paymentMethod)
     {
         return paymentMethod == PaymentMethods.CASH ||
@@ -84,12 +68,13 @@ public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
 
     private async Task<bool> NotHaveDuplicatePayment(SalaryPaymentRequest request, CancellationToken cancellationToken)
     {
-        var period = $"{request.Month:D2}/{request.Year}";
-        var exists = await _transactionRepository.Query().Include(x => x.TransactionHead)
-            .AnyAsync(x => x.TransactionHead!.UsageFor == UsageFor.SALARY &&
-                          x.EntityId == request.EmployeeId.ToString() &&
-                          x.Description.Contains(period) &&
-                          !x.IsDeleted, cancellationToken);
+        var exists = await _salaryPaymentRepository.Query()
+            .Include(x => x.Transaction)
+            .AnyAsync(x => x.EmployeeId == request.EmployeeId &&
+                           x.Month == request.Month &&
+                           x.Year == request.Year &&
+                           !x.Transaction!.IsDeleted, cancellationToken);
         return !exists;
     }
 }
+
