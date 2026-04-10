@@ -1,1 +1,249 @@
-// Styles inherited from transaction-receipt-print component
+/*
+=====================================================================
+Salary Receipt Print Component Styles - Bengali Format
+=====================================================================
+*/
+
+$font-size: 11px;
+
+.no-print {
+    margin: auto;
+    max-width: 210mm;
+}
+
+.print-section-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    margin: auto;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.invoice-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white;
+    page-break-after: always;
+    font-size: $font-size;
+    color: #000;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.invoice-card {
+    width: 210mm;
+    min-height: 297mm;
+    border: none;
+    box-shadow: none;
+}
+
+// Info Box Section
+.booking-info-box {
+    margin-bottom: 15px;
+    border: 2px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        tr {
+            td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                vertical-align: middle;
+                color: #000;
+            }
+
+            .info-label {
+                font-weight: bold;
+                width: 25%;
+                background-color: #f9f9f9;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .info-value {
+                width: 25%;
+            }
+        }
+    }
+}
+
+// Section Titles
+.section-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin: 15px 0 8px 0;
+    text-align: center;
+    text-decoration: underline;
+    color: #000;
+}
+
+// Salary Details Section
+.stored-products-section {
+    margin-bottom: 15px;
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse !important;
+
+        thead {
+            th {
+                border: 1px solid #000 !important;
+                padding: 6px 8px;
+                font-size: $font-size;
+                font-weight: bold;
+                text-align: center;
+                background-color: #f9f9f9;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        tbody {
+            tr {
+                td {
+                    border: 1px solid #000 !important;
+                    padding: 6px 8px;
+                    font-size: $font-size;
+                    color: #000;
+                }
+            }
+        }
+
+        tfoot {
+            .total-row {
+                td {
+                    border: 1px solid #000 !important;
+                    padding: 6px 8px;
+                    font-size: $font-size;
+                    font-weight: bold;
+                    background-color: #f9f9f9;
+                    color: #000;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
+        }
+    }
+}
+
+// Amount in Words
+.amount-words {
+    margin: 15px 0;
+    padding: 8px;
+    border: 1px solid #000;
+    font-size: $font-size;
+    font-weight: bold;
+    color: #000;
+
+    span {
+        font-weight: normal;
+    }
+}
+
+// Notes Section
+.notes-section {
+    margin: 15px 0;
+    padding: 8px;
+    border: 1px solid #000;
+    font-size: $font-size;
+    color: #000;
+
+    strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    p {
+        margin: 0;
+        line-height: 1.5;
+    }
+}
+
+// Signature Section
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+
+    .signature-box {
+        width: 45%;
+        text-align: center;
+
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-bottom: 5px;
+        }
+
+        .signature-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+        }
+
+        .signature-sublabel {
+            font-size: 10px;
+            color: #666;
+        }
+    }
+}
+
+// Print Styles
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-section-container {
+        width: 210mm;
+        min-height: 297mm;
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+    }
+
+    .invoice-container {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 10mm;
+    }
+
+    .booking-info-box,
+    .info-table tr td,
+    .products-table thead th,
+    .products-table tbody tr td,
+    .products-table tfoot tr td,
+    .amount-words,
+    .notes-section,
+    .signature-line {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+}

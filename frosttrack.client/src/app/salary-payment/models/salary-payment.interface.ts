@@ -24,6 +24,7 @@ export interface ISalaryPaymentResponse {
   paymentMethod: string;
   note?: string;
   transactionId: string;
+  transactionCode: string;
   createdAt: Date;
 }
 

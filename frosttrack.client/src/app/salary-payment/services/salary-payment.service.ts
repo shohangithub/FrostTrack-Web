@@ -12,6 +12,7 @@ import {
   ISalaryPaymentList,
   IMonthlyPaymentSummary,
 } from '../models/salary-payment.interface';
+import { ILookup } from '@core/models/lookup';
 
 @Injectable({ providedIn: 'root' })
 export class SalaryPaymentService {
@@ -31,7 +32,7 @@ export class SalaryPaymentService {
     pagination: PaginationQuery,
     employeeId?: number,
     month?: number,
-    year?: number
+    year?: number,
   ): Observable<PaginationResult<ISalaryPaymentList>> {
     const paginationParams = {
       pageSize: pagination.pageSize,
@@ -46,14 +47,14 @@ export class SalaryPaymentService {
 
     const url = getApiEndpoint(
       paginationParams,
-      `${this.path}/get-with-pagination`
+      `${this.path}/get-with-pagination`,
     );
 
     return this.http.get<PaginationResult<ISalaryPaymentList>>(url);
   }
 
   createSalaryPayment(
-    request: ISalaryPaymentRequest
+    request: ISalaryPaymentRequest,
   ): Observable<ISalaryPaymentResponse> {
     return this.http.post<ISalaryPaymentResponse>(this.path, request);
   }
@@ -61,7 +62,7 @@ export class SalaryPaymentService {
   getPaymentHistory(
     employeeId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Observable<ISalaryPaymentList[]> {
     let params = new HttpParams();
 
@@ -82,7 +83,7 @@ export class SalaryPaymentService {
 
   getMonthlyReport(
     month: number,
-    year: number
+    year: number,
   ): Observable<IMonthlyPaymentSummary> {
     const params = new HttpParams()
       .set('month', month.toString())
@@ -90,7 +91,7 @@ export class SalaryPaymentService {
 
     return this.http.get<IMonthlyPaymentSummary>(
       `${this.path}/monthly-report`,
-      { params }
+      { params },
     );
   }
 
@@ -98,9 +99,13 @@ export class SalaryPaymentService {
     return this.http.get<ISalaryPaymentResponse>(`${this.path}/${id}`);
   }
 
+  getLookup(): Observable<ILookup<string>[]> {
+    return this.http.get<ILookup<string>[]>(`${this.path}/lookup`);
+  }
+
   updateSalaryPayment(
     id: string,
-    request: ISalaryPaymentRequest
+    request: ISalaryPaymentRequest,
   ): Observable<ISalaryPaymentResponse> {
     return this.http.put<ISalaryPaymentResponse>(`${this.path}/${id}`, request);
   }

@@ -185,6 +185,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             request.PaymentMethod,
             request.Note,
             transaction.Id.ToString(),
+            transaction.TransactionCode,
             transaction.CreatedTime
         );
     }
@@ -413,6 +414,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             request.PaymentMethod,
             request.Note,
             sp.TransactionId.ToString(),
+            sp.Transaction.TransactionCode,
             sp.Transaction.CreatedTime
         );
     }
@@ -439,6 +441,22 @@ public class SalaryPaymentService : ISalaryPaymentService
     }
 
     // --- Helpers ---
+
+    public async Task<IEnumerable<Lookup<string>>> GetLookupAsync(CancellationToken cancellationToken = default)
+    {
+        var tenantId = _tenantProvider.GetTenantId();
+
+        return await _salaryPaymentRepository.Query()
+            .Include(sp => sp.Transaction)
+            .Include(sp => sp.Employee)
+            .Where(sp => sp.TenantId == tenantId && !sp.Transaction!.IsDeleted)
+            .OrderByDescending(sp => sp.Transaction!.TransactionDate)
+            .Select(sp => new Lookup<string>(
+                sp.TransactionId.ToString(),
+                sp.Employee!.EmployeeName + " (" + sp.Month.ToString("D2") + "/" + sp.Year + ") - " + sp.Transaction!.TransactionCode
+            ))
+            .ToListAsync(cancellationToken);
+    }
 
     private static SalaryPaymentListResponse MapToListResponse(SalaryPayment sp) =>
         new SalaryPaymentListResponse(
@@ -469,6 +487,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             sp.Transaction?.PaymentMethod ?? "",
             sp.Transaction?.Note,
             sp.TransactionId.ToString(),
+            sp.Transaction?.TransactionCode ?? "",
             sp.Transaction?.CreatedTime ?? DateTime.UtcNow
         );
 }

@@ -13,4 +13,5 @@ public interface ISalaryPaymentService
     Task<SalaryPaymentResponse> GetByIdAsync(Guid transactionId, CancellationToken cancellationToken = default);
     Task<SalaryPaymentResponse> UpdateSalaryPaymentAsync(Guid id, RequestDTO.SalaryPaymentRequest request, CancellationToken cancellationToken = default);
     Task<bool> DeleteSalaryPaymentAsync(Guid transactionId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Lookup<string>>> GetLookupAsync(CancellationToken cancellationToken = default);
 }

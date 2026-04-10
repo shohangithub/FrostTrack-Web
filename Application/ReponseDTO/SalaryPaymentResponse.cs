@@ -15,6 +15,7 @@ public record SalaryPaymentResponse(
     string PaymentMethod,
     string? Note,
     string TransactionId,
+    string TransactionCode,
     DateTime CreatedAt
 );
 

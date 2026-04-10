@@ -110,6 +110,16 @@ public class SalaryPaymentController : ControllerBase
     }
 
     /// <summary>
+    /// Get salary payment lookup list
+    /// </summary>
+    [HttpGet("lookup")]
+    public async Task<IActionResult> GetLookup(CancellationToken cancellationToken)
+    {
+        var result = await _salaryPaymentService.GetLookupAsync(cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Delete salary payment (only allowed within 24 hours)
     /// </summary>
     [HttpDelete("{transactionId}")]

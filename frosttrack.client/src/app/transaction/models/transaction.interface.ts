@@ -89,6 +89,8 @@ export interface ITransactionDetailResponse extends ITransactionListResponse {
   updatedBy?: string;
   deletedBy?: string;
   archivedBy?: string;
+  bonus?: number | null;
+  deduction?: number | null;
 }
 
 export interface ITransactionPaginationQuery extends PaginationQuery {
