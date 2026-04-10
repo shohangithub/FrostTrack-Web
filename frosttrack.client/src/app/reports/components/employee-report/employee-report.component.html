@@ -1,0 +1,302 @@
+<section class="main-content">
+  <div class="section-body">
+    <!-- Filter Section -->
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Employee Report</span>
+          <div class="p-10 mt-2">
+            <form
+              class="product-form"
+              [formGroup]="reportForm"
+              (ngSubmit)="generateReport()"
+            >
+              <div class="row">
+                <!-- <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="department" class="col-sm-12 col-form-label"
+                      >Department</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="department"
+                        [items]="departments"
+                        placeholder="All Departments"
+                        formControlName="department"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div> -->
+
+                <!-- <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="designation" class="col-sm-12 col-form-label"
+                      >Designation</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="designation"
+                        [items]="designations"
+                        placeholder="All Designations"
+                        formControlName="designation"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div> -->
+
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="employmentType" class="col-sm-12 col-form-label"
+                      >Employment Type</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="employmentType"
+                        [items]="employmentTypeList"
+                        bindLabel="text"
+                        bindValue="value"
+                        placeholder="All Types"
+                        formControlName="employmentType"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="isActive" class="col-sm-12 col-form-label"
+                      >Status</label
+                    >
+                    <div class="col-sm-12">
+                      <ng-select
+                        id="isActive"
+                        [items]="statusOptions"
+                        bindLabel="label"
+                        bindValue="value"
+                        placeholder="All"
+                        formControlName="isActive"
+                        [clearable]="true"
+                      ></ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                  <div class="form-group row mt-2">
+                    <div class="col-sm-12 text-end">
+                      <button
+                        type="submit"
+                        class="btn btn-primary px-2"
+                        [disabled]="isLoading"
+                      >
+                        @if (isLoading) {
+                          <span
+                            class="spinner-border spinner-border-sm me-2"
+                            role="status"
+                          ></span>
+                        }
+                        Show Report
+                      </button>
+                      @if (showReport) {
+                        <button
+                          type="button"
+                          class="btn btn-secondary ms-2 px-2"
+                          (click)="reset()"
+                        >
+                          Clear
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Display Section -->
+    @if (showReport && !isLoading) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card">
+            <!-- Action Buttons (No Print) -->
+            <div class="row no-print mb-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button
+                    type="button"
+                    class="btn"
+                    [openNewTab]="true"
+                    [closeWindow]="true"
+                    [previewOnly]="false"
+                    [useExistingCss]="true"
+                    printTitle="Employee Report"
+                    printSectionId="print-section-id"
+                    ngxPrint
+                  >
+                    <i class="fas fa-print me-1"></i>Print
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="print-section-id" class="print-section-container">
+              <div class="card invoice-card">
+                <div class="card-body p-0">
+                  <div class="invoice-container">
+                    <!-- Report Header -->
+                    <app-report-invoice-header
+                      [Title]="'কর্মচারী রিপোর্ট'"
+                      [InvoiceNumber]="''"
+                    ></app-report-invoice-header>
+
+                    <!-- Report Filter Info -->
+                    <div class="booking-info-box">
+                      <table class="info-table">
+                        <!-- <tr>
+                          <td class="info-label">Department:</td>
+                          <td class="info-value">
+                            {{ getSelectedDepartmentLabel() }}
+                          </td>
+                          <td class="info-label">Designation:</td>
+                          <td class="info-value">
+                            {{ getSelectedDesignationLabel() }}
+                          </td>
+                        </tr> -->
+                        <tr>
+                          <td class="info-label">Emp Type:</td>
+                          <td class="info-value">
+                            {{ getSelectedEmploymentTypeLabel() }}
+                          </td>
+                          <td class="info-label">Status:</td>
+                          <td class="info-value">
+                            {{ getSelectedStatusLabel() }}
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <!-- <div class="summary-section no-print">
+                      <div class="summary-cards">
+                        <div class="summary-card">
+                          <div class="summary-label">Total Employees</div>
+                          <div class="summary-value">
+                            {{ employeeReportItems.length }}
+                          </div>
+                        </div>
+                        <div class="summary-card">
+                          <div class="summary-label">Active</div>
+                          <div class="summary-value">
+                            {{ getActiveCount() }}
+                          </div>
+                        </div>
+                        <div class="summary-card">
+                          <div class="summary-label">Inactive</div>
+                          <div class="summary-value">
+                            {{ getInactiveCount() }}
+                          </div>
+                        </div>
+                        <div class="summary-card">
+                          <div class="summary-label">Total Salary</div>
+                          <div class="summary-value">
+                            ৳{{ getTotalSalary() | number: "1.2-2" }}
+                          </div>
+                        </div>
+                      </div>
+                    </div> -->
+
+                    <!-- Employee Table -->
+                    @if (employeeReportItems.length > 0) {
+                      <div class="stored-products-section">
+                        <table class="products-table">
+                          <thead>
+                            <tr>
+                              <th>ক্রমিক</th>
+                              <th>কর্মচারী কোড</th>
+                              <th>কর্মচারীর নাম</th>
+                              <!-- <th>বিভাগ</th>
+                              <th>পদবী</th> -->
+                              <th>কর্মসংস্থানের ধরন</th>
+                              <th>যোগদানের তারিখ</th>
+                              <th>মোবাইল</th>
+                              <th>ইমেইল</th>
+                              <th class="text-end">বেতন(৳)</th>
+                              <th>অবস্থা</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (
+                              item of employeeReportItems;
+                              track item.id;
+                              let i = $index
+                            ) {
+                              <tr>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ item.employeeCode }}</td>
+                                <td>{{ item.employeeName }}</td>
+                                <!-- <td>{{ item.department ?? "—" }}</td>
+                                <td>{{ item.designation ?? "—" }}</td> -->
+                                <td>{{ item.employmentType ?? "—" }}</td>
+                                <td>
+                                  {{
+                                    item.joiningDate
+                                      ? (item.joiningDate | date: "dd-MMM-yyyy")
+                                      : "—"
+                                  }}
+                                </td>
+                                <td>{{ item.phone ?? "—" }}</td>
+                                <td>{{ item.email ?? "—" }}</td>
+                                <td class="text-end">
+                                  {{ item.salary | number: "1.2-2" }}
+                                </td>
+                                <td>
+                                  <span
+                                    [class]="
+                                      item.status === 'Active'
+                                        ? 'badge badge-success'
+                                        : 'badge badge-danger'
+                                    "
+                                  >
+                                    {{ item.status }}
+                                  </span>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="7" class="text-end fw-bold">
+                                মোট বেতন:
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ getTotalSalary() | number: "1.2-2" }}
+                              </td>
+                              <td></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    } @else {
+                      <div class="text-center py-4">
+                        <p class="text-muted">No employee data found.</p>
+                      </div>
+                    }
+
+                    <!-- Report Footer -->
+                    <app-report-footer></app-report-footer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>

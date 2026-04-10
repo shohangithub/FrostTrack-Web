@@ -705,6 +705,17 @@ export const ROUTES: RouteInfo[] = [
         badgeClass: '',
         submenu: [],
       },
+      {
+        path: '/reports/employee-report',
+        title: 'Employee Report',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
       // {
       //   path: '/transaction/report',
       //   title: 'Transaction Report',

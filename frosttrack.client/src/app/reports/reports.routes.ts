@@ -78,4 +78,11 @@ export const reportRoutes: Route[] = [
         (m) => m.BalanceSheetComponent,
       ),
   },
+  {
+    path: 'employee-report',
+    loadComponent: () =>
+      import('./components/employee-report/employee-report.component').then(
+        (m) => m.EmployeeReportComponent,
+      ),
+  },
 ];
