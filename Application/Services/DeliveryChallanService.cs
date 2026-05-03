@@ -38,13 +38,30 @@ public class DeliveryChallanService : IDeliveryChallanService
     }
 
     public async Task<IEnumerable<DeliveryChallanListResponse>> ListAsync(CancellationToken cancellationToken = default)
+        => await ListAsync("active", cancellationToken);
+
+    public async Task<IEnumerable<DeliveryChallanListResponse>> ListAsync(string? status, CancellationToken cancellationToken = default)
     {
-        var response = await _repository.Query()
+        var normalizedStatus = status?.ToLowerInvariant() ?? "active";
+        var baseQuery = normalizedStatus == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _repository.Query();
+
+        IQueryable<DeliveryChallan> query = baseQuery
             .Include(x => x.ChallanItems)
             .ThenInclude(x => x.Delivery)
             .ThenInclude(x => x.Booking)
             .ThenInclude(x => x.Customer)
-            .Where(x => !x.IsDeleted)
+            .AsQueryable();
+
+        query = normalizedStatus switch
+        {
+            "archived" => query.Where(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => query.Where(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => query.Where(x => !x.IsDeleted && !x.IsArchived)
+        };
+
+        var response = await query
             .Select(x => new DeliveryChallanListResponse(
                 x.Id,
                 x.ChallanNumber,
@@ -53,6 +70,10 @@ public class DeliveryChallanService : IDeliveryChallanService
                 x.DriverName,
                 x.Destination,
                 x.Status,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 x.ChallanItems.Count,
                 x.ChallanItems.Sum(i => i.Delivery.ChargeAmount),
                 x.DispatchTime,
@@ -64,17 +85,26 @@ public class DeliveryChallanService : IDeliveryChallanService
     }
 
     public async Task<PaginationResult<DeliveryChallanListResponse>> PaginationListAsync(
-        PaginationQuery requestQuery,
+        DeliveryChallanPaginationQuery requestQuery,
         CancellationToken cancellationToken = default)
     {
-        Expression<Func<DeliveryChallan, bool>>? predicate = x => !x.IsDeleted;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+        Expression<Func<DeliveryChallan, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => !obj.IsDeleted &&
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj =>
                 (obj.ChallanNumber.ToLower().Contains(requestQuery.OpenText.ToLower()) ||
                  obj.VehicleNumber.ToLower().Contains(requestQuery.OpenText.ToLower()) ||
-                 obj.DriverName.ToLower().Contains(requestQuery.OpenText.ToLower()));
+                 obj.DriverName.ToLower().Contains(searchText)));
         }
 
         Expression<Func<DeliveryChallan, DeliveryChallanListResponse>>? selector = x => new DeliveryChallanListResponse(
@@ -85,18 +115,21 @@ public class DeliveryChallanService : IDeliveryChallanService
             x.DriverName,
             x.Destination,
             x.Status,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.ChallanItems.Count,
             x.ChallanItems.Sum(i => i.Delivery.ChargeAmount),
             x.DispatchTime,
             x.DeliveryTime
         );
 
-        var query = _repository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _repository.Query();
 
-        if (predicate != null)
-        {
-            query = query.Where(predicate);
-        }
+        var query = baseQuery.Where(predicate);
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
@@ -231,6 +264,19 @@ public class DeliveryChallanService : IDeliveryChallanService
     {
         var challan = await _repository.GetByIdAsync(id, cancellationToken)
             ?? throw new KeyNotFoundException($"Delivery Challan with ID {id} not found");
+        return await _repository.DeleteAsync(challan, cancellationToken);
+    }
+
+    public async Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
+        return result > 0;
+    }
+
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var challan = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Delivery Challan with ID {id} not found");
 
         challan.IsDeleted = true;
         challan.DeletedAt = DateTime.UtcNow;
@@ -240,18 +286,48 @@ public class DeliveryChallanService : IDeliveryChallanService
         return true;
     }
 
-    public async Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default)
+    public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        foreach (var id in ids)
-        {
-            await DeleteAsync(id, cancellationToken);
-        }
+        var challan = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Delivery Challan with ID {id} not found");
+
+        challan.IsDeleted = false;
+        challan.DeletedAt = null;
+        challan.DeletedById = null;
+
+        await _repository.UpdateAsync(challan, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var challan = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Delivery Challan with ID {id} not found");
+
+        challan.IsArchived = true;
+        challan.ArchivedAt = DateTime.UtcNow;
+        challan.ArchivedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(challan, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var challan = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Delivery Challan with ID {id} not found");
+
+        challan.IsArchived = false;
+        challan.ArchivedAt = null;
+        challan.ArchivedById = null;
+
+        await _repository.UpdateAsync(challan, cancellationToken);
         return true;
     }
 
     public async Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _repository.Query().AnyAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+        return await _repository.Query().AnyAsync(x => x.Id == id && !x.IsDeleted && !x.IsArchived, cancellationToken);
     }
 
     public async Task<string> GenerateChallanNumber(CancellationToken cancellationToken = default)
@@ -317,6 +393,10 @@ public class DeliveryChallanService : IDeliveryChallanService
             challan.BranchId,
             challan.Remarks,
             challan.Status,
+            challan.IsDeleted,
+            challan.IsArchived,
+            challan.DeletedAt,
+            challan.ArchivedAt,
             challan.DispatchTime,
             challan.DeliveryTime,
             challan.ChallanItems.Select(item => new DeliveryChallanItemResponse(

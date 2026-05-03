@@ -390,12 +390,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<Delivery>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
+        });
+
         modelBuilder.Entity<Transaction>(entity =>
         {
             entity.ToTable("Transactions", "finance");
             entity.HasIndex(x => x.TenantId);
             if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
 
             entity.Property(x => x.Amount).HasColumnType("decimal(18,2)");
             entity.Property(x => x.DiscountAmount).HasColumnType("decimal(18,2)");
@@ -433,7 +440,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         {
             entity.HasIndex(x => x.TenantId);
             if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
 
             entity.HasOne(x => x.Branch)
                   .WithMany()

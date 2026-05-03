@@ -2,6 +2,7 @@ import { IProductResponse } from '../../administration/models/product.interface'
 import { ICustomerResponse } from '../../common/models/customer.interface';
 import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
 import { IBookingResponse } from '../../booking/models/booking.interface';
+import { PaginationQuery } from '@core/models/pagination-query';
 
 export interface IDeliveryRequest {
   id: string;
@@ -48,6 +49,10 @@ export interface IDeliveryResponse {
   paymentStatus?: string;
   paymentDate?: Date;
   transactionId?: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
   deliveryDetails: IDeliveryDetailResponse[];
 }
 
@@ -76,7 +81,15 @@ export interface IDeliveryListResponse {
   chargeAmount: number;
   discountAmount: number;
   paidAmount: number;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
   deliveryDetails: IDeliveryDetailResponse[];
+}
+
+export interface IDeliveryPaginationQuery extends PaginationQuery {
+  status: 'active' | 'archived' | 'deleted';
 }
 
 export interface ICustomerStockResponse {

@@ -5,7 +5,7 @@ namespace Application.Contractors;
 public interface IBookingService
 {
     Task<IEnumerable<BookingListResponse>> ListAsync(CancellationToken cancellationToken = default);
-    Task<PaginationResult<BookingListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<BookingListResponse>> PaginationListAsync(BookingPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<BookingResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<BookingResponse> AddAsync(BookingRequest request, CancellationToken cancellationToken = default);
     Task<BookingResponse> UpdateAsync(Guid id, BookingRequest request, CancellationToken cancellationToken = default);
@@ -17,4 +17,8 @@ public interface IBookingService
     Task<BookingInvoiceWithDeliveryResponse?> GetInvoiceWithDeliveryAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<CustomerDueSummaryResponse>> GetCustomerDueSummaryAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -95,17 +95,22 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (item of row.salesDetails; track item; let idx =
-                        $index) {
-                        <tr>
-                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
-                          <td class="text-center">{{ item.productName }}</td>
-                          <td class="text-center">{{ item.salesRate }}</td>
-                          <td class="text-center">
-                            {{ item.salesQuantity }}
-                          </td>
-                          <td class="text-center">{{ item.salesAmount }}</td>
-                        </tr>
+                        @for (
+                          item of row.salesDetails;
+                          track item;
+                          let idx = $index
+                        ) {
+                          <tr>
+                            <th class="text-center" scope="row">
+                              {{ idx + 1 }}
+                            </th>
+                            <td class="text-center">{{ item.productName }}</td>
+                            <td class="text-center">{{ item.salesRate }}</td>
+                            <td class="text-center">
+                              {{ item.salesQuantity }}
+                            </td>
+                            <td class="text-center">{{ item.salesAmount }}</td>
+                          </tr>
                         }
                       </tbody>
                     </table>
@@ -151,7 +156,7 @@
                 [width]="120"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.invoiceDate | date : "dd-MMM-yyyy" }}
+                  {{ row.invoiceDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -227,7 +232,7 @@
                       <i class="fas fa-print"></i>
                     </button>
                     <button
-                      class="btn btn-tbl-success h-auto"
+                      class="btn btn-tbl-restore h-auto"
                       (click)="downloadInvoice(row)"
                       title="Download PDF"
                     >

@@ -35,6 +35,7 @@ public class GeneralLedgerService : IGeneralLedgerService
         var lastOpeningBalance = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t =>
+                !t.IsDeleted &&
                 !t.IsArchived &&
                 t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
                 t.TransactionDate < toDate)
@@ -52,6 +53,7 @@ public class GeneralLedgerService : IGeneralLedgerService
         var previousCashAmount = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t =>
+                !t.IsDeleted &&
                 !t.IsArchived &&
                 t.TransactionDate >= openingDate &&
                 t.TransactionDate < fromUtc &&
@@ -75,6 +77,7 @@ public class GeneralLedgerService : IGeneralLedgerService
             .Where(t =>
                 t.TransactionDate >= fromUtc &&
                 t.TransactionDate < toUtc &&
+                !t.IsDeleted &&
                 !t.IsArchived &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                 t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)

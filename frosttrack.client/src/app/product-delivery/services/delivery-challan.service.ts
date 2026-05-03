@@ -4,9 +4,9 @@ import { environment } from 'environments/environment';
 import { Observable } from 'rxjs';
 import { getApiEndpoint } from 'app/utils/api-builder';
 import { PaginationResult } from '@core/models/pagination-result';
-import { PaginationQuery } from '@core/models/pagination-query';
 import {
   IDeliveryChallanListResponse,
+  IDeliveryChallanPaginationQuery,
   IDeliveryChallanRequest,
   IDeliveryChallanResponse,
 } from '../models/delivery-challan.interface';
@@ -24,7 +24,7 @@ export class DeliveryChallanService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery,
+    pagination: IDeliveryChallanPaginationQuery,
   ): Observable<PaginationResult<IDeliveryChallanListResponse>> {
     return this.get<PaginationResult<IDeliveryChallanListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
@@ -32,9 +32,11 @@ export class DeliveryChallanService extends BaseService {
     );
   }
 
-  getList(): Observable<IDeliveryChallanListResponse[]> {
+  getList(
+    status: 'active' | 'archived' | 'deleted' = 'active',
+  ): Observable<IDeliveryChallanListResponse[]> {
     return this.get<IDeliveryChallanListResponse[]>(
-      this.path + '/list',
+      `${this.path}/list?status=${status}`,
       'Load Delivery Challan List',
     );
   }
@@ -86,6 +88,22 @@ export class DeliveryChallanService extends BaseService {
     );
   }
 
+  softDelete(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/unarchive`, {});
+  }
+
   generateChallanNumber(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-challan-number',
@@ -97,11 +115,10 @@ export class DeliveryChallanService extends BaseService {
     id: string,
     status: string,
   ): Observable<IDeliveryChallanResponse> {
-    return this.putWithSuccess<IDeliveryChallanResponse>(
+    return this.patch<IDeliveryChallanResponse>(
       `${this.path}/${id}/status`,
       { status },
       'Update Challan Status',
-      'Status updated successfully',
     );
   }
 }

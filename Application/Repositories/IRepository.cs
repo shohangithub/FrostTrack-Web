@@ -8,6 +8,7 @@ public interface IRepository<TEntity, KeyType>
     where TEntity : class
 {
     IQueryable<TEntity> Query();
+    IQueryable<TEntity> UnfilteredQuery();
     ValueTask<PaginationResult<TResponse>> PaginationQuery<TResponse>(PaginationQuery paginationQuery, Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResponse>> selector, CancellationToken cancellationToken);
     ValueTask<PaginationResult<TResponse>> PaginationQuery<TResponse>(IQueryable<TEntity> query, PaginationQuery paginationQuery, Expression<Func<TEntity, TResponse>> selector, CancellationToken cancellationToken = default);
     ValueTask<TEntity?> GetByIdAsync(KeyType id, CancellationToken cancellationToken);

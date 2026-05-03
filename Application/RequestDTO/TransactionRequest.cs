@@ -9,10 +9,10 @@ public record TransactionRequest(
     decimal Amount,
     string? Note,
     // Optional fields with defaults
-    string? EntityName = "GENERAL",
-    string? EntityId = "00000000-0000-0000-0000-000000000000",
     int? CustomerId = null,
     Guid? BookingId = null,
+        Guid? DeliveryId = null,
+        int? SupplierId = null,
     decimal DiscountAmount = 0,
     decimal AdjustmentValue = 0,
     decimal NetAmount = 0,
@@ -20,10 +20,5 @@ public record TransactionRequest(
     string? PaymentReference = null,
     string? Category = null,
     string? SubCategory = null,
-    string Description = "",
-    string? VendorName = null,
-    string? VendorContact = null,
-    DateTime? BillingPeriodStart = null,
-    DateTime? BillingPeriodEnd = null,
-    string? AttachmentPath = null
+    string Description = ""
 );

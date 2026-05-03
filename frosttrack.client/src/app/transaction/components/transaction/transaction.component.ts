@@ -65,7 +65,7 @@ export class TransactionComponent implements OnInit {
     private authService: AuthService,
     private layoutService: LayoutService,
     private transactionHeadService: TransactionHeadService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -118,7 +118,7 @@ export class TransactionComponent implements OnInit {
             {
               transactionFlow: value.type,
             },
-            { emitEvent: false }
+            { emitEvent: false },
           );
         }
       });
@@ -143,7 +143,7 @@ export class TransactionComponent implements OnInit {
   addTransactionHead(): void {
     const modalRef = this.modalService.open(
       AddTransactionHeadComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then(
       (result: string) => {
@@ -155,7 +155,7 @@ export class TransactionComponent implements OnInit {
           }, 300);
         }
       },
-      () => {}
+      () => {},
     );
   }
 
@@ -182,7 +182,7 @@ export class TransactionComponent implements OnInit {
 
         // Find the transaction head by matching the transactionHeadId
         const transactionHead = this.transactionHeads.find(
-          (th) => th.id === transaction.transactionHeadId
+          (th) => th.id === transaction.transactionHeadId,
         );
 
         this.transactionForm.patchValue({
@@ -230,8 +230,6 @@ export class TransactionComponent implements OnInit {
       amount: formValue.amount,
       note: formValue.note,
       paymentMethod: 'CASH', // Default to CASH
-      entityName: 'GENERAL',
-      entityId: '00000000-0000-0000-0000-000000000000',
       description: `${formValue.transactionHead?.name} - ${formValue.transactionFlow}`,
       discountAmount: 0,
       adjustmentValue: 0,
@@ -284,8 +282,6 @@ export class TransactionComponent implements OnInit {
       amount: formValue.amount,
       note: formValue.note,
       paymentMethod: 'CASH', // Default to CASH
-      entityName: 'GENERAL',
-      entityId: '00000000-0000-0000-0000-000000000000',
       description: `${formValue.transactionHead?.name} - ${formValue.transactionFlow}`,
       discountAmount: 0,
       adjustmentValue: 0,
@@ -317,7 +313,7 @@ export class TransactionComponent implements OnInit {
   loadReceiptForPrint(): void {
     console.log(
       'Loading receipt for print, transaction ID:',
-      this.savedTransactionId
+      this.savedTransactionId,
     );
     this.receiptId = this.savedTransactionId;
     this.showReceipt = true;

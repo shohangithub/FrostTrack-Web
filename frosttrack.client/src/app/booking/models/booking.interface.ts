@@ -2,6 +2,7 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { IBranchListResponse } from 'app/common/models/branch.interface';
 import { IProductResponse } from 'app/administration/models/product.interface';
 import { IUnitConversionResponse } from 'app/common/models/unit-conversion.interface';
+import { PaginationQuery } from '@core/models/pagination-query';
 
 export interface IBookingRequest {
   id: string;
@@ -37,6 +38,10 @@ export interface IBookingResponse {
   branchId: number;
   branch: IBranchListResponse;
   notes?: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
   bookingDetails: IBookingDetailResponse[];
 }
 
@@ -66,7 +71,15 @@ export interface IBookingListResponse {
   branchId: number;
   branch: IBranchListResponse;
   notes?: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
   bookingDetails: IBookingDetailListResponse[];
+}
+
+export interface IBookingPaginationQuery extends PaginationQuery {
+  status: 'active' | 'archived' | 'deleted';
 }
 
 export interface IBookingDetailListResponse {

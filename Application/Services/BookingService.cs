@@ -108,6 +108,58 @@ public class BookingService : IBookingService
         return result > 0;
     }
 
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Booking record not found!");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Booking record not found!");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Booking record not found!");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Booking record not found!");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
     public async Task<BookingResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
@@ -171,6 +223,10 @@ public class BookingService : IBookingService
                 x.BranchId,
                 x.Branch!,
                 x.Notes,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 x.BookingDetails.Select(d => new BookingDetailListResponse(
                     d.Id,
                     d.Id,
@@ -190,7 +246,7 @@ public class BookingService : IBookingService
         return response;
     }
 
-    public async Task<PaginationResult<BookingListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<BookingListResponse>> PaginationListAsync(BookingPaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         // Map frontend column names to entity property names
         if (!string.IsNullOrEmpty(requestQuery.OrderBy))
@@ -205,12 +261,22 @@ public class BookingService : IBookingService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<Booking, bool>>? predicate = null;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<Booking, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.BookingNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower()));
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj => obj.BookingNumber.ToLower().Contains(searchText)
+                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(searchText)));
         }
 
         Expression<Func<Booking, BookingListResponse>>? selector = x => new BookingListResponse(
@@ -223,6 +289,10 @@ public class BookingService : IBookingService
             x.BranchId,
             x.Branch!,
             x.Notes,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.BookingDetails.Select(d => new BookingDetailListResponse(
                 d.Id,
                 d.Id,
@@ -239,13 +309,13 @@ public class BookingService : IBookingService
                 d.LastDeliveryDate))
             );
 
-        var query = _bookingRepository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _bookingRepository.Query();
 
-        // Apply search predicate if it exists
-        if (predicate != null)
-        {
-            query = query.Where(predicate);
-        }
+        var query = baseQuery;
+
+        query = query.Where(predicate);
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
@@ -335,7 +405,7 @@ public class BookingService : IBookingService
             Id = d.Id,
             DeliveryNumber = d.DeliveryNumber,
             DeliveryDate = d.DeliveryDate,
-            ChargeAmount = transactions.FirstOrDefault(t => t.EntityId == d.Id.ToString() && t.EntityName == "Delivery")?.Amount ?? 0,
+            ChargeAmount = transactions.FirstOrDefault(t => t.DeliveryId == d.Id)?.Amount ?? 0,
             AdjustmentValue = d.AdjustmentValue,
             DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
             {

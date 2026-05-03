@@ -12,6 +12,10 @@ public record BookingResponse(
         int BranchId,
         Branch Branch,
         string? Notes,
+  bool IsDeleted,
+  bool IsArchived,
+  DateTime? DeletedAt,
+  DateTime? ArchivedAt,
         ICollection<BookingDetailResponse> BookingDetails
     );
 
@@ -57,5 +61,9 @@ public record BookingListResponse(
         int BranchId,
         Branch Branch,
         string? Notes,
+  bool IsDeleted,
+  bool IsArchived,
+  DateTime? DeletedAt,
+  DateTime? ArchivedAt,
         IEnumerable<BookingDetailListResponse> BookingDetails
     );

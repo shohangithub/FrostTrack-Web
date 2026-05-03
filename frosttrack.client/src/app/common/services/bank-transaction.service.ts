@@ -18,7 +18,6 @@ import { MessageHub } from '@config/message-hub';
 import { CodeResponse } from '@core/models/code-response';
 
 @Injectable({ providedIn: 'root' })
-@Injectable({ providedIn: 'root' })
 export class BankTransactionService extends BaseService {
   path: string = `${environment.apiUrl}/banktransaction`;
 
@@ -27,41 +26,41 @@ export class BankTransactionService extends BaseService {
   }
 
   getWithPagination(
-    pagination: IBankTransactionPaginationQuery
+    pagination: IBankTransactionPaginationQuery,
   ): Observable<PaginationResult<IBankTransactionListResponse>> {
     return this.get<PaginationResult<IBankTransactionListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Bank Transactions'
+      'Load Bank Transactions',
     );
   }
 
   getById(id: number): Observable<IBankTransactionResponse> {
     return this.get<IBankTransactionResponse>(
       this.path + '/' + id,
-      'Load Bank Transaction'
+      'Load Bank Transaction',
     );
   }
 
   create(
-    payload: IBankTransactionRequest
+    payload: IBankTransactionRequest,
   ): Observable<IBankTransactionResponse> {
     return this.postWithSuccess<IBankTransactionResponse>(
       this.path,
       payload,
       'Create Bank Transaction',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
   update(
     id: number,
-    payload: IBankTransactionRequest
+    payload: IBankTransactionRequest,
   ): Observable<IBankTransactionResponse> {
     return this.putWithSuccess<IBankTransactionResponse>(
       `${this.path}/${id}`,
       payload,
       'Update Bank Transaction',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -69,7 +68,7 @@ export class BankTransactionService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Bank Transaction',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -78,21 +77,37 @@ export class BankTransactionService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Bank Transactions',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
+  }
+
+  softDelete(id: number): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/unarchive`, {});
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Bank Transaction Lookup'
+      'Load Bank Transaction Lookup',
     );
   }
 
   generateCode(isGlobal: boolean = false): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       `${this.path}/generate-code?isGlobal=${isGlobal}`,
-      'Transaction Code Generation'
+      'Transaction Code Generation',
     );
   }
 }

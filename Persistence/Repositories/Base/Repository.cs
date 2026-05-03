@@ -7,6 +7,7 @@ public class Repository<TEntity, KeyType>(ApplicationDbContext _context) : IRepo
     private readonly DbSet<TEntity> _dbSet = _context.Set<TEntity>() ?? throw new ArgumentNullException("dbset can't be null !");
 
     public IQueryable<TEntity> Query() => _dbSet.AsNoTracking().AsQueryable();
+    public IQueryable<TEntity> UnfilteredQuery() => _dbSet.AsNoTracking().IgnoreQueryFilters().AsQueryable();
 
     public async ValueTask<TEntity?> GetByIdAsync(KeyType id, CancellationToken cancellationToken = default) => await _context.Set<TEntity>().FindAsync(id, cancellationToken);
 

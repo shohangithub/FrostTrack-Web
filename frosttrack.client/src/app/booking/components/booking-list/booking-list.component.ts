@@ -4,7 +4,10 @@ import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { MessageHub } from '@config/message-hub';
 import { DefaultPagination } from '@config/pagination';
-import { PaginationQuery } from '@core/models/pagination-query';
+import {
+  IBookingPaginationQuery,
+  IBookingListResponse,
+} from 'app/booking/models/booking.interface';
 import {
   PaginationResult,
   PagingResponse,
@@ -17,7 +20,6 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
-import { IBookingListResponse } from 'app/booking/models/booking.interface';
 import { BookingService } from 'app/booking/services/booking.service';
 import { ROLES } from 'app/common/data/settings-data';
 import { SwalConfirm } from 'app/theme-config';
@@ -58,7 +60,8 @@ export class BookingListComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IBookingListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IBookingPaginationQuery = {
+    status: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -81,7 +84,7 @@ export class BookingListComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private layoutService: LayoutService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -145,7 +148,7 @@ export class BookingListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -182,27 +185,65 @@ export class BookingListComponent implements OnInit {
     this.router.navigate(['booking/edit', row.id]);
   }
 
+  setStatus(status: 'active' | 'archived' | 'deleted') {
+    this.pagination.status = status;
+    this.pagination.pageIndex = DefaultPagination.PAGEINDEX;
+    this.fetchData();
+  }
+
   delete(row: any) {
+    const isPermanent = row.isDeleted || this.pagination.status === 'deleted';
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: isPermanent
+        ? 'Are you sure you want to permanently delete this booking?'
+        : 'Are you sure you want to soft delete this booking?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.bookingService.remove(row.id).subscribe({
-          next: (response) => {
-            if (response) {
-              this.removeRecord(row);
-              this.toastr.success(MessageHub.DELETE_ONE);
-            }
-          },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
-          },
-        });
+        if (isPermanent) {
+          this.bookingService.remove(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: (err: ErrorResponse) => {
+              this.toastr.error(formatErrorMessage(err));
+            },
+          });
+        } else {
+          this.bookingService.softDelete(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: (err: ErrorResponse) => {
+              this.toastr.error(formatErrorMessage(err));
+            },
+          });
+        }
       }
+    });
+  }
+
+  restoreRow(row: IBookingListResponse) {
+    this.bookingService.restore(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
+    });
+  }
+
+  archiveRow(row: IBookingListResponse) {
+    this.bookingService.archive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
+    });
+  }
+
+  unarchiveRow(row: IBookingListResponse) {
+    this.bookingService.unarchive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
     });
   }
 
@@ -240,7 +281,7 @@ export class BookingListComponent implements OnInit {
   getRowTotalQuantity(bookingDetails: any[]): number {
     return bookingDetails.reduce(
       (sum, item) => sum + (item.bookingQuantity || 0),
-      0
+      0,
     );
   }
 
@@ -248,7 +289,7 @@ export class BookingListComponent implements OnInit {
     return bookingDetails.reduce(
       (sum, item) =>
         sum + (item.bookingQuantity || 0) * (item.bookingRate || 0),
-      0
+      0,
     );
   }
 

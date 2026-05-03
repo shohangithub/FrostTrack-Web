@@ -37,6 +37,7 @@ namespace Application.Services
                 .Include(t => t.TransactionHead)
                 .Where(t =>
                     t.PaymentMethod == PaymentMethods.CASH &&
+                    !t.IsDeleted &&
                     !t.IsArchived &&
                     t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
                      && t.TransactionDate < toDate
@@ -56,6 +57,7 @@ namespace Application.Services
                 .Include(t => t.TransactionHead)
                 .Where(t =>
                     t.PaymentMethod == PaymentMethods.CASH &&
+                    !t.IsDeleted &&
                     !t.IsArchived &&
                     t.TransactionDate >= openingDate &&
                     t.TransactionDate < fromUtc &&
@@ -76,7 +78,7 @@ namespace Application.Services
             // Get cash transactions for the report date
             var transactions = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
-                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && t.PaymentMethod == PaymentMethods.CASH && t.IsArchived == false && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && t.PaymentMethod == PaymentMethods.CASH && !t.IsDeleted && t.IsArchived == false && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .ToListAsync(cancellationToken);
 
 

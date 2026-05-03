@@ -16,6 +16,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import {
   IBankTransactionListResponse,
+  IBankTransactionPaginationQuery,
   IBankTransactionRequest,
 } from '../../models/bank-transaction.interface';
 import { BankService } from '../../services/bank.service';
@@ -26,7 +27,6 @@ import {
   PaginationResult,
   PagingResponse,
 } from '../../../core/models/pagination-result';
-import { PaginationQuery } from '../../../core/models/pagination-query';
 import {
   BANK_TRANSACTION_TYPE,
   COMMON_STATUS_LIST,
@@ -94,7 +94,8 @@ export class BankTransactionComponent implements OnInit {
   withdrawForm!: UntypedFormGroup;
 
   // Pagination
-  pagination: PaginationQuery = {
+  pagination: IBankTransactionPaginationQuery = {
+    archiveStatus: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -125,7 +126,7 @@ export class BankTransactionComponent implements OnInit {
             actual: amount,
             max: this.selectedBankBalance,
             message: `Amount cannot exceed available balance of $${this.selectedBankBalance.toFixed(
-              2
+              2,
             )}`,
           },
         };
@@ -154,7 +155,7 @@ export class BankTransactionComponent implements OnInit {
     private toastr: ToastrService,
     private bankTransactionService: BankTransactionService,
     private bankService: BankService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -337,6 +338,12 @@ export class BankTransactionComponent implements OnInit {
     this.fetchData();
   }
 
+  setStatus(status: 'active' | 'archived' | 'deleted') {
+    this.pagination.archiveStatus = status;
+    this.pagination.pageIndex = DefaultPagination.PAGEINDEX;
+    this.fetchData();
+  }
+
   // select record using check box
   onSelect({ selected }: { selected: any }) {
     this.selected.splice(0, this.selected.length);
@@ -412,23 +419,59 @@ export class BankTransactionComponent implements OnInit {
   }
 
   delete(row: any) {
+    const isPermanent =
+      row.isDeleted || this.pagination.archiveStatus === 'deleted';
     Swal.fire({
-      title: this.MessageHub.DELETE_CONFIRM,
+      title: isPermanent
+        ? 'Are you sure you want to permanently delete this transaction?'
+        : 'Are you sure you want to soft delete this transaction?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.bankTransactionService.remove(row.id).subscribe({
-          next: () => {
-            this.removeRecord(row);
-          },
-          error: () => {
-            // Error is handled by service
-          },
-        });
+        if (isPermanent) {
+          this.bankTransactionService.remove(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: () => {
+              // Error is handled by service
+            },
+          });
+        } else {
+          this.bankTransactionService.softDelete(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: () => {
+              // Error is handled by service
+            },
+          });
+        }
       }
+    });
+  }
+
+  restoreRow(row: IBankTransactionListResponse) {
+    this.bankTransactionService.restore(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: () => {},
+    });
+  }
+
+  archiveRow(row: IBankTransactionListResponse) {
+    this.bankTransactionService.archive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: () => {},
+    });
+  }
+
+  unarchiveRow(row: IBankTransactionListResponse) {
+    this.bankTransactionService.unarchive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: () => {},
     });
   }
 
@@ -467,7 +510,7 @@ export class BankTransactionComponent implements OnInit {
       },
       () => {
         // Modal dismissed
-      }
+      },
     );
   }
 }

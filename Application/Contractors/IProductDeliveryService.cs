@@ -11,7 +11,7 @@ public interface IDeliveryService
     Task<bool> DeleteAsync(Guid id);
     Task<bool> BatchDeleteAsync(Guid[] ids);
     Task<DeliveryResponse> GetByIdAsync(Guid id);
-    Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(PaginationQuery query);
+    Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(DeliveryPaginationQuery query);
     Task<string> GenerateDeliveryNumberAsync();
     Task<BookingForDeliveryResponse> GetBookingForDeliveryAsync(string bookingNumber);
     Task<List<RemainingQuantityResponse>> GetRemainingQuantitiesAsync(Guid bookingId);
@@ -25,4 +25,8 @@ public interface IDeliveryService
     Task<List<DeliveryResponse>> GetAllUnpaidDeliveriesAsync();
     Task<List<DeliveryResponse>> GetAllDeliveriesAsync();
     Task<List<DeliveryResponse>> GetDeliveriesByTransactionIdAsync(Guid transactionId);
+    Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default);
 }

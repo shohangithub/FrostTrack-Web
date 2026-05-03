@@ -12,6 +12,10 @@ export interface IBankTransactionListResponse {
   description?: string;
   balanceAfter: number;
   receiptNumber?: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
   status: string;
 }
 
@@ -28,6 +32,10 @@ export interface IBankTransactionResponse {
   balanceAfter: number;
   receiptNumber?: string;
   isActive: boolean;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
   status: string;
 }
 
@@ -47,4 +55,5 @@ export interface IBankTransactionRequest {
 export interface IBankTransactionPaginationQuery extends PaginationQuery {
   transactionType?: string;
   status?: string;
+  archiveStatus?: 'active' | 'archived' | 'deleted';
 }

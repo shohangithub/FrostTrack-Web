@@ -50,6 +50,7 @@ export class BillCollectionListComponent implements OnInit {
   selected: ITransactionListResponse[] = [];
   pagination: ITransactionPaginationQuery = {
     usageFor: USAGE_FOR.BILL_COLLECTION,
+    status: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -66,7 +67,7 @@ export class BillCollectionListComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private layoutService: LayoutService,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -95,7 +96,7 @@ export class BillCollectionListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;

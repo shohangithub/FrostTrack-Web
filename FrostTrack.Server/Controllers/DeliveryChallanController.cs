@@ -19,15 +19,15 @@ public class DeliveryChallanController : ControllerBase
     }
 
     [HttpGet("list")]
-    public async Task<ActionResult<IEnumerable<DeliveryChallanListResponse>>> GetList(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<DeliveryChallanListResponse>>> GetList([FromQuery] string? status, CancellationToken cancellationToken)
     {
-        var result = await _service.ListAsync(cancellationToken);
+        var result = await _service.ListAsync(status, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("get-with-pagination")]
     public async Task<ActionResult<PaginationResult<DeliveryChallanListResponse>>> GetWithPagination(
-        [FromQuery] PaginationQuery query,
+        [FromQuery] DeliveryChallanPaginationQuery query,
         CancellationToken cancellationToken)
     {
         var result = await _service.PaginationListAsync(query, cancellationToken);
@@ -105,6 +105,43 @@ public class DeliveryChallanController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _service.DeleteBatchAsync(ids, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("DeleteBatch")]
+    public async Task<ActionResult<bool>> DeleteBatchAlias(
+        [FromBody] List<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.DeleteBatchAsync(ids, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<ActionResult<bool>> SoftDelete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.SoftDeleteAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/restore")]
+    public async Task<ActionResult<bool>> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.RestoreAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/archive")]
+    public async Task<ActionResult<bool>> Archive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.ArchiveAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<ActionResult<bool>> Unarchive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.UnarchiveAsync(id, cancellationToken);
         return Ok(result);
     }
 

@@ -28,7 +28,7 @@ public class BookingController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<BookingListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<BookingListResponse>> GetWithPagination([FromQuery] BookingPaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _bookingService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -68,6 +68,34 @@ public class BookingController : ControllerBase
     public async Task<ActionResult<bool>> DeleteBatch([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
         return await _bookingService.DeleteBatchAsync(ids, cancellationToken);
+    }
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<IActionResult> SoftDelete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _bookingService.SoftDeleteAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/restore")]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _bookingService.RestoreAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/archive")]
+    public async Task<IActionResult> Archive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _bookingService.ArchiveAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<IActionResult> Unarchive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _bookingService.UnarchiveAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("IsBookingExists")]

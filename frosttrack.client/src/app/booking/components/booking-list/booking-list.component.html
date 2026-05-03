@@ -39,6 +39,49 @@
                   </div>
                 </div>
               </div>
+              <div
+                class="col-lg-6 d-flex align-items-center justify-content-end pe-3"
+              >
+                <div
+                  class="btn-group"
+                  role="group"
+                  aria-label="Record status filter"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-primary]="pagination.status === 'active'"
+                    [class.btn-outline-primary]="pagination.status !== 'active'"
+                    (click)="setStatus('active')"
+                  >
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-warning]="pagination.status === 'archived'"
+                    [class.btn-outline-warning]="
+                      pagination.status !== 'archived'
+                    "
+                    (click)="setStatus('archived')"
+                  >
+                    Archived
+                  </button>
+                  @if (canDelete) {
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-danger]="pagination.status === 'deleted'"
+                      [class.btn-outline-danger]="
+                        pagination.status !== 'deleted'
+                      "
+                      (click)="setStatus('deleted')"
+                    >
+                      Deleted
+                    </button>
+                  }
+                </div>
+              </div>
             </div>
 
             <ngx-datatable
@@ -86,28 +129,33 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (item of row.bookingDetails; track item; let idx =
-                        $index) {
-                        <tr>
-                          <th class="text-center" scope="row">{{ idx + 1 }}</th>
-                          <td class="text-center">{{ item.productName }}</td>
-                          <td class="text-center">
-                            {{ item.unitName || "N/A" }}
-                          </td>
-                          <td class="text-center">
-                            {{ item.billType || "N/A" }}
-                          </td>
-                          <td class="text-center">{{ item.bookingRate }}</td>
-                          <td class="text-center">
-                            {{ item.bookingQuantity }}
-                          </td>
-                          <td class="text-center">
-                            {{
-                              item.bookingQuantity * item.bookingRate
-                                | number : "1.2-2"
-                            }}
-                          </td>
-                        </tr>
+                        @for (
+                          item of row.bookingDetails;
+                          track item;
+                          let idx = $index
+                        ) {
+                          <tr>
+                            <th class="text-center" scope="row">
+                              {{ idx + 1 }}
+                            </th>
+                            <td class="text-center">{{ item.productName }}</td>
+                            <td class="text-center">
+                              {{ item.unitName || "N/A" }}
+                            </td>
+                            <td class="text-center">
+                              {{ item.billType || "N/A" }}
+                            </td>
+                            <td class="text-center">{{ item.bookingRate }}</td>
+                            <td class="text-center">
+                              {{ item.bookingQuantity }}
+                            </td>
+                            <td class="text-center">
+                              {{
+                                item.bookingQuantity * item.bookingRate
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
                         }
                       </tbody>
                       <tfoot>
@@ -118,13 +166,13 @@
                           <th class="text-center fw-bold">
                             {{
                               getRowTotalQuantity(row.bookingDetails)
-                                | number : "1.2-2"
+                                | number: "1.2-2"
                             }}
                           </th>
                           <th class="text-center fw-bold">
                             {{
                               getRowTotalAmount(row.bookingDetails)
-                                | number : "1.2-2"
+                                | number: "1.2-2"
                             }}
                           </th>
                         </tr>
@@ -172,7 +220,7 @@
                 [width]="150"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.bookingDate | date : "dd-MMM-yyyy" }}
+                  {{ row.bookingDate | date: "dd-MMM-yyyy" }}
                 </ng-template>
               </ngx-datatable-column>
 
@@ -219,20 +267,67 @@
                     >
                       <i class="fas fa-print"></i>
                     </button>
-                    @if(canEdit) {
-                    <button
-                      class="btn btn-tbl-edit h-auto"
-                      (click)="editRow(row)"
-                    >
-                      <i class="fas fa-pen"></i>
-                    </button>
-                    } @if(canDelete) {
-                    <button
-                      class="btn btn-tbl-delete h-auto"
-                      (click)="delete(row)"
-                    >
-                      <i class="far fa-trash-alt"></i>
-                    </button>
+                    @if (canEdit) {
+                      <button
+                        class="btn btn-tbl-edit h-auto"
+                        (click)="editRow(row)"
+                      >
+                        <i class="fas fa-pen"></i>
+                      </button>
+                    }
+                    @if (row.isDeleted) {
+                      <button
+                        class="btn btn-tbl-restore h-auto"
+                        (click)="restoreRow(row)"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >restore</i
+                        >
+                      </button>
+                      @if (canDelete) {
+                        <button
+                          class="btn btn-tbl-delete h-auto"
+                          (click)="delete(row)"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >delete_forever</i
+                          >
+                        </button>
+                      }
+                    } @else if (row.isArchived) {
+                      <button
+                        class="btn btn-tbl-archive h-auto"
+                        (click)="unarchiveRow(row)"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >unarchive</i
+                        >
+                      </button>
+                      @if (canDelete) {
+                        <button
+                          class="btn btn-tbl-delete h-auto"
+                          (click)="delete(row)"
+                        >
+                          <i class="far fa-trash-alt"></i>
+                        </button>
+                      }
+                    } @else {
+                      <button
+                        class="btn btn-tbl-archive h-auto"
+                        (click)="archiveRow(row)"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >archive</i
+                        >
+                      </button>
+                      @if (canDelete) {
+                        <button
+                          class="btn btn-tbl-delete h-auto"
+                          (click)="delete(row)"
+                        >
+                          <i class="far fa-trash-alt"></i>
+                        </button>
+                      }
                     }
                   </span>
                 </ng-template>
@@ -246,10 +341,10 @@
 </section>
 
 <!-- Hidden Invoice Component for Printing -->
-@if(showInvoice && invoiceId) {
-<div style="position: absolute; left: -9999px">
-  <app-booking-invoice-print
-    [invoiceId]="invoiceId"
-  ></app-booking-invoice-print>
-</div>
+@if (showInvoice && invoiceId) {
+  <div style="position: absolute; left: -9999px">
+    <app-booking-invoice-print
+      [invoiceId]="invoiceId"
+    ></app-booking-invoice-print>
+  </div>
 }

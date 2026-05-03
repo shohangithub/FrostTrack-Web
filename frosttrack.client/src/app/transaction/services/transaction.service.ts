@@ -20,25 +20,25 @@ import { MessageHub } from '@config/message-hub';
 export class TransactionService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/transaction`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<ITransactionListResponse>> {
     return this.get<PaginationResult<ITransactionListResponse>>(
       getApiEndpoint(pagination, this.path + `/pagination`),
-      'Load Transactions'
+      'Load Transactions',
     );
   }
 
   getById(id: string): Observable<ITransactionDetailResponse> {
     return this.get<ITransactionDetailResponse>(
       this.path + '/' + id,
-      'Load Transaction'
+      'Load Transaction',
     );
   }
 
@@ -47,19 +47,19 @@ export class TransactionService extends BaseService {
       this.path,
       payload,
       'Create Transaction',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
   update(
     id: string,
-    payload: ITransactionRequest
+    payload: ITransactionRequest,
   ): Observable<ITransactionDetailResponse> {
     return this.putWithSuccess<ITransactionDetailResponse>(
       `${this.path}/${id}`,
       payload,
       'Update Transaction',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -67,7 +67,7 @@ export class TransactionService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Transaction',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -76,7 +76,7 @@ export class TransactionService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Transactions',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
@@ -84,7 +84,7 @@ export class TransactionService extends BaseService {
     return this.post<void>(
       `${this.path}/${id}/soft-delete`,
       {},
-      'Soft Delete Transaction'
+      'Soft Delete Transaction',
     );
   }
 
@@ -92,7 +92,7 @@ export class TransactionService extends BaseService {
     return this.post<void>(
       `${this.path}/${id}/restore`,
       {},
-      'Restore Transaction'
+      'Restore Transaction',
     );
   }
 
@@ -100,7 +100,7 @@ export class TransactionService extends BaseService {
     return this.post<void>(
       `${this.path}/${id}/archive`,
       {},
-      'Archive Transaction'
+      'Archive Transaction',
     );
   }
 
@@ -108,53 +108,43 @@ export class TransactionService extends BaseService {
     return this.post<void>(
       `${this.path}/${id}/unarchive`,
       {},
-      'Unarchive Transaction'
-    );
-  }
-
-  getByEntityReference(
-    entityName: string,
-    entityId: string
-  ): Observable<ITransactionListResponse[]> {
-    return this.get<ITransactionListResponse[]>(
-      `${this.path}/by-entity/${entityName}/${entityId}`,
-      'Load Entity Transactions'
+      'Unarchive Transaction',
     );
   }
 
   generateCode(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
-      'Transaction Code Generation'
+      'Transaction Code Generation',
     );
   }
 
   getLookup(): Observable<ILookup<string>[]> {
     return this.get<ILookup<string>[]>(
       this.path + '/lookup',
-      'Load Transaction Lookup'
+      'Load Transaction Lookup',
     );
   }
 
   getLookupByUsageFor(usageFor: string): Observable<ILookup<string>[]> {
     return this.get<ILookup<string>[]>(
       `${this.path}/lookup-by-usage-for?usageFor=${usageFor}`,
-      'Load Transaction Lookup by UsageFor'
+      'Load Transaction Lookup by UsageFor',
     );
   }
 
   getByTransactionCode(
-    transactionCode: string
+    transactionCode: string,
   ): Observable<ITransactionDetailResponse> {
     return this.get<ITransactionDetailResponse>(
       `${this.path}/by-code/${transactionCode}`,
-      'Load Transaction by Code'
+      'Load Transaction by Code',
     );
   }
 
   getTransactionReport(
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Observable<ITransactionListResponse[]> {
     const params = new URLSearchParams({
       startDate: startDate.toISOString(),
@@ -162,7 +152,7 @@ export class TransactionService extends BaseService {
     });
     return this.get<ITransactionListResponse[]>(
       `${this.path}?${params.toString()}`,
-      'Load Transaction Report'
+      'Load Transaction Report',
     );
   }
 }

@@ -96,6 +96,58 @@ public class BankTransactionService : IBankTransactionService
         return true;
     }
 
+    public async Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
     public async Task<string> GenerateCode(CancellationToken cancellationToken = default)
     {
         return await _codeGenerationService.GenerateCodeAsync(
@@ -126,6 +178,10 @@ public class BankTransactionService : IBankTransactionService
             result.BalanceAfter,
             result.ReceiptNumber,
             result.IsActive,
+            result.IsDeleted,
+            result.IsArchived,
+            result.DeletedAt,
+            result.ArchivedAt,
             result.Status
         );
 
@@ -166,6 +222,10 @@ public class BankTransactionService : IBankTransactionService
             x.Description,
             x.BalanceAfter,
             x.ReceiptNumber,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.Status
         ));
 
@@ -197,6 +257,10 @@ public class BankTransactionService : IBankTransactionService
                x.Description,
                x.BalanceAfter,
                x.ReceiptNumber,
+             x.IsDeleted,
+             x.IsArchived,
+             x.DeletedAt,
+             x.ArchivedAt,
                x.Status
             );
 
@@ -225,10 +289,15 @@ public class BankTransactionService : IBankTransactionService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
+        var archiveStatus = requestQuery.archiveStatus?.ToLowerInvariant() ?? "active";
         Expression<Func<BankTransaction, bool>> predicate = x => true;
 
-        // Always exclude archived transactions
-        predicate = predicate.And(x => !x.IsArchived);
+        predicate = archiveStatus switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         // Filter by Transaction Type
         if (!string.IsNullOrWhiteSpace(requestQuery.transactionType))
@@ -293,10 +362,18 @@ public class BankTransactionService : IBankTransactionService
             x.Description,
             x.BalanceAfter,
             x.ReceiptNumber,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.Status
         );
 
-        var query = _repository.Query()
+        var baseQuery = archiveStatus == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _repository.Query();
+
+        var query = baseQuery
             .Include(x => x.Bank)
             .AsQueryable();
 

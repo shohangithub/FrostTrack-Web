@@ -31,6 +31,7 @@ namespace Application.Services
             var lastOpeningBalance = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
                 .Where(t =>
+                    !t.IsDeleted &&
                     !t.IsArchived &&
                     t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
                      && t.TransactionDate < dateWithUTCTime
@@ -48,6 +49,7 @@ namespace Application.Services
             var previousAmount = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
                 .Where(t =>
+                    !t.IsDeleted &&
                     !t.IsArchived &&
                     t.TransactionDate >= openingDate &&
                     t.TransactionDate < fromUtc &&
@@ -59,7 +61,7 @@ namespace Application.Services
             // Get transactions for the report date
             var transactions = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
-                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsArchived && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .OrderBy(t => t.CreatedTime)
                 .ToListAsync(cancellationToken);
 

@@ -11,9 +11,6 @@ public class Booking : AuditableEntity<Guid>
     public required int BranchId { get; set; }
     public Branch? Branch { get; set; }
     public string? Notes { get; set; }
-    public bool IsArchived { get; set; } = false;
-    public DateTime? ArchivedAt { get; set; }
-    public int? ArchivedById { get; set; }
     public ICollection<BookingDetail> BookingDetails { get; set; } = [];
     //public ICollection<Transaction> Transactions { get; set; } = [];
 }

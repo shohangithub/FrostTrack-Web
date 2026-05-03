@@ -58,6 +58,7 @@ public class DashboardService : IDashboardService
             .Where(x => x.TenantId == _tenantId
                 && x.TransactionDate >= fromUtc
                 && x.TransactionDate < toUtc
+                && !x.IsDeleted
                 && !x.IsArchived);
 
         // Apply branch filter if provided
@@ -144,6 +145,7 @@ public class DashboardService : IDashboardService
             .Where(x => x.TenantId == _tenantId
                 && x.TransactionDate >= fromUtc
                 && x.TransactionDate < toUtc
+                && !x.IsDeleted
                 && !x.IsArchived);
 
         // Apply branch filter

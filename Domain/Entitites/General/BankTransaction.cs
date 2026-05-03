@@ -15,9 +15,6 @@ public class BankTransaction : AuditableEntity<long>
     public decimal BalanceAfter { get; set; }
     public string? ReceiptNumber { get; set; }
     public required bool IsActive { get; set; } = true;
-    public bool IsArchived { get; set; } = false;
-    public DateTime? ArchivedAt { get; set; }
-    public string? ArchivedBy { get; set; }
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";
 

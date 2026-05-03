@@ -53,7 +53,7 @@
                         ></span>
                         <span *ngIf="!isLoadingBalance">Current Balance: </span>
                         <span class="text-success" *ngIf="!isLoadingBalance">
-                          {{ selectedBankBalance | number : "1.2-2" }}
+                          {{ selectedBankBalance | number: "1.2-2" }}
                         </span>
                       </div>
                     </div>
@@ -101,11 +101,13 @@
                             </div>
                           </div>
                         </div>
-                        @if (!currentForm.get('transactionNumber')?.valid &&
-                        currentForm.get('transactionNumber')?.touched) {
-                        <small class="form-text text-danger"
-                          >Transaction Number is required</small
-                        >
+                        @if (
+                          !currentForm.get("transactionNumber")?.valid &&
+                          currentForm.get("transactionNumber")?.touched
+                        ) {
+                          <small class="form-text text-danger"
+                            >Transaction Number is required</small
+                          >
                         }
                       </div>
 
@@ -120,11 +122,13 @@
                           formControlName="transactionDate"
                           required
                         />
-                        @if (!currentForm.get('transactionDate')?.valid &&
-                        currentForm.get('transactionDate')?.touched) {
-                        <small class="form-text text-danger"
-                          >Transaction Date is required</small
-                        >
+                        @if (
+                          !currentForm.get("transactionDate")?.valid &&
+                          currentForm.get("transactionDate")?.touched
+                        ) {
+                          <small class="form-text text-danger"
+                            >Transaction Date is required</small
+                          >
                         }
                       </div>
 
@@ -155,11 +159,13 @@
                             </button>
                           </div>
                         </div>
-                        @if (!currentForm.get('bankId')?.valid &&
-                        currentForm.get('bankId')?.touched) {
-                        <small class="form-text text-danger"
-                          >Bank is required</small
-                        >
+                        @if (
+                          !currentForm.get("bankId")?.valid &&
+                          currentForm.get("bankId")?.touched
+                        ) {
+                          <small class="form-text text-danger"
+                            >Bank is required</small
+                          >
                         }
                       </div>
                     </div>
@@ -176,17 +182,28 @@
                           min="0.01"
                           required
                         />
-                        @if (!currentForm.get('amount')?.valid &&
-                        currentForm.get('amount')?.touched) {
-                        <small class="form-text text-danger">
-                          @if (currentForm.get('amount')?.errors?.['required'])
-                          { Amount is required } @if
-                          (currentForm.get('amount')?.errors?.['min']) { Amount
-                          must be greater than 0 } @if
-                          (currentForm.get('amount')?.errors?.['maxAmount']) {
-                          {{ currentForm.get('amount')?.errors?.['maxAmount'].message }}
-                          }
-                        </small>
+                        @if (
+                          !currentForm.get("amount")?.valid &&
+                          currentForm.get("amount")?.touched
+                        ) {
+                          <small class="form-text text-danger">
+                            @if (
+                              currentForm.get("amount")?.errors?.["required"]
+                            ) {
+                              Amount is required
+                            }
+                            @if (currentForm.get("amount")?.errors?.["min"]) {
+                              Amount must be greater than 0
+                            }
+                            @if (
+                              currentForm.get("amount")?.errors?.["maxAmount"]
+                            ) {
+                              {{
+                                currentForm.get("amount")?.errors?.["maxAmount"]
+                                  .message
+                              }}
+                            }
+                          </small>
                         }
                       </div>
 
@@ -233,16 +250,18 @@
                             Please select
                           </option>
                           @for (status of statusList; track status) {
-                          <option [value]="status.id">
-                            {{ status.value }}
-                          </option>
+                            <option [value]="status.id">
+                              {{ status.value }}
+                            </option>
                           }
                         </select>
-                        @if (!currentForm.get('isActive')?.valid &&
-                        currentForm.get('isActive')?.touched) {
-                        <small class="form-text text-danger"
-                          >Status is required</small
-                        >
+                        @if (
+                          !currentForm.get("isActive")?.valid &&
+                          currentForm.get("isActive")?.touched
+                        ) {
+                          <small class="form-text text-danger"
+                            >Status is required</small
+                          >
                         }
                       </div>
                     </div>
@@ -256,7 +275,7 @@
                             [disabled]="!currentForm.valid || isSubmitted"
                           >
                             @if (isSubmitted) {
-                            <i class="fa fa-spinner fa-spin"></i>
+                              <i class="fa fa-spinner fa-spin"></i>
                             }
                             {{
                               activeTab === "deposit" ? "Deposit" : "Withdraw"
@@ -313,6 +332,55 @@
                           </div>
                         </div>
                       </div>
+                      <div
+                        class="col-lg-6 d-flex align-items-center justify-content-end pe-3"
+                      >
+                        <div
+                          class="btn-group"
+                          role="group"
+                          aria-label="Record status filter"
+                        >
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            [class.btn-primary]="
+                              pagination.archiveStatus === 'active'
+                            "
+                            [class.btn-outline-primary]="
+                              pagination.archiveStatus !== 'active'
+                            "
+                            (click)="setStatus('active')"
+                          >
+                            Active
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            [class.btn-warning]="
+                              pagination.archiveStatus === 'archived'
+                            "
+                            [class.btn-outline-warning]="
+                              pagination.archiveStatus !== 'archived'
+                            "
+                            (click)="setStatus('archived')"
+                          >
+                            Archived
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            [class.btn-danger]="
+                              pagination.archiveStatus === 'deleted'
+                            "
+                            [class.btn-outline-danger]="
+                              pagination.archiveStatus !== 'deleted'
+                            "
+                            (click)="setStatus('deleted')"
+                          >
+                            Deleted
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -366,7 +434,7 @@
                   [width]="120"
                 >
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    {{ row.transactionDate | date : "dd/MMM/yyyy" }}
+                    {{ row.transactionDate | date: "dd/MMM/yyyy" }}
                   </ng-template>
                 </ngx-datatable-column>
 
@@ -383,13 +451,13 @@
                 >
                   <ng-template let-row="row" ngx-datatable-cell-template>
                     @if (row.transactionType === bankTransactionType.Deposit) {
-                    <div class="badge-outline col-green">
-                      {{ row.transactionType | titlecase }}
-                    </div>
+                      <div class="badge-outline col-green">
+                        {{ row.transactionType | titlecase }}
+                      </div>
                     } @else {
-                    <div class="badge-outline col-red">
-                      {{ row.transactionType | titlecase }}
-                    </div>
+                      <div class="badge-outline col-red">
+                        {{ row.transactionType | titlecase }}
+                      </div>
                     }
                   </ng-template>
                 </ngx-datatable-column>
@@ -403,7 +471,7 @@
                           : 'text-danger'
                       "
                     >
-                      {{ row.amount | number : "1.2-2" }}
+                      {{ row.amount | number: "1.2-2" }}
                     </span>
                   </ng-template>
                 </ngx-datatable-column>
@@ -414,7 +482,7 @@
                   [width]="130"
                 >
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    {{ row.balanceAfter | number : "1.2-2" }}
+                    {{ row.balanceAfter | number: "1.2-2" }}
                   </ng-template>
                 </ngx-datatable-column>
 
@@ -430,10 +498,12 @@
 
                 <ngx-datatable-column name="Status" prop="status" [width]="100">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    @if (row.status === 'Active') {
-                    <div class="badge-outline col-green">{{ row.status }}</div>
+                    @if (row.status === "Active") {
+                      <div class="badge-outline col-green">
+                        {{ row.status }}
+                      </div>
                     } @else {
-                    <div class="badge-outline col-red">{{ row.status }}</div>
+                      <div class="badge-outline col-red">{{ row.status }}</div>
                     }
                   </ng-template>
                 </ngx-datatable-column>
@@ -449,6 +519,34 @@
                     ngx-datatable-cell-template
                   >
                     <span>
+                      @if (row.isDeleted) {
+                        <button
+                          class="btn btn-tbl-restore h-auto"
+                          (click)="restoreRow(row)"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >restore</i
+                          >
+                        </button>
+                      } @else if (row.isArchived) {
+                        <button
+                          class="btn btn-tbl-archive h-auto"
+                          (click)="unarchiveRow(row)"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >unarchive</i
+                          >
+                        </button>
+                      } @else {
+                        <button
+                          class="btn btn-tbl-archive h-auto"
+                          (click)="archiveRow(row)"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >archive</i
+                          >
+                        </button>
+                      }
                       <button
                         class="btn btn-tbl-delete h-auto"
                         (click)="delete(row)"

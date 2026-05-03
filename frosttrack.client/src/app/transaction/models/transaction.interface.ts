@@ -28,6 +28,10 @@ export interface ITransactionListResponse {
   description: string;
   vendorName?: string | null;
   relatedLabourCharge?: number | null;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date | string | null;
+  archivedAt?: Date | string | null;
 }
 
 export interface ITransactionRequest {
@@ -39,8 +43,6 @@ export interface ITransactionRequest {
   amount: number;
   note?: string;
   // Optional fields with defaults
-  entityName?: string;
-  entityId?: string;
   customerId?: number | null;
   bookingId?: string | null;
   discountAmount?: number;
@@ -76,8 +78,6 @@ export interface ITransactionDetailResponse extends ITransactionListResponse {
   discountAmount: number;
   adjustmentValue: number;
   note?: string | null;
-  entityName?: string;
-  entityId?: string;
   bookingId?: string | null;
   paymentReference?: string | null;
   subCategory?: string | null;
@@ -95,4 +95,5 @@ export interface ITransactionDetailResponse extends ITransactionListResponse {
 
 export interface ITransactionPaginationQuery extends PaginationQuery {
   usageFor: string;
+  status: 'active' | 'archived' | 'deleted';
 }

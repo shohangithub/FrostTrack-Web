@@ -46,6 +46,7 @@ public class BalanceSheetService : IBalanceSheetService
             .Include(t => t.TransactionHead)
             .Where(t =>
                 t.TenantId == _tenantId &&
+                !t.IsDeleted &&
                 !t.IsArchived &&
                 t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
                 t.TransactionDate < toDate)
@@ -64,6 +65,7 @@ public class BalanceSheetService : IBalanceSheetService
             .Include(t => t.TransactionHead)
             .Where(t =>
                 t.TenantId == _tenantId &&
+                !t.IsDeleted &&
                 !t.IsArchived &&
                 t.TransactionDate >= openingDate &&
                 t.TransactionDate < fromUtc &&

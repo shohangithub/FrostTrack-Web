@@ -22,9 +22,9 @@ public class Delivery : AuditableEntity<Guid>
     // Payment tracking
     [MaxLength(20)]
     public string PaymentStatus { get; set; } = PaymentStatuses.UNPAID;
-    
+
     public DateTime? PaymentDate { get; set; }
-    
+
     public Guid? TransactionId { get; set; }
     public Transaction? Transaction { get; set; }
 
@@ -33,15 +33,6 @@ public class Delivery : AuditableEntity<Guid>
 
     // [Column(TypeName = "decimal(10, 2)")]
     // public required decimal PaidAmount { get; set; } = 0;
-
-    // Soft delete and archive
-    public bool IsDeleted { get; set; } = false;
-    public DateTime? DeletedAt { get; set; }
-    public int? DeletedById { get; set; }
-
-    public bool IsArchived { get; set; } = false;
-    public DateTime? ArchivedAt { get; set; }
-    public int? ArchivedById { get; set; }
 
     public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

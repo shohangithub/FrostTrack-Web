@@ -38,10 +38,5 @@ public class DeliveryChallan : AuditableEntity<Guid>
     public DateTime? DispatchTime { get; set; }
     public DateTime? DeliveryTime { get; set; }
 
-    // Soft delete
-    public bool IsDeleted { get; set; } = false;
-    public DateTime? DeletedAt { get; set; }
-    public int? DeletedById { get; set; }
-
     public ICollection<DeliveryChallanItem> ChallanItems { get; set; } = [];
 }

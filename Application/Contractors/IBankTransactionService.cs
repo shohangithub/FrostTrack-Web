@@ -13,4 +13,8 @@ public interface IBankTransactionService
     Task<IEnumerable<Lookup<long>>> GetLookup(Expression<Func<BankTransaction, bool>> predicate, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(long id, CancellationToken cancellationToken = default);
     Task<string> GenerateCode(CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default);
 }

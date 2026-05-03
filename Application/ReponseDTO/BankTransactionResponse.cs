@@ -13,6 +13,10 @@ public record BankTransactionListResponse
     string? Description,
     decimal BalanceAfter,
     string? ReceiptNumber,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt,
     string Status
 );
 
@@ -30,5 +34,9 @@ public record BankTransactionResponse
     decimal BalanceAfter,
     string? ReceiptNumber,
     bool IsActive,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt,
     string Status
 );

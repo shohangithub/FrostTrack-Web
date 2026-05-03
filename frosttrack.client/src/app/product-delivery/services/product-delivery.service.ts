@@ -4,9 +4,9 @@ import { environment } from 'environments/environment';
 import { Observable } from 'rxjs';
 import { getApiEndpoint } from 'app/utils/api-builder';
 import { PaginationResult } from '@core/models/pagination-result';
-import { PaginationQuery } from '@core/models/pagination-query';
 import {
   IDeliveryListResponse,
+  IDeliveryPaginationQuery,
   IDeliveryRequest,
   IDeliveryResponse,
   ICustomerStockResponse,
@@ -26,7 +26,7 @@ export class DeliveryService extends BaseService {
   path: string = `${environment.apiUrl}/delivery`;
 
   getWithPagination(
-    pagination: PaginationQuery,
+    pagination: IDeliveryPaginationQuery,
   ): Observable<PaginationResult<IDeliveryListResponse>> {
     return this.get<PaginationResult<IDeliveryListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
@@ -51,6 +51,22 @@ export class DeliveryService extends BaseService {
 
   batchDelete(ids: string[]): Observable<boolean> {
     return this.post<boolean>(this.path + '/DeleteBatch', ids);
+  }
+
+  softDelete(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: string): Observable<void> {
+    return this.post<void>(`${this.path}/${id}/unarchive`, {});
   }
 
   generateDeliveryNumber(): Observable<CodeResponse> {

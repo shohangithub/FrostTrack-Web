@@ -9,7 +9,7 @@ public class TransactionValidator : AbstractValidator<TransactionRequest>
     private readonly Guid? _currentId;
 
     public TransactionValidator(
-        IRepository<Transaction, Guid> repository, 
+        IRepository<Transaction, Guid> repository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         Guid? currentId = null)
     {
@@ -29,13 +29,6 @@ public class TransactionValidator : AbstractValidator<TransactionRequest>
             .NotEqual(Guid.Empty).WithMessage("Transaction head is required")
             .MustAsync(BeValidTransactionHead).WithMessage("Invalid transaction head selected");
 
-        RuleFor(x => x.EntityName)
-            .NotEmpty().WithMessage("Entity name is required")
-            .MaximumLength(100).WithMessage("Entity name cannot exceed 100 characters");
-
-        RuleFor(x => x.EntityId)
-            .NotEmpty().WithMessage("Entity ID is required");
-
         RuleFor(x => x.BranchId)
             .GreaterThan(0).WithMessage("Branch is required");
 
@@ -52,9 +45,6 @@ public class TransactionValidator : AbstractValidator<TransactionRequest>
         RuleFor(x => x.Description)
             .NotEmpty().WithMessage("Description is required")
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
-
-        RuleFor(x => x.VendorName)
-            .MaximumLength(200).WithMessage("Vendor name cannot exceed 200 characters");
 
         RuleFor(x => x.Category)
             .MaximumLength(100).WithMessage("Category cannot exceed 100 characters");

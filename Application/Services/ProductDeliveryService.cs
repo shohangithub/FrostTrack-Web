@@ -52,7 +52,7 @@ public class DeliveryService : IDeliveryService
 
         var entity = request.Adapt<Delivery>();
         entity.BranchId = _currentUser.BranchId;
-       // entity.DeliveryDate = DateTime.UtcNow;
+        // entity.DeliveryDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
 
@@ -145,11 +145,10 @@ public class DeliveryService : IDeliveryService
                     TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence1),
                     TransactionDate: DateTime.UtcNow,
                     TransactionHeadId: transactionHead.Id,
-                    EntityName: TransactionEntityNames.DELIVERY,
-                    EntityId: entity.Id.ToString(),
                     BranchId: entity.BranchId,
                     CustomerId: booking?.CustomerId,
                     BookingId: request.BookingId,
+                                        DeliveryId: entity.Id,
                     Amount: chargeAmount,
                     DiscountAmount: 0,
                     AdjustmentValue: 0,
@@ -159,12 +158,7 @@ public class DeliveryService : IDeliveryService
                     Category: null,
                     SubCategory: null,
                     Description: $"Charge Payment for Delivery {entity.DeliveryNumber}",
-                    Note: request.TransactionNotes,
-                    VendorName: null,
-                    VendorContact: null,
-                    BillingPeriodStart: null,
-                    BillingPeriodEnd: null,
-                    AttachmentPath: null
+                    Note: request.TransactionNotes
                 );
 
                 var chargeTransaction = await _transactionService.AddAsync(chargeTransactionRequest, CancellationToken.None);
@@ -203,8 +197,7 @@ public class DeliveryService : IDeliveryService
                     TransactionCode: CodeGenerator.GenerateTransactionCode(prefix, nextSequence2),
                     TransactionDate: DateTime.UtcNow,
                     TransactionHeadId: transactionHeadForLabourCharge.Id,
-                    EntityName: TransactionEntityNames.DELIVERY,
-                    EntityId: entity.Id.ToString(),
+                                        DeliveryId: entity.Id,
                     BranchId: entity.BranchId,
                     CustomerId: booking?.CustomerId,
                     BookingId: request.BookingId,
@@ -217,12 +210,7 @@ public class DeliveryService : IDeliveryService
                     Category: null,
                     SubCategory: null,
                     Description: $"Labour Charge for Delivery {entity.DeliveryNumber}",
-                    Note: request.TransactionNotes,
-                    VendorName: null,
-                    VendorContact: null,
-                    BillingPeriodStart: null,
-                    BillingPeriodEnd: null,
-                    AttachmentPath: null
+                    Note: request.TransactionNotes
                 );
 
                 await _transactionService.AddAsync(labourTransactionRequest, CancellationToken.None);
@@ -289,7 +277,8 @@ public class DeliveryService : IDeliveryService
     public async Task<bool> DeleteAsync(Guid id)
     {
         var result = await _repository.DeletableQuery(x => x.Id == id).ExecuteDeleteAsync();
-        var result1 = await _transactionRepository.DeletableQuery(x => x.EntityName == TransactionEntityNames.DELIVERY && x.EntityId == id.ToString()).ExecuteDeleteAsync();
+        var result1 = await _transactionRepository.DeletableQuery(x => x.DeliveryId == id)
+            .ExecuteDeleteAsync();
         return result > 0;
     }
 
@@ -297,6 +286,58 @@ public class DeliveryService : IDeliveryService
     {
         var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync();
         return result > 0;
+    }
+
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product delivery not found");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product delivery not found");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product delivery not found");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product delivery not found");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<DeliveryResponse> GetByIdAsync(Guid id)
@@ -332,9 +373,19 @@ public class DeliveryService : IDeliveryService
         return response;
     }
 
-    public async Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(PaginationQuery query)
+    public async Task<PaginationResult<DeliveryResponse>> GetWithPaginationAsync(DeliveryPaginationQuery query)
     {
-        var baseQuery = _repository.Query().AsQueryable();
+        var status = query.Status?.ToLowerInvariant() ?? "active";
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery().AsQueryable()
+            : _repository.Query().AsQueryable();
+
+        baseQuery = status switch
+        {
+            "archived" => baseQuery.Where(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => baseQuery.Where(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => baseQuery.Where(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         // Filtering
         if (!string.IsNullOrEmpty(query.OpenText))
@@ -757,7 +808,7 @@ public class DeliveryService : IDeliveryService
         // Get all deliveries for this booking
         var deliveries = await _repository.Query()
             .Where(d => d.BookingId == bookingId)
-            .Select(d => d.Id.ToString())
+            .Select(d => d.Id)
             .ToListAsync();
 
         if (!deliveries.Any())
@@ -766,8 +817,7 @@ public class DeliveryService : IDeliveryService
         // Sum up all bill collection transactions for these deliveries
         var totalPaid = await _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
-                     && t.EntityName == TransactionEntityNames.DELIVERY
-                     && deliveries.Contains(t.EntityId))
+                     && deliveries.Contains(t.DeliveryId!.Value))
             .SumAsync(t => t.Amount);
 
         return totalPaid;
@@ -787,12 +837,11 @@ public class DeliveryService : IDeliveryService
         var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
 
         // Calculate total paid amount for these deliveries
-        var deliveryIds = deliveries.Select(d => d.Id.ToString()).ToList();
+        var deliveryIds = deliveries.Select(d => d.Id).ToList();
         var totalPaid = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
-                     && t.EntityName == TransactionEntityNames.DELIVERY
-                     && deliveryIds.Contains(t.EntityId))
+                     && deliveryIds.Contains(t.DeliveryId!.Value))
             .SumAsync(t => t.Amount);
 
         // Return due amount (charges - payments)

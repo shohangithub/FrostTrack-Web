@@ -372,9 +372,7 @@ table tr:hover .table-links {
   margin-top: 0px;
   padding-left: 40px !important;
 }
-.ngx-datatable.material.single-selection
-  .datatable-body-row.active
-  .datatable-body-cell {
+.ngx-datatable.material.single-selection .datatable-body-row.active .datatable-body-cell {
   color: #ffffff;
 }
 
@@ -462,6 +460,51 @@ table tr:hover .table-links {
 .btn-tbl-delete:hover {
   color: #fff;
 }
+
+.btn-tbl-archive {
+  background-color: #6777ef !important;
+  height: 30px !important;
+  width: 30px !important;
+  margin: 2px !important;
+  line-height: 30px !important;
+  color: #fff;
+  border-radius: 50%;
+  i {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  :focus {
+    background-color: #6777ef;
+  }
+}
+.btn-tbl-archive:focus,
+.btn-tbl-archive:hover {
+  color: #fff;
+}
+
+.btn-tbl-restore {
+  background-color: #4caf4f !important;
+  height: 30px !important;
+  width: 30px !important;
+  margin: 2px !important;
+  line-height: 30px !important;
+  color: #fff;
+  border-radius: 50%;
+  i {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  :focus {
+    background-color: #4caf4f;
+  }
+}
+.btn-tbl-restore:focus,
+.btn-tbl-restore:hover {
+  color: #fff;
+}
+
 .btn-tbl-info {
   background-color: #3dc9b3 !important;
   height: 30px !important;
@@ -482,7 +525,7 @@ table tr:hover .table-links {
 .btn-tbl-info:hover {
   color: #fff;
 }
-.datatable-checkbox input[type='checkbox']:before {
+.datatable-checkbox input[type="checkbox"]:before {
   border: 2px solid #807b7b;
 }
 .data-table-img {
@@ -554,7 +597,7 @@ table tr:hover .table-links {
   background-color: rgba(114, 208, 251, 0.1);
 }
 .status-label:before {
-  content: '';
+  content: "";
   display: inline-block;
   height: 6px;
   width: 6px;

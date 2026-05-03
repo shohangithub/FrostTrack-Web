@@ -414,8 +414,6 @@ public class ApplicationDbContextInitializer
                 TransactionCode= "TR-251227-07E615",
                 TransactionDate= DateTime.UtcNow,
                 TransactionHeadId= _context.TransactionHeads.Where(th => th.Code == "OPENING_BALANCE").Select(th => th.Id).FirstOrDefault(),
-                EntityName= "GENERAL",
-                EntityId= Guid.Empty.ToString(),
                 BranchId= branchId,
                 Amount= 0,
                 NetAmount= 0,

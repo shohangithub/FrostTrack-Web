@@ -28,6 +28,7 @@ export class DeliveryChallanListComponent implements OnInit {
   isLoading = false;
   searchText = '';
   selectedStatus = 'All';
+  recordStatus: 'active' | 'archived' | 'deleted' = 'active';
   scrollBarHorizontal = window.innerWidth < 1200;
 
   statusOptions = ['All', 'Pending', 'In Transit', 'Delivered', 'Cancelled'];
@@ -57,7 +58,7 @@ export class DeliveryChallanListComponent implements OnInit {
 
   loadChallans(): void {
     this.isLoading = true;
-    this.challanService.getList().subscribe({
+    this.challanService.getList(this.recordStatus).subscribe({
       next: (data: IDeliveryChallanListResponse[]) => {
         this.challans = data;
         this.filteredChallans = data;
@@ -77,6 +78,11 @@ export class DeliveryChallanListComponent implements OnInit {
 
   onStatusChange(): void {
     this.applyFilters();
+  }
+
+  onRecordStatusChange(status: 'active' | 'archived' | 'deleted'): void {
+    this.recordStatus = status;
+    this.loadChallans();
   }
 
   applyFilters(): void {
@@ -115,16 +121,61 @@ export class DeliveryChallanListComponent implements OnInit {
   }
 
   delete(id: string): void {
-    if (confirm('Are you sure you want to delete this delivery challan?')) {
-      this.challanService.remove(id).subscribe({
-        next: () => {
-          this.loadChallans();
-        },
-        error: (error: any) => {
-          console.error('Error deleting challan:', error);
-        },
-      });
+    const isPermanent = this.recordStatus === 'deleted';
+    if (
+      confirm(
+        isPermanent
+          ? 'Are you sure you want to permanently delete this delivery challan?'
+          : 'Are you sure you want to soft delete this delivery challan?',
+      )
+    ) {
+      if (isPermanent) {
+        this.challanService.remove(id).subscribe({
+          next: () => {
+            this.loadChallans();
+          },
+          error: (error: any) => {
+            console.error('Error deleting challan:', error);
+          },
+        });
+      } else {
+        this.challanService.softDelete(id).subscribe({
+          next: () => {
+            this.loadChallans();
+          },
+          error: (error: any) => {
+            console.error('Error deleting challan:', error);
+          },
+        });
+      }
     }
+  }
+
+  restore(id: string): void {
+    this.challanService.restore(id).subscribe({
+      next: () => this.loadChallans(),
+      error: (error: any) => {
+        console.error('Error restoring challan:', error);
+      },
+    });
+  }
+
+  archive(id: string): void {
+    this.challanService.archive(id).subscribe({
+      next: () => this.loadChallans(),
+      error: (error: any) => {
+        console.error('Error archiving challan:', error);
+      },
+    });
+  }
+
+  unarchive(id: string): void {
+    this.challanService.unarchive(id).subscribe({
+      next: () => this.loadChallans(),
+      error: (error: any) => {
+        console.error('Error unarchiving challan:', error);
+      },
+    });
   }
 
   updateStatus(id: string, status: string): void {

@@ -45,6 +45,50 @@
                   </div>
                 </div>
               </div>
+              <!-- Status filter tabs -->
+              <div
+                class="col-lg-6 d-flex align-items-center justify-content-end pe-3"
+              >
+                <div
+                  class="btn-group"
+                  role="group"
+                  aria-label="Record status filter"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-primary]="pagination.status === 'active'"
+                    [class.btn-outline-primary]="pagination.status !== 'active'"
+                    (click)="setStatus('active')"
+                  >
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-warning]="pagination.status === 'archived'"
+                    [class.btn-outline-warning]="
+                      pagination.status !== 'archived'
+                    "
+                    (click)="setStatus('archived')"
+                  >
+                    Archived
+                  </button>
+                  @if (canDelete) {
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-danger]="pagination.status === 'deleted'"
+                      [class.btn-outline-danger]="
+                        pagination.status !== 'deleted'
+                      "
+                      (click)="setStatus('deleted')"
+                    >
+                      Deleted
+                    </button>
+                  }
+                </div>
+              </div>
             </div>
 
             <ngx-datatable
@@ -168,7 +212,7 @@
               <ngx-datatable-column
                 name="Actions"
                 [sortable]="false"
-                [flexGrow]="1"
+                [flexGrow]="1.2"
               >
                 <ng-template
                   let-value="value"
@@ -177,81 +221,87 @@
                   ngx-datatable-cell-template
                 >
                   <span>
-                    <button
-                      class="btn btn-tbl-edit h-auto"
-                      (click)="editRow(row)"
-                      title="Edit"
-                    >
-                      <i class="fas fa-pen"></i>
-                    </button>
-                    <button
-                      class="btn btn-tbl-info h-auto"
-                      (click)="printReceipt(row)"
-                      title="Print Receipt"
-                    >
-                      <i class="fas fa-print"></i>
-                    </button>
-                    <button
-                      class="btn btn-tbl-delete h-auto"
-                      (click)="softDeleteRow(row)"
-                      title="Delete"
-                    >
-                      <i class="far fa-trash-alt"></i>
-                    </button>
+                    @if (row.isDeleted) {
+                      <!-- DELETED view: restore only (admin already confirmed via tab) -->
+                      <button
+                        class="btn btn-tbl-restore h-auto"
+                        (click)="restoreRow(row)"
+                        title="Restore transaction"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >restore</i
+                        >
+                      </button>
+                      @if (canDelete) {
+                        <button
+                          class="btn btn-tbl-delete h-auto"
+                          (click)="delete(row)"
+                          title="Permanently delete"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >delete_forever</i
+                          >
+                        </button>
+                      }
+                    } @else if (row.isArchived) {
+                      <!-- ARCHIVED view: view receipt + unarchive -->
+                      <button
+                        class="btn btn-tbl-info h-auto"
+                        (click)="printReceipt(row)"
+                        title="Print receipt"
+                      >
+                        <i class="fas fa-print"></i>
+                      </button>
+                      @if (canEdit) {
+                        <button
+                          class="btn btn-tbl-archive h-auto"
+                          (click)="unarchiveRow(row)"
+                          title="Move back to active"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >unarchive</i
+                          >
+                        </button>
+                      }
+                    } @else {
+                      <!-- ACTIVE view: edit, print, archive, soft-delete -->
+                      <button
+                        class="btn btn-tbl-edit h-auto"
+                        (click)="editRow(row)"
+                        title="Edit"
+                      >
+                        <i class="fas fa-pen"></i>
+                      </button>
+                      <button
+                        class="btn btn-tbl-info h-auto"
+                        (click)="printReceipt(row)"
+                        title="Print Receipt"
+                      >
+                        <i class="fas fa-print"></i>
+                      </button>
+                      @if (canEdit) {
+                        <button
+                          class="btn btn-tbl-archive h-auto"
+                          (click)="archiveRow(row)"
+                          title="Archive — hides from active list, keeps in reports"
+                        >
+                          <i class="material-icons" style="font-size: 16px"
+                            >archive</i
+                          >
+                        </button>
+                      }
+                      @if (canDelete) {
+                        <button
+                          class="btn btn-tbl-delete h-auto"
+                          (click)="softDeleteRow(row)"
+                          title="Soft delete — recoverable"
+                        >
+                          <i class="far fa-trash-alt"></i>
+                        </button>
+                      }
+                    }
                   </span>
                 </ng-template>
-
-                <!-- <ng-template let-row="row" ngx-datatable-cell-template>
-                  <div class="btn-group" role="group">
-                    @if (!row.isDeleted) {
-                    <button
-                      class="btn btn-sm btn-primary"
-                      (click)="editRow(row)"
-                      title="Edit"
-                    >
-                      <i class="material-icons">edit</i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-warning"
-                      (click)="softDeleteRow(row)"
-                      title="Soft Delete"
-                    >
-                      <i class="material-icons">delete_outline</i>
-                    </button>
-                    @if (!row.isArchived) {
-                    <button
-                      class="btn btn-sm btn-info"
-                      (click)="archiveRow(row)"
-                      title="Archive"
-                    >
-                      <i class="material-icons">archive</i>
-                    </button>
-                    } @else {
-                    <button
-                      class="btn btn-sm btn-secondary"
-                      (click)="unarchiveRow(row)"
-                      title="Unarchive"
-                    >
-                      <i class="material-icons">unarchive</i>
-                    </button>
-                    } } @else {
-                    <button
-                      class="btn btn-sm btn-success"
-                      (click)="restoreRow(row)"
-                      title="Restore"
-                    >
-                      <i class="material-icons">restore</i>
-                    </button>
-                    }
-                    <button
-                      class="btn btn-sm btn-danger"
-                      (click)="delete(row)"
-                      title="Permanent Delete"
-                    >
-                      <i class="material-icons">delete_forever</i>
-                    </button>
-                  </div>
-                </ng-template> -->
               </ngx-datatable-column>
             </ngx-datatable>
           </div>

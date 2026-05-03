@@ -58,7 +58,9 @@ public static class UsageFor
     public const string BANK_TRANSACTION = "BANK_TRANSACTION"; // Money IN/OUT via bank
     public const string BOOKING = "BOOKING"; // Money IN from bookings
     public const string BOOKING_EXTRA_CHARGE = "BOOKING_EXTRA_CHARGE"; // Money IN from bookings
-    public const string DELEVERY = "DELEVERY"; // Money IN from delevery payments
+    [Obsolete("Use DELIVERY instead. Legacy value 'DELEVERY' is kept for backward compat with existing DB data.")]
+    public const string DELEVERY = "DELEVERY";
+    public const string DELIVERY = "DELIVERY"; // Money IN from delivery payments
     public const string SALARY = "SALARY";
     // public const string OFFICE_COST = "OFFICE_COST  "; // Money OUT for office expenses
     // public const string BILL_PAYMENT = "BILL_PAYMENT"; // Money OUT for vendor bills

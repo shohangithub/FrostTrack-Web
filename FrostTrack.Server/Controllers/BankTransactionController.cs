@@ -57,14 +57,14 @@ public class BankTransactionController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<BankTransactionResponse>> UpdateBankTransaction(int id, [FromBody] BankTransactionRequest bankTransaction, CancellationToken cancellationToken)
+    public async Task<ActionResult<BankTransactionResponse>> UpdateBankTransaction(long id, [FromBody] BankTransactionRequest bankTransaction, CancellationToken cancellationToken)
     {
         var result = await _bankTransactionService.UpdateAsync(id, bankTransaction, cancellationToken);
         return Ok(result);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteBankTransaction(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteBankTransaction(long id, CancellationToken cancellationToken)
     {
         await _bankTransactionService.DeleteAsync(id, cancellationToken);
         return NoContent();
@@ -76,6 +76,42 @@ public class BankTransactionController : ControllerBase
     {
         await _bankTransactionService.DeleteBatchAsync(ids, cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost]
+    [Route("DeleteBatch")]
+    public async Task<IActionResult> DeleteBatch([FromBody] List<long> ids, CancellationToken cancellationToken)
+    {
+        await _bankTransactionService.DeleteBatchAsync(ids, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<IActionResult> SoftDelete(long id, CancellationToken cancellationToken)
+    {
+        var result = await _bankTransactionService.SoftDeleteAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/restore")]
+    public async Task<IActionResult> Restore(long id, CancellationToken cancellationToken)
+    {
+        var result = await _bankTransactionService.RestoreAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/archive")]
+    public async Task<IActionResult> Archive(long id, CancellationToken cancellationToken)
+    {
+        var result = await _bankTransactionService.ArchiveAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<IActionResult> Unarchive(long id, CancellationToken cancellationToken)
+    {
+        var result = await _bankTransactionService.UnarchiveAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet]

@@ -20,7 +20,7 @@ public class DeliveryController : ControllerBase
     }
 
     [HttpGet("get-with-pagination")]
-    public async Task<ActionResult<PaginationResult<DeliveryResponse>>> GetWithPagination([FromQuery] PaginationQuery query)
+    public async Task<ActionResult<PaginationResult<DeliveryResponse>>> GetWithPagination([FromQuery] DeliveryPaginationQuery query)
     {
         var result = await _service.GetWithPaginationAsync(query);
         return Ok(result);
@@ -58,6 +58,34 @@ public class DeliveryController : ControllerBase
     public async Task<ActionResult<bool>> BatchDelete([FromBody] Guid[] ids)
     {
         var result = await _service.BatchDeleteAsync(ids);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<ActionResult<bool>> SoftDelete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.SoftDeleteAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/restore")]
+    public async Task<ActionResult<bool>> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.RestoreAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/archive")]
+    public async Task<ActionResult<bool>> Archive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.ArchiveAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<ActionResult<bool>> Unarchive(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _service.UnarchiveAsync(id, cancellationToken);
         return Ok(result);
     }
 

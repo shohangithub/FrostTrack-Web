@@ -128,8 +128,6 @@ public class SalaryPaymentService : ISalaryPaymentService
             TransactionCode = nextCode,
             TransactionDate = DateTime.UtcNow,
             TransactionHeadId = transactionHead.Id,
-            EntityName = "Employee",
-            EntityId = employee.Id.ToString(),
             EmployeeId = employee.Id,
             Amount = (-1) * netAmount,
             NetAmount = (-1) * netAmount,
@@ -366,7 +364,6 @@ public class SalaryPaymentService : ISalaryPaymentService
         var netAmount = request.BasicSalary + request.Bonus - request.Deduction;
         var period = $"{request.Month:D2}/{request.Year}";
 
-        sp.Transaction.EntityId = employee.Id.ToString();
         sp.Transaction.EmployeeId = employee.Id;
         sp.Transaction.Amount = (-1) * netAmount;
         sp.Transaction.NetAmount = (-1) * netAmount;

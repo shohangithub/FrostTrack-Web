@@ -49,6 +49,7 @@ export class TransactionListComponent implements OnInit {
   selected: ITransactionListResponse[] = [];
   pagination: ITransactionPaginationQuery = {
     usageFor: USAGE_FOR.TRANSACTION,
+    status: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -65,7 +66,7 @@ export class TransactionListComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private layoutService: LayoutService,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -94,7 +95,7 @@ export class TransactionListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -130,6 +131,12 @@ export class TransactionListComponent implements OnInit {
   filterDatatable(event: any) {
     const val = event.target.value.toLowerCase();
     this.searchSubject.next(val);
+  }
+
+  setStatus(status: 'active' | 'archived' | 'deleted') {
+    this.pagination.status = status;
+    this.pagination.pageIndex = DefaultPagination.PAGEINDEX;
+    this.fetchData();
   }
 
   editRow(row: ITransactionListResponse) {

@@ -48,18 +48,6 @@ public class TransactionService : ITransactionService
             entity.PaymentMethod = PaymentMethods.CASH;
         }
 
-        // Set default EntityName if not provided
-        if (string.IsNullOrEmpty(entity.EntityName))
-        {
-            entity.EntityName = "GENERAL";
-        }
-
-        // Set default EntityId if not provided
-        if (string.IsNullOrEmpty(entity.EntityId))
-        {
-            entity.EntityId = "00000000-0000-0000-0000-000000000000";
-        }
-
         // Set default Description if empty
         if (string.IsNullOrEmpty(entity.Description))
         {
@@ -128,14 +116,13 @@ public class TransactionService : ITransactionService
             };
         }
 
-        // Fetch related labour charge if this is a BILL_COLLECTION for deliveries
-        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && result.EntityName == "DELIVERY")
+        // Fetch related labour charge if this is a BILL_COLLECTION linked to a delivery
+        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && result.DeliveryId.HasValue)
         {
             var labourCharge = await _repository.Query()
                 .Where(t => t.TransactionCode == result.TransactionCode + "-L" &&
                            t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
-                           t.EntityName == "DELIVERY" &&
-                           t.EntityId == result.EntityId)
+                           t.DeliveryId == result.DeliveryId)
                 .Select(t => (decimal?)t.NetAmount)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -256,7 +243,10 @@ public class TransactionService : ITransactionService
                 x.NetAmount,
                 x.PaymentMethod,
                 x.Description,
-                x.VendorName,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 null
             ))
             .ToListAsync(cancellationToken);
@@ -277,16 +267,32 @@ public class TransactionService : ITransactionService
                 "paymentMethod" => nameof(Transaction.PaymentMethod),
                 "description" => nameof(Transaction.Description),
                 "customerName" => nameof(Transaction.CustomerId), // Sort by CustomerId instead of navigation property
-                "vendorName" => nameof(Transaction.VendorName),
+                "vendorName" => nameof(Transaction.Description),
                 _ => requestQuery.OrderBy
             };
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<Transaction, bool>> predicate = x => true;
-        predicate = predicate.And(x => !x.IsArchived && x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
 
-        if (requestQuery.UsageFor != null)
+        Expression<Func<Transaction, bool>> predicate = x => true;
+
+        // Status-based filter — drives which set of records is shown
+        predicate = status switch
+        {
+            "archived" => predicate.And(x =>
+                !x.IsDeleted && x.IsArchived &&
+                x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE),
+            "deleted" => predicate.And(x =>
+                x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x =>
+                !x.IsDeleted && !x.IsArchived &&
+                x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+        };
+
+        if (requestQuery.UsageFor != null && status != "deleted")
         {
             predicate = predicate.And(x =>
                 x.TransactionHead != null &&
@@ -302,7 +308,6 @@ public class TransactionService : ITransactionService
                 (obj.Description != null && obj.Description.ToLower().Contains(searchText)) ||
                 obj.NetAmount.ToString().Contains(searchText) ||
                 obj.Amount.ToString().Contains(searchText) ||
-                (obj.VendorName != null && obj.VendorName.ToLower().Contains(searchText)) ||
                 (obj.Customer != null &&
                 obj.Customer.CustomerName != null &&
                 obj.Customer.CustomerName.ToLower().Contains(searchText))
@@ -329,20 +334,27 @@ public class TransactionService : ITransactionService
             x.NetAmount,
             x.PaymentMethod,
             x.Description,
-            x.VendorName,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             // Find related labour charge transaction for this BILL_COLLECTION
-            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && x.EntityName == "DELIVERY"
+            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && x.DeliveryId != null
                 ? _repository.Query()
                     .Where(t => t.TransactionCode == x.TransactionCode + "-L" &&
                                t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
-                               t.EntityName == "DELIVERY" &&
-                               t.EntityId == x.EntityId)
+                               t.DeliveryId == x.DeliveryId)
                     .Select(t => (decimal?)t.NetAmount)
                     .FirstOrDefault()
                 : null
         );
 
-        var query = _repository.Query()
+        // For the "deleted" view, bypass the global IsDeleted query filter
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _repository.Query();
+
+        var query = baseQuery
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Employee)
@@ -440,7 +452,7 @@ public class TransactionService : ITransactionService
 
     public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
 
         entity.IsDeleted = false;

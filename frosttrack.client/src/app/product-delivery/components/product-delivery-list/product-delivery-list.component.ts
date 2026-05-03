@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { MessageHub } from '@config/message-hub';
 import { DefaultPagination } from '@config/pagination';
-import { PaginationQuery } from '@core/models/pagination-query';
 import {
   PaginationResult,
   PagingResponse,
@@ -18,7 +17,10 @@ import {
   SelectionType,
 } from '@swimlane/ngx-datatable';
 import { ROLES } from 'app/common/data/settings-data';
-import { IDeliveryListResponse } from 'app/product-delivery/models/product-delivery.interface';
+import {
+  IDeliveryListResponse,
+  IDeliveryPaginationQuery,
+} from 'app/product-delivery/models/product-delivery.interface';
 import { DeliveryService } from 'app/product-delivery/services/product-delivery.service';
 import { SwalConfirm } from 'app/theme-config';
 import {
@@ -58,7 +60,8 @@ export class DeliveryListComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IDeliveryListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IDeliveryPaginationQuery = {
+    status: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -81,7 +84,7 @@ export class DeliveryListComponent implements OnInit {
     private authService: AuthService,
     private deliveryService: DeliveryService,
     private router: Router,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -144,7 +147,7 @@ export class DeliveryListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -181,27 +184,65 @@ export class DeliveryListComponent implements OnInit {
     this.router.navigate(['product-delivery/edit', row.id]);
   }
 
+  setStatus(status: 'active' | 'archived' | 'deleted') {
+    this.pagination.status = status;
+    this.pagination.pageIndex = DefaultPagination.PAGEINDEX;
+    this.fetchData();
+  }
+
   delete(row: any) {
+    const isPermanent = row.isDeleted || this.pagination.status === 'deleted';
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: isPermanent
+        ? 'Are you sure you want to permanently delete this delivery?'
+        : 'Are you sure you want to soft delete this delivery?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.deliveryService.remove(row.id).subscribe({
-          next: (response) => {
-            if (response) {
-              this.removeRecord(row);
-              this.toastr.success(MessageHub.DELETE_ONE);
-            }
-          },
-          error: (err: ErrorResponse) => {
-            this.toastr.error(formatErrorMessage(err));
-          },
-        });
+        if (isPermanent) {
+          this.deliveryService.remove(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: (err: ErrorResponse) => {
+              this.toastr.error(formatErrorMessage(err));
+            },
+          });
+        } else {
+          this.deliveryService.softDelete(row.id).subscribe({
+            next: () => {
+              this.fetchData();
+            },
+            error: (err: ErrorResponse) => {
+              this.toastr.error(formatErrorMessage(err));
+            },
+          });
+        }
       }
+    });
+  }
+
+  restoreRow(row: IDeliveryListResponse) {
+    this.deliveryService.restore(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
+    });
+  }
+
+  archiveRow(row: IDeliveryListResponse) {
+    this.deliveryService.archive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
+    });
+  }
+
+  unarchiveRow(row: IDeliveryListResponse) {
+    this.deliveryService.unarchive(row.id).subscribe({
+      next: () => this.fetchData(),
+      error: (err: ErrorResponse) => this.toastr.error(formatErrorMessage(err)),
     });
   }
 
@@ -239,14 +280,14 @@ export class DeliveryListComponent implements OnInit {
   getRowTotalQuantity(deliveryDetails: any[]): number {
     return deliveryDetails.reduce(
       (sum, item) => sum + (item.deliveryQuantity || 0),
-      0
+      0,
     );
   }
 
   getRowTotalAmount(deliveryDetails: any[]): number {
     return deliveryDetails.reduce(
       (sum, item) => sum + (item.chargeAmount || 0),
-      0
+      0,
     );
   }
 
