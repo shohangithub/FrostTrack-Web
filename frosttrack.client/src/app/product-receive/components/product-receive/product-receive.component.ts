@@ -103,7 +103,7 @@ export class ProductReceiveComponent implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private layoutService: LayoutService,
-    private unitConversionService: UnitConversionService
+    private unitConversionService: UnitConversionService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -336,15 +336,15 @@ export class ProductReceiveComponent implements OnInit {
           ?.get('receiveUnit')
           ?.setValue(
             this.productUnits.find(
-              (x) => x.value == existingProduct.receiveUnitId
-            ) || null
+              (x) => x.value == existingProduct.receiveUnitId,
+            ) || null,
           );
       } else {
         childForm
           ?.get('receiveUnit')
           ?.setValue(
             this.productUnits.find((x) => x.value == product.defaultUnitId) ||
-              null
+              null,
           );
         childForm?.get('bookingRate')?.setValue(product.bookingRate || 0);
         childForm?.get('receiveQuantity')?.setValue(0);
@@ -357,7 +357,7 @@ export class ProductReceiveComponent implements OnInit {
     child
       ?.get('receiveAmount')
       ?.setValue(
-        child?.get('receiveQuantity')?.value * child?.get('bookingRate')?.value
+        child?.get('receiveQuantity')?.value * child?.get('bookingRate')?.value,
       );
   }
 
@@ -369,7 +369,7 @@ export class ProductReceiveComponent implements OnInit {
     const formData = this.productForm.value;
     const cardData: Array<any> = this.productReceiveDetails.value;
     const existingProduct = cardData.find(
-      (x) => x.productId === formData.product.id
+      (x) => x.productId === formData.product.id,
     );
     if (existingProduct) {
       existingProduct.receiveUnitId =
@@ -409,7 +409,7 @@ export class ProductReceiveComponent implements OnInit {
     if (cart) {
       const subTotal = cart?.reduce(
         (sum, current) => sum + current.receiveAmount,
-        0
+        0,
       );
       this.register.get('subtotal')?.setValue(subTotal);
     }
@@ -419,7 +419,7 @@ export class ProductReceiveComponent implements OnInit {
     let subtotal: number = parseFloat(this.register.get('subtotal')?.value);
     let vatAmount: number = parseFloat(this.register.get('vatAmount')?.value);
     let discountAmount: number = parseFloat(
-      this.register.get('discountAmount')?.value
+      this.register.get('discountAmount')?.value,
     );
     let otherCost: number = parseFloat(this.register.get('otherCost')?.value);
     subtotal = isNaN(subtotal) ? 0 : subtotal;
@@ -466,7 +466,7 @@ export class ProductReceiveComponent implements OnInit {
   addProduct() {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -485,6 +485,8 @@ export class ProductReceiveComponent implements OnInit {
           isActive: result.isActive,
           status: result.status,
           branchId: result.branchId,
+          isDeleted: false,
+          isArchived: false,
         };
         this.products = this.products.insertThenClone(obj);
       }
@@ -494,7 +496,7 @@ export class ProductReceiveComponent implements OnInit {
   addCustomer() {
     const modalRef = this.modalService.open(
       AddCustomerComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -511,6 +513,8 @@ export class ProductReceiveComponent implements OnInit {
           status: response.data.status,
           previousDue: 0,
           isSystemDefault: false,
+          isDeleted: false,
+          isArchived: false,
         };
         this.customers = this.customers.insertThenClone(obj);
       }
@@ -520,7 +524,7 @@ export class ProductReceiveComponent implements OnInit {
   addUnit() {
     const modalRef = this.modalService.open(
       AddBaseUnitComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {

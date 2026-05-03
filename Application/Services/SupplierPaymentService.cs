@@ -60,6 +60,54 @@ public class SupplierPaymentService : ISupplierPaymentService
         return result > 0;
     }
 
+    public async Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Supplier payment not found !");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Supplier payment not found !");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Supplier payment not found !");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Supplier payment not found !");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
     public async Task<SupplierPaymentResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
@@ -92,7 +140,7 @@ public class SupplierPaymentService : ISupplierPaymentService
         return response;
     }
 
-    public async Task<PaginationResult<SupplierPaymentListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<SupplierPaymentListResponse>> PaginationListAsync(SupplierPaymentPaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         // Map frontend column names to entity property names
         if (!string.IsNullOrEmpty(requestQuery.OrderBy))
@@ -111,14 +159,23 @@ public class SupplierPaymentService : ISupplierPaymentService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<SupplierPayment, bool>>? predicate = null;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+        Expression<Func<SupplierPayment, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.PaymentNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.PaymentAmount.ToString().Contains(requestQuery.OpenText.ToLower())
-                            || (obj.Supplier != null && obj.Supplier.SupplierName.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower()));
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj => obj.PaymentNumber.ToLower().Contains(searchText)
+                            || obj.PaymentAmount.ToString().Contains(searchText)
+                            || (obj.Supplier != null && obj.Supplier.SupplierName.ToLower().Contains(searchText))
+                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(searchText)));
         }
 
         Expression<Func<SupplierPayment, SupplierPaymentListResponse>>? selector = x => new SupplierPaymentListResponse(
@@ -138,10 +195,18 @@ public class SupplierPaymentService : ISupplierPaymentService
             x.PaymentAmount,
             x.Notes,
             x.BranchId,
-            x.Branch
+            x.Branch,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt
         );
 
-        var query = _supplierPaymentRepository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _supplierPaymentRepository.Query();
+
+        var query = baseQuery.Where(predicate);
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }

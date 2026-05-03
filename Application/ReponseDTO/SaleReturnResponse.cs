@@ -18,6 +18,10 @@ public record SaleReturnResponse(
         string Reason,
         int BranchId,
         Branch Branch,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         ICollection<SaleReturnDetailResponse> SaleReturnDetails
     );
 
@@ -65,5 +69,9 @@ public record SaleReturnListResponse(
         string Reason,
         int BranchId,
         Branch Branch,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         IEnumerable<SaleReturnDetailListResponse> SaleReturnDetails
     );

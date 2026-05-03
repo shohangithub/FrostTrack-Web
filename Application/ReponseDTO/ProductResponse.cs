@@ -25,7 +25,11 @@ public record ProductListResponse(
     string? UnitName,
     string? ImageUrl,
     decimal? BookingRate,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );
 
 

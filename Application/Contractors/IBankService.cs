@@ -8,6 +8,7 @@ public interface IBankService
 {
     Task<IEnumerable<BankListResponse>> ListAsync(CancellationToken cancellationToken = default);
     Task<PaginationResult<BankListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<BankListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<BankResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<BankResponse> AddAsync(BankRequest bank, CancellationToken cancellationToken = default);
     Task<BankResponse> UpdateAsync(int id, BankRequest bank, CancellationToken cancellationToken = default);
@@ -17,4 +18,8 @@ public interface IBankService
     Task<IEnumerable<Lookup<int>>> GetLookup(Expression<Func<Bank, bool>> predicate, CancellationToken cancellationToken = default);
     Task<string> GenerateCode(CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentBalanceAsync(int bankId, CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
-import { IProductResponse } from "../../administration/models/product.interface";
-import { ICustomerResponse } from "../../common/models/customer.interface";
-import { IUnitConversionResponse } from "../../common/models/unit-conversion.interface";
+import { IProductResponse } from '../../administration/models/product.interface';
+import { ICustomerResponse } from '../../common/models/customer.interface';
+import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
+import { PaginationQuery } from '../../core/models/pagination-query';
 
 export interface ISalesRequest {
   id: number;
@@ -76,4 +77,12 @@ export interface ISalesListResponse {
   paidAmount: number;
   branchId: number;
   branch: any;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
+}
+
+export interface ISalesPaginationQuery extends PaginationQuery {
+  status?: string;
 }

@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IProductReceiveListResponse,
+  IProductReceivePaginationQuery,
   IProductReceiveRequest,
   IProductReceiveResponse,
 } from '../models/product-receive.interface';
@@ -19,17 +20,17 @@ import { ErrorHandlerService } from '../../core/service/error-handler.service';
 export class ProductReceiveService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/productreceive`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: IProductReceivePaginationQuery,
   ): Observable<PaginationResult<IProductReceiveListResponse>> {
     return this.get<PaginationResult<IProductReceiveListResponse>>(
-      getApiEndpoint(pagination, this.path + `/get-with-pagination`)
+      getApiEndpoint(pagination, this.path + `/get-with-pagination`),
     );
   }
 
@@ -43,13 +44,29 @@ export class ProductReceiveService extends BaseService {
 
   update(
     id: number,
-    payload: IProductReceiveRequest
+    payload: IProductReceiveRequest,
   ): Observable<IProductReceiveResponse> {
     return this.put<IProductReceiveResponse>(this.path + '/' + id, payload);
   }
 
-  remove(id: number): Observable<boolean> {
-    return this.delete<boolean>(this.path + '/' + id);
+  softDelete(id: number): Observable<boolean> {
+    return this.put<boolean>(this.path + '/' + id, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 
   batchDelete(ids: number[]): Observable<boolean> {

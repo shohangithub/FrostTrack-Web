@@ -29,7 +29,7 @@ public class PurchaseController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<PurchaseListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<PurchaseListResponse>> GetWithPagination([FromQuery] PurchasePaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _purchaseService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -63,7 +63,7 @@ public class PurchaseController : ControllerBase
     [HttpDelete("{id}")]
     public async ValueTask<bool> DeletePurchase(long id, CancellationToken cancellationToken)
     {
-        return await _purchaseService.DeleteAsync(id, cancellationToken);
+        return await _purchaseService.SoftDeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
@@ -84,5 +84,29 @@ public class PurchaseController : ControllerBase
     {
         var response = await _purchaseService.GenerateInvoiceNumber(cancellationToken);
         return new CodeResponse(response);
+    }
+
+    [HttpPut("{id}/restore")]
+    public async Task<ActionResult<bool>> RestorePurchase(long id, CancellationToken cancellationToken)
+    {
+        return await _purchaseService.RestoreAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/archive")]
+    public async Task<ActionResult<bool>> ArchivePurchase(long id, CancellationToken cancellationToken)
+    {
+        return await _purchaseService.ArchiveAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/unarchive")]
+    public async Task<ActionResult<bool>> UnarchivePurchase(long id, CancellationToken cancellationToken)
+    {
+        return await _purchaseService.UnarchiveAsync(id, cancellationToken);
+    }
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<ActionResult<bool>> PermanentDeletePurchase(long id, CancellationToken cancellationToken)
+    {
+        return await _purchaseService.DeleteAsync(id, cancellationToken);
     }
 }

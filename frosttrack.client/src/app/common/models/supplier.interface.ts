@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface ISupplierListResponse {
   id: number;
   supplierName: string;
@@ -13,6 +15,14 @@ export interface ISupplierListResponse {
   previousDue: number;
   isSystemDefault: boolean;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface ISupplierPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface ISupplierResponse {

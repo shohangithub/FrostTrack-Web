@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IPaymentMethodListResponse,
+  IPaymentMethodPaginationQuery,
   IPaymentMethodRequest,
   IPaymentMethodResponse,
 } from '../models/payment-method.interface';
@@ -26,18 +27,18 @@ export class PaymentMethodService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IPaymentMethodListResponse>> {
     return this.get<PaginationResult<IPaymentMethodListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Payment Methods'
+      'Load Payment Methods',
     );
   }
 
   getById(id: number): Observable<IPaymentMethodResponse> {
     return this.get<IPaymentMethodResponse>(
       this.path + '/' + id,
-      'Load Payment Method'
+      'Load Payment Method',
     );
   }
 
@@ -46,19 +47,19 @@ export class PaymentMethodService extends BaseService {
       this.path,
       payload,
       'Create Payment Method',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
   update(
     id: number,
-    payload: IPaymentMethodRequest
+    payload: IPaymentMethodRequest,
   ): Observable<IPaymentMethodResponse> {
     return this.putWithSuccess<IPaymentMethodResponse>(
       `${this.path}/${id}`,
       payload,
       'Update Payment Method',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -66,7 +67,7 @@ export class PaymentMethodService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Payment Method',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -75,28 +76,56 @@ export class PaymentMethodService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Payment Methods',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Payment Method Lookup'
+      'Load Payment Method Lookup',
     );
   }
 
   getActiveList(): Observable<IPaymentMethodListResponse[]> {
     return this.get<IPaymentMethodListResponse[]>(
       this.path + '/active',
-      'Load Active Payment Methods'
+      'Load Active Payment Methods',
     );
   }
 
   generateCode(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
-      'Generate Payment Method Code'
+      'Generate Payment Method Code',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IPaymentMethodPaginationQuery,
+  ): Observable<PaginationResult<IPaymentMethodListResponse>> {
+    return this.get<PaginationResult<IPaymentMethodListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

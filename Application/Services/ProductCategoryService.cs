@@ -1,13 +1,15 @@
-﻿namespace Application.Services;
+namespace Application.Services;
 
 public class ProductCategoryService : IProductCategoryService
 {
     private readonly IRepository<ProductCategory, int> _repository;
     private readonly DefaultValueInjector _defaultValueInjector;
-    public ProductCategoryService(IRepository<ProductCategory, int> repository, DefaultValueInjector defaultValueInjector)
+    private readonly CurrentUser _currentUser;
+    public ProductCategoryService(IRepository<ProductCategory, int> repository, DefaultValueInjector defaultValueInjector, IUserContextService userContextService)
     {
         _repository = repository;
         _defaultValueInjector = defaultValueInjector;
+        _currentUser = userContextService.GetCurrentUser();
     }
 
     public async Task<ProductCategoryResponse> AddAsync(ProductCategoryRequest user, CancellationToken cancellationToken = default)
@@ -86,25 +88,91 @@ public class ProductCategoryService : IProductCategoryService
     public async Task<IEnumerable<ProductCategoryListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var response = await _repository.Query()
-           .Select(x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status))
+           .Select(x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
            .ToListAsync(cancellationToken);
         return response;
     }
 
     public async Task<PaginationResult<ProductCategoryListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-
-        Expression<Func<ProductCategory, bool>>? predicate = null;
+        Expression<Func<ProductCategory, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.CategoryName.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Description.ToLower().Contains(requestQuery.OpenText.ToLower());
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.CategoryName.ToLower().Contains(requestQuery.OpenText.ToLower())
+                            || obj.Description.ToLower().Contains(requestQuery.OpenText.ToLower()));
         }
 
-        Expression<Func<ProductCategory, ProductCategoryListResponse>>? selector = x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status);
+        Expression<Func<ProductCategory, ProductCategoryListResponse>> selector = x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt);
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<ProductCategoryListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<ProductCategory, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj => obj.CategoryName.ToLower().Contains(search));
+        }
+
+        Expression<Func<ProductCategory, ProductCategoryListResponse>> selector = x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt);
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
 }

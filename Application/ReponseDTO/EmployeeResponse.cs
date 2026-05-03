@@ -44,5 +44,9 @@ public record EmployeeListResponse(
     string? BankAccount,
     string? Notes,
     string? PhotoUrl,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );

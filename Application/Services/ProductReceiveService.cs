@@ -72,6 +72,54 @@ public class ProductReceiveService : IProductReceiveService
         return result > 0;
     }
 
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product receive not found !");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product receive not found !");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product receive not found !");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Product receive not found !");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
     public async Task<ProductReceiveResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
@@ -125,6 +173,10 @@ public class ProductReceiveService : IProductReceiveService
                 x.BranchId,
                 x.Branch!,
                 x.Notes,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                     d.Id,
                     d.Id,
@@ -141,7 +193,7 @@ public class ProductReceiveService : IProductReceiveService
         return response;
     }
 
-    public async Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(ProductReceivePaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         // Map frontend column names to entity property names
         if (!string.IsNullOrEmpty(requestQuery.OrderBy))
@@ -156,12 +208,21 @@ public class ProductReceiveService : IProductReceiveService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<Booking, bool>>? predicate = null;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+        Expression<Func<Booking, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.BookingNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower()));
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj => obj.BookingNumber.ToLower().Contains(searchText)
+                            || (obj.Customer != null && obj.Customer.CustomerName.ToLower().Contains(searchText)));
         }
 
         Expression<Func<Booking, ProductReceiveListResponse>>? selector = x => new ProductReceiveListResponse(
@@ -173,6 +234,10 @@ public class ProductReceiveService : IProductReceiveService
             x.BranchId,
             x.Branch!,
             x.Notes,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.BookingDetails.Select(d => new ProductReceiveDetailListResponse(
                 d.Id,
                 d.Id,
@@ -186,7 +251,11 @@ public class ProductReceiveService : IProductReceiveService
                 d.BaseRate))
             );
 
-        var query = _productReceiveRepository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _productReceiveRepository.Query();
+
+        var query = baseQuery.Where(predicate);
 
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }

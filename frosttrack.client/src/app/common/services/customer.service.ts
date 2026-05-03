@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   ICustomerListResponse,
+  ICustomerPaginationQuery,
   ICustomerRequest,
   ICustomerResponse,
 } from '../models/customer.interface';
@@ -20,25 +21,25 @@ import { MessageHub } from '@config/message-hub';
 export class CustomerService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/customer`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<ICustomerListResponse>> {
     return this.get<PaginationResult<ICustomerListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Customers pagination'
+      'Load Customers pagination',
     );
   }
 
   getList(): Observable<ICustomerListResponse[]> {
     return this.get<ICustomerListResponse[]>(
       this.path + `/get-list`,
-      'Load Customer List'
+      'Load Customer List',
     );
   }
 
@@ -51,7 +52,7 @@ export class CustomerService extends BaseService {
       this.path,
       payload,
       'Create Customer',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -60,7 +61,7 @@ export class CustomerService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Customer',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -68,7 +69,7 @@ export class CustomerService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Customer',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -77,14 +78,42 @@ export class CustomerService extends BaseService {
       `${this.path}/deletebatch`,
       ids,
       'Delete Customers',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   generateCode(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
-      'Generate Customer Code'
+      'Generate Customer Code',
     );
+  }
+
+  getWithPaginationStatus(
+    query: ICustomerPaginationQuery,
+  ): Observable<PaginationResult<ICustomerListResponse>> {
+    return this.get<PaginationResult<ICustomerListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

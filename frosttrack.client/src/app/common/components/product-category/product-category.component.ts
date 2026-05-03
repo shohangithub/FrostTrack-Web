@@ -10,6 +10,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import {
   IProductCategoryListResponse,
+  IProductCategoryPaginationQuery,
   IProductCategoryResponse,
 } from '../../models/product-category.interface';
 import { ProductCategoryService } from '../../services/product-category.service';
@@ -55,12 +56,14 @@ export class ProductCategoryComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IProductCategoryListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IProductCategoryPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -77,7 +80,7 @@ export class ProductCategoryComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private productCategoryService: ProductCategoryService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.MessageHub.UPDATE = 'Update Record Successfully';
     this.MessageHub.DELETE = 'Delete Record Successfully';
@@ -133,7 +136,7 @@ export class ProductCategoryComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -142,17 +145,19 @@ export class ProductCategoryComponent implements OnInit {
   }
 
   fetchData() {
-    this.productCategoryService.getWithPagination(this.pagination).subscribe({
-      next: (response: PaginationResult<IProductCategoryListResponse>) => {
-        this.data = response.data;
-        this.paging = response.paging;
-        this.loadingIndicator = false;
-      },
-      error: () => {
-        this.loadingIndicator = false;
-        // BaseService already handles error toasts via ErrorHandlerService
-      },
-    });
+    this.productCategoryService
+      .getWithPaginationStatus(this.pagination)
+      .subscribe({
+        next: (response: PaginationResult<IProductCategoryListResponse>) => {
+          this.data = response.data;
+          this.paging = response.paging;
+          this.loadingIndicator = false;
+        },
+        error: () => {
+          this.loadingIndicator = false;
+          // BaseService already handles error toasts via ErrorHandlerService
+        },
+      });
   }
 
   changePagination(pageInfo: any) {
@@ -172,7 +177,7 @@ export class ProductCategoryComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddProductCategoryComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -184,7 +189,7 @@ export class ProductCategoryComponent implements OnInit {
   editRow(row: any) {
     const modalRef = this.modalService.open(
       AddProductCategoryComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -199,14 +204,14 @@ export class ProductCategoryComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.productCategoryService.remove(row.id).subscribe({
+        this.productCategoryService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -233,5 +238,51 @@ export class ProductCategoryComponent implements OnInit {
   filterDatatable(event: any) {
     const val = event.target.value.toLowerCase();
     this.searchSubject.next(val);
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.productCategoryService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.productCategoryService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.productCategoryService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.productCategoryService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

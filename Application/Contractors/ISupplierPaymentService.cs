@@ -5,7 +5,7 @@ namespace Application.Contractors;
 public interface ISupplierPaymentService
 {
     Task<IEnumerable<SupplierPaymentListResponse>> ListAsync(CancellationToken cancellationToken = default);
-    Task<PaginationResult<SupplierPaymentListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<SupplierPaymentListResponse>> PaginationListAsync(SupplierPaymentPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<SupplierPaymentResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<SupplierPaymentResponse> AddAsync(SupplierPaymentRequest request, CancellationToken cancellationToken = default);
     Task<SupplierPaymentResponse> UpdateAsync(long id, SupplierPaymentRequest request, CancellationToken cancellationToken = default);
@@ -17,4 +17,8 @@ public interface ISupplierPaymentService
     Task<decimal> GetSupplierDueBalance(int supplierId, CancellationToken cancellationToken = default);
     Task<IEnumerable<PurchaseListResponse>> GetPendingPurchases(int supplierId, CancellationToken cancellationToken = default);
     Task<IEnumerable<SalesListResponse>> GetPendingSales(int customerId, CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default);
 }

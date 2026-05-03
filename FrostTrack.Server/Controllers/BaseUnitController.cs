@@ -78,4 +78,28 @@ public class BaseUnitController : ControllerBase
         var response = await _baseBaseUnitService.IsExistsAsync(id, cancellationToken);
         return response;
     }
+
+    [HttpGet("get-with-pagination-status")]
+    public async Task<PaginationResult<BaseUnitListResponse>> GetWithPaginationStatus([FromQuery] SetupPaginationQuery requestQuery, CancellationToken cancellationToken)
+        => await _baseBaseUnitService.PaginationListAsync(requestQuery, cancellationToken);
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<IActionResult> SoftDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _baseBaseUnitService.SoftDeleteAsync(id, cancellationToken));
+
+    [HttpPost("{id}/restore")]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+        => Ok(await _baseBaseUnitService.RestoreAsync(id, cancellationToken));
+
+    [HttpPost("{id}/archive")]
+    public async Task<IActionResult> Archive(int id, CancellationToken cancellationToken)
+        => Ok(await _baseBaseUnitService.ArchiveAsync(id, cancellationToken));
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<IActionResult> Unarchive(int id, CancellationToken cancellationToken)
+        => Ok(await _baseBaseUnitService.UnarchiveAsync(id, cancellationToken));
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<IActionResult> PermanentDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _baseBaseUnitService.DeleteAsync(id, cancellationToken));
 }

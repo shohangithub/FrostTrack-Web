@@ -1,6 +1,7 @@
 import { ISupplierResponse } from '../../common/models/supplier.interface';
 import { ICustomerResponse } from '../../common/models/customer.interface';
 import { IBankResponse } from '../../common/models/bank.interface';
+import { PaginationQuery } from '../../core/models/pagination-query';
 
 export interface ISupplierPaymentRequest {
   id: number;
@@ -78,6 +79,14 @@ export interface ISupplierPaymentListResponse {
   notes?: string;
   branchId: number;
   branch: any;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
+}
+
+export interface ISupplierPaymentPaginationQuery extends PaginationQuery {
+  status?: string;
 }
 
 export interface IPendingInvoice {

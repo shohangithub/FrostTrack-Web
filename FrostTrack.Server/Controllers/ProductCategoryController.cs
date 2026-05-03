@@ -80,4 +80,28 @@ public class ProductCategoryController : ControllerBase
         var response = await _productCategoryService.IsExistsAsync(id, cancellationToken);
         return response;
     }
+
+    [HttpGet("get-with-pagination-status")]
+    public async Task<PaginationResult<ProductCategoryListResponse>> GetWithPaginationStatus([FromQuery] SetupPaginationQuery requestQuery, CancellationToken cancellationToken)
+        => await _productCategoryService.PaginationListAsync(requestQuery, cancellationToken);
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<IActionResult> SoftDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _productCategoryService.SoftDeleteAsync(id, cancellationToken));
+
+    [HttpPost("{id}/restore")]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+        => Ok(await _productCategoryService.RestoreAsync(id, cancellationToken));
+
+    [HttpPost("{id}/archive")]
+    public async Task<IActionResult> Archive(int id, CancellationToken cancellationToken)
+        => Ok(await _productCategoryService.ArchiveAsync(id, cancellationToken));
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<IActionResult> Unarchive(int id, CancellationToken cancellationToken)
+        => Ok(await _productCategoryService.UnarchiveAsync(id, cancellationToken));
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<IActionResult> PermanentDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _productCategoryService.DeleteAsync(id, cancellationToken));
 }

@@ -5,7 +5,7 @@ namespace Application.Contractors;
 public interface IProductReceiveService
 {
     Task<IEnumerable<ProductReceiveListResponse>> ListAsync(CancellationToken cancellationToken = default);
-    Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<ProductReceiveListResponse>> PaginationListAsync(ProductReceivePaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<ProductReceiveResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ProductReceiveResponse> AddAsync(ProductReceiveRequest request, CancellationToken cancellationToken = default);
     Task<ProductReceiveResponse> UpdateAsync(Guid id, ProductReceiveRequest request, CancellationToken cancellationToken = default);
@@ -14,4 +14,8 @@ public interface IProductReceiveService
     Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default);
     Task<string> GenerateReceiveNumber(CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(Guid id, CancellationToken cancellationToken = default);
 }

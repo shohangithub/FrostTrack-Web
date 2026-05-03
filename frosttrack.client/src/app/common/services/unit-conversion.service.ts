@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IUnitConversionListResponse,
+  IUnitConversionPaginationQuery,
   IUnitConversionRequest,
   IUnitConversionResponse,
 } from '../models/unit-conversion.interface';
@@ -19,25 +20,25 @@ import { MessageHub } from '@config/message-hub';
 export class UnitConversionService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/unitconversion`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IUnitConversionListResponse>> {
     return this.get<PaginationResult<IUnitConversionListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Unit Conversions pagination'
+      'Load Unit Conversions pagination',
     );
   }
 
   getById(id: number): Observable<IUnitConversionResponse> {
     return this.get<IUnitConversionResponse>(
       this.path + '/' + id,
-      'Load Unit Conversion'
+      'Load Unit Conversion',
     );
   }
 
@@ -46,19 +47,19 @@ export class UnitConversionService extends BaseService {
       this.path,
       payload,
       'Create Unit Conversion',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
   update(
     id: number,
-    payload: IUnitConversionRequest
+    payload: IUnitConversionRequest,
   ): Observable<IUnitConversionResponse> {
     return this.putWithSuccess<IUnitConversionResponse>(
       `${this.path}/${id}`,
       payload,
       'Update Unit Conversion',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -66,7 +67,7 @@ export class UnitConversionService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Unit Conversion',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -75,14 +76,42 @@ export class UnitConversionService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Unit Conversions',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Unit Conversions Lookup'
+      'Load Unit Conversions Lookup',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IUnitConversionPaginationQuery,
+  ): Observable<PaginationResult<IUnitConversionListResponse>> {
+    return this.get<PaginationResult<IUnitConversionListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

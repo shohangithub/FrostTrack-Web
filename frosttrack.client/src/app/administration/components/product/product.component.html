@@ -52,6 +52,36 @@
                   </div>
                 </div>
               </div>
+              <div
+                class="col-lg-6 d-flex align-items-center justify-content-end"
+              >
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    class="btn"
+                    [class.btn-primary]="activeStatus === 'active'"
+                    [class.btn-outline-primary]="activeStatus !== 'active'"
+                    (click)="setStatus('active')"
+                  >
+                    Active
+                  </button>
+                  <button
+                    class="btn"
+                    [class.btn-warning]="activeStatus === 'archived'"
+                    [class.btn-outline-warning]="activeStatus !== 'archived'"
+                    (click)="setStatus('archived')"
+                  >
+                    Archived
+                  </button>
+                  <button
+                    class="btn"
+                    [class.btn-danger]="activeStatus === 'deleted'"
+                    [class.btn-outline-danger]="activeStatus !== 'deleted'"
+                    (click)="setStatus('deleted')"
+                  >
+                    Trash
+                  </button>
+                </div>
+              </div>
             </div>
             <ngx-datatable
               #table
@@ -148,17 +178,19 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="Status" prop="isActive" [width]="150">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  @if (row.status==='Active') {
-                  <div class="badge-outline col-green">{{ row.status }}</div>
-                  } @if (row.status==='Inactive') {
-                  <div class="badge-outline col-red">{{ row.status }}</div>
-                  } @if (row.status==='Pending') {
-                  <div class="badge-outline col-indigo">{{ row.status }}</div>
+                  @if (row.status === "Active") {
+                    <div class="badge-outline col-green">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Inactive") {
+                    <div class="badge-outline col-red">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Pending") {
+                    <div class="badge-outline col-indigo">{{ row.status }}</div>
                   }
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
-                [width]="220"
+                [width]="120"
                 name="Actions"
                 [sortable]="false"
               >
@@ -168,26 +200,59 @@
                   let-rowIndex="rowIndex"
                   ngx-datatable-cell-template
                 >
-                  <span>
+                  @if (row.isDeleted) {
                     <button
                       class="btn btn-tbl-edit h-auto"
-                      (click)="editRow(row, rowIndex)"
+                      (click)="restore(row)"
+                      title="Restore"
                     >
-                      <i class="fas fa-pen"></i>
+                      <i class="fas fa-undo"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="permanentDelete(row)"
+                      title="Permanent Delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  } @else if (row.isArchived) {
+                    <button
+                      class="btn btn-tbl-archive h-auto"
+                      (click)="unarchive(row)"
+                      title="Unarchive"
+                    >
+                      <i class="fas fa-box-open"></i>
                     </button>
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
+                      title="Soft Delete"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>
-                    <!-- <button
-                      class="btn btn-tbl-info h-auto"
-                      (click)="printBarcode(row)"
+                  } @else {
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="editRow(row, rowIndex)"
+                      title="Edit"
                     >
-                      <i class="fas fa-barcode"></i>
-                    </button> -->
-                  </span>
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-archive h-auto"
+                      (click)="archive(row)"
+                      title="Archive"
+                    >
+                      <i class="fas fa-archive"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="delete(row)"
+                      title="Delete"
+                    >
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  }
                 </ng-template>
               </ngx-datatable-column>
             </ngx-datatable>

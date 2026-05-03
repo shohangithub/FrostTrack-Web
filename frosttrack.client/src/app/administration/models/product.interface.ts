@@ -1,4 +1,5 @@
 import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
+import { PaginationQuery } from 'app/core/models/pagination-query';
 
 export interface IProductListResponse {
   id: number;
@@ -14,6 +15,14 @@ export interface IProductListResponse {
   isActive: boolean;
   status: string;
   branchId: number | null;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IProductPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IProductListWithStockResponse extends IProductListResponse {

@@ -7,6 +7,7 @@ public class SaleReturnService : ISaleReturnService
     private readonly IStockRepository _stockRepository;
     private readonly IRepository<Company, int> _companyRepository;
     private readonly ITenantProvider _tenantProvider;
+    private readonly Guid _tenantId;
     private readonly CurrentUser _currentUser;
 
     public SaleReturnService(IRepository<SaleReturn, long> repository, ISaleReturnRepository saleReturnRepository, ITenantProvider tenantProvider, IUserContextService userContextService, IRepository<Company, int> companyRepository, IStockRepository stockRepository)
@@ -14,6 +15,7 @@ public class SaleReturnService : ISaleReturnService
         _repository = repository;
         _saleReturnRepository = saleReturnRepository;
         _tenantProvider = tenantProvider;
+        _tenantId = _tenantProvider.GetTenantId();
         _currentUser = userContextService.GetCurrentUser();
         _companyRepository = companyRepository;
         _stockRepository = stockRepository;
@@ -60,6 +62,54 @@ public class SaleReturnService : ISaleReturnService
 
         var result = await _stockRepository.ManageBatchDeleteSaleReturnStock(existingData, cancellationToken);
         return result;
+    }
+
+    public async Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Sale return not found !");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Sale return not found !");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Sale return not found !");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Sale return not found !");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<SaleReturnResponse> GetByIdAsync(long id, CancellationToken cancellationToken = default)
@@ -132,22 +182,35 @@ public class SaleReturnService : ISaleReturnService
                 x.Reason,
                 x.BranchId,
                 x.Branch,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 x.SaleReturnDetails.Select(d => new SaleReturnDetailListResponse(d.Id, d.SaleReturnId, d.ProductId, d.Product.ProductName, d.ReturnUnitId, "", d.ReturnRate, (float)d.ReturnQuantity, d.ReturnAmount, d.Reason))
                ))
            .ToListAsync(cancellationToken);
         return response;
     }
 
-    public async Task<PaginationResult<SaleReturnListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<SaleReturnListResponse>> PaginationListAsync(SaleReturnPaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<SaleReturn, bool>>? predicate = null;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+        Expression<Func<SaleReturn, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.ReturnNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.ReturnAmount.ToString().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Sales.InvoiceNumber.ToLower().Contains(requestQuery.OpenText.ToLower());
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj => obj.ReturnNumber.ToLower().Contains(searchText)
+                            || obj.ReturnAmount.ToString().Contains(searchText)
+                            || obj.Customer.CustomerName.ToLower().Contains(searchText)
+                            || obj.Sales.InvoiceNumber.ToLower().Contains(searchText));
         }
 
         Expression<Func<SaleReturn, SaleReturnListResponse>>? selector = x => new SaleReturnListResponse(
@@ -168,10 +231,18 @@ public class SaleReturnService : ISaleReturnService
             x.Reason,
             x.BranchId,
             x.Branch,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.SaleReturnDetails.Select(d => new SaleReturnDetailListResponse(d.Id, d.SaleReturnId, d.ProductId, d.Product.ProductName, d.ReturnUnitId, "", d.ReturnRate, (float)d.ReturnQuantity, d.ReturnAmount, d.Reason))
             );
 
-        var query = _saleReturnRepository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _saleReturnRepository.Query();
+
+        var query = baseQuery.Where(predicate);
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
 

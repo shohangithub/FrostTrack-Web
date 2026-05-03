@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IPurchaseListResponse,
+  IPurchasePaginationQuery,
   IPurchaseRequest,
   IPurchaseResponse,
 } from '../models/purchase.interface';
@@ -19,17 +20,17 @@ import { ErrorHandlerService } from '../../core/service/error-handler.service';
 export class PurchaseService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/purchase`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: IPurchasePaginationQuery,
   ): Observable<PaginationResult<IPurchaseListResponse>> {
     return this.get<PaginationResult<IPurchaseListResponse>>(
-      getApiEndpoint(pagination, this.path + `/get-with-pagination`)
+      getApiEndpoint(pagination, this.path + `/get-with-pagination`),
     );
   }
 
@@ -46,7 +47,27 @@ export class PurchaseService extends BaseService {
   }
 
   remove(id: number): Observable<boolean> {
-    return this.delete<boolean>(this.path + '/' + id);
+    return this.softDelete(id);
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.put<boolean>(this.path + '/' + id, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 
   batchDelete(ids: number[]): Observable<boolean> {

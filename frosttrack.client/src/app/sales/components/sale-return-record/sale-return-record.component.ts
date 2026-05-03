@@ -25,7 +25,10 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SaleReturnService } from 'app/sales/services/sale-return.service';
 import { MessageHub } from '../../../config/message-hub';
-import { ISaleReturnListResponse } from 'app/sales/models/sale-return.interface';
+import {
+  ISaleReturnListResponse,
+  ISaleReturnPaginationQuery,
+} from 'app/sales/models/sale-return.interface';
 import { PaginationResult } from '../../../core/models/pagination-result';
 import { PaginationQuery } from '../../../core/models/pagination-query';
 import { COMMON_STATUS_LIST } from '../../../common/data/settings-data';
@@ -48,11 +51,13 @@ export class SaleReturnRecordComponent implements OnInit {
 
   data: ISaleReturnListResponse[] = [];
   paging: any = {};
-  pagination: PaginationQuery = {
+  activeStatus: string = 'active';
+  pagination: ISaleReturnPaginationQuery = {
     pageIndex: 0,
     pageSize: 10,
     orderBy: '',
     isAscending: true,
+    status: 'active',
   };
   searchTerm = '';
 
@@ -79,7 +84,7 @@ export class SaleReturnRecordComponent implements OnInit {
     private toastr: ToastrService,
     private saleReturnService: SaleReturnService,
     private modalService: NgbModal,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -143,7 +148,7 @@ export class SaleReturnRecordComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.saleReturnService.remove(row.id).subscribe({
+        this.saleReturnService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -152,6 +157,65 @@ export class SaleReturnRecordComponent implements OnInit {
           error: (err: ErrorResponse) => {
             this.toastr.error(formatErrorMessage(err));
           },
+        });
+      }
+    });
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  archive(row: any) {
+    this.saleReturnService.archive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Archived');
+      },
+      error: () => {},
+    });
+  }
+
+  unarchive(row: any) {
+    this.saleReturnService.unarchive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Unarchived');
+      },
+      error: () => {},
+    });
+  }
+
+  restore(row: any) {
+    this.saleReturnService.restore(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Restored');
+      },
+      error: () => {},
+    });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete this record?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes, delete!',
+    }).then((result) => {
+      if (result.value) {
+        this.saleReturnService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.removeRecord(row);
+            this.toastr.success('Permanently deleted');
+          },
+          error: () => {},
         });
       }
     });

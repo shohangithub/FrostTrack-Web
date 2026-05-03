@@ -1,4 +1,4 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.Contractors;
 using Application.Contractors.Authentication;
 using Application.Framework;
@@ -63,7 +63,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
         var employeeIds = employees.Select(e => e.Id).ToList();
 
-        // Single projection query — fetch only needed fields for active employees
+        // Single projection query � fetch only needed fields for active employees
         var lastPaymentData = await _salaryPaymentRepository.Query()
             .Include(sp => sp.Transaction)
             .Where(sp => sp.TenantId == tenantId

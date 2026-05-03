@@ -28,7 +28,7 @@ public class SupplierPaymentController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<SupplierPaymentListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<SupplierPaymentListResponse>> GetWithPagination([FromQuery] SupplierPaymentPaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _supplierPaymentService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -61,7 +61,7 @@ public class SupplierPaymentController : ControllerBase
     [HttpDelete("{id}")]
     public async ValueTask<bool> DeleteSupplierPayment(long id, CancellationToken cancellationToken)
     {
-        return await _supplierPaymentService.DeleteAsync(id, cancellationToken);
+        return await _supplierPaymentService.SoftDeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
@@ -100,5 +100,29 @@ public class SupplierPaymentController : ControllerBase
     public async Task<IEnumerable<SalesListResponse>> GetPendingSales(int customerId, CancellationToken cancellationToken)
     {
         return await _supplierPaymentService.GetPendingSales(customerId, cancellationToken);
+    }
+
+    [HttpPut("{id}/restore")]
+    public async Task<ActionResult<bool>> RestoreSupplierPayment(long id, CancellationToken cancellationToken)
+    {
+        return await _supplierPaymentService.RestoreAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/archive")]
+    public async Task<ActionResult<bool>> ArchiveSupplierPayment(long id, CancellationToken cancellationToken)
+    {
+        return await _supplierPaymentService.ArchiveAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/unarchive")]
+    public async Task<ActionResult<bool>> UnarchiveSupplierPayment(long id, CancellationToken cancellationToken)
+    {
+        return await _supplierPaymentService.UnarchiveAsync(id, cancellationToken);
+    }
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<ActionResult<bool>> PermanentDeleteSupplierPayment(long id, CancellationToken cancellationToken)
+    {
+        return await _supplierPaymentService.DeleteAsync(id, cancellationToken);
     }
 }

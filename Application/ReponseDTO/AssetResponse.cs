@@ -44,5 +44,9 @@ public record AssetListResponse(
     DateTime? MaintenanceDate,
     string? Notes,
     string? ImageUrl,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );

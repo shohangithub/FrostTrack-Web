@@ -28,7 +28,7 @@ public class SaleReturnController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<SaleReturnListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<SaleReturnListResponse>> GetWithPagination([FromQuery] SaleReturnPaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _saleReturnService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -61,7 +61,7 @@ public class SaleReturnController : ControllerBase
     [HttpDelete("{id}")]
     public async ValueTask<bool> DeleteSaleReturn(long id, CancellationToken cancellationToken)
     {
-        return await _saleReturnService.DeleteAsync(id, cancellationToken);
+        return await _saleReturnService.SoftDeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
@@ -82,5 +82,29 @@ public class SaleReturnController : ControllerBase
     {
         var response = await _saleReturnService.GenerateReturnNumber(cancellationToken);
         return new CodeResponse(response);
+    }
+
+    [HttpPut("{id}/restore")]
+    public async Task<ActionResult<bool>> RestoreSaleReturn(long id, CancellationToken cancellationToken)
+    {
+        return await _saleReturnService.RestoreAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/archive")]
+    public async Task<ActionResult<bool>> ArchiveSaleReturn(long id, CancellationToken cancellationToken)
+    {
+        return await _saleReturnService.ArchiveAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/unarchive")]
+    public async Task<ActionResult<bool>> UnarchiveSaleReturn(long id, CancellationToken cancellationToken)
+    {
+        return await _saleReturnService.UnarchiveAsync(id, cancellationToken);
+    }
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<ActionResult<bool>> PermanentDeleteSaleReturn(long id, CancellationToken cancellationToken)
+    {
+        return await _saleReturnService.DeleteAsync(id, cancellationToken);
     }
 }

@@ -8,7 +8,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { IProductListResponse } from '../../models/product.interface';
+import {
+  IProductListResponse,
+  IProductPaginationQuery,
+} from '../../models/product.interface';
 import { CommonModule } from '@angular/common';
 import {
   ErrorResponse,
@@ -55,12 +58,14 @@ export class ProductComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IProductListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IProductPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
@@ -68,7 +73,7 @@ export class ProductComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private productService: ProductService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -125,7 +130,7 @@ export class ProductComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -134,7 +139,7 @@ export class ProductComponent implements OnInit {
   }
 
   fetchData() {
-    this.productService.getWithPagination(this.pagination).subscribe({
+    this.productService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<IProductListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -164,7 +169,7 @@ export class ProductComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -176,7 +181,7 @@ export class ProductComponent implements OnInit {
   editRow(row: any, rowIndex: number) {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -205,14 +210,14 @@ export class ProductComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.productService.remove(row.id).subscribe({
+        this.productService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -248,12 +253,58 @@ export class ProductComponent implements OnInit {
   printBarcode(row: IProductListResponse) {
     const modalRef = this.modalService.open(
       GenerateSingleBarcodeComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.data = row;
     modalRef.result.then((response) => {
       if (response?.success) {
         const result = response.data;
+      }
+    });
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.productService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.productService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.productService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.productService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
       }
     });
   }

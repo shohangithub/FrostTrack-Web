@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IBaseUnitListResponse,
+  IBaseUnitPaginationQuery,
   IBaseUnitRequest,
   IBaseUnitResponse,
 } from '../models/base-unit.interface';
@@ -19,18 +20,18 @@ import { MessageHub } from '@config/message-hub';
 export class BaseUnitService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/baseunit`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IBaseUnitListResponse>> {
     return this.get<PaginationResult<IBaseUnitListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Base Units pagination'
+      'Load Base Units pagination',
     );
   }
 
@@ -43,7 +44,7 @@ export class BaseUnitService extends BaseService {
       this.path,
       payload,
       'Create Base Unit',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -52,7 +53,7 @@ export class BaseUnitService extends BaseService {
       this.path + '/' + id,
       payload,
       'Update Base Unit',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -60,7 +61,7 @@ export class BaseUnitService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       this.path + '/' + id,
       'Delete Base Unit',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -69,14 +70,42 @@ export class BaseUnitService extends BaseService {
       this.path + '/DeleteBatch',
       ids,
       `Delete ${ids.length} Base Units`,
-      MessageHub.DELETE_BATCH
+      MessageHub.DELETE_BATCH,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Base Units Lookup'
+      'Load Base Units Lookup',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IBaseUnitPaginationQuery,
+  ): Observable<PaginationResult<IBaseUnitListResponse>> {
+    return this.get<PaginationResult<IBaseUnitListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

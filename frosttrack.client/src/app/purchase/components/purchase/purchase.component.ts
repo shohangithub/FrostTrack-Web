@@ -103,7 +103,7 @@ export class PurchaseComponent implements OnInit {
     private productService: ProductService,
     private supplierService: SupplierService,
     private route: ActivatedRoute,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -341,7 +341,7 @@ export class PurchaseComponent implements OnInit {
       ?.get('purchaseAmount')
       ?.setValue(
         child?.get('purchaseQuantity')?.value *
-          child?.get('purchaseRate')?.value
+          child?.get('purchaseRate')?.value,
       );
   }
 
@@ -353,7 +353,7 @@ export class PurchaseComponent implements OnInit {
     const formData = this.productForm.value;
     const cardData: Array<any> = this.purchaseDetails.value;
     const existingProduct = cardData.find(
-      (x) => x.productId == formData.product.id
+      (x) => x.productId == formData.product.id,
     );
     if (existingProduct) {
       existingProduct.purchaseUnitId = formData.purchaseUnitId;
@@ -391,7 +391,7 @@ export class PurchaseComponent implements OnInit {
     if (cart) {
       const subTotal = cart?.reduce(
         (sum, current) => sum + current.purchaseAmount,
-        0
+        0,
       );
 
       this.register.get('subtotal')?.setValue(subTotal);
@@ -401,7 +401,7 @@ export class PurchaseComponent implements OnInit {
     let subtotal: number = parseFloat(this.register.get('subtotal')?.value);
     let vatAmount: number = parseFloat(this.register.get('vatAmount')?.value);
     let discountAmount: number = parseFloat(
-      this.register.get('discountAmount')?.value
+      this.register.get('discountAmount')?.value,
     );
     let otherCost: number = parseFloat(this.register.get('otherCost')?.value);
     subtotal = isNaN(subtotal) ? 0 : subtotal;
@@ -485,7 +485,7 @@ export class PurchaseComponent implements OnInit {
   addProduct() {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -504,6 +504,8 @@ export class PurchaseComponent implements OnInit {
           isActive: result.isActive,
           status: result.status,
           branchId: result.branchId,
+          isDeleted: false,
+          isArchived: false,
         };
         this.products = this.products.insertThenClone(obj);
       }
@@ -513,7 +515,7 @@ export class PurchaseComponent implements OnInit {
   addSupplier() {
     const modalRef = this.modalService.open(
       AddSupplierComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -530,6 +532,8 @@ export class PurchaseComponent implements OnInit {
           status: response.data.status,
           previousDue: 0,
           isSystemDefault: false,
+          isDeleted: false,
+          isArchived: false,
         };
         this.suppliers = this.suppliers.insertThenClone(obj);
       }

@@ -29,5 +29,9 @@ public record SupplierListResponse(
     decimal OpeningBalance,
     decimal PreviousDue,
     bool IsSystemDefault,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );

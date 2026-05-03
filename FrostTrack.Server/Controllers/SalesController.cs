@@ -29,7 +29,7 @@ public class SalesController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<SalesListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<SalesListResponse>> GetWithPagination([FromQuery] SalesPaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _salesService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -63,7 +63,7 @@ public class SalesController : ControllerBase
     [HttpDelete("{id}")]
     public async ValueTask<bool> DeleteSales(long id, CancellationToken cancellationToken)
     {
-        return await _salesService.DeleteAsync(id, cancellationToken);
+        return await _salesService.SoftDeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
@@ -84,5 +84,29 @@ public class SalesController : ControllerBase
     {
         var response = await _salesService.GenerateInvoiceNumber(cancellationToken);
         return new CodeResponse(response);
+    }
+
+    [HttpPut("{id}/restore")]
+    public async Task<ActionResult<bool>> RestoreSales(long id, CancellationToken cancellationToken)
+    {
+        return await _salesService.RestoreAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/archive")]
+    public async Task<ActionResult<bool>> ArchiveSales(long id, CancellationToken cancellationToken)
+    {
+        return await _salesService.ArchiveAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/unarchive")]
+    public async Task<ActionResult<bool>> UnarchiveSales(long id, CancellationToken cancellationToken)
+    {
+        return await _salesService.UnarchiveAsync(id, cancellationToken);
+    }
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<ActionResult<bool>> PermanentDeleteSales(long id, CancellationToken cancellationToken)
+    {
+        return await _salesService.DeleteAsync(id, cancellationToken);
     }
 }

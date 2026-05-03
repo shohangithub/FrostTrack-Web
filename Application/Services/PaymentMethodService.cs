@@ -134,34 +134,97 @@ public class PaymentMethodService : IPaymentMethodService
 
     public async Task<PaginationResult<PaymentMethodListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<PaymentMethod, bool>>? predicate = null;
+        Expression<Func<PaymentMethod, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.MethodName.ToLower().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.MethodName.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || (obj.Description != null && obj.Description.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.Code != null && obj.Code.ToLower().Contains(requestQuery.OpenText.ToLower()));
+                            || (obj.Code != null && obj.Code.ToLower().Contains(requestQuery.OpenText.ToLower())));
         }
 
-        Expression<Func<PaymentMethod, PaymentMethodListResponse>>? selector = x => new PaymentMethodListResponse(
-            x.Id,
-            x.MethodName,
-            x.Code,
-            x.Description,
-            x.Category,
-            x.RequiresBankAccount,
-            x.RequiresCheckDetails,
-            x.RequiresOnlineDetails,
-            x.RequiresMobileWalletDetails,
-            x.RequiresCardDetails,
-            x.IsActive,
-            x.SortOrder,
-            x.IconClass,
-            x.BranchId,
-            x.Status
+        Expression<Func<PaymentMethod, PaymentMethodListResponse>> selector = x => new PaymentMethodListResponse(
+            x.Id, x.MethodName, x.Code, x.Description, x.Category, x.RequiresBankAccount,
+            x.RequiresCheckDetails, x.RequiresOnlineDetails, x.RequiresMobileWalletDetails,
+            x.RequiresCardDetails, x.IsActive, x.SortOrder, x.IconClass, x.BranchId, x.Status,
+            x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
         );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<PaymentMethodListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<PaymentMethod, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                obj.MethodName.ToLower().Contains(search) ||
+                (obj.Code != null && obj.Code.ToLower().Contains(search)));
+        }
+
+        Expression<Func<PaymentMethod, PaymentMethodListResponse>> selector = x => new PaymentMethodListResponse(
+            x.Id, x.MethodName, x.Code, x.Description, x.Category, x.RequiresBankAccount,
+            x.RequiresCheckDetails, x.RequiresOnlineDetails, x.RequiresMobileWalletDetails,
+            x.RequiresCardDetails, x.IsActive, x.SortOrder, x.IconClass, x.BranchId, x.Status,
+            x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
+        );
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<PaymentMethodResponse> UpdateAsync(int id, PaymentMethodRequest request, CancellationToken cancellationToken = default)

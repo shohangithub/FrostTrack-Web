@@ -8,6 +8,7 @@ import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IProductListResponse,
   IProductListWithStockResponse,
+  IProductPaginationQuery,
   IProductRequest,
   IProductResponse,
 } from '../models/product.interface';
@@ -21,39 +22,39 @@ import { MessageHub } from '@config/message-hub';
 export class ProductService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/product`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IProductListResponse>> {
     return this.get<PaginationResult<IProductListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Products'
+      'Load Products',
     );
   }
 
   getList(): Observable<IProductListResponse[]> {
     return this.get<IProductListResponse[]>(
       this.path + `/get-list`,
-      'Load Product List'
+      'Load Product List',
     );
   }
 
   getProductsWithoutService(): Observable<IProductListResponse[]> {
     return this.get<IProductListResponse[]>(
       this.path + `/get-list-without-service`,
-      'Load Products Without Service'
+      'Load Products Without Service',
     );
   }
 
   getListWithStock(): Observable<IProductListWithStockResponse[]> {
     return this.get<IProductListWithStockResponse[]>(
       this.path + `/get-list-with-stock`,
-      'Load Products With Stock'
+      'Load Products With Stock',
     );
   }
 
@@ -66,7 +67,7 @@ export class ProductService extends BaseService {
       this.path,
       payload,
       'Create Product',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -75,7 +76,7 @@ export class ProductService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Product',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -83,7 +84,7 @@ export class ProductService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Product',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -92,21 +93,49 @@ export class ProductService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Products',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Product Lookup'
+      'Load Product Lookup',
     );
   }
 
   generateCode(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
-      'Product Code Generation'
+      'Product Code Generation',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IProductPaginationQuery,
+  ): Observable<PaginationResult<IProductListResponse>> {
+    return this.get<PaginationResult<IProductListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

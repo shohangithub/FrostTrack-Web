@@ -30,7 +30,11 @@ public record SupplierPaymentResponse(
     string? CardTransactionId,
     decimal PaymentAmount,
     string? Notes,
-    int BranchId
+    int BranchId,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
 );
 
 public record SupplierPaymentListResponse(
@@ -50,5 +54,9 @@ public record SupplierPaymentListResponse(
     decimal PaymentAmount,
     string? Notes,
     int BranchId,
-    Branch Branch
+    Branch Branch,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
 );

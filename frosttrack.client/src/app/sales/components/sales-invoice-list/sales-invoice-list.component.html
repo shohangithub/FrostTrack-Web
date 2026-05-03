@@ -49,6 +49,49 @@
                     </div>
                   </div>
                 </div>
+                <div
+                  class="col-lg-6 d-flex align-items-center justify-content-end pe-3"
+                >
+                  <div
+                    class="btn-group"
+                    role="group"
+                    aria-label="Record status filter"
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-primary]="pagination.status === 'active'"
+                      [class.btn-outline-primary]="
+                        pagination.status !== 'active'
+                      "
+                      (click)="setStatus('active')"
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-warning]="pagination.status === 'archived'"
+                      [class.btn-outline-warning]="
+                        pagination.status !== 'archived'
+                      "
+                      (click)="setStatus('archived')"
+                    >
+                      Archived
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-danger]="pagination.status === 'deleted'"
+                      [class.btn-outline-danger]="
+                        pagination.status !== 'deleted'
+                      "
+                      (click)="setStatus('deleted')"
+                    >
+                      Deleted
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -245,13 +288,60 @@
                     >
                       <i class="fas fa-pen"></i>
                     </button>
-                    <button
-                      class="btn btn-tbl-delete h-auto"
-                      (click)="delete(row)"
-                      title="Delete"
-                    >
-                      <i class="far fa-trash-alt"></i>
-                    </button>
+                    @if (row.isDeleted) {
+                      <button
+                        class="btn btn-tbl-restore h-auto"
+                        (click)="restore(row)"
+                        title="Restore"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >restore</i
+                        >
+                      </button>
+                      <button
+                        class="btn btn-tbl-delete h-auto"
+                        (click)="permanentDelete(row)"
+                        title="Permanent Delete"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >delete_forever</i
+                        >
+                      </button>
+                    } @else if (row.isArchived) {
+                      <button
+                        class="btn btn-tbl-archive h-auto"
+                        (click)="unarchive(row)"
+                        title="Unarchive"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >unarchive</i
+                        >
+                      </button>
+                      <button
+                        class="btn btn-tbl-delete h-auto"
+                        (click)="delete(row)"
+                        title="Delete"
+                      >
+                        <i class="far fa-trash-alt"></i>
+                      </button>
+                    } @else {
+                      <button
+                        class="btn btn-tbl-archive h-auto"
+                        (click)="archive(row)"
+                        title="Archive"
+                      >
+                        <i class="material-icons" style="font-size: 16px"
+                          >archive</i
+                        >
+                      </button>
+                      <button
+                        class="btn btn-tbl-delete h-auto"
+                        (click)="delete(row)"
+                        title="Delete"
+                      >
+                        <i class="far fa-trash-alt"></i>
+                      </button>
+                    }
                   </span>
                 </ng-template>
               </ngx-datatable-column>

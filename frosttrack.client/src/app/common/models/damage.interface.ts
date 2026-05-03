@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface IDamageListResponse {
   id: number;
   damageNumber: string;
@@ -9,6 +11,14 @@ export interface IDamageListResponse {
   totalCost: number;
   reason?: string;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IDamagePaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IDamageResponse {

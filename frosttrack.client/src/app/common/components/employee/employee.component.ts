@@ -9,6 +9,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import {
   IEmployeeListResponse,
+  IEmployeePaginationQuery,
   IEmployeeResponse,
 } from '../../models/employee.interface';
 import { EmployeeService } from '../../services/employee.service';
@@ -48,12 +49,14 @@ export class EmployeeComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IEmployeeListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IEmployeePaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -65,7 +68,7 @@ export class EmployeeComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private employeeService: EmployeeService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -93,7 +96,7 @@ export class EmployeeComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -102,7 +105,7 @@ export class EmployeeComponent implements OnInit {
   }
 
   fetchData() {
-    this.employeeService.getWithPagination(this.pagination).subscribe({
+    this.employeeService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<IEmployeeListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -130,7 +133,7 @@ export class EmployeeComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddEmployeeComponent,
-      ModalOption.xl
+      ModalOption.xl,
     );
     modalRef.componentInstance.isEditing = false;
     modalRef.result
@@ -148,7 +151,7 @@ export class EmployeeComponent implements OnInit {
   editRow(row: any) {
     const modalRef = this.modalService.open(
       AddEmployeeComponent,
-      ModalOption.xl
+      ModalOption.xl,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -162,14 +165,14 @@ export class EmployeeComponent implements OnInit {
   // delete record
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.isConfirmed) {
-        this.employeeService.remove(row.id).subscribe({
+        this.employeeService.softDelete(row.id).subscribe({
           next: () => {
             this.fetchData();
           },
@@ -219,5 +222,51 @@ export class EmployeeComponent implements OnInit {
   filterDatatable(event: any) {
     const val = event.target.value.toLowerCase();
     this.searchSubject.next(val);
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.employeeService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.employeeService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.employeeService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.employeeService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

@@ -28,7 +28,7 @@ public class ProductReceiveController : ControllerBase
 
     [HttpGet]
     [Route("get-with-pagination")]
-    public async Task<PaginationResult<ProductReceiveListResponse>> GetWithPagination([FromQuery] PaginationQuery requestQuery, CancellationToken cancellationToken)
+    public async Task<PaginationResult<ProductReceiveListResponse>> GetWithPagination([FromQuery] ProductReceivePaginationQuery requestQuery, CancellationToken cancellationToken)
     {
         return await _productReceiveService.PaginationListAsync(requestQuery, cancellationToken);
     }
@@ -61,7 +61,7 @@ public class ProductReceiveController : ControllerBase
     [HttpDelete("{id}")]
     public async ValueTask<bool> DeleteProductReceive(Guid id, CancellationToken cancellationToken)
     {
-        return await _productReceiveService.DeleteAsync(id, cancellationToken);
+        return await _productReceiveService.SoftDeleteAsync(id, cancellationToken);
     }
 
     [HttpPost("DeleteBatch")]
@@ -82,5 +82,29 @@ public class ProductReceiveController : ControllerBase
     {
         var response = await _productReceiveService.GenerateReceiveNumber(cancellationToken);
         return new CodeResponse(response);
+    }
+
+    [HttpPut("{id}/restore")]
+    public async Task<ActionResult<bool>> RestoreProductReceive(Guid id, CancellationToken cancellationToken)
+    {
+        return await _productReceiveService.RestoreAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/archive")]
+    public async Task<ActionResult<bool>> ArchiveProductReceive(Guid id, CancellationToken cancellationToken)
+    {
+        return await _productReceiveService.ArchiveAsync(id, cancellationToken);
+    }
+
+    [HttpPut("{id}/unarchive")]
+    public async Task<ActionResult<bool>> UnarchiveProductReceive(Guid id, CancellationToken cancellationToken)
+    {
+        return await _productReceiveService.UnarchiveAsync(id, cancellationToken);
+    }
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<ActionResult<bool>> PermanentDeleteProductReceive(Guid id, CancellationToken cancellationToken)
+    {
+        return await _productReceiveService.DeleteAsync(id, cancellationToken);
     }
 }

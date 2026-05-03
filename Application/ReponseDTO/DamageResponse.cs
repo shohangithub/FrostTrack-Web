@@ -27,5 +27,9 @@ public record DamageListResponse(
     decimal UnitCost,
     decimal TotalCost,
     string? Reason,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
 );

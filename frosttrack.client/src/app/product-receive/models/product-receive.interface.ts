@@ -2,6 +2,8 @@ import { IProductResponse } from '../../administration/models/product.interface'
 import { ICustomerResponse } from '../../common/models/customer.interface';
 import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
 
+import { PaginationQuery } from '../../core/models/pagination-query';
+
 export interface IProductReceiveRequest {
   id: number;
   receiveNumber: string;
@@ -75,4 +77,12 @@ export interface IProductReceiveListResponse {
   branchId: number;
   notes?: string;
   branch: any;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
+}
+
+export interface IProductReceivePaginationQuery extends PaginationQuery {
+  status?: string;
 }

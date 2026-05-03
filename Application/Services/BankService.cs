@@ -97,47 +97,111 @@ public class BankService : IBankService
     {
         var result = await _repository.Query()
             .OrderBy(x => x.BankName)
+            .Select(x => new BankListResponse(
+               x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
+               x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
+               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
             .ToListAsync(cancellationToken);
-        var response = result.Adapt<IEnumerable<BankListResponse>>();
-        return response;
+        return result;
     }
 
     public async Task<PaginationResult<BankListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<Bank, bool>>? predicate = x => true;
+        Expression<Func<Bank, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.BankName.ToLower().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.BankName.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || obj.BankCode.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || (obj.AccountNumber != null && obj.AccountNumber.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.AccountTitle != null && obj.AccountTitle.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.SwiftCode != null && obj.SwiftCode.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.ContactPerson != null && obj.ContactPerson.ToLower().Contains(requestQuery.OpenText.ToLower()));
+                            || (obj.ContactPerson != null && obj.ContactPerson.ToLower().Contains(requestQuery.OpenText.ToLower())));
         }
 
-        Expression<Func<Bank, BankListResponse>>? selector = x => new BankListResponse(
-               x.Id,
-               x.BankName,
-               x.BankCode,
-               x.BankBranch,
-               x.AccountNumber,
-               x.AccountTitle,
-               x.SwiftCode,
-               x.RoutingNumber,
-               x.IBANNumber,
-               x.ContactPerson,
-               x.ContactPhone,
-               x.ContactEmail,
-               x.Address,
-               x.OpeningBalance,
-               x.CurrentBalance,
-               x.Description,
-               x.IsMainAccount,
-               x.Status
+        Expression<Func<Bank, BankListResponse>> selector = x => new BankListResponse(
+               x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
+               x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
+               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<BankListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<Bank, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                obj.BankName.ToLower().Contains(search) ||
+                obj.BankCode.ToLower().Contains(search));
+        }
+
+        Expression<Func<Bank, BankListResponse>> selector = x => new BankListResponse(
+               x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
+               x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
+               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
+            );
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<BankResponse> UpdateAsync(int id, BankRequest bank, CancellationToken cancellationToken = default)

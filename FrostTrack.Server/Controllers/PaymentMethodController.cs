@@ -125,4 +125,28 @@ public class PaymentMethodController : ControllerBase
         }
         return NoContent();
     }
+
+    [HttpGet("get-with-pagination-status")]
+    public async Task<PaginationResult<PaymentMethodListResponse>> GetWithPaginationStatus([FromQuery] SetupPaginationQuery requestQuery, CancellationToken cancellationToken)
+        => await _paymentMethodService.PaginationListAsync(requestQuery, cancellationToken);
+
+    [HttpPost("{id}/soft-delete")]
+    public async Task<IActionResult> SoftDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _paymentMethodService.SoftDeleteAsync(id, cancellationToken));
+
+    [HttpPost("{id}/restore")]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+        => Ok(await _paymentMethodService.RestoreAsync(id, cancellationToken));
+
+    [HttpPost("{id}/archive")]
+    public async Task<IActionResult> Archive(int id, CancellationToken cancellationToken)
+        => Ok(await _paymentMethodService.ArchiveAsync(id, cancellationToken));
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<IActionResult> Unarchive(int id, CancellationToken cancellationToken)
+        => Ok(await _paymentMethodService.UnarchiveAsync(id, cancellationToken));
+
+    [HttpDelete("{id}/permanent")]
+    public async Task<IActionResult> PermanentDelete(int id, CancellationToken cancellationToken)
+        => Ok(await _paymentMethodService.DeleteAsync(id, cancellationToken));
 }

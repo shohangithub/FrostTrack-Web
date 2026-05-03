@@ -16,6 +16,10 @@ public record SalesResponse(
         decimal InvoiceAmount,
         decimal PaidAmount,
         int BranchId,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         ICollection<SalesDetailResponse> SalesDetails
     );
 public record SalesDetailResponse(
@@ -58,5 +62,9 @@ public record SalesListResponse(
         decimal PaidAmount,
         int BranchId,
         Branch Branch,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         IEnumerable<SalesDetailListResponse> SalesDetails
     );

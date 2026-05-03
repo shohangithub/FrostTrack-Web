@@ -8,6 +8,7 @@ public interface IBaseUnitService
 {
     Task<IEnumerable<BaseUnitListResponse>> ListAsync(CancellationToken cancellationToken = default);
     Task<PaginationResult<BaseUnitListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<BaseUnitListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<BaseUnitResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<BaseUnitResponse> AddAsync(BaseUnitRequest user, CancellationToken cancellationToken = default);
     Task<BaseUnitResponse> UpdateAsync(int id, BaseUnitRequest user, CancellationToken cancellationToken = default);
@@ -15,4 +16,8 @@ public interface IBaseUnitService
     Task<bool> DeleteBatchAsync(List<int> ids, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lookup<int>>> GetLookup(Expression<Func<BaseUnit, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default);
 }

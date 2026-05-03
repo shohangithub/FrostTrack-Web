@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IDamageListResponse,
+  IDamagePaginationQuery,
   IDamageRequest,
   IDamageResponse,
 } from '../models/damage.interface';
@@ -26,11 +27,11 @@ export class DamageService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IDamageListResponse>> {
     return this.get<PaginationResult<IDamageListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Damage pagination'
+      'Load Damage pagination',
     );
   }
 
@@ -43,7 +44,7 @@ export class DamageService extends BaseService {
       this.path,
       payload,
       'Create Damage',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -52,7 +53,7 @@ export class DamageService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Damage',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -60,7 +61,7 @@ export class DamageService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Damage',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -69,21 +70,49 @@ export class DamageService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Damages',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Damage Lookup'
+      'Load Damage Lookup',
     );
   }
 
   generateCode(isGlobal: boolean = false): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       `${this.path}/generate-code?isGlobal=${isGlobal}`,
-      'Damage Code Generation'
+      'Damage Code Generation',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IDamagePaginationQuery,
+  ): Observable<PaginationResult<IDamageListResponse>> {
+    return this.get<PaginationResult<IDamageListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

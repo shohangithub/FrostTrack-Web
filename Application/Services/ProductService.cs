@@ -1,4 +1,4 @@
-﻿namespace Application.Services;
+namespace Application.Services;
 
 public class ProductService : IProductService
 {
@@ -119,17 +119,10 @@ public class ProductService : IProductService
 
         var response = await query
            .Select(x => new ProductListResponse(
-               x.Id,
-               x.ProductName,
-               x.ProductCode,
-               x.CustomBarcode,
-               x.CategoryId,
-               x.Category.CategoryName,
-               x.DefaultUnitId,
-               x.DefaultUnit.UnitName,
-               x.ImageUrl,
-               x.BookingRate,
-               x.Status
+               x.Id, x.ProductName, x.ProductCode, x.CustomBarcode, x.CategoryId,
+               x.Category.CategoryName, x.DefaultUnitId, x.DefaultUnit.UnitName,
+               x.ImageUrl, x.BookingRate, x.Status,
+               x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
                ))
            .ToListAsync(cancellationToken);
         return response;
@@ -158,31 +151,97 @@ public class ProductService : IProductService
 
     public async Task<PaginationResult<ProductListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-
-        Expression<Func<Product, bool>>? predicate = null;
+        Expression<Func<Product, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.ProductName.ToLower().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.ProductName.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || obj.ProductCode.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Category.CategoryName.ToLower().Contains(requestQuery.OpenText.ToLower());
+                            || obj.Category.CategoryName.ToLower().Contains(requestQuery.OpenText.ToLower()));
         }
 
         Expression<Func<Product, ProductListResponse>>? selector = x => new ProductListResponse(
-               x.Id,
-               x.ProductName,
-               x.ProductCode,
-               x.CustomBarcode,
-               x.CategoryId,
-               x.Category.CategoryName,
-               x.DefaultUnitId,
-               x.DefaultUnit.UnitName,
-               x.ImageUrl,
-               x.BookingRate,
-               x.Status
+               x.Id, x.ProductName, x.ProductCode, x.CustomBarcode, x.CategoryId,
+               x.Category.CategoryName, x.DefaultUnitId, x.DefaultUnit.UnitName,
+               x.ImageUrl, x.BookingRate, x.Status,
+               x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<ProductListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<Product, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                obj.ProductName.ToLower().Contains(search) ||
+                obj.ProductCode.ToLower().Contains(search));
+        }
+
+        Expression<Func<Product, ProductListResponse>> selector = x => new ProductListResponse(
+               x.Id, x.ProductName, x.ProductCode, x.CustomBarcode, x.CategoryId,
+               x.Category.CategoryName, x.DefaultUnitId, x.DefaultUnit.UnitName,
+               x.ImageUrl, x.BookingRate, x.Status,
+               x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
+            );
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<string> GenerateCode(CancellationToken cancellationToken = default)

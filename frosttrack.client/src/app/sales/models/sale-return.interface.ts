@@ -1,6 +1,7 @@
 import { IProductResponse } from '../../administration/models/product.interface';
 import { ICustomerResponse } from '../../common/models/customer.interface';
 import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
+import { PaginationQuery } from '../../core/models/pagination-query';
 
 export interface ISaleReturnRequest {
   id: number;
@@ -78,5 +79,13 @@ export interface ISaleReturnListResponse {
   returnAmount: number;
   branchId: number;
   branch: any;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
   reason: string;
+}
+
+export interface ISaleReturnPaginationQuery extends PaginationQuery {
+  status?: string;
 }

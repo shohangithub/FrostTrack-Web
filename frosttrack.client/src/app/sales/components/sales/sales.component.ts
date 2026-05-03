@@ -110,7 +110,7 @@ export class SalesComponent implements OnInit {
     private customerService: CustomerService,
     private route: ActivatedRoute,
     private layoutService: LayoutService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -369,7 +369,7 @@ export class SalesComponent implements OnInit {
           ?.setValue(
             salesType == this.salesTypes.RETAIL
               ? product.bookingRate
-              : product.wholesalePrice
+              : product.wholesalePrice,
           );
         childForm?.get('salesQuantity')?.setValue(0);
       }
@@ -380,7 +380,7 @@ export class SalesComponent implements OnInit {
     child
       ?.get('salesAmount')
       ?.setValue(
-        child?.get('salesQuantity')?.value * child?.get('salesRate')?.value
+        child?.get('salesQuantity')?.value * child?.get('salesRate')?.value,
       );
   }
 
@@ -403,7 +403,7 @@ export class SalesComponent implements OnInit {
     }
     const cardData: Array<any> = this.salesDetails.value;
     const existingProduct = cardData.find(
-      (x) => x.productId == formData.product.id
+      (x) => x.productId == formData.product.id,
     );
     if (existingProduct) {
       existingProduct.salesUnitId = formData.salesUnitId;
@@ -439,7 +439,7 @@ export class SalesComponent implements OnInit {
     if (cart) {
       const subTotal = cart?.reduce(
         (sum, current) => sum + current.salesAmount,
-        0
+        0,
       );
 
       this.register.get('subtotal')?.setValue(subTotal);
@@ -449,7 +449,7 @@ export class SalesComponent implements OnInit {
     let subtotal: number = parseFloat(this.register.get('subtotal')?.value);
     let vatAmount: number = parseFloat(this.register.get('vatAmount')?.value);
     let discountAmount: number = parseFloat(
-      this.register.get('discountAmount')?.value
+      this.register.get('discountAmount')?.value,
     );
     let otherCost: number = parseFloat(this.register.get('otherCost')?.value);
     subtotal = isNaN(subtotal) ? 0 : subtotal;
@@ -587,7 +587,7 @@ export class SalesComponent implements OnInit {
   addProduct() {
     const modalRef = this.modalService.open(
       AddProductComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -609,6 +609,8 @@ export class SalesComponent implements OnInit {
           currentStock: null,
           lastPurchaseRate: null,
           stockUnit: null,
+          isDeleted: false,
+          isArchived: false,
         };
         this.products = this.products.insertThenClone(obj);
       }
@@ -618,7 +620,7 @@ export class SalesComponent implements OnInit {
   addCustomer() {
     const modalRef = this.modalService.open(
       AddCustomerComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -635,6 +637,8 @@ export class SalesComponent implements OnInit {
           status: response.data.status,
           previousDue: 0,
           isSystemDefault: false,
+          isDeleted: false,
+          isArchived: false,
         };
         this.customers = this.customers.insertThenClone(obj);
       }

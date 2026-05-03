@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IEmployeeListResponse,
+  IEmployeePaginationQuery,
   IEmployeeRequest,
   IEmployeeResponse,
 } from '../models/employee.interface';
@@ -26,11 +27,11 @@ export class EmployeeService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IEmployeeListResponse>> {
     return this.get<PaginationResult<IEmployeeListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Employees pagination'
+      'Load Employees pagination',
     );
   }
 
@@ -43,7 +44,7 @@ export class EmployeeService extends BaseService {
       this.path,
       payload,
       'Create Employee',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -52,7 +53,7 @@ export class EmployeeService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Employee',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -60,7 +61,7 @@ export class EmployeeService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Employee',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -69,21 +70,21 @@ export class EmployeeService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Employees',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Employee Lookup'
+      'Load Employee Lookup',
     );
   }
 
   generateCode(isGlobal: boolean = false): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       `${this.path}/generate-code?isGlobal=${isGlobal}`,
-      'Employee Code Generation'
+      'Employee Code Generation',
     );
   }
 
@@ -93,5 +94,33 @@ export class EmployeeService extends BaseService {
 
   getDistinctDesignations(): Observable<string[]> {
     return this.get<string[]>(`${this.path}/designations`, 'Load Designations');
+  }
+
+  getWithPaginationStatus(
+    query: IEmployeePaginationQuery,
+  ): Observable<PaginationResult<IEmployeeListResponse>> {
+    return this.get<PaginationResult<IEmployeeListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

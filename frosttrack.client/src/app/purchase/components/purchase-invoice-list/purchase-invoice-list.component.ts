@@ -16,7 +16,10 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
-import { IPurchaseListResponse } from 'app/purchase/models/purchase.interface';
+import {
+  IPurchaseListResponse,
+  IPurchasePaginationQuery,
+} from 'app/purchase/models/purchase.interface';
 import { PurchaseService } from 'app/purchase/services/purchase.service';
 import { SwalConfirm } from 'app/theme-config';
 import {
@@ -48,11 +51,13 @@ export class PurchaseInvoiceListComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IPurchaseListResponse[] = [];
-  pagination: PaginationQuery = {
+  activeStatus: string = 'active';
+  pagination: IPurchasePaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
@@ -62,7 +67,7 @@ export class PurchaseInvoiceListComponent implements OnInit {
     private toastr: ToastrService,
     private purchaseService: PurchaseService,
     private router: Router,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -118,7 +123,7 @@ export class PurchaseInvoiceListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -167,16 +172,74 @@ export class PurchaseInvoiceListComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.purchaseService.remove(row.id).subscribe({
+        this.purchaseService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
-              this.toastr.success(MessageHub.DELETE_ONE);
             }
           },
           error: (err: ErrorResponse) => {
             this.toastr.error(formatErrorMessage(err));
           },
+        });
+      }
+    });
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  archive(row: any) {
+    this.purchaseService.archive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Archived');
+      },
+      error: () => {},
+    });
+  }
+
+  unarchive(row: any) {
+    this.purchaseService.unarchive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Unarchived');
+      },
+      error: () => {},
+    });
+  }
+
+  restore(row: any) {
+    this.purchaseService.restore(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Restored');
+      },
+      error: () => {},
+    });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete this record?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes, delete!',
+    }).then((result) => {
+      if (result.value) {
+        this.purchaseService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.removeRecord(row);
+            this.toastr.success('Permanently deleted');
+          },
+          error: () => {},
         });
       }
     });

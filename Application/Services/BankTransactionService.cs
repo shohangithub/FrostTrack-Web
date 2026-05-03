@@ -289,7 +289,7 @@ public class BankTransactionService : IBankTransactionService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        var archiveStatus = requestQuery.archiveStatus?.ToLowerInvariant() ?? "active";
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
         Expression<Func<BankTransaction, bool>> predicate = x => true;
 
         predicate = archiveStatus switch

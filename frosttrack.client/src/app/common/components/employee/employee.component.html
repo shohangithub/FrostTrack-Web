@@ -45,6 +45,36 @@
                   </div>
                 </div>
               </div>
+              <div
+                class="col-lg-6 d-flex align-items-center justify-content-end"
+              >
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    class="btn"
+                    [class.btn-primary]="activeStatus === 'active'"
+                    [class.btn-outline-primary]="activeStatus !== 'active'"
+                    (click)="setStatus('active')"
+                  >
+                    Active
+                  </button>
+                  <button
+                    class="btn"
+                    [class.btn-warning]="activeStatus === 'archived'"
+                    [class.btn-outline-warning]="activeStatus !== 'archived'"
+                    (click)="setStatus('archived')"
+                  >
+                    Archived
+                  </button>
+                  <button
+                    class="btn"
+                    [class.btn-danger]="activeStatus === 'deleted'"
+                    [class.btn-outline-danger]="activeStatus !== 'deleted'"
+                    (click)="setStatus('deleted')"
+                  >
+                    Trash
+                  </button>
+                </div>
+              </div>
             </div>
             <ngx-datatable
               #table
@@ -117,12 +147,12 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="Hire Date" prop="joiningDate">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.joiningDate | date : "shortDate" }}
+                  {{ row.joiningDate | date: "shortDate" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="Salary" prop="salary">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.salary | number : "1.2-2" }}
+                  {{ row.salary | number: "1.2-2" }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
@@ -130,34 +160,36 @@
                 prop="employmentType"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  @if (row.employmentType === 'FullTime') {
-                  <div class="badge-outline col-green">Full Time</div>
-                  } @else if (row.employmentType === 'PartTime') {
-                  <div class="badge-outline col-blue">Part Time</div>
-                  } @else if (row.employmentType === 'Contract') {
-                  <div class="badge-outline col-orange">Contract</div>
-                  } @else if (row.employmentType === 'Intern') {
-                  <div class="badge-outline col-purple">Intern</div>
+                  @if (row.employmentType === "FullTime") {
+                    <div class="badge-outline col-green">Full Time</div>
+                  } @else if (row.employmentType === "PartTime") {
+                    <div class="badge-outline col-blue">Part Time</div>
+                  } @else if (row.employmentType === "Contract") {
+                    <div class="badge-outline col-orange">Contract</div>
+                  } @else if (row.employmentType === "Intern") {
+                    <div class="badge-outline col-purple">Intern</div>
                   } @else {
-                  <div class="badge-outline col-gray">
-                    {{ row.employmentType || "-" }}
-                  </div>
+                    <div class="badge-outline col-gray">
+                      {{ row.employmentType || "-" }}
+                    </div>
                   }
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="Status" prop="status">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  @if (row.status==='Active') {
-                  <div class="badge-outline col-green">{{ row.status }}</div>
-                  } @if (row.status==='Inactive') {
-                  <div class="badge-outline col-red">{{ row.status }}</div>
-                  } @if (row.status==='Pending') {
-                  <div class="badge-outline col-indigo">{{ row.status }}</div>
+                  @if (row.status === "Active") {
+                    <div class="badge-outline col-green">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Inactive") {
+                    <div class="badge-outline col-red">{{ row.status }}</div>
+                  }
+                  @if (row.status === "Pending") {
+                    <div class="badge-outline col-indigo">{{ row.status }}</div>
                   }
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column
-                [width]="50"
+                [width]="120"
                 name="Actions"
                 [sortable]="false"
               >
@@ -167,20 +199,59 @@
                   let-rowIndex="rowIndex"
                   ngx-datatable-cell-template
                 >
-                  <span>
+                  @if (row.isDeleted) {
                     <button
                       class="btn btn-tbl-edit h-auto"
-                      (click)="editRow(row)"
+                      (click)="restore(row)"
+                      title="Restore"
                     >
-                      <i class="fas fa-pen"></i>
+                      <i class="fas fa-undo"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="permanentDelete(row)"
+                      title="Permanent Delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  } @else if (row.isArchived) {
+                    <button
+                      class="btn btn-tbl-archive h-auto"
+                      (click)="unarchive(row)"
+                      title="Unarchive"
+                    >
+                      <i class="fas fa-box-open"></i>
                     </button>
                     <button
                       class="btn btn-tbl-delete h-auto"
                       (click)="delete(row)"
+                      title="Soft Delete"
                     >
                       <i class="far fa-trash-alt"></i>
                     </button>
-                  </span>
+                  } @else {
+                    <button
+                      class="btn btn-tbl-edit h-auto"
+                      (click)="editRow(row)"
+                      title="Edit"
+                    >
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-archive h-auto"
+                      (click)="archive(row)"
+                      title="Archive"
+                    >
+                      <i class="fas fa-archive"></i>
+                    </button>
+                    <button
+                      class="btn btn-tbl-delete h-auto"
+                      (click)="delete(row)"
+                      title="Delete"
+                    >
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  }
                 </ng-template>
               </ngx-datatable-column>
             </ngx-datatable>

@@ -1,4 +1,4 @@
-﻿namespace Application.Services;
+namespace Application.Services;
 
 public class SalesService : ISalesService
 {
@@ -59,6 +59,54 @@ public class SalesService : ISalesService
     {
         var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
         return result > 0;
+    }
+
+    public async Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Invoice not found !");
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Invoice not found !");
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Invoice not found !");
+
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity == null) throw new Exception("Invoice not found !");
+
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<SalesResponse?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
@@ -124,13 +172,17 @@ public class SalesService : ISalesService
                 x.PaidAmount,
                 x.BranchId,
                 x.Branch,
+                x.IsDeleted,
+                x.IsArchived,
+                x.DeletedAt,
+                x.ArchivedAt,
                 x.SalesDetails.Select(d => new SalesDetailListResponse(d.Id, d.SalesId, d.ProductId, d.Product.ProductName, d.SalesUnitId, "", d.SalesRate, d.SalesQuantity, d.SalesAmount))
                ))
            .ToListAsync(cancellationToken);
         return response;
     }
 
-    public async Task<PaginationResult<SalesListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    public async Task<PaginationResult<SalesListResponse>> PaginationListAsync(SalesPaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         // Map frontend column names to entity property names
         if (!string.IsNullOrEmpty(requestQuery.OrderBy))
@@ -148,13 +200,22 @@ public class SalesService : ISalesService
             requestQuery = requestQuery with { OrderBy = mappedOrderBy };
         }
 
-        Expression<Func<Sales, bool>>? predicate = null;
+        var status = requestQuery.Status?.ToLowerInvariant() ?? "active";
+        Expression<Func<Sales, bool>> predicate = x => true;
+
+        predicate = status switch
+        {
+            "archived" => predicate.And(x => !x.IsDeleted && x.IsArchived),
+            "deleted" => predicate.And(x => x.IsDeleted && x.TenantId == _tenantId),
+            _ => predicate.And(x => !x.IsDeleted && !x.IsArchived)
+        };
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.InvoiceNumber.ToLower().Contains(requestQuery.OpenText.ToLower())
-                            || obj.InvoiceAmount.ToString().Contains(requestQuery.OpenText.ToLower())
-                            || obj.Customer.CustomerName.ToLower().Contains(requestQuery.OpenText.ToLower());
+            var searchText = requestQuery.OpenText.ToLower();
+            predicate = predicate.And(obj => obj.InvoiceNumber.ToLower().Contains(searchText)
+                            || obj.InvoiceAmount.ToString().Contains(searchText)
+                            || obj.Customer.CustomerName.ToLower().Contains(searchText));
         }
 
         Expression<Func<Sales, SalesListResponse>>? selector = x => new SalesListResponse(
@@ -174,10 +235,18 @@ public class SalesService : ISalesService
             x.PaidAmount,
             x.BranchId,
             x.Branch,
+            x.IsDeleted,
+            x.IsArchived,
+            x.DeletedAt,
+            x.ArchivedAt,
             x.SalesDetails.Select(d => new SalesDetailListResponse(d.Id, d.SalesId, d.ProductId, d.Product.ProductName, d.SalesUnitId, "", d.SalesRate, d.SalesQuantity, d.SalesAmount))
             );
 
-        var query = _salesRepository.Query();
+        var baseQuery = status == "deleted"
+            ? _repository.UnfilteredQuery()
+            : _salesRepository.Query();
+
+        var query = baseQuery.Where(predicate);
         return await _repository.PaginationQuery(query, paginationQuery: requestQuery, selector: selector, cancellationToken);
     }
 

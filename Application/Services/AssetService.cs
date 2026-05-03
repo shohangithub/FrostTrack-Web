@@ -103,17 +103,24 @@ public class AssetService : IAssetService
 
     public async Task<IEnumerable<AssetListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var result = await _repository.Query().ToListAsync(cancellationToken);
-        return result.Adapt<IEnumerable<AssetListResponse>>();
+        var result = await _repository.Query()
+            .Select(x => new AssetListResponse(
+               x.Id, x.AssetName, x.AssetCode, x.AssetType, x.SerialNumber, x.Model, x.Manufacturer,
+               x.PurchaseDate, x.PurchaseCost, x.CurrentValue, x.DepreciationRate, x.Location,
+               x.Department, x.AssignedTo, x.Condition, x.WarrantyExpiryDate, x.MaintenanceDate,
+               x.Notes, x.ImageUrl, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
+            .ToListAsync(cancellationToken);
+        return result;
     }
 
     public async Task<PaginationResult<AssetListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<Asset, bool>>? predicate = x => true;
+        Expression<Func<Asset, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.AssetName.ToLower().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.AssetName.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || obj.AssetCode.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || (obj.AssetType != null && obj.AssetType.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.SerialNumber != null && obj.SerialNumber.ToLower().Contains(requestQuery.OpenText.ToLower()))
@@ -121,33 +128,91 @@ public class AssetService : IAssetService
                             || (obj.Manufacturer != null && obj.Manufacturer.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Location != null && obj.Location.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Department != null && obj.Department.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.AssignedTo != null && obj.AssignedTo.ToLower().Contains(requestQuery.OpenText.ToLower()));
+                            || (obj.AssignedTo != null && obj.AssignedTo.ToLower().Contains(requestQuery.OpenText.ToLower())));
         }
 
-        Expression<Func<Asset, AssetListResponse>>? selector = x => new AssetListResponse(
-               x.Id,
-               x.AssetName,
-               x.AssetCode,
-               x.AssetType,
-               x.SerialNumber,
-               x.Model,
-               x.Manufacturer,
-               x.PurchaseDate,
-               x.PurchaseCost,
-               x.CurrentValue,
-               x.DepreciationRate,
-               x.Location,
-               x.Department,
-               x.AssignedTo,
-               x.Condition,
-               x.WarrantyExpiryDate,
-               x.MaintenanceDate,
-               x.Notes,
-               x.ImageUrl,
-               x.Status
+        Expression<Func<Asset, AssetListResponse>> selector = x => new AssetListResponse(
+               x.Id, x.AssetName, x.AssetCode, x.AssetType, x.SerialNumber, x.Model, x.Manufacturer,
+               x.PurchaseDate, x.PurchaseCost, x.CurrentValue, x.DepreciationRate, x.Location,
+               x.Department, x.AssignedTo, x.Condition, x.WarrantyExpiryDate, x.MaintenanceDate,
+               x.Notes, x.ImageUrl, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<AssetListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<Asset, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                obj.AssetName.ToLower().Contains(search) ||
+                obj.AssetCode.ToLower().Contains(search) ||
+                (obj.AssetType != null && obj.AssetType.ToLower().Contains(search)));
+        }
+
+        Expression<Func<Asset, AssetListResponse>> selector = x => new AssetListResponse(
+               x.Id, x.AssetName, x.AssetCode, x.AssetType, x.SerialNumber, x.Model, x.Manufacturer,
+               x.PurchaseDate, x.PurchaseCost, x.CurrentValue, x.DepreciationRate, x.Location,
+               x.Department, x.AssignedTo, x.Condition, x.WarrantyExpiryDate, x.MaintenanceDate,
+               x.Notes, x.ImageUrl, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
+            );
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<AssetResponse> UpdateAsync(int id, AssetRequest asset, CancellationToken cancellationToken = default)

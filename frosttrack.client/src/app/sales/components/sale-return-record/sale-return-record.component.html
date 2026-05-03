@@ -26,7 +26,9 @@
                 />
               </div>
               <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                <div class="text-end">
+                <div
+                  class="d-flex align-items-center justify-content-end gap-2"
+                >
                   <button
                     type="button"
                     class="btn btn-danger btn-sm"
@@ -35,6 +37,45 @@
                   >
                     Delete Selected ({{ selected.length }})
                   </button>
+                  <div
+                    class="btn-group"
+                    role="group"
+                    aria-label="Record status filter"
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-primary]="pagination.status === 'active'"
+                      [class.btn-outline-primary]="
+                        pagination.status !== 'active'
+                      "
+                      (click)="setStatus('active')"
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-warning]="pagination.status === 'archived'"
+                      [class.btn-outline-warning]="
+                        pagination.status !== 'archived'
+                      "
+                      (click)="setStatus('archived')"
+                    >
+                      Archived
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-danger]="pagination.status === 'deleted'"
+                      [class.btn-outline-danger]="
+                        pagination.status !== 'deleted'
+                      "
+                      (click)="setStatus('deleted')"
+                    >
+                      Deleted
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -141,14 +182,66 @@
                     >
                       <i class="fa fa-edit"></i>
                     </button>
-                    <button
-                      type="button"
-                      class="btn btn-danger btn-sm"
-                      title="Delete"
-                      (click)="delete(row)"
-                    >
-                      <i class="fa fa-trash"></i>
-                    </button>
+                    @if (row.isDeleted) {
+                      <button
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        title="Restore"
+                        (click)="restore(row)"
+                      >
+                        <i class="material-icons" style="font-size: 14px"
+                          >restore</i
+                        >
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        title="Permanent Delete"
+                        (click)="permanentDelete(row)"
+                      >
+                        <i class="material-icons" style="font-size: 14px"
+                          >delete_forever</i
+                        >
+                      </button>
+                    } @else if (row.isArchived) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        title="Unarchive"
+                        (click)="unarchive(row)"
+                      >
+                        <i class="material-icons" style="font-size: 14px"
+                          >unarchive</i
+                        >
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        title="Delete"
+                        (click)="delete(row)"
+                      >
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        title="Archive"
+                        (click)="archive(row)"
+                      >
+                        <i class="material-icons" style="font-size: 14px"
+                          >archive</i
+                        >
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        title="Delete"
+                        (click)="delete(row)"
+                      >
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    }
                   </div>
                 </ng-template>
               </ngx-datatable-column>

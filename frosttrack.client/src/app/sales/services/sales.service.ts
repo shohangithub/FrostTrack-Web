@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   ISalesListResponse,
+  ISalesPaginationQuery,
   ISalesRequest,
   ISalesResponse,
 } from '../models/sales.interface';
@@ -20,18 +21,18 @@ import { MessageHub } from '@config/message-hub';
 export class SalesService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/sales`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: ISalesPaginationQuery,
   ): Observable<PaginationResult<ISalesListResponse>> {
     return this.get<PaginationResult<ISalesListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Sales pagination'
+      'Load Sales pagination',
     );
   }
 
@@ -44,7 +45,7 @@ export class SalesService extends BaseService {
       this.path,
       payload,
       'Create Sales',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -53,16 +54,37 @@ export class SalesService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Sales',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
   remove(id: number): Observable<boolean> {
-    return this.deleteWithSuccess<boolean>(
+    return this.softDelete(id);
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.putWithSuccess<boolean>(
       `${this.path}/${id}`,
+      {},
       'Delete Sales',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 
   batchDelete(ids: number[]): Observable<boolean> {
@@ -70,21 +92,21 @@ export class SalesService extends BaseService {
       this.path + '/DeleteBatch',
       ids,
       `Delete ${ids.length} Sales`,
-      MessageHub.DELETE_BATCH
+      MessageHub.DELETE_BATCH,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Sales Lookup'
+      'Load Sales Lookup',
     );
   }
 
   generateInvoiceNumber(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-invoice-number',
-      'Generate Invoice Number'
+      'Generate Invoice Number',
     );
   }
 }

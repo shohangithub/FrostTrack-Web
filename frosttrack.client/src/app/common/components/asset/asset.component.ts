@@ -14,6 +14,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import {
   IAssetListResponse,
+  IAssetPaginationQuery,
   IAssetResponse,
 } from '../../models/asset.interface';
 import { AssetService } from '../../services/asset.service';
@@ -58,12 +59,14 @@ export class AssetComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IAssetListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IAssetPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -82,7 +85,7 @@ export class AssetComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private assetService: AssetService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -116,7 +119,7 @@ export class AssetComponent implements OnInit {
   }
 
   fetchData() {
-    this.assetService.getWithPagination(this.pagination).subscribe({
+    this.assetService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<IAssetListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -167,9 +170,15 @@ export class AssetComponent implements OnInit {
   }
 
   delete(row: IAssetListResponse) {
-    Swal.fire(SwalConfirm).then((result) => {
+    Swal.fire({
+      title: 'Move to trash?',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes',
+    }).then((result) => {
       if (result.isConfirmed) {
-        this.assetService.remove(row.id).subscribe({
+        this.assetService.softDelete(row.id).subscribe({
           next: () => {
             this.fetchData();
           },
@@ -213,5 +222,51 @@ export class AssetComponent implements OnInit {
     this.pagination.orderBy = event.sorts[0].prop;
     this.pagination.isAscending = event.sorts[0].dir === 'asc';
     this.fetchData();
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.assetService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.assetService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.assetService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.assetService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

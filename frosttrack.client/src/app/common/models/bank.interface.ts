@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface IBankListResponse {
   id: number;
   bankName: string;
@@ -17,6 +19,14 @@ export interface IBankListResponse {
   description?: string;
   isMainAccount: boolean;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IBankPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IBankResponse {

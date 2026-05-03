@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface ICustomerListResponse {
   id: number;
   customerName: string;
@@ -13,6 +15,14 @@ export interface ICustomerListResponse {
   previousDue: number;
   isSystemDefault: boolean;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface ICustomerPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface ICustomerResponse {

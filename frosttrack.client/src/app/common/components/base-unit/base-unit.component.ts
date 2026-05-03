@@ -9,7 +9,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { RouterLink } from '@angular/router';
-import { IBaseUnitListResponse } from '../../models/base-unit.interface';
+import {
+  IBaseUnitListResponse,
+  IBaseUnitPaginationQuery,
+} from '../../models/base-unit.interface';
 import { CommonModule } from '@angular/common';
 import {
   ErrorResponse,
@@ -56,12 +59,14 @@ export class BaseUnitComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IBaseUnitListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IBaseUnitPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
@@ -69,7 +74,7 @@ export class BaseUnitComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private baseUnitService: BaseUnitService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -126,7 +131,7 @@ export class BaseUnitComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -135,7 +140,7 @@ export class BaseUnitComponent implements OnInit {
   }
 
   fetchData() {
-    this.baseUnitService.getWithPagination(this.pagination).subscribe({
+    this.baseUnitService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<IBaseUnitListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -164,7 +169,7 @@ export class BaseUnitComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddBaseUnitComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -176,7 +181,7 @@ export class BaseUnitComponent implements OnInit {
   editRow(row: any, rowIndex: number) {
     const modalRef = this.modalService.open(
       AddBaseUnitComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -198,14 +203,14 @@ export class BaseUnitComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.baseUnitService.remove(row.id).subscribe({
+        this.baseUnitService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -236,5 +241,51 @@ export class BaseUnitComponent implements OnInit {
 
   deleteRecordSuccess(count: number) {
     // Success message now handled by service
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.baseUnitService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.baseUnitService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.baseUnitService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.baseUnitService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

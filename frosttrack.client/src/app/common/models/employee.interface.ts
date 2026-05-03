@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface IEmployeeListResponse {
   id: number;
   employeeName: string;
@@ -19,6 +21,14 @@ export interface IEmployeeListResponse {
   notes?: string;
   photoUrl?: string;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IEmployeePaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IEmployeeResponse {

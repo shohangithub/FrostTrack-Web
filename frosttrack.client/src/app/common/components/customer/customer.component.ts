@@ -18,6 +18,7 @@ import Swal from 'sweetalert2';
 import { RouterLink } from '@angular/router';
 import {
   ICustomerListResponse,
+  ICustomerPaginationQuery,
   ICustomerRequest,
   ICustomerResponse,
 } from '../../models/customer.interface';
@@ -69,12 +70,14 @@ export class CustomerComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: ICustomerListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: ICustomerPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -93,7 +96,7 @@ export class CustomerComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private customerService: CustomerService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -156,7 +159,7 @@ export class CustomerComponent implements OnInit {
   }
 
   fetchData() {
-    this.customerService.getWithPagination(this.pagination).subscribe({
+    this.customerService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<ICustomerListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -164,9 +167,15 @@ export class CustomerComponent implements OnInit {
       },
       error: () => {
         this.loadingIndicator = false;
-        // BaseService already handles error toasts via ErrorHandlerService
       },
     });
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
   }
 
   changePagination(pageInfo: any) {
@@ -186,7 +195,7 @@ export class CustomerComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddCustomerComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -198,7 +207,7 @@ export class CustomerComponent implements OnInit {
   editRow(row: any, rowIndex: number) {
     const modalRef = this.modalService.open(
       AddCustomerComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -225,23 +234,58 @@ export class CustomerComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: this.MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
+      text: 'Record will be soft-deleted and can be restored.',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.customerService.remove(row.id).subscribe({
-          next: (response) => {
-            if (response) {
-              this.removeRecord(row);
-              this.deleteRecordSuccess(1);
-            }
+        this.customerService.softDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
           },
-          error: () => {
-            // BaseService already handles error toasts via ErrorHandlerService
+          error: () => {},
+        });
+      }
+    });
+  }
+
+  restore(row: any) {
+    this.customerService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.customerService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.customerService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.customerService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
           },
+          error: () => {},
         });
       }
     });

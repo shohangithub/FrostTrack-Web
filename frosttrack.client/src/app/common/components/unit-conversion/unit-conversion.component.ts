@@ -18,6 +18,7 @@ import Swal from 'sweetalert2';
 import { RouterLink } from '@angular/router';
 import {
   IUnitConversionListResponse,
+  IUnitConversionPaginationQuery,
   IUnitConversionRequest,
   IUnitConversionResponse,
 } from '../../models/unit-conversion.interface';
@@ -69,12 +70,14 @@ export class UnitConversionComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IUnitConversionListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IUnitConversionPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -93,7 +96,7 @@ export class UnitConversionComponent implements OnInit {
     private toastr: ToastrService,
     private unitConversionService: UnitConversionService,
     private baseUnitService: BaseUnitService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
@@ -177,18 +180,20 @@ export class UnitConversionComponent implements OnInit {
   }
 
   fetchData() {
-    this.unitConversionService.getWithPagination(this.pagination).subscribe({
-      next: (response: PaginationResult<IUnitConversionListResponse>) => {
-        this.data = response.data;
-        this.paging = response.paging;
-        this.loadingIndicator = false;
-      },
-      error: (err: ErrorResponse) => {
-        this.loadingIndicator = false;
-        const errString = formatErrorMessage(err);
-        this.toastr.error(errString);
-      },
-    });
+    this.unitConversionService
+      .getWithPaginationStatus(this.pagination)
+      .subscribe({
+        next: (response: PaginationResult<IUnitConversionListResponse>) => {
+          this.data = response.data;
+          this.paging = response.paging;
+          this.loadingIndicator = false;
+        },
+        error: (err: ErrorResponse) => {
+          this.loadingIndicator = false;
+          const errString = formatErrorMessage(err);
+          this.toastr.error(errString);
+        },
+      });
   }
 
   fetchBaseUnitLookup() {
@@ -299,14 +304,14 @@ export class UnitConversionComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: this.MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.unitConversionService.remove(row.id).subscribe({
+        this.unitConversionService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -351,5 +356,51 @@ export class UnitConversionComponent implements OnInit {
 
   deleteRecordSuccess(count: number) {
     // Success message is now handled by the service
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.unitConversionService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.unitConversionService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.unitConversionService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.unitConversionService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

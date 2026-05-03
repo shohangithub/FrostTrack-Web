@@ -12,7 +12,11 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { IBankListResponse, IBankResponse } from '../../models/bank.interface';
+import {
+  IBankListResponse,
+  IBankPaginationQuery,
+  IBankResponse,
+} from '../../models/bank.interface';
 import { BankService } from '../../services/bank.service';
 import { CommonModule } from '@angular/common';
 import {
@@ -59,12 +63,14 @@ export class BankComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IBankListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IBankPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -83,7 +89,7 @@ export class BankComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private bankService: BankService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -144,7 +150,7 @@ export class BankComponent implements OnInit {
   }
 
   fetchData() {
-    this.bankService.getWithPagination(this.pagination).subscribe({
+    this.bankService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<IBankListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -215,14 +221,14 @@ export class BankComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: this.MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.bankService.remove(row.id).subscribe({
+        this.bankService.softDelete(row.id).subscribe({
           next: () => {
             this.removeRecord(row);
             this.deleteRecordSuccess();
@@ -252,5 +258,51 @@ export class BankComponent implements OnInit {
 
   deleteRecordSuccess() {
     // Success message is now handled by the service
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.bankService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.bankService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.bankService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.bankService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

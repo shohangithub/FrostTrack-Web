@@ -7,6 +7,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   ISaleReturnListResponse,
+  ISaleReturnPaginationQuery,
   ISaleReturnRequest,
   ISaleReturnResponse,
 } from '../models/sale-return.interface';
@@ -20,25 +21,25 @@ import { MessageHub } from '@config/message-hub';
 export class SaleReturnService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/salereturn`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: ISaleReturnPaginationQuery,
   ): Observable<PaginationResult<ISaleReturnListResponse>> {
     return this.get<PaginationResult<ISaleReturnListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Sale Returns pagination'
+      'Load Sale Returns pagination',
     );
   }
 
   getById(id: number): Observable<ISaleReturnResponse> {
     return this.get<ISaleReturnResponse>(
       this.path + '/' + id,
-      'Load Sale Return'
+      'Load Sale Return',
     );
   }
 
@@ -47,28 +48,45 @@ export class SaleReturnService extends BaseService {
       this.path,
       payload,
       'Create Sale Return',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
   update(
     id: number,
-    payload: ISaleReturnRequest
+    payload: ISaleReturnRequest,
   ): Observable<ISaleReturnResponse> {
     return this.putWithSuccess<ISaleReturnResponse>(
       `${this.path}/${id}`,
       payload,
       'Update Sale Return',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
-  remove(id: number): Observable<boolean> {
-    return this.deleteWithSuccess<boolean>(
+  softDelete(id: number): Observable<boolean> {
+    return this.putWithSuccess<boolean>(
       `${this.path}/${id}`,
+      {},
       'Delete Sale Return',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.put<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 
   batchDelete(ids: number[]): Observable<boolean> {
@@ -76,28 +94,28 @@ export class SaleReturnService extends BaseService {
       this.path + '/DeleteBatch',
       ids,
       `Delete ${ids.length} Sale Returns`,
-      MessageHub.DELETE_BATCH
+      MessageHub.DELETE_BATCH,
     );
   }
 
   generateReturnNumber(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-return-number',
-      'Generate Return Number'
+      'Generate Return Number',
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Sale Returns Lookup'
+      'Load Sale Returns Lookup',
     );
   }
 
   getSalesBySalesId(salesId: number): Observable<any> {
     return this.get<any>(
       this.path + `/sales/${salesId}`,
-      'Load Sale by Sales ID'
+      'Load Sale by Sales ID',
     );
   }
 }

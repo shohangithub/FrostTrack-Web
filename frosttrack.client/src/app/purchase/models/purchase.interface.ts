@@ -1,6 +1,7 @@
-import { IProductResponse } from "../../administration/models/product.interface";
-import { ISupplierResponse } from "../../common/models/supplier.interface";
-import { IUnitConversionResponse } from "../../common/models/unit-conversion.interface";
+import { IProductResponse } from '../../administration/models/product.interface';
+import { PaginationQuery } from '../../core/models/pagination-query';
+import { IUnitConversionResponse } from '../../common/models/unit-conversion.interface';
+import { ISupplierResponse } from '../../common/models/supplier.interface';
 
 export interface IPurchaseRequest {
   id: number;
@@ -73,4 +74,12 @@ export interface IPurchaseListResponse {
   paidAmount: number;
   branchId: number;
   branch: any;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: Date;
+  archivedAt?: Date;
+}
+
+export interface IPurchasePaginationQuery extends PaginationQuery {
+  status?: string;
 }

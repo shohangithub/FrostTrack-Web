@@ -10,6 +10,10 @@ public record ProductReceiveResponse(
         Customer Customer,
         int BranchId,
         string? Notes,
+  bool IsDeleted,
+  bool IsArchived,
+  DateTime? DeletedAt,
+  DateTime? ArchivedAt,
         ICollection<ProductReceiveDetailResponse> BookingDetails
     );
 
@@ -48,5 +52,9 @@ public record ProductReceiveListResponse(
         int BranchId,
         Branch Branch,
         string? Notes,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         IEnumerable<ProductReceiveDetailListResponse> BookingDetails
     );

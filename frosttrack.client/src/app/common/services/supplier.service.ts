@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   ISupplierListResponse,
+  ISupplierPaginationQuery,
   ISupplierRequest,
   ISupplierResponse,
 } from '../models/supplier.interface';
@@ -21,25 +22,25 @@ import { MessageHub } from '@config/message-hub';
 export class SupplierService extends BaseService {
   constructor(
     httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
+    errorHandlerService: ErrorHandlerService,
   ) {
     super(httpClient, errorHandlerService);
   }
   path: string = `${environment.apiUrl}/supplier`;
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<ISupplierListResponse>> {
     return this.get<PaginationResult<ISupplierListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Suppliers pagination'
+      'Load Suppliers pagination',
     );
   }
 
   getList(): Observable<ISupplierListResponse[]> {
     return this.get<ISupplierListResponse[]>(
       this.path + `/get-list`,
-      'Load Supplier List'
+      'Load Supplier List',
     );
   }
 
@@ -52,7 +53,7 @@ export class SupplierService extends BaseService {
       this.path,
       payload,
       'Create Supplier',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -61,7 +62,7 @@ export class SupplierService extends BaseService {
       this.path + '/' + id,
       payload,
       'Update Supplier',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -69,7 +70,7 @@ export class SupplierService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       this.path + '/' + id,
       'Delete Supplier',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -78,21 +79,49 @@ export class SupplierService extends BaseService {
       this.path + '/deletebatch',
       ids,
       `Delete ${ids.length} Suppliers`,
-      MessageHub.DELETE_BATCH
+      MessageHub.DELETE_BATCH,
     );
   }
 
   generateCode(): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       this.path + '/generate-code',
-      'Generate Supplier Code'
+      'Generate Supplier Code',
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Supplier Lookup'
+      'Load Supplier Lookup',
     );
+  }
+
+  getWithPaginationStatus(
+    query: ISupplierPaginationQuery,
+  ): Observable<PaginationResult<ISupplierListResponse>> {
+    return this.get<PaginationResult<ISupplierListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

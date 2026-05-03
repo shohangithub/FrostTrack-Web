@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface IPaymentMethodListResponse {
   id: number;
   methodName: string;
@@ -14,6 +16,14 @@ export interface IPaymentMethodListResponse {
   iconClass?: string;
   branchId?: number;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IPaymentMethodPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IPaymentMethodResponse {

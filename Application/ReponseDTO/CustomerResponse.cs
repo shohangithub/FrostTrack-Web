@@ -29,5 +29,9 @@ public record CustomerListResponse(
     decimal PreviousDue,
     decimal OpeningBalance,
     bool IsSystemDefault,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );

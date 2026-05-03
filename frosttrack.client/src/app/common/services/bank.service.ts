@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IBankListResponse,
+  IBankPaginationQuery,
   IBankRequest,
   IBankResponse,
 } from '../models/bank.interface';
@@ -26,11 +27,11 @@ export class BankService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IBankListResponse>> {
     return this.get<PaginationResult<IBankListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Banks'
+      'Load Banks',
     );
   }
 
@@ -43,7 +44,7 @@ export class BankService extends BaseService {
       this.path,
       payload,
       'Create Bank',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -52,7 +53,7 @@ export class BankService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Bank',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -60,7 +61,7 @@ export class BankService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Bank',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -69,28 +70,56 @@ export class BankService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Banks',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Bank Lookup'
+      'Load Bank Lookup',
     );
   }
 
   generateCode(isGlobal: boolean = false): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       `${this.path}/generate-code?isGlobal=${isGlobal}`,
-      'Bank Code Generation'
+      'Bank Code Generation',
     );
   }
 
   getCurrentBalance(bankId: number): Observable<number> {
     return this.get<number>(
       `${this.path}/${bankId}/balance`,
-      'Load Bank Balance'
+      'Load Bank Balance',
     );
+  }
+
+  getWithPaginationStatus(
+    query: IBankPaginationQuery,
+  ): Observable<PaginationResult<IBankListResponse>> {
+    return this.get<PaginationResult<IBankListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

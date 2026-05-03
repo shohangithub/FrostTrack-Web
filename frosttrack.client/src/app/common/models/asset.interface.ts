@@ -1,3 +1,5 @@
+import { PaginationQuery } from 'app/core/models/pagination-query';
+
 export interface IAssetListResponse {
   id: number;
   assetName: string;
@@ -19,6 +21,14 @@ export interface IAssetListResponse {
   notes?: string;
   imageUrl?: string;
   status: string;
+  isDeleted: boolean;
+  isArchived: boolean;
+  deletedAt?: string;
+  archivedAt?: string;
+}
+
+export interface IAssetPaginationQuery extends PaginationQuery {
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface IAssetResponse {

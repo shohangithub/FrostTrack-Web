@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import { RouterLink } from '@angular/router';
 import {
   ISupplierListResponse,
+  ISupplierPaginationQuery,
   ISupplierResponse,
 } from '../../models/supplier.interface';
 import { SupplierService } from '../../services/supplier.service';
@@ -59,12 +60,14 @@ export class SupplierComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: ISupplierListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: ISupplierPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
@@ -74,7 +77,7 @@ export class SupplierComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private supplierService: SupplierService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -137,7 +140,7 @@ export class SupplierComponent implements OnInit {
   }
 
   fetchData() {
-    this.supplierService.getWithPagination(this.pagination).subscribe({
+    this.supplierService.getWithPaginationStatus(this.pagination).subscribe({
       next: (response: PaginationResult<ISupplierListResponse>) => {
         this.data = response.data;
         this.paging = response.paging;
@@ -168,7 +171,7 @@ export class SupplierComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddSupplierComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -180,7 +183,7 @@ export class SupplierComponent implements OnInit {
   editRow(row: any, rowIndex: number) {
     const modalRef = this.modalService.open(
       AddSupplierComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -208,14 +211,14 @@ export class SupplierComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.supplierService.remove(row.id).subscribe({
+        this.supplierService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -246,5 +249,51 @@ export class SupplierComponent implements OnInit {
 
   deleteRecordSuccess(count: number) {
     // Success message is now handled by the service
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.supplierService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.supplierService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.supplierService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.supplierService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }

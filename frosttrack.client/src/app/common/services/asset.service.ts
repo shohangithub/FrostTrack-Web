@@ -8,6 +8,7 @@ import { PaginationResult } from '../../core/models/pagination-result';
 import { PaginationQuery } from '../../core/models/pagination-query';
 import {
   IAssetListResponse,
+  IAssetPaginationQuery,
   IAssetRequest,
   IAssetResponse,
 } from '../models/asset.interface';
@@ -26,11 +27,11 @@ export class AssetService extends BaseService {
   }
 
   getWithPagination(
-    pagination: PaginationQuery
+    pagination: PaginationQuery,
   ): Observable<PaginationResult<IAssetListResponse>> {
     return this.get<PaginationResult<IAssetListResponse>>(
       getApiEndpoint(pagination, this.path + `/get-with-pagination`),
-      'Load Assets pagination'
+      'Load Assets pagination',
     );
   }
 
@@ -43,7 +44,7 @@ export class AssetService extends BaseService {
       this.path,
       payload,
       'Create Asset',
-      MessageHub.ADD
+      MessageHub.ADD,
     );
   }
 
@@ -52,7 +53,7 @@ export class AssetService extends BaseService {
       `${this.path}/${id}`,
       payload,
       'Update Asset',
-      MessageHub.UPDATE
+      MessageHub.UPDATE,
     );
   }
 
@@ -60,7 +61,7 @@ export class AssetService extends BaseService {
     return this.deleteWithSuccess<boolean>(
       `${this.path}/${id}`,
       'Delete Asset',
-      MessageHub.DELETE_ONE
+      MessageHub.DELETE_ONE,
     );
   }
 
@@ -69,32 +70,60 @@ export class AssetService extends BaseService {
       `${this.path}/DeleteBatch`,
       ids,
       'Delete Assets',
-      `${ids.length} ${MessageHub.DELETE_BATCH}`
+      `${ids.length} ${MessageHub.DELETE_BATCH}`,
     );
   }
 
   getLookup(): Observable<ILookup<number>[]> {
     return this.get<ILookup<number>[]>(
       this.path + `/lookup`,
-      'Load Asset Lookup'
+      'Load Asset Lookup',
     );
   }
 
   generateCode(isGlobal: boolean = false): Observable<CodeResponse> {
     return this.get<CodeResponse>(
       `${this.path}/generate-code?isGlobal=${isGlobal}`,
-      'Asset Code Generation'
+      'Asset Code Generation',
     );
   }
 
   getCurrentValue(assetId: number): Observable<number> {
     return this.get<number>(
       `${this.path}/${assetId}/current-value`,
-      'Load Asset Current Value'
+      'Load Asset Current Value',
     );
   }
 
   getDistinctAssetTypes(): Observable<string[]> {
     return this.get<string[]>(`${this.path}/asset-types`, 'Load Asset Types');
+  }
+
+  getWithPaginationStatus(
+    query: IAssetPaginationQuery,
+  ): Observable<PaginationResult<IAssetListResponse>> {
+    return this.get<PaginationResult<IAssetListResponse>>(
+      getApiEndpoint(query, `${this.path}/get-with-pagination-status`),
+    );
+  }
+
+  softDelete(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/soft-delete`, {});
+  }
+
+  restore(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/restore`, {});
+  }
+
+  archive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/archive`, {});
+  }
+
+  unarchive(id: number): Observable<boolean> {
+    return this.post<boolean>(`${this.path}/${id}/unarchive`, {});
+  }
+
+  permanentDelete(id: number): Observable<boolean> {
+    return this.delete<boolean>(`${this.path}/${id}/permanent`);
   }
 }

@@ -8,6 +8,7 @@ public interface IEmployeeService
 {
     Task<IEnumerable<EmployeeListResponse>> ListAsync(CancellationToken cancellationToken = default);
     Task<PaginationResult<EmployeeListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default);
+    Task<PaginationResult<EmployeeListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default);
     Task<EmployeeResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<EmployeeResponse> AddAsync(EmployeeRequest employee, CancellationToken cancellationToken = default);
     Task<EmployeeResponse> UpdateAsync(int id, EmployeeRequest employee, CancellationToken cancellationToken = default);
@@ -18,4 +19,8 @@ public interface IEmployeeService
     Task<string> GenerateCode(CancellationToken cancellationToken = default);
     Task<IEnumerable<string>> GetDistinctDepartmentsAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<string>> GetDistinctDesignationsAsync(CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default);
 }

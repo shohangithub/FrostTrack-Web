@@ -21,7 +21,10 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
-import { ISalesListResponse } from 'app/sales/models/sales.interface';
+import {
+  ISalesListResponse,
+  ISalesPaginationQuery,
+} from 'app/sales/models/sales.interface';
 import { SalesService } from 'app/sales/services/sales.service';
 import { SwalConfirm } from 'app/theme-config';
 import { NgxPrintModule } from 'ngx-print';
@@ -51,11 +54,12 @@ export class SalesInvoicePrintComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: ISalesListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: ISalesPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
@@ -65,7 +69,7 @@ export class SalesInvoicePrintComponent implements OnInit {
     private toastr: ToastrService,
     private salesService: SalesService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -118,7 +122,7 @@ export class SalesInvoicePrintComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;

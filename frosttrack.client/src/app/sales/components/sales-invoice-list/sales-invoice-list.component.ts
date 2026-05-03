@@ -22,7 +22,10 @@ import {
   NgxDatatableModule,
   SelectionType,
 } from '@swimlane/ngx-datatable';
-import { ISalesListResponse } from 'app/sales/models/sales.interface';
+import {
+  ISalesListResponse,
+  ISalesPaginationQuery,
+} from 'app/sales/models/sales.interface';
 import { SalesService } from 'app/sales/services/sales.service';
 import { SwalConfirm } from 'app/theme-config';
 import {
@@ -55,11 +58,13 @@ export class SalesInvoiceListComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: ISalesListResponse[] = [];
-  pagination: PaginationQuery = {
+  activeStatus: string = 'active';
+  pagination: ISalesPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
@@ -70,7 +75,7 @@ export class SalesInvoiceListComponent implements OnInit {
     private salesService: SalesService,
     private router: Router,
     private layoutService: LayoutService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -126,7 +131,7 @@ export class SalesInvoiceListComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -176,16 +181,72 @@ export class SalesInvoiceListComponent implements OnInit {
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.salesService.remove(row.id).subscribe({
+        this.salesService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
-              this.toastr.success(MessageHub.DELETE_ONE);
             }
           },
-          error: () => {
-            // BaseService already handles error toasts via ErrorHandlerService
+          error: () => {},
+        });
+      }
+    });
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  archive(row: any) {
+    this.salesService.archive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Archived');
+      },
+      error: () => {},
+    });
+  }
+
+  unarchive(row: any) {
+    this.salesService.unarchive(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Unarchived');
+      },
+      error: () => {},
+    });
+  }
+
+  restore(row: any) {
+    this.salesService.restore(row.id).subscribe({
+      next: () => {
+        this.removeRecord(row);
+        this.toastr.success('Restored');
+      },
+      error: () => {},
+    });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete this record?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes, delete!',
+    }).then((result) => {
+      if (result.value) {
+        this.salesService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.removeRecord(row);
+            this.toastr.success('Permanently deleted');
           },
+          error: () => {},
         });
       }
     });

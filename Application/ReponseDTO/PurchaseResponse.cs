@@ -17,6 +17,10 @@ public record PurchaseResponse(
         decimal InvoiceAmount,
         decimal PaidAmount,
         int BranchId,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         ICollection<PurchaseDetailResponse> PurchaseDetails
     );
 public record PurchaseDetailResponse(
@@ -58,5 +62,9 @@ public record PurchaseListResponse(
         decimal PaidAmount,
         int BranchId,
         Branch Branch,
+        bool IsDeleted,
+        bool IsArchived,
+        DateTime? DeletedAt,
+        DateTime? ArchivedAt,
         IEnumerable<PurchaseDetailListResponse> PurchaseDetails
     );

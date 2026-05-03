@@ -87,44 +87,103 @@ public class EmployeeService : IEmployeeService
 
     public async Task<PaginationResult<EmployeeListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<Employee, bool>>? predicate = x => true;
+        Expression<Func<Employee, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;
 
         if (!string.IsNullOrEmpty(requestQuery.OpenText) && !string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
-            predicate = obj => obj.EmployeeName.ToLower().Contains(requestQuery.OpenText.ToLower())
+            predicate = obj => !obj.IsDeleted && !obj.IsArchived
+                            && (obj.EmployeeName.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || obj.EmployeeCode.ToLower().Contains(requestQuery.OpenText.ToLower())
                             || (obj.EmploymentType != null && obj.EmploymentType.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Email != null && obj.Email.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Phone != null && obj.Phone.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Department != null && obj.Department.ToLower().Contains(requestQuery.OpenText.ToLower()))
                             || (obj.Designation != null && obj.Designation.ToLower().Contains(requestQuery.OpenText.ToLower()))
-                            || (obj.Address != null && obj.Address.ToLower().Contains(requestQuery.OpenText.ToLower()));
+                            || (obj.Address != null && obj.Address.ToLower().Contains(requestQuery.OpenText.ToLower())));
         }
 
         Expression<Func<Employee, EmployeeListResponse>>? selector = x => new EmployeeListResponse(
-               x.Id,
-               x.EmployeeName,
-               x.EmployeeCode,
-               x.EmploymentType,
-               x.Email,
-               x.Phone,
-               x.Address,
-               x.DateOfBirth,
-               x.JoiningDate,
-               x.Department,
-               x.Designation,
-               x.Salary,
-               x.EmergencyContact,
-               x.BloodGroup,
-               x.NationalId,
-               x.PassportNumber,
-               x.BankAccount,
-               x.Notes,
-               x.PhotoUrl,
-               x.Status
+               x.Id, x.EmployeeName, x.EmployeeCode, x.EmploymentType, x.Email, x.Phone,
+               x.Address, x.DateOfBirth, x.JoiningDate, x.Department, x.Designation, x.Salary,
+               x.EmergencyContact, x.BloodGroup, x.NationalId, x.PassportNumber, x.BankAccount,
+               x.Notes, x.PhotoUrl, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<PaginationResult<EmployeeListResponse>> PaginationListAsync(SetupPaginationQuery requestQuery, CancellationToken cancellationToken = default)
+    {
+        var archiveStatus = requestQuery.status?.ToLowerInvariant() ?? "active";
+
+        Expression<Func<Employee, bool>> predicate = archiveStatus switch
+        {
+            "archived" => x => !x.IsDeleted && x.IsArchived,
+            "deleted" => x => x.IsDeleted,
+            _ => x => !x.IsDeleted && !x.IsArchived
+        };
+
+        if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
+        {
+            var search = requestQuery.OpenText.Trim().ToLower();
+            predicate = predicate.And(obj =>
+                obj.EmployeeName.ToLower().Contains(search) ||
+                obj.EmployeeCode.ToLower().Contains(search) ||
+                (obj.Department != null && obj.Department.ToLower().Contains(search)));
+        }
+
+        Expression<Func<Employee, EmployeeListResponse>> selector = x => new EmployeeListResponse(
+               x.Id, x.EmployeeName, x.EmployeeCode, x.EmploymentType, x.Email, x.Phone,
+               x.Address, x.DateOfBirth, x.JoiningDate, x.Department, x.Designation, x.Salary,
+               x.EmergencyContact, x.BloodGroup, x.NationalId, x.PassportNumber, x.BankAccount,
+               x.Notes, x.PhotoUrl, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
+            );
+
+        return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = true;
+        entity.ArchivedAt = DateTime.UtcNow;
+        entity.ArchivedById = _currentUser.Id;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        entity.IsArchived = false;
+        entity.ArchivedAt = null;
+        entity.ArchivedById = null;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<string> GenerateCode(CancellationToken cancellationToken = default)

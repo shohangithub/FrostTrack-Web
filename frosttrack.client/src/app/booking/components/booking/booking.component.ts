@@ -566,6 +566,8 @@ export class BookingComponent implements OnInit {
           isActive: result.isActive,
           status: result.status,
           branchId: result.branchId,
+          isDeleted: false,
+          isArchived: false,
         };
         this.products = this.products.insertThenClone(obj);
       }
@@ -592,6 +594,8 @@ export class BookingComponent implements OnInit {
           status: response.data.status,
           previousDue: 0,
           isSystemDefault: false,
+          isDeleted: false,
+          isArchived: false,
         };
         this.customers = this.customers.insertThenClone(obj);
       }

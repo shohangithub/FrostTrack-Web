@@ -11,7 +11,10 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SupplierPaymentService } from '../../services/supplier-payment.service';
-import { ISupplierPaymentListResponse } from '../../models/supplier-payment.interface';
+import {
+  ISupplierPaymentListResponse,
+  ISupplierPaymentPaginationQuery,
+} from '../../models/supplier-payment.interface';
 import { PaginatedComponent } from '@core/base/paginated-component';
 
 @Component({
@@ -28,6 +31,7 @@ export class SupplierPaymentListComponent
 
   rows: ISupplierPaymentListResponse[] = [];
   reorderable = true;
+  activeStatus: string = 'active';
 
   columns = [
     { name: 'Payment Number', prop: 'paymentNumber', width: 150 },
@@ -60,11 +64,69 @@ export class SupplierPaymentListComponent
     this.loadPaginatedData(
       (query) => this.supplierPaymentService.getWithPagination(query),
       {
+        additionalFilters: { status: this.activeStatus },
         onDataLoaded: (data) => {
           this.rows = data;
         },
-      }
+      },
     );
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.currentPage = 1;
+    this.loadData();
+  }
+
+  archivePayment(id: number): void {
+    this.supplierPaymentService.archive(id).subscribe({
+      next: () => {
+        this.rows = this.rows.filter((r) => r.id !== id);
+      },
+      error: () => {},
+    });
+  }
+
+  unarchivePayment(id: number): void {
+    this.supplierPaymentService.unarchive(id).subscribe({
+      next: () => {
+        this.rows = this.rows.filter((r) => r.id !== id);
+      },
+      error: () => {},
+    });
+  }
+
+  restorePayment(id: number): void {
+    this.supplierPaymentService.restore(id).subscribe({
+      next: () => {
+        this.rows = this.rows.filter((r) => r.id !== id);
+      },
+      error: () => {},
+    });
+  }
+
+  async permanentDeletePayment(id: number): Promise<void> {
+    const result = await Swal.fire({
+      title: 'Permanently delete this record?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete!',
+    });
+    if (result.isConfirmed) {
+      try {
+        const success = await firstValueFrom(
+          this.supplierPaymentService.permanentDelete(id),
+        );
+        if (success) {
+          this.rows = this.rows.filter((r) => r.id !== id);
+        }
+      } catch (error) {
+        console.error('Error permanently deleting payment:', error);
+      }
+    }
   }
 
   onSort(event: any): void {
@@ -77,7 +139,7 @@ export class SupplierPaymentListComponent
   async deletePayment(id: number): Promise<void> {
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: 'This payment will be deleted permanently!',
+      text: 'This payment record will be soft-deleted!',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -88,10 +150,10 @@ export class SupplierPaymentListComponent
     if (result.isConfirmed) {
       try {
         const success = await firstValueFrom(
-          this.supplierPaymentService.remove(id)
+          this.supplierPaymentService.softDelete(id),
         );
         if (success) {
-          this.loadData();
+          this.rows = this.rows.filter((r) => r.id !== id);
         }
       } catch (error) {
         console.error('Error deleting payment:', error);

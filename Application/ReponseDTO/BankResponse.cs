@@ -40,5 +40,9 @@ public record BankListResponse(
     decimal CurrentBalance,
     string? Description,
     bool IsMainAccount,
-    string Status
+    string Status,
+    bool IsDeleted,
+    bool IsArchived,
+    DateTime? DeletedAt,
+    DateTime? ArchivedAt
     );

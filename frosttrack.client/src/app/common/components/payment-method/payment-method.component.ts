@@ -10,6 +10,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import {
   IPaymentMethodListResponse,
+  IPaymentMethodPaginationQuery,
   IPaymentMethodResponse,
 } from '../../models/payment-method.interface';
 import { PaymentMethodService } from '../../services/payment-method.service';
@@ -55,12 +56,14 @@ export class PaymentMethodComponent implements OnInit {
   selectedOption!: string;
   reorderable = true;
   selected: IPaymentMethodListResponse[] = [];
-  pagination: PaginationQuery = {
+  pagination: IPaymentMethodPaginationQuery = {
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
     isAscending: DefaultPagination.ASCENDING,
+    status: 'active',
   };
+  activeStatus: string = 'active';
   paging: PagingResponse | undefined;
 
   statusList = COMMON_STATUS_LIST;
@@ -77,7 +80,7 @@ export class PaymentMethodComponent implements OnInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private paymentMethodService: PaymentMethodService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
   ) {
     this.MessageHub.UPDATE = 'Update Record Successfully';
     this.MessageHub.DELETE = 'Delete Record Successfully';
@@ -132,7 +135,7 @@ export class PaymentMethodComponent implements OnInit {
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((value: any) => {
         this.pagination.openText = value;
@@ -141,17 +144,19 @@ export class PaymentMethodComponent implements OnInit {
   }
 
   fetchData() {
-    this.paymentMethodService.getWithPagination(this.pagination).subscribe({
-      next: (response: PaginationResult<IPaymentMethodListResponse>) => {
-        this.data = response.data;
-        this.paging = response.paging;
-        this.loadingIndicator = false;
-      },
-      error: () => {
-        this.loadingIndicator = false;
-        // BaseService already handles error toasts via ErrorHandlerService
-      },
-    });
+    this.paymentMethodService
+      .getWithPaginationStatus(this.pagination)
+      .subscribe({
+        next: (response: PaginationResult<IPaymentMethodListResponse>) => {
+          this.data = response.data;
+          this.paging = response.paging;
+          this.loadingIndicator = false;
+        },
+        error: () => {
+          this.loadingIndicator = false;
+          // BaseService already handles error toasts via ErrorHandlerService
+        },
+      });
   }
 
   changePagination(pageInfo: any) {
@@ -171,7 +176,7 @@ export class PaymentMethodComponent implements OnInit {
   addRow() {
     const modalRef = this.modalService.open(
       AddPaymentMethodComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.result.then((response) => {
       if (response?.success) {
@@ -183,7 +188,7 @@ export class PaymentMethodComponent implements OnInit {
   editRow(row: any) {
     const modalRef = this.modalService.open(
       AddPaymentMethodComponent,
-      ModalOption.lg
+      ModalOption.lg,
     );
     modalRef.componentInstance.isEditing = true;
     modalRef.componentInstance.row = row;
@@ -197,14 +202,14 @@ export class PaymentMethodComponent implements OnInit {
   // delete single row
   delete(row: any) {
     Swal.fire({
-      title: MessageHub.DELETE_CONFIRM,
+      title: 'Move to trash?',
       showCancelButton: true,
       confirmButtonColor: SwalConfirm.confirmButtonColor,
       cancelButtonColor: SwalConfirm.cancelButtonColor,
       confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.value) {
-        this.paymentMethodService.remove(row.id).subscribe({
+        this.paymentMethodService.softDelete(row.id).subscribe({
           next: (response) => {
             if (response) {
               this.removeRecord(row);
@@ -231,5 +236,51 @@ export class PaymentMethodComponent implements OnInit {
   filterDatatable(event: any) {
     const val = event.target.value.toLowerCase();
     this.searchSubject.next(val);
+  }
+
+  setStatus(status: string) {
+    this.activeStatus = status;
+    this.pagination.status = status as any;
+    this.pagination.pageIndex = 0;
+    this.fetchData();
+  }
+
+  restore(row: any) {
+    this.paymentMethodService
+      .restore(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  archive(row: any) {
+    this.paymentMethodService
+      .archive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  unarchive(row: any) {
+    this.paymentMethodService
+      .unarchive(row.id)
+      .subscribe({ next: () => this.fetchData() });
+  }
+
+  permanentDelete(row: any) {
+    Swal.fire({
+      title: 'Permanently delete?',
+      text: 'This cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if (result.value) {
+        this.paymentMethodService.permanentDelete(row.id).subscribe({
+          next: () => {
+            this.fetchData();
+          },
+          error: () => {},
+        });
+      }
+    });
   }
 }
