@@ -31,24 +31,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductCategory> ProductCategories { get; set; }
-    public DbSet<Purchase> Purchases { get; set; }
-    public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<BookingDetail> BookingDetails { get; set; }
     public DbSet<Delivery> Deliveries { get; set; }
     public DbSet<DeliveryDetail> DeliveryDetails { get; set; }
     public DbSet<DeliveryChallan> DeliveryChallans { get; set; }
     public DbSet<DeliveryChallanItem> DeliveryChallanItems { get; set; }
-    public DbSet<SupplierPayment> SupplierPayments { get; set; }
-    public DbSet<SupplierPaymentDetail> SupplierPaymentDetails { get; set; }
-    public DbSet<Sales> Sales { get; set; }
-    public DbSet<SalesDetail> SalesDetails { get; set; }
-    public DbSet<SaleReturn> SaleReturns { get; set; }
-    public DbSet<SaleReturnDetail> SaleReturnDetails { get; set; }
-    public DbSet<Damage> Damages { get; set; }
     public DbSet<Asset> Assets { get; set; }
     public DbSet<Employee> Employees { get; set; }
-    public DbSet<Stock> Stocks { get; set; }
     public DbSet<BaseUnit> ProductUnits { get; set; }
     public DbSet<UnitConversion> UnitConversions { get; set; }
     public DbSet<Organization> Organizations { get; set; }
@@ -57,12 +47,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Bank> Banks { get; set; }
     public DbSet<BankTransaction> BankTransactions { get; set; }
     public DbSet<Customer> Customers { get; set; }
-    public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<PaymentMethod> PaymentMethods { get; set; }
     public DbSet<PrintSettings> PrintSettings { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<TransactionHead> TransactionHeads { get; set; }
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
+    public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
+    public DbSet<RecurringChargeEntry> RecurringChargeEntries { get; set; }
+    public DbSet<BookingCharge> BookingCharges { get; set; }
+    public DbSet<BookingPayment> BookingPayments { get; set; }
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
 
@@ -316,59 +309,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });
 
-        modelBuilder.Entity<Purchase>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<PurchaseDetail>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<Sales>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<SalesDetail>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<Stock>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
         modelBuilder.Entity<Company>(entity =>
         {
             entity.HasIndex(x => x.TenantId);
             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<SaleReturn>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
-        });
-
-        modelBuilder.Entity<SaleReturnDetail>(entity =>
-        {
-            entity.HasIndex(x => x.TenantId);
-            if (_tenantId != Guid.Empty)
-                entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });
 
         modelBuilder.Entity<Branch>(entity =>
@@ -376,18 +320,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.HasIndex(x => x.TenantId);
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-            entity.HasMany(x => x.Purchases)
-                  .WithOne(x => x.Branch)
-                  .HasForeignKey(x => x.BranchId)
-                  .IsRequired(false)
-                  .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasMany(x => x.Sales)
-                  .WithOne(x => x.Branch)
-                  .HasForeignKey(x => x.BranchId)
-                  .IsRequired(false)
-                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Delivery>(entity =>
@@ -466,6 +398,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
         // Apply DeliveryDetail configuration for cascade delete
         modelBuilder.ApplyConfiguration(new DeliveryDetailConfiguration());
+
+        // RecurringChargeRun — immutable audit log; tenant-filtered, no soft delete
+        modelBuilder.Entity<RecurringChargeRun>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.StartedAt);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -513,6 +454,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                     entry.Property(e => e.CreatedTime).IsModified = false;
                     break;
             }
+        }
+
+        // Handle plain BaseEntity<Guid> (e.g. RecurringChargeRun) — set TenantId on insert only
+        var guidBaseEntries = ChangeTracker.Entries<BaseEntity<Guid>>()
+            .Where(e => e.State == EntityState.Added && e.Entity is not AuditableEntity<Guid>);
+        foreach (var entry in guidBaseEntries)
+        {
+            if (entry.Entity.TenantId == Guid.Empty)
+                entry.Entity.TenantId = _tenantId;
         }
 
         return base.SaveChangesAsync(cancellationToken);

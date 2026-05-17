@@ -9,6 +9,8 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
+    private readonly IRepository<BookingCharge, Guid> _bookingChargeRepository;
+    private readonly IRepository<BookingPayment, Guid> _bookingPaymentRepository;
     private readonly ITransactionService _transactionService;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
@@ -24,6 +26,8 @@ public class DeliveryService : IDeliveryService
         IRepository<UnitConversion, int> unitConversionRepository,
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
+        IRepository<BookingCharge, Guid> bookingChargeRepository,
+        IRepository<BookingPayment, Guid> bookingPaymentRepository,
         ITransactionService transactionService,
         ICodeGenerationService codeGenerationService,
         DefaultValueInjector defaultValueInjector,
@@ -37,6 +41,8 @@ public class DeliveryService : IDeliveryService
         _unitConversionRepository = unitConversionRepository;
         _transactionRepository = transactionRepository;
         _transactionHeadRepository = transactionHeadRepository;
+        _bookingChargeRepository = bookingChargeRepository;
+        _bookingPaymentRepository = bookingPaymentRepository;
         _transactionService = transactionService;
         _codeGenerationService = codeGenerationService;
         _defaultValueInjector = defaultValueInjector;
@@ -97,6 +103,37 @@ public class DeliveryService : IDeliveryService
         }
 
         await _repository.AddAsync(entity, CancellationToken.None);
+
+        // Create BookingCharge ledger entries for each delivered product line
+        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
+        {
+            var deliveryDate = entity.DeliveryDate.Kind == DateTimeKind.Utc
+                ? entity.DeliveryDate
+                : entity.DeliveryDate.ToUniversalTime();
+
+            foreach (var dd in entity.DeliveryDetails)
+            {
+                var net = dd.ChargeAmount + dd.LabourCharge + dd.AdjustmentValue;
+                var charge = new BookingCharge
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = _tenantId,
+                    BookingId = entity.BookingId,
+                    BookingDetailId = dd.BookingDetailId,
+                    DeliveryId = entity.Id,
+                    DeliveryNumber = entity.DeliveryNumber,
+                    DeliveryDate = deliveryDate,
+                    Quantity = dd.DeliveryQuantity,
+                    Rate = dd.DeliveryQuantity > 0 ? dd.ChargeAmount / (decimal)dd.DeliveryQuantity : 0m,
+                    ChargeAmount = dd.ChargeAmount,
+                    LabourCharge = dd.LabourCharge,
+                    AdjustmentValue = dd.AdjustmentValue,
+                    NetAmount = net,
+                    CreatedAt = DateTime.UtcNow,
+                };
+                await _bookingChargeRepository.AddAsync(charge, CancellationToken.None);
+            }
+        }
 
         // Calculate total labour charge from delivery details
         var totalLabourCharge = entity.DeliveryDetails?.Sum(d => d.LabourCharge) ?? 0;
@@ -165,6 +202,31 @@ public class DeliveryService : IDeliveryService
 
                 // Update delivery with transaction ID (charge transaction)
                 entity.TransactionId = chargeTransaction.Id;
+
+                // Create BookingPayment ledger record
+                if (booking != null)
+                {
+                    var payment = new BookingPayment
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = _tenantId,
+                        BookingId = request.BookingId,
+                        CustomerId = booking.CustomerId,
+                        TransactionId = chargeTransaction.Id,
+                        DeliveryId = entity.Id,
+                        TransactionCode = chargeTransactionRequest.TransactionCode,
+                        TransactionDate = chargeTransactionRequest.TransactionDate,
+                        Amount = chargeAmount,
+                        DiscountAmount = 0,
+                        AdjustmentValue = 0,
+                        NetAmount = chargeAmount,
+                        PaymentMethod = request.PaymentMethod ?? PaymentMethods.CASH,
+                        Reference = request.TransactionNotes,
+                        Note = $"Bill collection for delivery {entity.DeliveryNumber}",
+                        CreatedAt = DateTime.UtcNow,
+                    };
+                    await _bookingPaymentRepository.AddAsync(payment, CancellationToken.None);
+                }
             }
 
             // Transaction 2: Labour Charge (if exists)
@@ -825,28 +887,52 @@ public class DeliveryService : IDeliveryService
 
     public async Task<decimal> GetBookingDueAmountAsync(Guid bookingId)
     {
-        // Get all deliveries for this booking
+        // Calculate due from all non-deleted deliveries; do not rely on PaymentStatus,
+        // because partial payments can still leave due even when status was marked paid.
         var deliveries = await _repository.Query()
-            .Where(d => d.BookingId == bookingId && d.PaymentStatus == PaymentStatuses.UNPAID)
+            .Include(d => d.DeliveryDetails)
+            .Where(d => d.BookingId == bookingId && !d.IsDeleted)
             .ToListAsync();
 
+        // Show immediate due after booking even before first delivery.
         if (!deliveries.Any())
-            return 0;
+        {
+            var booking = await _bookingRepository.Query()
+                .Include(b => b.BookingDetails)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
 
-        // Calculate total charges from all deliveries
-        var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
+            if (booking == null) return 0;
 
-        // Calculate total paid amount for these deliveries
+            var initialAccrued = booking.BookingDetails.Sum(bd => ((decimal)bd.BookingQuantity * bd.BookingRate) + bd.LabourCharge);
+
+            var initialPaid = await _transactionRepository.Query()
+                .Include(t => t.TransactionHead)
+                .Where(t => !t.IsDeleted
+                            && t.BookingId == bookingId
+                            && t.TransactionHead != null
+                            && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                            && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
+                                || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
+                .SumAsync(t => t.Amount);
+
+            return Math.Max(initialAccrued - initialPaid, 0m);
+        }
+
+        var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m));
+
         var deliveryIds = deliveries.Select(d => d.Id).ToList();
         var totalPaid = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
-            .Where(t => t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
-                     && deliveryIds.Contains(t.DeliveryId!.Value))
+            .Where(t => !t.IsDeleted
+                        && t.DeliveryId.HasValue
+                        && deliveryIds.Contains(t.DeliveryId.Value)
+                        && t.TransactionHead != null
+                        && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                        && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
+                            || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .SumAsync(t => t.Amount);
 
-        // Return due amount (charges - payments)
-        var dueAmount = totalCharges - totalPaid;
-        return dueAmount > 0 ? dueAmount : 0;
+        return Math.Max(totalCharges - totalPaid, 0m);
     }
 
     public async Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync()

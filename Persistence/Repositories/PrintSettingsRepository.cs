@@ -40,14 +40,6 @@ namespace Persistence.Repositories
             return await _context.Branches.FindAsync(new object[] { branchId }, cancellationToken);
         }
 
-        public async Task<SupplierPayment?> GetSupplierPaymentByIdAsync(int paymentId, CancellationToken cancellationToken = default)
-        {
-            return await _context.SupplierPayments
-                .Include(p => p.Supplier)
-                .Include(p => p.Branch)
-                .FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken);
-        }
-
         public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken = default)
         {
             return await _context.Bookings

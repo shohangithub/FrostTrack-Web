@@ -11,6 +11,7 @@ import {
   IBookingResponse,
   ICustomerDueSummaryResponse,
   ICustomerDueDetailResponse,
+  ICustomerOutstandingResponse,
 } from '../models/booking.interface';
 import { ILookup } from '../../core/models/lookup';
 import { CodeResponse } from '../../core/models/code-response';
@@ -94,6 +95,14 @@ export class BookingService extends BaseService {
   ): Observable<ICustomerDueDetailResponse[]> {
     return this.get<ICustomerDueDetailResponse[]>(
       this.path + `/customer-due-detail/${customerId}`,
+    );
+  }
+
+  getCustomerOutstanding(
+    customerId: number,
+  ): Observable<ICustomerOutstandingResponse> {
+    return this.get<ICustomerOutstandingResponse>(
+      this.path + `/customer-outstanding/${customerId}`,
     );
   }
 }

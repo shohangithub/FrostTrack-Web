@@ -19,6 +19,4 @@ public class Branch : BaseEntity<int>
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";
     // public ICollection<ApplicationUser> Users { get; set; } = [];
-    public ICollection<Purchase> Purchases { get; set; } = [];
-    public ICollection<Sales> Sales { get; set; } = [];
 }

@@ -29,14 +29,6 @@ public class ProductController : ControllerBase
 
 
     [HttpGet]
-    [Route("get-list-with-stock")]
-    public async Task<IEnumerable<ProductLisWithStockResponse>> GetProductWithStock(CancellationToken cancellationToken)
-    {
-        return await _productService.ListwithStockAsync(cancellationToken);
-    }
-
-
-    [HttpGet]
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {

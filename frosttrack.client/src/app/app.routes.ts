@@ -30,19 +30,7 @@ export const APP_ROUTE: Route[] = [
         path: 'administration',
         loadChildren: () =>
           import('./administration/administration.routes').then(
-            (m) => m.ADMINISTRATION_ROUTE
-          ),
-      },
-      {
-        path: 'purchase',
-        loadChildren: () =>
-          import('./purchase/purchase.routes').then((m) => m.PURCHASE_ROUTE),
-      },
-      {
-        path: 'product-receive',
-        loadChildren: () =>
-          import('./product-receive/product-receive.routes').then(
-            (m) => m.PRODUCT_RECEIVE_ROUTE
+            (m) => m.ADMINISTRATION_ROUTE,
           ),
       },
       {
@@ -54,33 +42,21 @@ export const APP_ROUTE: Route[] = [
         path: 'product-delivery',
         loadChildren: () =>
           import('./product-delivery/product-delivery.routes').then(
-            (m) => m.PRODUCT_DELIVERY_ROUTE
+            (m) => m.PRODUCT_DELIVERY_ROUTE,
           ),
-      },
-      {
-        path: 'supplier-payment',
-        loadChildren: () =>
-          import('./supplier-payment/supplier-payment.routes').then(
-            (m) => m.SUPPLIER_PAYMENT_ROUTE
-          ),
-      },
-      {
-        path: 'sales',
-        loadChildren: () =>
-          import('./sales/sales.routes').then((m) => m.SALES_ROUTE),
       },
       {
         path: 'transaction',
         loadChildren: () =>
           import('./transaction/transaction.routes').then(
-            (m) => m.transactionRoutes
+            (m) => m.transactionRoutes,
           ),
       },
       {
         path: 'bill-collection',
         loadChildren: () =>
           import('./bill-collection/bill-collection.routes').then(
-            (m) => m.billCollectionRoutes
+            (m) => m.billCollectionRoutes,
           ),
       },
       {
@@ -92,7 +68,7 @@ export const APP_ROUTE: Route[] = [
         path: 'salary-payment',
         loadChildren: () =>
           import('./salary-payment/salary-payment.routes').then(
-            (m) => m.salaryPaymentRoutes
+            (m) => m.salaryPaymentRoutes,
           ),
       },
       {
@@ -104,21 +80,21 @@ export const APP_ROUTE: Route[] = [
         path: 'advance-table',
         loadChildren: () =>
           import('./advance-table/advance-table.routes').then(
-            (m) => m.ADVANCE_TABLE_ROUTE
+            (m) => m.ADVANCE_TABLE_ROUTE,
           ),
       },
       {
         path: 'extra-pages',
         loadChildren: () =>
           import('./extra-pages/extra-pages.routes').then(
-            (m) => m.EXTRA_PAGES_ROUTE
+            (m) => m.EXTRA_PAGES_ROUTE,
           ),
       },
       {
         path: 'multilevel',
         loadChildren: () =>
           import('./multilevel/multilevel.routes').then(
-            (m) => m.MULTILEVEL_ROUTE
+            (m) => m.MULTILEVEL_ROUTE,
           ),
       },
     ],

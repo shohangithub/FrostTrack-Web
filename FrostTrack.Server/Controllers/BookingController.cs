@@ -137,4 +137,11 @@ public class BookingController : ControllerBase
         var dueDetail = await _bookingService.GetCustomerDueDetailAsync(customerId, cancellationToken);
         return Ok(dueDetail);
     }
+
+    [HttpGet("customer-outstanding/{customerId}")]
+    public async Task<ActionResult<CustomerOutstandingResponse>> GetCustomerOutstanding(int customerId, CancellationToken cancellationToken)
+    {
+        var outstanding = await _bookingService.GetCustomerOutstandingAsync(customerId, cancellationToken);
+        return Ok(outstanding);
+    }
 }

@@ -199,6 +199,7 @@ public static class DependencyInjection
 
     private static IServiceCollection AddBackgroundServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddHostedService<BillingRecurringChargeJob>();
         services.AddEmailNotifications(configuration);
 
         return services;

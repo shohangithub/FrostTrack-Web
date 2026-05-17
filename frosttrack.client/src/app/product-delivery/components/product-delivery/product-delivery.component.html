@@ -405,7 +405,7 @@
                       </div>
                       <div class="form-group row mb-2">
                         <label class="col-sm-3 col-form-label">
-                          <strong class="text-danger">Previous Due:</strong>
+                          <strong class="text-danger">Customer Due:</strong>
                         </label>
                         <div class="col-sm-9">
                           <input
@@ -419,6 +419,36 @@
                           />
                         </div>
                       </div>
+                      @if (outstandingLoading) {
+                        <div class="small text-muted text-end mb-2">
+                          Loading customer outstanding...
+                        </div>
+                      }
+                      @if (customerOutstanding) {
+                        <div class="small text-muted text-end mb-2">
+                          <div>
+                            Accrued:
+                            {{
+                              customerOutstanding.totalAccrued | number: "1.2-2"
+                            }}
+                          </div>
+                          <div>
+                            Paid:
+                            {{
+                              customerOutstanding.totalPaid | number: "1.2-2"
+                            }}
+                          </div>
+                          @if (customerOutstanding.openingBalance > 0) {
+                            <div>
+                              Opening Balance:
+                              {{
+                                customerOutstanding.openingBalance
+                                  | number: "1.2-2"
+                              }}
+                            </div>
+                          }
+                        </div>
+                      }
                       <div class="form-group row mb-0" style="display: none">
                         <label class="col-sm-3 col-form-label"
                           ><strong>Remaining Balance:</strong></label
@@ -436,7 +466,9 @@
                         </div>
                       </div>
                       <div class="form-group row mb-2">
-                        <label class="col-sm-3 col-form-label">Amount:</label>
+                        <label class="col-sm-3 col-form-label"
+                          >Collect Amount:</label
+                        >
                         <div class="col-sm-9">
                           <input
                             type="text"

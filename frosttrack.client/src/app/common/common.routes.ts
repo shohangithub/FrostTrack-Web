@@ -3,12 +3,10 @@ import { Page404Component } from '../authentication/page404/page404.component';
 import { ProductCategoryComponent } from './components/product-category/product-category.component';
 import { BaseUnitComponent } from './components/base-unit/base-unit.component';
 import { UnitConversionComponent } from './components/unit-conversion/unit-conversion.component';
-import { SupplierComponent } from './components/supplier/supplier.component';
 import { CustomerComponent } from './components/customer/customer.component';
 import { BranchComponent } from './components/branch/branch.component';
 import { BankComponent } from './components/bank/bank.component';
 import { BankTransactionComponent } from './components/bank-transaction/bank-transaction.component';
-import { DamageComponent } from './components/damage/damage.component';
 import { AssetComponent } from './components/asset/asset.component';
 import { EmployeeComponent } from './components/employee/employee.component';
 import { PaymentMethodComponent } from './components/payment-method/payment-method.component';
@@ -41,10 +39,6 @@ export const COMMON_ROUTE: Route[] = [
   //   path: 'branch',
   //   component: BranchComponent,
   // },
-  // {
-  //   path: 'supplier',
-  //   component: SupplierComponent,
-  // },
   {
     path: 'bank',
     component: BankComponent,
@@ -61,10 +55,6 @@ export const COMMON_ROUTE: Route[] = [
     path: 'payment-method',
     component: PaymentMethodComponent,
   },
-  // {
-  //   path: 'damage',
-  //   component: DamageComponent,
-  // },
   {
     path: 'asset',
     component: AssetComponent,

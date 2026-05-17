@@ -1,0 +1,8 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^\\$content = Get-Content \"D:\\\\Personel\\\\FrostTrack_Web\\\\Application\\\\Services\\\\SalaryPaymentService\\.cs\" -Raw\n\\$lines = \\$content -split \"`n\"\nWrite-Host \"Total lines: \\$\\(\\$lines\\.Count\\)\"\n# Find the end of the new class \\(line 474 is '\\}'\\)\n\\$lines\\[470\\.\\.476\\] \\| ForEach-Object \\{ \\$i = 0 \\} \\{ Write-Host \"\\$\\(\\$i\\+471\\): \\$_\"; \\$i\\+\\+ \\}$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}

@@ -51,19 +51,17 @@ public static class DependencyInjection
         services.AddScoped<IRepository<BaseUnit, int>, Repository<BaseUnit, int>>();
         services.AddScoped<IRepository<UnitConversion, int>, Repository<UnitConversion, int>>();
         services.AddScoped<IRepository<Customer, int>, Repository<Customer, int>>();
-        services.AddScoped<IRepository<Supplier, int>, Repository<Supplier, int>>();
         services.AddScoped<IRepository<Company, int>, Repository<Company, int>>();
         services.AddScoped<IRepository<Product, int>, Repository<Product, int>>();
         services.AddScoped<IRepository<PaymentMethod, int>, Repository<PaymentMethod, int>>();
-        services.AddScoped<IRepository<Purchase, long>, Repository<Purchase, long>>();
-        services.AddScoped<IRepository<SupplierPayment, long>, Repository<SupplierPayment, long>>();
-        services.AddScoped<IRepository<Sales, long>, Repository<Sales, long>>();
-        services.AddScoped<IRepository<SaleReturn, long>, Repository<SaleReturn, long>>();
-        services.AddScoped<IRepository<Damage, int>, Repository<Damage, int>>();
         services.AddScoped<IRepository<Asset, int>, Repository<Asset, int>>();
         services.AddScoped<IRepository<Employee, int>, Repository<Employee, int>>();
         services.AddScoped<IRepository<Booking, Guid>, Repository<Booking, Guid>>();
         services.AddScoped<IRepository<BookingDetail, Guid>, Repository<BookingDetail, Guid>>();
+        services.AddScoped<IRepository<RecurringChargeRun, Guid>, Repository<RecurringChargeRun, Guid>>();
+        services.AddScoped<IRepository<RecurringChargeEntry, Guid>, Repository<RecurringChargeEntry, Guid>>();
+        services.AddScoped<IRepository<BookingCharge, Guid>, Repository<BookingCharge, Guid>>();
+        services.AddScoped<IRepository<BookingPayment, Guid>, Repository<BookingPayment, Guid>>();
         services.AddScoped<IRepository<Delivery, Guid>, Repository<Delivery, Guid>>();
         services.AddScoped<IRepository<DeliveryDetail, Guid>, Repository<DeliveryDetail, Guid>>();
         services.AddScoped<IRepository<DeliveryChallan, Guid>, Repository<DeliveryChallan, Guid>>();
@@ -77,15 +75,8 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        services.AddScoped<IStockRepository, StockRepository>();
-        services.AddScoped<ISalesRepository, SalesRepository>();
-        services.AddScoped<ISaleReturnRepository, SaleReturnRepository>();
-        services.AddScoped<IPurchaseRepository, PurchaseRepository>();
-        services.AddScoped<ISupplierPaymentRepository, SupplierPaymentRepository>();
         services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
         services.AddScoped<IPrintSettingsRepository, PrintSettingsRepository>();
-        services.AddScoped<IPurchaseReportRepository, PurchaseReportRepository>();
-        services.AddScoped<IProductReceiveRepository, ProductReceiveRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
 
         // Register DefaultValueInjector for repositories that need it

@@ -24,6 +24,4 @@ public class Customer : AuditableEntity<int>
     public string Status => IsActive ? "Active" : "Inactive";
 
     public int? BranchId { get; set; }
-
-    public ICollection<Sales> Sales { get; set; } = [];
 }

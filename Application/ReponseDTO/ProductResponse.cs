@@ -32,19 +32,3 @@ public record ProductListResponse(
     DateTime? ArchivedAt
     );
 
-
-public record ProductLisWithStockResponse(
-    int Id,
-    string ProductName,
-    string ProductCode,
-    int CategoryId,
-    string CategoryName,
-    int? DefaultUnitId,
-    string? UnitName,
-    string? ImageUrl,
-    decimal? BookingRate,
-    string Status,
-    double? CurrentStock,
-    decimal? LastPurchaseRate,
-    UnitConversion StockUnit
-    );

@@ -63,6 +63,13 @@ export const BOOKING_ROUTE: Route[] = [
       ),
   },
   {
+    path: 'recurring-charge-management',
+    loadComponent: () =>
+      import('./components/recurring-charge-management/recurring-charge-management.component').then(
+        (m) => m.RecurringChargeManagementComponent,
+      ),
+  },
+  {
     path: 'customer-due-print/:id',
     loadComponent: () =>
       import('./components/customer-due-print/customer-due-print.component').then(

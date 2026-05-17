@@ -12,6 +12,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DeliveryService } from 'app/delivery/services/delivery.service';
+import { BookingService } from 'app/booking/services/booking.service';
+import { ICustomerOutstandingResponse } from 'app/booking/models/booking.interface';
 import {
   IBookingForDeliveryResponse,
   IDeliveryRequest,
@@ -49,6 +51,8 @@ export class DeliveryComponent implements OnInit {
   invoiceId: string = '';
   showInvoice: boolean = false;
   shouldAutoPrint: boolean = false;
+  customerOutstanding: ICustomerOutstandingResponse | null = null;
+  outstandingLoading: boolean = false;
 
   paymentMethods = [
     { value: 'CASH', label: 'Cash' },
@@ -60,6 +64,7 @@ export class DeliveryComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private deliveryService: DeliveryService,
+    private bookingService: BookingService,
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
@@ -154,8 +159,8 @@ export class DeliveryComponent implements OnInit {
           this.bookingData = booking;
           this.populateDeliveryDetails(booking);
 
-          // Fetch booking due amount
-          this.fetchBookingDue(bookingId);
+          // Load full customer due so operators can collect old dues + current charge.
+          this.loadCustomerOutstanding(booking.customerId);
 
           this.isLoading = false;
         },
@@ -166,15 +171,22 @@ export class DeliveryComponent implements OnInit {
       });
   }
 
-  fetchBookingDue(bookingId: string) {
-    this.deliveryService.getBookingDueAmount(bookingId).subscribe({
-      next: (dueAmount) => {
+  loadCustomerOutstanding(customerId: number) {
+    this.outstandingLoading = true;
+    this.customerOutstanding = null;
+
+    this.bookingService.getCustomerOutstanding(customerId).subscribe({
+      next: (outstanding) => {
+        this.customerOutstanding = outstanding;
         this.deliveryForm.patchValue(
-          { totalPreviousPayments: dueAmount },
+          { totalPreviousPayments: outstanding.totalDue },
           { emitEvent: false },
         );
+        this.calculateTotalCharge();
+        this.outstandingLoading = false;
       },
       error: () => {
+        this.outstandingLoading = false;
         this.deliveryForm.patchValue(
           { totalPreviousPayments: 0 },
           { emitEvent: false },
@@ -382,10 +394,12 @@ export class DeliveryComponent implements OnInit {
       { emitEvent: false },
     );
 
-    // Update transaction amount with grand total (charge + labour) if transaction is enabled
+    // Suggest collection amount = previous customer due + this delivery charge.
     if (this.deliveryForm.get('createTransaction')?.value) {
+      const previousDue = this.customerOutstanding?.totalDue ?? 0;
+      const receivableAmount = grandTotal + previousDue;
       this.deliveryForm.patchValue(
-        { transactionAmount: grandTotal > 0 ? grandTotal : 0 },
+        { transactionAmount: receivableAmount > 0 ? receivableAmount : 0 },
         { emitEvent: false },
       );
     }
@@ -751,8 +765,10 @@ export class DeliveryComponent implements OnInit {
                   // Recalculate total charge to ensure sum is correct
                   this.calculateTotalCharge();
 
-                  // Fetch booking due amount
-                  this.fetchBookingDue(delivery.bookingId);
+                  // Load customer-wide outstanding (including prior booking dues).
+                  if (this.bookingData?.customerId) {
+                    this.loadCustomerOutstanding(this.bookingData.customerId);
+                  }
 
                   this.isLoading = false;
                 },

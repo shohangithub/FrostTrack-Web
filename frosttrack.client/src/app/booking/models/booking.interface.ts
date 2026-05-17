@@ -141,11 +141,15 @@ export interface ICustomerDueSummaryResponse {
   customerMobile: string;
   customerAddress: string;
   totalBookings: number;
+  openingBalance: number;
   totalAmount: number;
+  pendingRecurringChargeAmount: number;
   totalPaid: number;
   totalDue: number;
   oldestBookingDate: string;
   daysSinceOldestBooking: number;
+  lastPaymentDate?: string;
+  daysSinceLastPayment: number;
   status: 'normal' | 'warning' | 'danger';
 }
 
@@ -154,12 +158,35 @@ export interface ICustomerDueDetailResponse {
   bookingNumber: string;
   bookingDate: string;
   referenceNumber?: string;
-  totalAmount: number;
+  openingBalance: number;
+  totalAccruedAmount: number;
+  pendingRecurringChargeAmount: number;
+  lastDeliveryDate?: string;
+  totalAmount: number; // alias for totalAccruedAmount (backward-compat)
   totalPaid: number;
   totalDue: number;
   daysSinceBooking: number;
   status: 'normal' | 'warning' | 'danger';
   deliveries: ICustomerDueDeliveryResponse[];
+  recurringChargeEntries: IRecurringChargeEntryResponse[];
+}
+
+export interface IRecurringChargeEntryResponse {
+  id: string;
+  bookingId: string;
+  bookingDetailId: string;
+  productName: string;
+  recurringChargeRunId?: string;
+  source: string; // INITIAL | RUN
+  billPeriodFrom: string;
+  billPeriodTo: string;
+  billType: string;
+  cycles: number;
+  quantity: number;
+  rate: number;
+  amount: number;
+  note?: string;
+  createdAt: string;
 }
 
 export interface ICustomerDueDeliveryResponse {
@@ -173,4 +200,60 @@ export interface ICustomerDueDeliveryResponse {
   paidAmount: number;
   dueAmount: number;
   deliveryDetails: IDeliveryDetailInfoResponse[];
+}
+
+export interface ICustomerOutstandingResponse {
+  customerId: number;
+  customerName: string;
+  customerMobile: string;
+  openingBalance: number;
+  totalAccrued: number;
+  totalPaid: number;
+  totalDue: number;
+  bookings: IBookingOutstandingItem[];
+}
+
+export interface IBookingOutstandingItem {
+  bookingId: string;
+  bookingNumber: string;
+  bookingDate: string;
+  accruedAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+}
+
+export interface IRecurringChargePreviewBooking {
+  bookingId: string;
+  bookingNumber: string;
+  customerName: string;
+  affectedDetailLines: number;
+  totalRecurringChargeAmount: number;
+  oldestLastRecurringChargeDate?: string;
+}
+
+export interface IRecurringChargePreview {
+  asOfDate: string;
+  totalAffectedBookings: number;
+  totalAffectedDetailLines: number;
+  totalRecurringChargeAmount: number;
+  bookings: IRecurringChargePreviewBooking[];
+}
+
+export interface IRecurringChargeRunResponse {
+  id: string;
+  triggeredBy: string;
+  asOfDate: string;
+  status: string;
+  affectedCount: number;
+  totalRecurringChargeAmount: number;
+  notes?: string;
+  runByUserName: string;
+  startedAt: string;
+  completedAt?: string;
+  errorMessage?: string;
+}
+
+export interface IRecurringChargeRunRequest {
+  asOfDate?: string;
+  notes?: string;
 }

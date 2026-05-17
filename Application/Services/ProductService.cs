@@ -128,27 +128,6 @@ public class ProductService : IProductService
         return response;
     }
 
-    public async Task<IEnumerable<ProductLisWithStockResponse>> ListwithStockAsync(CancellationToken cancellationToken = default)
-    {
-        var response = await _repository.Query().Include(x => x.Category).Include(x => x.DefaultUnit).Include(x => x.Stock).ThenInclude(x => x.UnitConversion)
-           .Select(x => new ProductLisWithStockResponse(
-               x.Id,
-               x.ProductName,
-               x.ProductCode,
-               x.CategoryId,
-               x.Category.CategoryName,
-               x.DefaultUnitId,
-               x.DefaultUnit.UnitName,
-               x.ImageUrl,
-               x.BookingRate,
-               x.Status,
-               x.Stock.StockQuantity,
-               x.Stock.LastPurchaseRate,
-               x.Stock.UnitConversion
-               )).ToListAsync(cancellationToken);
-        return response;
-    }
-
     public async Task<PaginationResult<ProductListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
         Expression<Func<Product, bool>>? predicate = x => !x.IsDeleted && !x.IsArchived;

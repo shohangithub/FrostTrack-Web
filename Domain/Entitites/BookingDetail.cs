@@ -22,5 +22,14 @@ public class BookingDetail : AuditableEntity<Guid>
 
     [Column(TypeName = "datetime")]
     public DateTime LastDeliveryDate { get; set; }
+
+    /// <summary>
+    /// Tracks the last date up to which automatic billing recurring charge has been confirmed.
+    /// Updated by the BillingRecurringChargeJob. Used for audit/notification purposes only;
+    /// the actual due amount is always computed dynamically.
+    /// </summary>
+    [Column(TypeName = "datetime")]
+    public DateTime? LastRecurringChargeDate { get; set; }
+
     public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

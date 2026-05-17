@@ -63,3 +63,25 @@ public static class SalesType
        RETAIL = "RETAIL",
        WHOLESALE = "WHOLESALE";
 }
+
+public static class RecurringChargeTriggerTypes
+{
+    public const string Auto = "AUTO";
+    public const string Manual = "MANUAL";
+}
+
+public static class RecurringChargeRunStatuses
+{
+    public const string InProgress = "IN_PROGRESS";
+    public const string Success = "SUCCESS";
+    public const string Failed = "FAILED";
+}
+
+/// <summary>
+/// How a RecurringChargeEntry was created: INITIAL (at booking time) or RUN (from a manual/auto recurring-charge run).
+/// </summary>
+public static class RecurringChargeSources
+{
+    public const string Initial = "INITIAL";
+    public const string Run = "RUN";
+}

@@ -1,15 +1,12 @@
 import { DatePipe, DecimalPipe, CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Configuration } from '@config/configuration';
 import { LayoutService } from '@core/service/layout.service';
 import {
-  DatatableComponent,
-  NgxDatatableModule,
-} from '@swimlane/ngx-datatable';
-import {
   ICustomerDueSummaryResponse,
   ICustomerDueDetailResponse,
+  IRecurringChargeEntryResponse,
 } from 'app/booking/models/booking.interface';
 import { BookingService } from 'app/booking/services/booking.service';
 import { ToastrService } from 'ngx-toastr';
@@ -21,26 +18,17 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './customer-due-list.component.html',
   styleUrls: [],
   standalone: true,
-  imports: [
-    NgxDatatableModule,
-    DatePipe,
-    DecimalPipe,
-    CommonModule,
-    FormsModule,
-  ],
+  imports: [DatePipe, DecimalPipe, CommonModule, FormsModule],
 })
 export class CustomerDueListComponent implements OnInit {
-  @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
-
   data: ICustomerDueSummaryResponse[] = [];
   filteredData: ICustomerDueSummaryResponse[] = [];
   expandedCustomers: Map<number, ICustomerDueDetailResponse[]> = new Map();
+  expandedLoadingSet: Set<number> = new Set();
+  expandedCustomerIds: Set<number> = new Set();
+  expandedRecurringChargeBookingIds: Set<string> = new Set();
   loadingIndicator = true;
-  scrollBarHorizontal = window.innerWidth < 1200;
-  reorderable = true;
-  expanded: any = {};
 
-  // Filters
   selectedStatus: string = 'all';
   searchText: string = '';
   private searchSubject: Subject<string> = new Subject<string>();
@@ -51,35 +39,32 @@ export class CustomerDueListComponent implements OnInit {
     private layoutService: LayoutService,
     private bookingService: BookingService,
   ) {
-    window.onresize = () => {
-      this.scrollBarHorizontal = window.innerWidth < 1200;
-    };
     this.layoutService.loadCurrentRoute();
   }
 
   ngOnInit() {
     this.fetchData();
-
     this.searchSubject
       .pipe(
         debounceTime(Configuration.SEARCH_DEBOUNCE_TIME),
         distinctUntilChanged(),
       )
-      .subscribe(() => {
-        this.applyFilters();
-      });
+      .subscribe(() => this.applyFilters());
   }
 
   fetchData() {
     this.loadingIndicator = true;
+    this.expandedCustomers.clear();
+    this.expandedLoadingSet.clear();
+    this.expandedCustomerIds.clear();
+    this.expandedRecurringChargeBookingIds.clear();
     this.bookingService.getCustomerDueSummary().subscribe({
-      next: (response: ICustomerDueSummaryResponse[]) => {
+      next: (response) => {
         this.data = response;
         this.applyFilters();
         this.loadingIndicator = false;
       },
-      error: (error) => {
-        console.error('Failed to load customer due data:', error);
+      error: () => {
         this.toastr.error('Failed to load customer due data');
         this.loadingIndicator = false;
       },
@@ -88,22 +73,18 @@ export class CustomerDueListComponent implements OnInit {
 
   applyFilters() {
     let filtered = [...this.data];
-
-    // Apply status filter
     if (this.selectedStatus !== 'all') {
       filtered = filtered.filter((item) => item.status === this.selectedStatus);
     }
-
-    // Apply search filter
     if (this.searchText.trim()) {
       const search = this.searchText.toLowerCase();
       filtered = filtered.filter(
         (item) =>
           item.customerName.toLowerCase().includes(search) ||
-          item.customerMobile.toLowerCase().includes(search),
+          item.customerMobile.toLowerCase().includes(search) ||
+          (item.customerAddress || '').toLowerCase().includes(search),
       );
     }
-
     this.filteredData = filtered;
   }
 
@@ -117,31 +98,54 @@ export class CustomerDueListComponent implements OnInit {
     this.applyFilters();
   }
 
-  onDetailToggle(event: any) {
-    const customerId = event.value.customerId;
-
-    if (event.type === 'row' && event.value) {
-      if (!this.expandedCustomers.has(customerId)) {
-        // Load customer due details
-        this.bookingService.getCustomerDueDetail(customerId).subscribe({
-          next: (response: ICustomerDueDetailResponse[]) => {
-            this.expandedCustomers.set(customerId, response);
+  toggleExpand(row: ICustomerDueSummaryResponse) {
+    const id = row.customerId;
+    if (this.expandedCustomerIds.has(id)) {
+      this.expandedCustomerIds.delete(id);
+    } else {
+      this.expandedCustomerIds.add(id);
+      if (!this.expandedCustomers.has(id) && !this.expandedLoadingSet.has(id)) {
+        this.expandedLoadingSet.add(id);
+        this.bookingService.getCustomerDueDetail(id).subscribe({
+          next: (response) => {
+            this.expandedCustomers.set(id, response);
+            this.expandedLoadingSet.delete(id);
           },
-          error: (error) => {
-            console.error('Failed to load customer due details:', error);
+          error: () => {
             this.toastr.error('Failed to load customer due details');
+            this.expandedLoadingSet.delete(id);
           },
         });
       }
     }
   }
 
+  isExpanded(customerId: number): boolean {
+    return this.expandedCustomerIds.has(customerId);
+  }
+
+  isDetailLoading(customerId: number): boolean {
+    return this.expandedLoadingSet.has(customerId);
+  }
+
   getCustomerDetails(customerId: number): ICustomerDueDetailResponse[] {
     return this.expandedCustomers.get(customerId) || [];
   }
 
-  toggleExpandRow(row: any) {
-    this.table.rowDetail.toggleExpandRow(row);
+  toggleRecurringChargeHistory(bookingId: string): void {
+    if (this.expandedRecurringChargeBookingIds.has(bookingId)) {
+      this.expandedRecurringChargeBookingIds.delete(bookingId);
+    } else {
+      this.expandedRecurringChargeBookingIds.add(bookingId);
+    }
+  }
+
+  isRecurringChargeHistoryExpanded(bookingId: string): boolean {
+    return this.expandedRecurringChargeBookingIds.has(bookingId);
+  }
+
+  sumRecurringChargeEntries(entries: IRecurringChargeEntryResponse[]): number {
+    return entries?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
   }
 
   getStatusClass(status: string): string {
@@ -149,7 +153,7 @@ export class CustomerDueListComponent implements OnInit {
       case 'danger':
         return 'badge bg-danger';
       case 'warning':
-        return 'badge bg-warning';
+        return 'badge bg-warning text-dark';
       default:
         return 'badge bg-success';
     }
@@ -158,11 +162,22 @@ export class CustomerDueListComponent implements OnInit {
   getStatusText(status: string): string {
     switch (status) {
       case 'danger':
-        return 'Overdue (30+ days)';
+        return 'Overdue';
       case 'warning':
-        return 'Due Soon (25+ days)';
+        return 'Due Soon';
       default:
-        return 'Normal';
+        return 'Current';
+    }
+  }
+
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'danger':
+        return 'warning';
+      case 'warning':
+        return 'schedule';
+      default:
+        return 'check_circle';
     }
   }
 
@@ -170,17 +185,14 @@ export class CustomerDueListComponent implements OnInit {
     this.router.navigate(['/booking/customer-due-print', customerId]);
   }
 
-  getTotalDeliveryAmount(deliveries: any[]): number {
-    if (!deliveries) return 0;
-    return deliveries.reduce((sum, delivery) => {
-      return (
-        sum +
-        delivery.chargeAmount +
-        delivery.labourCharge +
-        delivery.adjustmentValue -
-        delivery.discountAmount
-      );
-    }, 0);
+  // ── Summary stats ──────────────────────────────────────────────────────────
+
+  getTotalCustomers(): number {
+    return this.filteredData.length;
+  }
+
+  getTotalOverdue(): number {
+    return this.filteredData.filter((x) => x.status === 'danger').length;
   }
 
   getTotalAmount(): number {
@@ -193,5 +205,63 @@ export class CustomerDueListComponent implements OnInit {
 
   getTotalDue(): number {
     return this.filteredData.reduce((sum, item) => sum + item.totalDue, 0);
+  }
+
+  getTotalPendingRecurringCharge(): number {
+    return this.filteredData.reduce(
+      (sum, item) => sum + (item.pendingRecurringChargeAmount ?? 0),
+      0,
+    );
+  }
+
+  // ── Export CSV ────────────────────────────────────────────────────────────
+
+  exportCsv() {
+    const headers = [
+      'Customer Name',
+      'Mobile',
+      'Address',
+      'Bookings',
+      'Opening Balance',
+      'Total Billed',
+      'Total Paid',
+      'Outstanding Due',
+      'Pending Recurring Charge',
+      'Last Payment Date',
+      'Days Since Last Payment',
+      'Status',
+      'Oldest Booking',
+      'Days Since Oldest Booking',
+    ];
+    const rows = this.filteredData.map((r) => [
+      r.customerName,
+      r.customerMobile,
+      r.customerAddress,
+      r.totalBookings,
+      r.openingBalance.toFixed(2),
+      r.totalAmount.toFixed(2),
+      r.totalPaid.toFixed(2),
+      r.totalDue.toFixed(2),
+      (r.pendingRecurringChargeAmount ?? 0).toFixed(2),
+      r.lastPaymentDate ? r.lastPaymentDate.substring(0, 10) : 'No Payments',
+      r.daysSinceLastPayment,
+      this.getStatusText(r.status),
+      r.oldestBookingDate ? r.oldestBookingDate.substring(0, 10) : '',
+      r.daysSinceOldestBooking,
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((row) =>
+        row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','),
+      )
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customer-due-${new Date().toISOString().substring(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

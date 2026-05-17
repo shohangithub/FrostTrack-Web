@@ -30,10 +30,6 @@ public class Transaction : AuditableEntity<Guid>
     // Note: No navigation property to avoid circular reference with Delivery.TransactionId
     public Guid? DeliveryId { get; set; }
 
-    // Supplier tracking (typed FK — for supplier-related transactions)
-    public int? SupplierId { get; set; }
-    public Supplier? Supplier { get; set; }
-
     // Financial fields
     [Column(TypeName = "decimal(10, 2)")]
     public required decimal Amount { get; set; }

@@ -20,7 +20,4 @@ public class Product : AuditableEntity<int>
 
     public int? BranchId { get; set; }
 
-    public ICollection<PurchaseDetail> PurchaseDetails { get; set; } = [];
-    public ICollection<SalesDetail> SalesDetails { get; set; } = [];
-    public Stock? Stock { get; set; }
 }
