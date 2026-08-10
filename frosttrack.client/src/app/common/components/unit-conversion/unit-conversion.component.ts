@@ -204,7 +204,7 @@ export class UnitConversionComponent implements OnInit {
       },
       error: (err: ErrorResponse) => {
         this.loadingIndicator = false;
-        var errString = formatErrorMessage(err);
+        const errString = formatErrorMessage(err);
         this.toastr.error(errString);
       },
     });

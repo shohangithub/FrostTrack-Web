@@ -24,16 +24,16 @@ export class DecimaNumberDirective {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    let current: string = this.el.nativeElement.value;
+    const current: string = this.el.nativeElement.value;
     const position = this.el.nativeElement.selectionStart;
-    let currentValue = changes['control'].currentValue;
+    const currentValue = changes['control'].currentValue;
     if (currentValue) {
       if (!String(currentValue).match(this.regex))
         if (isNaN(parseFloat(currentValue))) {
           this.el.nativeElement.value = 0;
           this.el.nativeElement.dispatchEvent(new Event("change"));
         }
-      let arr = String(currentValue).match(this.acceptanceRegex);
+      const arr = String(currentValue).match(this.acceptanceRegex);
       if (arr && arr.length > 0) {
         this.el.nativeElement.value = arr[0];
         this.el.nativeElement.dispatchEvent(new Event("change"));
@@ -52,7 +52,7 @@ export class DecimaNumberDirective {
     if (this.specialKeys.indexOf(event.key) !== -1) {
       return;
     }
-    let current: string = this.el.nativeElement.value;
+    const current: string = this.el.nativeElement.value;
     const position = this.el.nativeElement.selectionStart;
     const next: string = [current.slice(0, position), event.key == 'Decimal' ? '.' : event.key, current.slice(position)].join('');
     if (next && !String(next).match(this.regex)) {

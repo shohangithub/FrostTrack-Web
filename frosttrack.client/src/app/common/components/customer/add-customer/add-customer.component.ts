@@ -182,7 +182,7 @@ export class AddCustomerComponent implements OnInit {
       },
       error: (err: ErrorResponse) => {
         this.isGeneratingCode = false;
-        var errString = formatErrorMessage(err);
+        const errString = formatErrorMessage(err);
         this.toastr.error(errString);
       },
     });

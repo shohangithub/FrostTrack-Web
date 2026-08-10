@@ -6,7 +6,7 @@ export const getApiEndpoint = (params: any, api: string) => {
 const createApiEndpoint = (api: string, paramsDictionary: any) => {
   let apiEndpoint = api;
   let isSetOption = false;
-  for (let key in paramsDictionary) {
+  for (const key in paramsDictionary) {
     if (!isSetOption) {
       apiEndpoint = apiEndpoint + '?';
       isSetOption = true;
@@ -18,8 +18,8 @@ const createApiEndpoint = (api: string, paramsDictionary: any) => {
 };
 
 const checkParams = (params: any) => {
-  let paramsDictionary: any = {};
-  for (let item in params) {
+  const paramsDictionary: any = {};
+  for (const item in params) {
     if (params[item] != undefined && params[item] !== '') {
       paramsDictionary[item] = params[item];
     }

@@ -32,7 +32,15 @@
           }
         ],
         "@typescript-eslint/no-explicit-any": ["off"],
-        "@typescript-eslint/no-use-before-define": "warn"
+        "@typescript-eslint/no-use-before-define": "warn",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/ban-types": "warn",
+        "@angular-eslint/no-empty-lifecycle-method": "off",
+        "@angular-eslint/component-selector": "off",
+        "@angular-eslint/directive-selector": "off",
+        "prefer-const": "warn",
+        "@typescript-eslint/no-this-alias": "off",
+        "no-debugger": "warn"
       }
     },
     {
