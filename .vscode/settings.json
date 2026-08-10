@@ -4,5 +4,7 @@
       "approve": true,
       "matchCommandLine": true
     }
-  }
+  },
+  "github.copilot.customizations.enabled": true,
+  "github.copilot.customizations.file": "./copilot-instructions.md"
 }
