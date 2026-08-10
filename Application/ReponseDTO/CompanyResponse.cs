@@ -8,6 +8,7 @@ public record CompanyResponse(
     string CurrencySymbol,
     string Description,
     bool AutoInvoicePrint,
+    bool AutoGenerateBookingNo,
     string InvoiceHeader,
     string InvoiceFooter,
     bool IsSingleBranch,
@@ -23,6 +24,7 @@ public record CompanyListResponse(
     string CurrencySymbol,
     int CodeGeneration,
     string CodeGenerationName,
+    bool AutoGenerateBookingNo,
     bool IsActive,
     string Status
 );

@@ -5,6 +5,7 @@ export interface ICompanyListResponse {
   currencySymbol: string;
   codeGeneration: number;
   codeGenerationName: string;
+  autoGenerateBookingNo: boolean;
   isActive: boolean;
   status: string;
 }
@@ -17,6 +18,7 @@ export interface ICompanyResponse {
   currencySymbol: string;
   description: string;
   autoInvoicePrint: boolean;
+  autoGenerateBookingNo: boolean;
   invoiceHeader: string;
   invoiceFooter: string;
   isSingleBranch: boolean;
@@ -32,6 +34,7 @@ export interface ICompanyRequest {
   currencySymbol?: string;
   description?: string;
   autoInvoicePrint: boolean;
+  autoGenerateBookingNo: boolean;
   invoiceHeader?: string;
   invoiceFooter?: string;
   isSingleBranch: boolean;

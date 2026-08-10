@@ -1,4 +1,4 @@
-﻿namespace Application.RequestDTO;
+namespace Application.RequestDTO;
 
 public record BranchRequest(
     string Name,
@@ -8,6 +8,7 @@ public record BranchRequest(
     string Phone,
     string Address,
     bool AutoInvoicePrint,
+    bool AutoGenerateBookingNo,
     string? InvoiceHeader,
     string? InvoiceFooter,
     bool IsMainBranch,

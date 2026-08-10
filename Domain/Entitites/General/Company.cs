@@ -1,4 +1,4 @@
-﻿namespace Domain.Entitites;
+namespace Domain.Entitites;
 
 [Table("Companies")]
 public class Company : BaseEntity<int>
@@ -9,6 +9,7 @@ public class Company : BaseEntity<int>
     public string CurrencySymbol { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool AutoInvoicePrint { get; set; } = true;
+    public bool AutoGenerateBookingNo { get; set; } = false;
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsSingleBranch { get; set; }

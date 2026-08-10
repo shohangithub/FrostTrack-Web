@@ -1,4 +1,4 @@
-﻿namespace Application.ReponseDTO;
+namespace Application.ReponseDTO;
 public record BranchResponse(
     int Id,
     string Name,
@@ -8,6 +8,7 @@ public record BranchResponse(
     string Phone,
     string Address,
     bool AutoInvoicePrint,
+    bool AutoGenerateBookingNo,
     string? InvoiceHeader,
     string? InvoiceFooter,
     bool IsMainBranch,
@@ -23,6 +24,7 @@ public record BranchListResponse(
     string Phone,
     string Address,
     bool AutoInvoicePrint,
+    bool AutoGenerateBookingNo,
     string? InvoiceHeader,
     string? InvoiceFooter,
     bool IsMainBranch,

@@ -648,8 +648,7 @@
 
                                     <!-- ── Recurring Charge History ── -->
                                     @if (
-                                      (booking.recurringChargeEntries.length ??
-                                        0) > 0
+                                      booking.recurringChargeEntries.length > 0
                                     ) {
                                       <div class="card-footer p-0 border-top">
                                         <button

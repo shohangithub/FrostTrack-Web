@@ -107,6 +107,7 @@ public class BranchService : IBranchService
                .SetProperty(cmd => cmd.Name, branch.Name)
                .SetProperty(cmd => cmd.Address, branch.Address)
                .SetProperty(cmd => cmd.AutoInvoicePrint, branch.AutoInvoicePrint)
+               .SetProperty(cmd => cmd.AutoGenerateBookingNo, branch.AutoGenerateBookingNo)
                .SetProperty(cmd => cmd.InvoiceHeader, branch.InvoiceHeader)
                .SetProperty(cmd => cmd.InvoiceFooter, branch.InvoiceFooter)
                .SetProperty(cmd => cmd.IsMainBranch, branch.IsMainBranch)
@@ -129,6 +130,7 @@ public class BranchService : IBranchService
                x.Phone,
                x.Address,
                x.AutoInvoicePrint,
+               x.AutoGenerateBookingNo,
                x.InvoiceHeader,
                x.InvoiceFooter,
                x.IsMainBranch,
@@ -159,6 +161,7 @@ public class BranchService : IBranchService
                x.Phone,
                x.Address,
                x.AutoInvoicePrint,
+               x.AutoGenerateBookingNo,
                x.InvoiceHeader,
                x.InvoiceFooter,
                x.IsMainBranch,

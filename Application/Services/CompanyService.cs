@@ -38,6 +38,7 @@ public class CompanyService : ICompanyService
             x.CurrencySymbol,
             (int)x.CodeGeneration,
             x.CodeGeneration.ToString(),
+            x.AutoGenerateBookingNo,
             x.IsActive,
             x.Status
         ));
@@ -56,6 +57,7 @@ public class CompanyService : ICompanyService
             result.CurrencySymbol,
             result.Description,
             result.AutoInvoicePrint,
+            result.AutoGenerateBookingNo,
             result.InvoiceHeader,
             result.InvoiceFooter,
             result.IsSingleBranch,
@@ -75,6 +77,7 @@ public class CompanyService : ICompanyService
             CurrencySymbol = request.CurrencySymbol ?? string.Empty,
             Description = request.Description ?? string.Empty,
             AutoInvoicePrint = request.AutoInvoicePrint,
+            AutoGenerateBookingNo = request.AutoGenerateBookingNo,
             InvoiceHeader = request.InvoiceHeader ?? string.Empty,
             InvoiceFooter = request.InvoiceFooter ?? string.Empty,
             IsSingleBranch = request.IsSingleBranch,
@@ -96,6 +99,7 @@ public class CompanyService : ICompanyService
             entity.CurrencySymbol,
             entity.Description,
             entity.AutoInvoicePrint,
+            entity.AutoGenerateBookingNo,
             entity.InvoiceHeader,
             entity.InvoiceFooter,
             entity.IsSingleBranch,
@@ -117,6 +121,7 @@ public class CompanyService : ICompanyService
         existingData.CurrencySymbol = request.CurrencySymbol ?? string.Empty;
         existingData.Description = request.Description ?? string.Empty;
         existingData.AutoInvoicePrint = request.AutoInvoicePrint;
+        existingData.AutoGenerateBookingNo = request.AutoGenerateBookingNo;
         existingData.InvoiceHeader = request.InvoiceHeader ?? string.Empty;
         existingData.InvoiceFooter = request.InvoiceFooter ?? string.Empty;
         existingData.IsSingleBranch = request.IsSingleBranch;
@@ -136,6 +141,7 @@ public class CompanyService : ICompanyService
             result.CurrencySymbol,
             result.Description,
             result.AutoInvoicePrint,
+            result.AutoGenerateBookingNo,
             result.InvoiceHeader,
             result.InvoiceFooter,
             result.IsSingleBranch,
@@ -184,6 +190,7 @@ public class CompanyService : ICompanyService
             x.CurrencySymbol,
             (int)x.CodeGeneration,
             x.CodeGeneration.ToString(),
+            x.AutoGenerateBookingNo,
             x.IsActive,
             x.Status
         ));
@@ -198,6 +205,7 @@ public class CompanyService : ICompanyService
                 x.CurrencySymbol,
                 (int)x.CodeGeneration,
                 x.CodeGeneration.ToString(),
+                x.AutoGenerateBookingNo,
                 x.IsActive,
                 x.Status
             ))

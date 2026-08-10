@@ -7,6 +7,7 @@ public record CompanyRequest(
     string? CurrencySymbol,
     string? Description,
     bool AutoInvoicePrint,
+    bool AutoGenerateBookingNo,
     string? InvoiceHeader,
     string? InvoiceFooter,
     bool IsSingleBranch,

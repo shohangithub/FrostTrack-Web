@@ -7,6 +7,7 @@ export interface IBranchListResponse {
   phone: string;
   address: string;
   autoInvoicePrint: boolean;
+  autoGenerateBookingNo: boolean;
   invoiceHeader?: string;
   invoiceFooter?: string;
   isMainBranch: boolean;
@@ -22,6 +23,7 @@ export interface IBranchResponse {
   phone: string;
   address: string;
   autoInvoicePrint: boolean;
+  autoGenerateBookingNo: boolean;
   invoiceHeader?: string;
   invoiceFooter?: string;
   isMainBranch: boolean;
@@ -37,6 +39,7 @@ export interface IBranchRequest {
   phone: string;
   address: string;
   autoInvoicePrint: boolean;
+  autoGenerateBookingNo: boolean;
   invoiceHeader?: string;
   invoiceFooter?: string;
   isMainBranch: boolean;

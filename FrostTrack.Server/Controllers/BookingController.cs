@@ -18,6 +18,13 @@ public class BookingController : ControllerBase
         return await _bookingService.ListAsync(cancellationToken);
     }
 
+    [HttpGet("generate-code")]
+    public async Task<IActionResult> GenerateCode(CancellationToken cancellationToken)
+    {
+        var code = await _bookingService.GenerateBookingNumber(cancellationToken);
+        return Ok(new Application.ReponseDTO.CodeResponse { Code = code });
+    }
+
     [HttpGet]
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<Guid>>> GetLookup(CancellationToken cancellationToken)

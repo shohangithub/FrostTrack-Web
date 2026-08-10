@@ -1,4 +1,4 @@
-﻿namespace Domain.Entitites;
+namespace Domain.Entitites;
 
 [Table("Branches")]
 public class Branch : BaseEntity<int>
@@ -12,6 +12,7 @@ public class Branch : BaseEntity<int>
     public string Phone { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public bool AutoInvoicePrint { get; set; } = true;
+    public bool AutoGenerateBookingNo { get; set; } = false;
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsMainBranch { get; set; }

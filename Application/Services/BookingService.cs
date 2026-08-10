@@ -886,4 +886,3 @@ public class BookingService : IBookingService
         return booking.BookingDetails.Sum(bd => ((decimal)bd.BookingQuantity * bd.BookingRate) + bd.LabourCharge);
     }
 }
-

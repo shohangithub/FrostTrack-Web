@@ -62,12 +62,22 @@
                           id="referenceNumber"
                           formControlName="referenceNumber"
                         /> -->
-                        <input
-                          type="text"
-                          class="form-control form-control-sm"
-                          id="bookingNumber"
-                          formControlName="bookingNumber"
-                        />
+                        <div class="input-group">
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            id="bookingNumber"
+                            formControlName="bookingNumber"
+                            [readonly]="isAutoGenerate"
+                          />
+                          @if(isGeneratingCode) {
+                            <div class="input-group-append">
+                              <span class="input-group-text input-group-text-append">
+                                <i class="fas fa-spinner fa-spin"></i>
+                              </span>
+                            </div>
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>

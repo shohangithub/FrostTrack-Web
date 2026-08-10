@@ -29,6 +29,7 @@ import { ILookup } from '@core/models/lookup';
 import { ProductService } from 'app/administration/services/product.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CustomerService } from 'app/common/services/customer.service';
+import { CompanyService } from 'app/system/services/company.service';
 import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { IProductListResponse } from 'app/administration/models/product.interface';
 import { AuthService } from '@core/service/auth.service';
@@ -88,6 +89,7 @@ export class BookingComponent implements OnInit {
   customerLoading = false;
   productUnits: ILookup<number>[] = [];
   productUnitLoading = false;
+  isAutoGenerate = false;
   billTypes = BILL_TYPES;
 
   private editableProductId?: number;
@@ -117,6 +119,7 @@ export class BookingComponent implements OnInit {
     private authService: AuthService,
     private layoutService: LayoutService,
     private unitConversionService: UnitConversionService,
+    private companyService: CompanyService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -126,6 +129,7 @@ export class BookingComponent implements OnInit {
 
   ngOnInit() {
     this.getUserBranch();
+    this.fetchBranchConfig();
     this.initFormData();
     this.fetchBranchLookup();
     this.fetchProductLookup();
@@ -162,6 +166,29 @@ export class BookingComponent implements OnInit {
 
   getUserBranch() {
     this.selectedBranch = this.authService.currentBranchId;
+  }
+
+  fetchBranchConfig() {
+    this.companyService.getList().subscribe({
+      next: (companies) => {
+        const companyAuto = companies.length > 0 ? companies[0].autoGenerateBookingNo : false;
+        
+        this.branchService.getById(this.selectedBranch).subscribe({
+          next: (res) => {
+            this.isAutoGenerate = companyAuto || res.autoGenerateBookingNo;
+            if (this.isAutoGenerate && !this.isEditing) {
+              this.generateCode();
+            }
+          },
+          error: () => {
+            this.toastr.error('Failed to load branch configuration');
+          }
+        });
+      },
+      error: () => {
+        this.toastr.error('Failed to load company configuration');
+      }
+    });
   }
 
   initFormData() {

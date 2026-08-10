@@ -44,6 +44,10 @@ export class BookingService extends BaseService {
     return this.post<IBookingResponse>(this.path, payload);
   }
 
+  generateBookingNumber(): Observable<CodeResponse> {
+    return this.get<CodeResponse>(this.path + '/generate-code');
+  }
+
   update(id: string, payload: IBookingRequest): Observable<IBookingResponse> {
     return this.put<IBookingResponse>(this.path + '/' + id, payload);
   }
@@ -76,9 +80,7 @@ export class BookingService extends BaseService {
     return this.get<ILookup<string>[]>(this.path + `/lookup`);
   }
 
-  generateBookingNumber(): Observable<CodeResponse> {
-    return this.get<CodeResponse>(this.path + '/generate-booking-number');
-  }
+
 
   getInvoiceWithDelivery(id: string): Observable<any> {
     return this.get<any>(this.path + `/invoice-with-delivery/${id}`);
