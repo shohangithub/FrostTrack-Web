@@ -1,4 +1,3 @@
-﻿using System.ComponentModel;
 using System.ComponentModel;
 
 namespace Domain.Enums;
@@ -44,8 +43,8 @@ public static class BankTransactionTypes
 
 public enum ECustomerType
 {
-    Retail = 1,
-    Wholesale
+    Regular = 1,
+    Corporate
 }
 
 [DefaultValue(ECodeGeneration.Auto)]
@@ -57,12 +56,7 @@ public enum ECodeGeneration
     Branch = 3      // Branch-level sequential
 }
 
-public static class SalesType
-{
-    public const string
-       RETAIL = "RETAIL",
-       WHOLESALE = "WHOLESALE";
-}
+
 
 public static class RecurringChargeTriggerTypes
 {

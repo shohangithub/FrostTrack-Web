@@ -2,6 +2,7 @@ using Application.Contractors;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
+using Application.Services.Common;
 
 namespace Application.Services
 {
@@ -9,12 +10,16 @@ namespace Application.Services
     {
         private readonly IRepository<Transaction, Guid> _transactionRepository;
         private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+        private readonly IBalanceCalculatorService _balanceCalculatorService;
+
         public CashBookService(
             IRepository<Transaction, Guid> transactionRepository,
-            IRepository<BankTransaction, long> bankTransactionRepository)
+            IRepository<BankTransaction, long> bankTransactionRepository,
+            IBalanceCalculatorService balanceCalculatorService)
         {
             _transactionRepository = transactionRepository;
             _bankTransactionRepository = bankTransactionRepository;
+            _balanceCalculatorService = balanceCalculatorService;
         }
 
         public async Task<CashBookResponse> GetCashBookAsync(DateTime reportDate, CancellationToken cancellationToken = default)
@@ -32,48 +37,7 @@ namespace Application.Services
             var dateWithUTCTime = reportDate.GetDateUtcTime();
             var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-
-            var lastOpeningBalance = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t =>
-                    t.PaymentMethod == PaymentMethods.CASH &&
-                    !t.IsDeleted &&
-                    !t.IsArchived &&
-                    t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
-                     && t.TransactionDate < toDate
-                    )
-                .OrderByDescending(t => t.TransactionDate)
-                .Select(t => new
-                {
-                    t.TransactionDate,
-                    t.NetAmount
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-
-            var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
-
-            var previousCashAmount = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t =>
-                    t.PaymentMethod == PaymentMethods.CASH &&
-                    !t.IsDeleted &&
-                    !t.IsArchived &&
-                    t.TransactionDate >= openingDate &&
-                    t.TransactionDate < fromUtc &&
-                    t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-                .SumAsync(t => t.NetAmount, cancellationToken);
-
-            // Calculate opening balance from bank
-            var previousBankAmount = await _bankTransactionRepository.Query()
-                .Where(bt =>
-                    bt.IsActive &&
-                    bt.TransactionDate >= openingDate &&
-                    bt.TransactionDate < fromUtc)
-                .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
-
-            var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
-            // var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousAmount;
+            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
 
             // Get cash transactions for the report date
             var transactions = await _transactionRepository.Query()
@@ -106,11 +70,11 @@ namespace Application.Services
 
             foreach (var group in groupedTransactions)
             {
-                var isCredit = group.TransactionType == TransactionHeadTypes.CREDIT;
-                var debitAmount = !isCredit ? group.TotalAmount : 0;
-                var creditAmount = isCredit ? group.TotalAmount : 0;
+                var isMoneyIn = group.TransactionType == TransactionHeadTypes.CREDIT;
+                var debitAmount = isMoneyIn ? group.TotalAmount : 0; // Money IN = Debit
+                var creditAmount = !isMoneyIn ? group.TotalAmount : 0; // Money OUT = Credit
 
-                runningBalance += creditAmount + debitAmount;
+                runningBalance += debitAmount - creditAmount;
 
                 items.Add(new CashBookItemResponse
                 {
@@ -118,7 +82,7 @@ namespace Application.Services
                     TransactionHeadName = group.TransactionHeadName,
                     TransactionType = group.TransactionType,
                     TransactionCount = group.Count,
-                    DebitAmount = (-1) * debitAmount,
+                    DebitAmount = debitAmount,
                     CreditAmount = creditAmount,
                     Balance = runningBalance
                 });
@@ -133,16 +97,16 @@ namespace Application.Services
                 {
                     TransactionType = g.Key,
                     Count = g.Count(),
-                    TotalAmount = g.Sum(bt => g.Key == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount)
-                })
-                .ToListAsync(cancellationToken);
-            foreach (var bankGroup in bankTransactions)
-            {
-                var isCredit = bankGroup.TransactionType == BankTransactionTypes.Withdraw;
-                var debitAmount = isCredit ? 0 : bankGroup.TotalAmount;
-                var creditAmount = isCredit ? bankGroup.TotalAmount : 0;
+                TotalAmount = g.Sum(bt => bt.Amount)
+            })
+            .ToListAsync(cancellationToken);
+        foreach (var bankGroup in bankTransactions)
+        {
+            var isDeposit = bankGroup.TransactionType == BankTransactionTypes.Deposit;
+            var debitAmount2 = isDeposit ? bankGroup.TotalAmount : 0; // Money IN = Debit
+            var creditAmount2 = !isDeposit ? bankGroup.TotalAmount : 0; // Money OUT = Credit
 
-                runningBalance += creditAmount + debitAmount;
+            runningBalance += debitAmount2 - creditAmount2;
 
                 items.Add(new CashBookItemResponse
                 {
@@ -150,8 +114,8 @@ namespace Application.Services
                     TransactionHeadName = $"Bank Transaction - {bankGroup.TransactionType}",
                     TransactionType = bankGroup.TransactionType.ToString(),
                     TransactionCount = bankGroup.Count,
-                    DebitAmount = -1 * debitAmount,
-                    CreditAmount = creditAmount,
+                    DebitAmount = debitAmount2,
+                    CreditAmount = creditAmount2,
                     Balance = runningBalance
                 });
             }
@@ -159,7 +123,7 @@ namespace Application.Services
 
             var totalDebit = items.Sum(i => i.DebitAmount);
             var totalCredit = items.Sum(i => i.CreditAmount);
-            var closingBalance = openingBalance + totalCredit - totalDebit;
+            var closingBalance = openingBalance + totalDebit - totalCredit;
 
             return new CashBookResponse
             {

@@ -28,5 +28,5 @@ public class Bank : AuditableEntity<int>
     public int? BranchId { get; set; }
 
     // Navigation properties for future financial transactions
-    // public ICollection<BankTransaction> BankTransactions { get; set; } = [];
+    public ICollection<BankTransaction> BankTransactions { get; set; } = [];
 }

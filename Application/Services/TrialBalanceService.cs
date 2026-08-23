@@ -1,18 +1,25 @@
+using Domain.Entitites;
+using Microsoft.EntityFrameworkCore;
+using Application.Services.Common;
+
 namespace Application.Services;
 
 public class TrialBalanceService : ITrialBalanceService
 {
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IBalanceCalculatorService _balanceCalculatorService;
     private readonly Guid _tenantId;
 
     public TrialBalanceService(
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
+        IBalanceCalculatorService balanceCalculatorService,
         ITenantProvider tenantProvider)
     {
         _transactionRepository = transactionRepository;
         _bankTransactionRepository = bankTransactionRepository;
+        _balanceCalculatorService = balanceCalculatorService;
         _tenantId = tenantProvider.GetTenantId();
     }
 
@@ -32,43 +39,7 @@ public class TrialBalanceService : ITrialBalanceService
         var dateWithUTCTime = reportDate.GetDateUtcTime();
         var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-        var lastOpeningBalance = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                t.TenantId == _tenantId &&
-                !t.IsArchived &&
-                t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
-                 && t.TransactionDate < toDate
-                )
-            .OrderByDescending(t => t.TransactionDate)
-            .Select(t => new
-            {
-                t.TransactionDate,
-                t.NetAmount
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
-
-        var previousCashAmount = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                t.TenantId == _tenantId &&
-                !t.IsArchived &&
-                t.TransactionDate >= openingDate &&
-                t.TransactionDate < fromUtc &&
-                t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-            .SumAsync(t => t.NetAmount, cancellationToken);
-
-        // Calculate opening balance from bank
-        var previousBankAmount = await _bankTransactionRepository.Query()
-            .Where(bt =>
-                bt.IsActive &&
-                bt.TransactionDate >= openingDate &&
-                bt.TransactionDate < fromUtc)
-            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
-
-        var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
+        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
 
         // Fetch cash transactions for the report date
         var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
@@ -95,9 +66,9 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
-                DebitAmount = (-1) * g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT) // Money IN = Debit
                               .Sum(t => t.NetAmount),
-                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT) // Money OUT = Credit
                                .Sum(t => t.NetAmount),
                 TransactionCount = g.Count(),
                 Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
@@ -114,14 +85,15 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = $"{g.Key.BankName} - {g.Key.TransactionType}",
                 AccountType = "Bank Transaction",
+                // Bank Deposit = money IN (DEBIT side); Withdrawal = money OUT (CREDIT side)
                 DebitAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
                               .Sum(bt => bt.Amount),
                 CreditAmount = g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
                                .Sum(bt => bt.Amount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
+                Balance = g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
                            .Sum(bt => bt.Amount) -
-                          g.Where(bt => bt.TransactionType == BankTransactionTypes.Deposit)
+                          g.Where(bt => bt.TransactionType == BankTransactionTypes.Withdraw)
                            .Sum(bt => bt.Amount)
             })
             .ToList();

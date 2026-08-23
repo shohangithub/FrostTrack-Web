@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Application.Contractors.Authentication;
@@ -54,195 +54,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
     public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
     public DbSet<RecurringChargeEntry> RecurringChargeEntries { get; set; }
-    public DbSet<BookingCharge> BookingCharges { get; set; }
-    public DbSet<BookingPayment> BookingPayments { get; set; }
+
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
-
-    // protected override void OnModelCreating(ModelBuilder modelBuilder)
-    // {
-    //     //builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-    //     //base.OnModelCreating(builder);
-
-    //     // Global fix for all audit field cascade conflicts - SIMPLE & EFFECTIVE
-    //     //modelBuilder.Entity<Product>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Product>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<ProductCategory>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<ProductCategory>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<BaseUnit>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<BaseUnit>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<UnitConversion>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<UnitConversion>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Purchase>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Purchase>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<PurchaseDetail>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<PurchaseDetail>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Sales>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Sales>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<SalesDetail>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<SalesDetail>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Stock>().HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.NoAction);
-    //     //modelBuilder.Entity<Stock>().HasOne<User>().WithMany().HasForeignKey(x => x.LastUpdatedById).OnDelete(DeleteBehavior.NoAction);
-
-
-
-
-
-    //     //modelBuilder.Entity<User>(entity =>
-    //     //{
-    //     //    entity.HasIndex(x => x.TenantId);
-    //     //    if (_tenantId != Guid.Empty)
-    //     //        entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-
-    //     //    // entity.HasMany(x => x.ProductsCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.ProductsUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.BaseUnitsCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.BaseUnitsUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.UnitConversionsCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.UnitConversionsUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-
-    //     //    // entity.HasMany(x => x.ProductCategoriesCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.ProductCategoriesUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.PurchasesCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.PurchasesUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.PurchaseDetailsCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.PurchaseDetailsUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.SalesCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.SalesUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.SalesDetailsCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.SalesDetailsUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //    // entity.HasMany(x => x.StocksCreated).WithOne(x => x.CreatedBy).HasForeignKey(x => x.CreatedById).IsRequired().OnDelete(DeleteBehavior.Restrict);
-    //     //    // entity.HasMany(x => x.StocksUpdated).WithOne(x => x.LastUpdatedBy).HasForeignKey(x => x.LastUpdatedById).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     //});
-
-    //     modelBuilder.Entity<BaseUnit>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-    //     });
-
-    //     modelBuilder.Entity<ProductCategory>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-
-
-    //         entity.HasMany(x => x.Products).WithOne(x => x.Category).HasForeignKey(x => x.CategoryId).IsRequired().OnDelete(DeleteBehavior.Restrict);
-
-    //     });
-
-    //     modelBuilder.Entity<Product>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<Purchase>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<PurchaseDetail>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<Sales>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<SalesDetail>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<Stock>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<Company>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         entity.HasQueryFilter(x => x.TenantId == _tenantId);
-    //     });
-
-
-
-    //     modelBuilder.Entity<SaleReturn>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-    //     modelBuilder.Entity<SaleReturnDetail>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //     });
-
-
-
-
-    //     modelBuilder.Entity<Branch>(entity =>
-    //     {
-    //         entity.HasIndex(x => x.TenantId);
-    //         if (_tenantId != Guid.Empty)
-    //             entity.HasQueryFilter(x => x.TenantId == _tenantId);
-
-    //         entity.HasMany(x => x.Purchases).WithOne(x => x.Branch).HasForeignKey(x => x.BranchId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-    //         entity.HasMany(x => x.Sales).WithOne(x => x.Branch).HasForeignKey(x => x.BranchId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
-
-    //     });
-    //     //    modelBuilder.Entity<User>().HasMany(e => e.Products).WithOne(x => x.CreatedBy).HasForeignKey("UserId").IsRequired(true);
-
-
-
-    //     //modelBuilder.Entity<AuditEntry>();
-
-    //     //modelBuilder.Entity<Product>(e =>
-    //     //{
-    //     //    e.Property(b => b.Purchase_Rate).HasColumnType("decimal(10, 2)");
-    //     //    e.Property(b => b.Purchase_Rate).HasColumnType("decimal(10, 2)");
-    //     //});
-
-    // }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -312,7 +126,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         modelBuilder.Entity<Company>(entity =>
         {
             entity.HasIndex(x => x.TenantId);
-            entity.HasQueryFilter(x => x.TenantId == _tenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });
 
         modelBuilder.Entity<Branch>(entity =>
@@ -404,6 +219,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         {
             entity.HasIndex(x => x.TenantId);
             entity.HasIndex(x => x.StartedAt);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+
+
+        modelBuilder.Entity<RecurringChargeEntry>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });

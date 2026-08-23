@@ -2,17 +2,21 @@ using Application.Contractors;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
+using Application.Services.Common;
 
 namespace Application.Services
 {
     public class LedgerBookService : ILedgerBookService
     {
         private readonly IRepository<Transaction, Guid> _transactionRepository;
+        private readonly IBalanceCalculatorService _balanceCalculatorService;
 
         public LedgerBookService(
-            IRepository<Transaction, Guid> transactionRepository)
+            IRepository<Transaction, Guid> transactionRepository,
+            IBalanceCalculatorService balanceCalculatorService)
         {
             _transactionRepository = transactionRepository;
+            _balanceCalculatorService = balanceCalculatorService;
         }
 
         public async Task<LedgerBookResponse> GetGeneralLedgerAsync(DateTime reportDate, CancellationToken cancellationToken = default)
@@ -27,36 +31,10 @@ namespace Application.Services
                 .ToUniversalTime();
 
             var dateWithUTCTime = reportDate.GetDateUtcTime();
+            var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-            var lastOpeningBalance = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t =>
-                    !t.IsDeleted &&
-                    !t.IsArchived &&
-                    t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE
-                     && t.TransactionDate < dateWithUTCTime
-                    )
-                .OrderByDescending(t => t.TransactionDate)
-                .Select(t => new
-                {
-                    t.TransactionDate,
-                    t.NetAmount
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
-
-            var previousAmount = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t =>
-                    !t.IsDeleted &&
-                    !t.IsArchived &&
-                    t.TransactionDate >= openingDate &&
-                    t.TransactionDate < fromUtc &&
-                    t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-                .SumAsync(t => t.NetAmount, cancellationToken);
-
-            var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousAmount;
+            // Ledger book traditionally only includes cash transactions in this system
+            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, false, cancellationToken);
 
             // Get transactions for the report date
             var transactions = await _transactionRepository.Query()
@@ -71,9 +49,9 @@ namespace Application.Services
 
             foreach (var transaction in transactions)
             {
-                var isCredit = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
-                var debitAmount = isCredit ? 0 : transaction.NetAmount;
-                var creditAmount = isCredit ? transaction.NetAmount : 0;
+                var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
+                var debitAmount = isMoneyIn ? transaction.NetAmount : 0; // Money IN = Debit
+                var creditAmount = !isMoneyIn ? transaction.NetAmount : 0; // Money OUT = Credit
 
                 totalDebit += debitAmount;
                 totalCredit += creditAmount;
@@ -88,13 +66,13 @@ namespace Application.Services
                     TransactionType = transaction.TransactionHead?.Type ?? "Unknown",
                     PaymentMethod = transaction.PaymentMethod,
                     ReferenceNo = transaction.PaymentReference,
-                    DebitAmount = (-1) * debitAmount,
+                    DebitAmount = debitAmount,
                     CreditAmount = creditAmount,
                     Balance = 0 // Not needed for general ledger
                 });
             }
 
-            var closingBalance = openingBalance + totalCredit + totalDebit;
+            var closingBalance = openingBalance + totalDebit - totalCredit;
 
             return new LedgerBookResponse
             {

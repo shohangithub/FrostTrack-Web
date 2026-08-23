@@ -9,14 +9,14 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
-    private readonly IRepository<BookingCharge, Guid> _bookingChargeRepository;
-    private readonly IRepository<BookingPayment, Guid> _bookingPaymentRepository;
+
     private readonly ITransactionService _transactionService;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
     private readonly Guid _tenantId;
     private readonly CurrentUser _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
 
     public DeliveryService(
         IRepository<Delivery, Guid> repository,
@@ -26,13 +26,13 @@ public class DeliveryService : IDeliveryService
         IRepository<UnitConversion, int> unitConversionRepository,
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
-        IRepository<BookingCharge, Guid> bookingChargeRepository,
-        IRepository<BookingPayment, Guid> bookingPaymentRepository,
+
         ITransactionService transactionService,
         ICodeGenerationService codeGenerationService,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _bookingRepository = bookingRepository;
@@ -41,14 +41,14 @@ public class DeliveryService : IDeliveryService
         _unitConversionRepository = unitConversionRepository;
         _transactionRepository = transactionRepository;
         _transactionHeadRepository = transactionHeadRepository;
-        _bookingChargeRepository = bookingChargeRepository;
-        _bookingPaymentRepository = bookingPaymentRepository;
+
         _transactionService = transactionService;
         _codeGenerationService = codeGenerationService;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
         _currentUser = userContextService.GetCurrentUser();
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<DeliveryResponse> CreateAsync(CreateDeliveryRequest request, CancellationToken cancellationToken = default)
@@ -56,7 +56,11 @@ public class DeliveryService : IDeliveryService
         // Validate stock availability
         await ValidateStockAvailability(request);
 
-        var entity = request.Adapt<Delivery>();
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var entity = request.Adapt<Delivery>();
         entity.BranchId = _currentUser.BranchId;
         // entity.DeliveryDate = DateTime.UtcNow;
         _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
@@ -104,36 +108,6 @@ public class DeliveryService : IDeliveryService
 
         await _repository.AddAsync(entity, CancellationToken.None);
 
-        // Create BookingCharge ledger entries for each delivered product line
-        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
-        {
-            var deliveryDate = entity.DeliveryDate.Kind == DateTimeKind.Utc
-                ? entity.DeliveryDate
-                : entity.DeliveryDate.ToUniversalTime();
-
-            foreach (var dd in entity.DeliveryDetails)
-            {
-                var net = dd.ChargeAmount + dd.LabourCharge + dd.AdjustmentValue;
-                var charge = new BookingCharge
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = _tenantId,
-                    BookingId = entity.BookingId,
-                    BookingDetailId = dd.BookingDetailId,
-                    DeliveryId = entity.Id,
-                    DeliveryNumber = entity.DeliveryNumber,
-                    DeliveryDate = deliveryDate,
-                    Quantity = dd.DeliveryQuantity,
-                    Rate = dd.DeliveryQuantity > 0 ? dd.ChargeAmount / (decimal)dd.DeliveryQuantity : 0m,
-                    ChargeAmount = dd.ChargeAmount,
-                    LabourCharge = dd.LabourCharge,
-                    AdjustmentValue = dd.AdjustmentValue,
-                    NetAmount = net,
-                    CreatedAt = DateTime.UtcNow,
-                };
-                await _bookingChargeRepository.AddAsync(charge, CancellationToken.None);
-            }
-        }
 
         // Calculate total labour charge from delivery details
         var totalLabourCharge = entity.DeliveryDetails?.Sum(d => d.LabourCharge) ?? 0;
@@ -203,30 +177,7 @@ public class DeliveryService : IDeliveryService
                 // Update delivery with transaction ID (charge transaction)
                 entity.TransactionId = chargeTransaction.Id;
 
-                // Create BookingPayment ledger record
-                if (booking != null)
-                {
-                    var payment = new BookingPayment
-                    {
-                        Id = Guid.NewGuid(),
-                        TenantId = _tenantId,
-                        BookingId = request.BookingId,
-                        CustomerId = booking.CustomerId,
-                        TransactionId = chargeTransaction.Id,
-                        DeliveryId = entity.Id,
-                        TransactionCode = chargeTransactionRequest.TransactionCode,
-                        TransactionDate = chargeTransactionRequest.TransactionDate,
-                        Amount = chargeAmount,
-                        DiscountAmount = 0,
-                        AdjustmentValue = 0,
-                        NetAmount = chargeAmount,
-                        PaymentMethod = request.PaymentMethod ?? PaymentMethods.CASH,
-                        Reference = request.TransactionNotes,
-                        Note = $"Bill collection for delivery {entity.DeliveryNumber}",
-                        CreatedAt = DateTime.UtcNow,
-                    };
-                    await _bookingPaymentRepository.AddAsync(payment, CancellationToken.None);
-                }
+
             }
 
             // Transaction 2: Labour Charge (if exists)
@@ -281,7 +232,14 @@ public class DeliveryService : IDeliveryService
             await _repository.UpdateAsync(entity, CancellationToken.None);
         }
 
+        await dbTransaction.CommitAsync(cancellationToken);
         return await GetByIdAsync(entity.Id);
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     public async Task<DeliveryResponse> UpdateAsync(Guid id, UpdateDeliveryRequest request, CancellationToken cancellationToken = default)
@@ -307,6 +265,8 @@ public class DeliveryService : IDeliveryService
 
         // Update child collection: Clear and add new ones (cascade delete handles removal)
         existing.DeliveryDetails.Clear();
+
+
 
         // Add new details
         if (request.DeliveryDetails != null && request.DeliveryDetails.Any())
@@ -360,6 +320,21 @@ public class DeliveryService : IDeliveryService
         entity.DeletedById = _currentUser.Id;
 
         await _repository.UpdateAsync(entity, cancellationToken);
+
+        // Soft-delete linked transactions to prevent ghost revenue
+        if (entity.TransactionId.HasValue)
+        {
+            var linkedTransactions = await _transactionRepository.UpdatableQuery(
+                t => t.DeliveryId == id && !t.IsDeleted).ToListAsync(cancellationToken);
+            foreach (var txn in linkedTransactions)
+            {
+                txn.IsDeleted = true;
+                txn.DeletedAt = DateTime.UtcNow;
+                txn.DeletedById = _currentUser.Id;
+                await _transactionRepository.UpdateAsync(txn, cancellationToken);
+            }
+        }
+
         return true;
     }
 

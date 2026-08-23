@@ -43,13 +43,13 @@ public class BankBookService : IBankBookService
 
         foreach (var bankTransaction in bankTransactions)
         {
-            var isCredit = bankTransaction.TransactionType == BankTransactionTypes.Deposit;
-            var debitAmount = isCredit ? 0 : bankTransaction.Amount;
-            var creditAmount = isCredit ? bankTransaction.Amount : 0;
+            var isDeposit = bankTransaction.TransactionType == BankTransactionTypes.Deposit;
+            var debitAmount = isDeposit ? bankTransaction.Amount : 0; // Money IN = Debit
+            var creditAmount = !isDeposit ? bankTransaction.Amount : 0; // Money OUT = Credit
 
             totalDebit += debitAmount;
             totalCredit += creditAmount;
-            runningBalance += creditAmount - debitAmount;
+            runningBalance += debitAmount - creditAmount;
 
             items.Add(new BankBookItemResponse
             {
@@ -67,7 +67,7 @@ public class BankBookService : IBankBookService
             });
         }
 
-        var closingBalance = openingBalance + totalCredit - totalDebit;
+        var closingBalance = openingBalance + totalDebit - totalCredit;
 
         return new BankBookResponse
         {

@@ -257,7 +257,7 @@ public class CustomerService : ICustomerService
             else if (range <= 999)
                 return $"C-0{code}"; //P-09999
             else
-                return $"S-{code}"; //P-99999
+                return $"C-{code}"; //P-99999
         }
     }
 }

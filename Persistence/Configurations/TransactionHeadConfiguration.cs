@@ -97,6 +97,23 @@ public class TransactionHeadConfiguration : IEntityTypeConfiguration<Transaction
                 IconClass = "fa-wallet",
                 CreatedTime = seedDate,
                 CreatedById = 1
+            },
+            new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "STORAGE_CHARGE",
+                Name = "Storage Charge",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "RECEIVABLE",
+                UsageFor = UsageFor.BOOKING,
+                Description = "Accounts receivable created when a customer books cold storage space",
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 8,
+                ColorCode = "#0F172A",
+                IconClass = "fa-snowflake",
+                CreatedTime = seedDate,
+                CreatedById = 1
             }
         );
     }

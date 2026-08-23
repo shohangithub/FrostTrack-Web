@@ -3,6 +3,7 @@ using Application.Contractors.Authentication;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
+using Application.Services.Common;
 
 namespace Application.Services;
 
@@ -11,17 +12,20 @@ public class BalanceSheetService : IBalanceSheetService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
     private readonly IRepository<Bank, int> _bankRepository;
+    private readonly IBalanceCalculatorService _balanceCalculatorService;
     private readonly Guid _tenantId;
 
     public BalanceSheetService(
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
         IRepository<Bank, int> bankRepository,
+        IBalanceCalculatorService balanceCalculatorService,
         ITenantProvider tenantProvider)
     {
         _transactionRepository = transactionRepository;
         _bankTransactionRepository = bankTransactionRepository;
         _bankRepository = bankRepository;
+        _balanceCalculatorService = balanceCalculatorService;
         _tenantId = tenantProvider.GetTenantId();
     }
 
@@ -41,48 +45,7 @@ public class BalanceSheetService : IBalanceSheetService
         var dateWithUTCTime = reportDate.GetDateUtcTime();
         var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-        // Get last opening balance
-        var lastOpeningBalance = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                t.TenantId == _tenantId &&
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
-                t.TransactionDate < toDate)
-            .OrderByDescending(t => t.TransactionDate)
-            .Select(t => new
-            {
-                t.TransactionDate,
-                t.NetAmount
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
-
-        // Calculate opening balance from cash
-        var previousCashAmount = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                t.TenantId == _tenantId &&
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.TransactionDate >= openingDate &&
-                t.TransactionDate < fromUtc &&
-                t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-            .SumAsync(t => t.NetAmount, cancellationToken);
-
-        // Calculate opening balance from bank
-        var previousBankAmount = await _bankTransactionRepository.Query()
-            .Where(bt =>
-                bt.TenantId == _tenantId &&
-                bt.IsActive &&
-                bt.TransactionDate >= openingDate &&
-                bt.TransactionDate < fromUtc)
-            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
-
-        var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
+        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
 
         // Fetch all cash transactions up to and including the report date (excluding system transactions)
         var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
@@ -113,7 +76,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // ASSETS: Calculate cash in hand from transactions
         //  var cashInflow = transactions.Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived).Sum(t => t.NetAmount);
-        var transactionAmount = transactions.Sum(t => t.NetAmount);
+        var transactionAmount = transactions.Sum(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT ? t.NetAmount : -t.NetAmount);
         var bankTransactionAmount = bankTransactions.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount);
 
         var cashInHand = openingBalance + transactionAmount + bankTransactionAmount;
@@ -170,7 +133,7 @@ public class BalanceSheetService : IBalanceSheetService
                      && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
             .Sum(t => t.NetAmount);
 
-        var retainedEarnings = revenue + expenses;
+        var retainedEarnings = revenue - expenses;
 
         if (retainedEarnings != 0)
         {
@@ -228,7 +191,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // Add bank balances to closing balance
         var bankBalance = bankTransactions.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount);
-        var closingBalance = openingBalance + closingCashInflow + closingCashOutflow + bankBalance;
+        var closingBalance = openingBalance + closingCashInflow - closingCashOutflow + bankBalance;
 
         return new BalanceSheetSummaryResponse
         {

@@ -46,7 +46,6 @@ public class PrintSettings : BaseEntity<int>
     public bool ShowLogo { get; set; } = true;
     public bool ShowBranchInfo { get; set; } = true;
     public bool ShowPaymentDetails { get; set; } = true;
-    public bool ShowSupplierInfo { get; set; } = false;
     public bool ShowAmountSummary { get; set; } = true;
     public bool ShowNotes { get; set; } = true;
 

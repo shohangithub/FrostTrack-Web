@@ -2,6 +2,7 @@ using Application.Contractors;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
+using Application.Services.Common;
 
 namespace Application.Services;
 
@@ -9,13 +10,16 @@ public class GeneralLedgerService : IGeneralLedgerService
 {
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IBalanceCalculatorService _balanceCalculatorService;
 
     public GeneralLedgerService(
         IRepository<Transaction, Guid> transactionRepository,
-        IRepository<BankTransaction, long> bankTransactionRepository)
+        IRepository<BankTransaction, long> bankTransactionRepository,
+        IBalanceCalculatorService balanceCalculatorService)
     {
         _transactionRepository = transactionRepository;
         _bankTransactionRepository = bankTransactionRepository;
+        _balanceCalculatorService = balanceCalculatorService;
     }
 
     public async Task<GeneralLedgerResponse> GetGeneralLedgerAsync(DateTime reportDate, CancellationToken cancellationToken = default)
@@ -31,45 +35,7 @@ public class GeneralLedgerService : IGeneralLedgerService
         var dateWithUTCTime = reportDate.GetDateUtcTime();
         var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-        // Get last opening balance
-        var lastOpeningBalance = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
-                t.TransactionDate < toDate)
-            .OrderByDescending(t => t.TransactionDate)
-            .Select(t => new
-            {
-                t.TransactionDate,
-                t.NetAmount
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var openingDate = lastOpeningBalance?.TransactionDate ?? dateWithUTCTime;
-
-        // Calculate opening balance from cash
-        var previousCashAmount = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.TransactionDate >= openingDate &&
-                t.TransactionDate < fromUtc &&
-                t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-            .SumAsync(t => t.NetAmount, cancellationToken);
-
-        // Calculate opening balance from bank
-        var previousBankAmount = await _bankTransactionRepository.Query()
-            .Where(bt =>
-                bt.IsActive &&
-                bt.TransactionDate >= openingDate &&
-                bt.TransactionDate < fromUtc)
-            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount, cancellationToken);
-
-        var openingBalance = (lastOpeningBalance?.NetAmount ?? 0) + previousCashAmount + previousBankAmount;
+        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
 
         // Get cash transactions
         var transactions = await _transactionRepository.Query()
@@ -91,9 +57,9 @@ public class GeneralLedgerService : IGeneralLedgerService
         // Add cash transactions
         foreach (var transaction in transactions)
         {
-            var isCredit = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
-            var debitAmount = isCredit ? 0 : transaction.NetAmount;
-            var creditAmount = isCredit ? transaction.NetAmount : 0;
+            var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
+            var debitAmount = isMoneyIn ? transaction.NetAmount : 0; // Money IN = Debit
+            var creditAmount = !isMoneyIn ? transaction.NetAmount : 0; // Money OUT = Credit
 
             totalDebit += debitAmount;
             totalCredit += creditAmount;
@@ -109,7 +75,7 @@ public class GeneralLedgerService : IGeneralLedgerService
                 TransactionType = transaction.TransactionHead?.Type ?? "Unknown",
                 PaymentMethod = transaction.PaymentMethod,
                 ReferenceNo = transaction.PaymentReference,
-                DebitAmount = (-1) * debitAmount,
+                DebitAmount = debitAmount,
                 CreditAmount = creditAmount
             });
         }
@@ -124,11 +90,12 @@ public class GeneralLedgerService : IGeneralLedgerService
         // Add bank transactions
         foreach (var bankTransaction in bankTransactions)
         {
-            var isCredit = bankTransaction.TransactionType == BankTransactionTypes.Withdraw;
-            var debitAmount = isCredit ? 0 : bankTransaction.Amount;
-            var creditAmount = isCredit ? bankTransaction.Amount : 0;
+            // Bank Deposit = money coming IN (DEBIT side), Withdrawal = money going OUT (CREDIT side)
+            var isDeposit = bankTransaction.TransactionType == BankTransactionTypes.Deposit;
+            var debitAmount = isDeposit ? bankTransaction.Amount : 0; // Money IN = Debit
+            var creditAmount = !isDeposit ? bankTransaction.Amount : 0; // Money OUT = Credit
 
-            totalDebit += -1 * debitAmount;
+            totalDebit += debitAmount;
             totalCredit += creditAmount;
 
             items.Add(new GeneralLedgerItemResponse
@@ -150,15 +117,15 @@ public class GeneralLedgerService : IGeneralLedgerService
         // Sort all items by date
         items = items.OrderBy(i => i.Date).ToList();
 
-        var closingBalance = openingBalance + totalCredit + totalDebit;
+        var closingBalance = openingBalance + totalDebit - totalCredit;
 
         return new GeneralLedgerResponse
         {
             ReportDate = reportDate,
             OpeningBalance = openingBalance,
             Items = items,
-            TotalDebit = (-1) * totalDebit,
-            TotalCredit = totalCredit + openingBalance,
+            TotalDebit = totalDebit,
+            TotalCredit = totalCredit,
             ClosingBalance = closingBalance
         };
     }

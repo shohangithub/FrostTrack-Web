@@ -1,4 +1,4 @@
-﻿using Application.Services;
+using Application.Services;
 using Application.Validators;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IBalanceSheetService, BalanceSheetService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IEmployeeReportService, EmployeeReportService>();
+        services.AddScoped<Application.Services.Common.IBalanceCalculatorService, Application.Services.Common.BalanceCalculatorService>();
 
         services.AddTransient<DefaultValueInjector>();
 

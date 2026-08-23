@@ -69,7 +69,6 @@ namespace Application.Services
                 AuthorizedBy = printSettings.AuthorizedBy,
                 Signature = printSettings.Signature,
                 ShowPaymentDetails = printSettings.ShowPaymentDetails,
-                ShowSupplierInfo = printSettings.ShowSupplierInfo,
                 ShowAmountSummary = printSettings.ShowAmountSummary,
                 ShowNotes = printSettings.ShowNotes,
                 ReceiptNumberPrefix = printSettings.ReceiptNumberPrefix,
@@ -107,7 +106,6 @@ namespace Application.Services
                     AuthorizedBy = settings.AuthorizedBy,
                     Signature = settings.Signature,
                     ShowPaymentDetails = settings.ShowPaymentDetails,
-                    ShowSupplierInfo = settings.ShowSupplierInfo,
                     ShowAmountSummary = settings.ShowAmountSummary,
                     ShowNotes = settings.ShowNotes,
                     ReceiptNumberPrefix = settings.ReceiptNumberPrefix,
@@ -140,7 +138,6 @@ namespace Application.Services
                 existingSettings.AuthorizedBy = settings.AuthorizedBy;
                 existingSettings.Signature = settings.Signature;
                 existingSettings.ShowPaymentDetails = settings.ShowPaymentDetails;
-                existingSettings.ShowSupplierInfo = settings.ShowSupplierInfo;
                 existingSettings.ShowAmountSummary = settings.ShowAmountSummary;
                 existingSettings.ShowNotes = settings.ShowNotes;
                 existingSettings.ReceiptNumberPrefix = settings.ReceiptNumberPrefix;

@@ -54,13 +54,10 @@ public class TransactionService : ITransactionService
             entity.Description = $"{transactionHead.Name} - {transactionHead.DisplayType}";
         }
 
-        // Make amount negative for OUT transactions
-        if (transactionHead.Type == TransactionHeadTypes.DEBIT && entity.Amount > 0)
-        {
-            entity.Amount = -entity.Amount;
-        }
+        // Store amounts as positive values; direction is determined by TransactionHead.Type (DEBIT = out, CREDIT = in)
+        entity.Amount = Math.Abs(entity.Amount);
 
-        // Calculate NetAmount
+        // Calculate NetAmount: Amount - Discount + Adjustment (always positive)
         entity.NetAmount = entity.Amount - entity.DiscountAmount + entity.AdjustmentValue;
 
         entity.TransactionDate = DateTime.UtcNow;
@@ -199,13 +196,10 @@ public class TransactionService : ITransactionService
             entity.PaymentMethod = PaymentMethods.CASH;
         }
 
-        // Make amount negative for OUT transactions
-        if (transactionHead.Type == TransactionHeadTypes.DEBIT && entity.Amount > 0)
-        {
-            entity.Amount = -entity.Amount;
-        }
+        // Store amounts as positive values; direction is determined by TransactionHead.Type (DEBIT = out, CREDIT = in)
+        entity.Amount = Math.Abs(entity.Amount);
 
-        // Calculate NetAmount
+        // Calculate NetAmount: Amount - Discount + Adjustment (always positive)
         entity.NetAmount = entity.Amount - entity.DiscountAmount + entity.AdjustmentValue;
 
         _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);

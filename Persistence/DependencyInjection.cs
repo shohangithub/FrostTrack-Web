@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -60,8 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<BookingDetail, Guid>, Repository<BookingDetail, Guid>>();
         services.AddScoped<IRepository<RecurringChargeRun, Guid>, Repository<RecurringChargeRun, Guid>>();
         services.AddScoped<IRepository<RecurringChargeEntry, Guid>, Repository<RecurringChargeEntry, Guid>>();
-        services.AddScoped<IRepository<BookingCharge, Guid>, Repository<BookingCharge, Guid>>();
-        services.AddScoped<IRepository<BookingPayment, Guid>, Repository<BookingPayment, Guid>>();
+
         services.AddScoped<IRepository<Delivery, Guid>, Repository<Delivery, Guid>>();
         services.AddScoped<IRepository<DeliveryDetail, Guid>, Repository<DeliveryDetail, Guid>>();
         services.AddScoped<IRepository<DeliveryChallan, Guid>, Repository<DeliveryChallan, Guid>>();

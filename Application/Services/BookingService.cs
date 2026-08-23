@@ -9,6 +9,7 @@ public class BookingService : IBookingService
     private readonly IRepository<UnitConversion, int> _unitConversionRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<RecurringChargeEntry, Guid> _recurringChargeEntryRepository;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
@@ -27,6 +28,7 @@ public class BookingService : IBookingService
         IBookingRepository bookingRepository,
         IRepository<Delivery, Guid> deliveryRepository,
         IRepository<Transaction, Guid> transactionRepository,
+        IRepository<TransactionHead, Guid> transactionHeadRepository,
         IRepository<RecurringChargeEntry, Guid> recurringChargeEntryRepository,
         ICodeGenerationService codeGenerationService)
     {
@@ -41,6 +43,7 @@ public class BookingService : IBookingService
         _bookingRepository = bookingRepository;
         _deliveryRepository = deliveryRepository;
         _transactionRepository = transactionRepository;
+        _transactionHeadRepository = transactionHeadRepository;
         _recurringChargeEntryRepository = recurringChargeEntryRepository;
         _codeGenerationService = codeGenerationService;
     }
@@ -126,6 +129,63 @@ public class BookingService : IBookingService
                     CreatedAt = now,
                 };
                 await _recurringChargeEntryRepository.AddAsync(entry, cancellationToken);
+            }
+
+            // Create a Transaction record (accounts receivable) for the booking charge
+            // This makes the customer's storage obligation visible in the accounting ledgers.
+            var storageChargeHead = await _transactionHeadRepository.Query()
+                .FirstOrDefaultAsync(th => th.Code == "STORAGE_CHARGE" && th.IsActive, cancellationToken);
+
+            if (storageChargeHead != null)
+            {
+                var totalChargeAmount = entity.BookingDetails
+                    .Where(d => !d.IsDeleted)
+                    .Sum(d => (decimal)d.BookingQuantity * d.BookingRate + d.LabourCharge);
+
+                if (totalChargeAmount > 0)
+                {
+                    var currentDate = DateTime.UtcNow;
+                    var datePart = currentDate.ToString("yyMMdd");
+                    var prefix = "BKC";
+
+                    var lastCode = await _transactionRepository.Query()
+                        .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+                        .OrderByDescending(x => x.TransactionCode)
+                        .Select(x => x.TransactionCode)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    int nextSequence = 1;
+                    if (!string.IsNullOrEmpty(lastCode))
+                    {
+                        var parts = lastCode.Split('-');
+                        if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                        {
+                            nextSequence = lastSequence + 1;
+                        }
+                    }
+
+                    var transactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence);
+                    var chargeTransaction = new Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = _tenantId,
+                        TransactionCode = transactionCode,
+                        TransactionDate = entity.BookingDate,
+                        TransactionHeadId = storageChargeHead.Id,
+                        BranchId = entity.BranchId,
+                        CustomerId = entity.CustomerId,
+                        BookingId = entity.Id,
+                        Amount = totalChargeAmount,
+                        DiscountAmount = 0,
+                        AdjustmentValue = 0,
+                        NetAmount = totalChargeAmount,
+                        PaymentMethod = PaymentMethods.CREDIT, // On account — customer pays later
+                        Description = $"Storage charge for Booking {entity.BookingNumber}",
+                        Note = $"Auto-generated on booking creation",
+                    };
+                    _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(chargeTransaction);
+                    await _transactionRepository.AddAsync(chargeTransaction, cancellationToken);
+                }
             }
         }
 
@@ -522,23 +582,13 @@ public class BookingService : IBookingService
             foreach (var booking in customerBookings)
             {
                 var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
-                decimal bookingAccrued;
-                decimal pendingRecurringCharge;
-
-                if (deliveryAccruedByBooking.TryGetValue(booking.Id, out var deliveryCharge))
-                {
-                    var lastDeliveryDate = activeDetails.Count > 0
-                        ? activeDetails.Max(d => (DateTime?)d.LastDeliveryDate) ?? booking.BookingDate
-                        : booking.BookingDate;
-                    pendingRecurringCharge = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, lastDeliveryDate, now);
-                    bookingAccrued = deliveryCharge + pendingRecurringCharge;
-                }
-                else
-                {
-                    var computed = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, booking.BookingDate, now);
-                    pendingRecurringCharge = computed > 0 ? computed : GetInitialBookingAccruedAmount(booking);
-                    bookingAccrued = pendingRecurringCharge;
-                }
+                var deliveryCharge = deliveryAccruedByBooking.TryGetValue(booking.Id, out var val) ? val : 0m;
+                
+                var (bookingAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+                    booking, 
+                    activeDetails, 
+                    deliveryCharge, 
+                    now);
 
                 totalAccrued += bookingAccrued;
                 totalPendingRecurringCharge += pendingRecurringCharge;
@@ -714,7 +764,7 @@ public class BookingService : IBookingService
             else
             {
                 var computed = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, booking.BookingDate, now);
-                pendingRecurringCharge = computed > 0 ? computed : GetInitialBookingAccruedAmount(booking);
+                pendingRecurringCharge = GetInitialBookingAccruedAmount(booking) + computed;
             }
 
             var totalAccrued = deliveryCharge + pendingRecurringCharge;
@@ -847,7 +897,7 @@ public class BookingService : IBookingService
                 // No deliveries yet: compute full recurring charge from booking date.
                 var computed = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, booking.BookingDate, now);
                 // Before first billing cycle completes, show initial booking charge.
-                accrued = computed > 0 ? computed : GetInitialBookingAccruedAmount(booking);
+                accrued = GetInitialBookingAccruedAmount(booking) + computed;
             }
 
             var paid = paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m;

@@ -53,25 +53,24 @@ public class BankTransactionService : IBankTransactionService
         entity.TransactionDate = DateTime.UtcNow;
 
         // Calculate new balance
+        var currentBalance = bank.OpeningBalance + await _repository.Query()
+            .Where(bt => bt.BankId == bankTransaction.BankId && bt.IsActive && !bt.IsDeleted)
+            .SumAsync(bt => bt.TransactionType == "Deposit" ? bt.Amount : -bt.Amount, cancellationToken);
+
         if (bankTransaction.TransactionType == BankTransactionTypes.Deposit)
         {
-            entity.BalanceAfter = bank.CurrentBalance + bankTransaction.Amount;
-            bank.CurrentBalance += bankTransaction.Amount;
+            entity.BalanceAfter = currentBalance + bankTransaction.Amount;
         }
         else if (bankTransaction.TransactionType == BankTransactionTypes.Withdraw)
         {
-            if (bank.CurrentBalance < bankTransaction.Amount)
+            if (currentBalance < bankTransaction.Amount)
                 throw new InvalidOperationException("Insufficient balance for withdrawal");
 
-            entity.BalanceAfter = bank.CurrentBalance - bankTransaction.Amount;
-            bank.CurrentBalance -= bankTransaction.Amount;
+            entity.BalanceAfter = currentBalance - bankTransaction.Amount;
         }
 
         _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(entity);
         var result = await _repository.AddAsync(entity, cancellationToken);
-
-        // Update bank balance
-        await _bankRepository.UpdateAsync(bank, cancellationToken);
 
         var response = result ? entity.Adapt<BankTransactionResponse>() : throw new InvalidOperationException("Failed to create bank transaction");
         return response;

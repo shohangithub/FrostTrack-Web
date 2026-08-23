@@ -42,13 +42,48 @@ public class BillCollectionService : IBillCollectionService
             .Include(b => b.BookingDetails)
             .ToListAsync(cancellationToken);
 
+        var bookingIds = bookings.Select(b => b.Id).ToList();
+        
+        // Fetch bulk deliveries and group by bookingId
+        var deliveriesGrouped = await _deliveryRepository.Query()
+            .Include(d => d.DeliveryDetails)
+            .Where(d => bookingIds.Contains(d.BookingId) && d.TenantId == _tenantId && !d.IsDeleted)
+            .ToListAsync(cancellationToken);
+
+        var deliveryChargeMap = deliveriesGrouped
+            .GroupBy(d => d.BookingId)
+            .ToDictionary(
+                g => g.Key, 
+                g => g.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m))
+            );
+
+        // Fetch bulk paid amounts and group by bookingId
+        var paidAmountsMap = await _transactionRepository.Query()
+            .Where(t => t.BookingId != null && bookingIds.Contains(t.BookingId.Value) &&
+                        !t.IsDeleted &&
+                        t.TransactionHead!.Type == TransactionHeadTypes.CREDIT &&
+                        (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
+                         t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
+            .GroupBy(t => t.BookingId!.Value)
+            .Select(g => new { BookingId = g.Key, PaidAmount = g.Sum(t => t.NetAmount) })
+            .ToDictionaryAsync(x => x.BookingId, x => x.PaidAmount, cancellationToken);
+
         var bookingsWithDue = new List<Lookup<Guid>>();
+        var now = DateTime.UtcNow;
 
         foreach (var booking in bookings)
         {
-            var totalAmount = await GetBookingTotalAmountAsync(booking.Id, cancellationToken);
-            var paidAmount = await GetBookingPaidAmountAsync(booking.Id, cancellationToken);
-            var dueAmount = totalAmount - paidAmount;
+            var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
+            var deliveryCharge = deliveryChargeMap.GetValueOrDefault(booking.Id, 0m);
+            var paidAmount = paidAmountsMap.GetValueOrDefault(booking.Id, 0m);
+            
+            var (totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+                booking,
+                activeDetails,
+                deliveryCharge,
+                now);
+
+            var dueAmount = totalAccrued - paidAmount;
 
             // Only include bookings with due amount > 0
             if (dueAmount > 0)
@@ -97,26 +132,39 @@ public class BillCollectionService : IBillCollectionService
 
     public async Task<decimal> GetBookingTotalAmountAsync(Guid bookingId, CancellationToken cancellationToken = default)
     {
-        var bookingDetails = await _bookingRepository.Query()
-            .Where(b => b.Id == bookingId && b.TenantId == _tenantId)
-            .SelectMany(b => b.BookingDetails)
+        var booking = await _bookingRepository.Query()
+            .Include(b => b.BookingDetails)
+            .FirstOrDefaultAsync(b => b.Id == bookingId && b.TenantId == _tenantId, cancellationToken);
+
+        if (booking == null) return 0m;
+
+        var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
+
+        var deliveries = await _deliveryRepository.Query()
+            .Include(d => d.DeliveryDetails)
+            .Where(d => d.BookingId == bookingId && d.TenantId == _tenantId && !d.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        var totalAmount = bookingDetails.Sum(bd =>
-            bd.BillType == BillTypes.Monthly
-                ? (decimal)bd.BookingQuantity * bd.BookingRate
-                : bd.BaseQuantity * bd.BaseRate);
+        var deliveryCharge = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m));
 
-        return totalAmount;
+        var (totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+            booking,
+            activeDetails,
+            deliveryCharge,
+            DateTime.UtcNow);
+
+        return totalAccrued;
     }
 
     public async Task<decimal> GetBookingPaidAmountAsync(Guid bookingId, CancellationToken cancellationToken = default)
     {
         var paidAmount = await _transactionRepository.Query()
             .Where(t => t.BookingId == bookingId &&
-                       t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION &&
-                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
-            .SumAsync(t => t.Amount, cancellationToken);
+                       !t.IsDeleted &&
+                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT &&
+                       (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
+                        t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
+            .SumAsync(t => t.NetAmount, cancellationToken);
 
         return paidAmount;
     }

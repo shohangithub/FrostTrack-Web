@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
@@ -494,7 +494,7 @@ public class ApplicationDbContextInitializer
             CustomerName = "General",
             BranchId = branchId,
             CustomerCode = string.Empty,
-            CustomerType = ECustomerType.Retail,
+            CustomerType = ECustomerType.Regular,
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = true,
@@ -505,7 +505,7 @@ public class ApplicationDbContextInitializer
             CustomerName = "John Doe",
             BranchId = branchId,
             CustomerCode = "C-00001",
-            CustomerType = ECustomerType.Retail,
+            CustomerType = ECustomerType.Regular,
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
@@ -516,7 +516,7 @@ public class ApplicationDbContextInitializer
             CustomerName = "Acme Corporation",
             BranchId = branchId,
             CustomerCode = "C-00002",
-            CustomerType = ECustomerType.Wholesale,
+            CustomerType = ECustomerType.Corporate,
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
@@ -527,7 +527,7 @@ public class ApplicationDbContextInitializer
             CustomerName = "Jane Smith",
             BranchId = branchId,
             CustomerCode = "C-00003",
-            CustomerType = ECustomerType.Retail,
+            CustomerType = ECustomerType.Regular,
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,
@@ -538,7 +538,7 @@ public class ApplicationDbContextInitializer
             CustomerName = "Mega Builders Ltd.",
             BranchId = branchId,
             CustomerCode = "C-00004",
-            CustomerType = ECustomerType.Wholesale,
+            CustomerType = ECustomerType.Corporate,
             CreatedById = userId,
             IsActive = true,
             IsSystemDefault = false,

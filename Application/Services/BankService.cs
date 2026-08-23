@@ -9,9 +9,12 @@ public class BankService : IBankService
     private readonly Guid _tenantId;
     private readonly CurrentUser _currentUser;
 
-    public BankService(IRepository<Bank, int> repository, DefaultValueInjector defaultValueInjector, ITenantProvider tenantProvider, IUserContextService userContextService, IRepository<Company, int> companyRepository)
+    private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+
+    public BankService(IRepository<Bank, int> repository, IRepository<BankTransaction, long> bankTransactionRepository, DefaultValueInjector defaultValueInjector, ITenantProvider tenantProvider, IUserContextService userContextService, IRepository<Company, int> companyRepository)
     {
         _repository = repository;
+        _bankTransactionRepository = bankTransactionRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
@@ -100,7 +103,9 @@ public class BankService : IBankService
             .Select(x => new BankListResponse(
                x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
                x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
-               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.ContactEmail, x.Address, x.OpeningBalance, 
+               x.OpeningBalance + x.BankTransactions.Where(bt => bt.IsActive && !bt.IsDeleted).Sum(bt => bt.TransactionType == "Deposit" ? bt.Amount : -bt.Amount), 
+               x.Description,
                x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
             .ToListAsync(cancellationToken);
         return result;
@@ -124,7 +129,9 @@ public class BankService : IBankService
         Expression<Func<Bank, BankListResponse>> selector = x => new BankListResponse(
                x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
                x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
-               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.ContactEmail, x.Address, x.OpeningBalance, 
+               x.OpeningBalance + x.BankTransactions.Where(bt => bt.IsActive && !bt.IsDeleted).Sum(bt => bt.TransactionType == "Deposit" ? bt.Amount : -bt.Amount), 
+               x.Description,
                x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
@@ -153,7 +160,9 @@ public class BankService : IBankService
         Expression<Func<Bank, BankListResponse>> selector = x => new BankListResponse(
                x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
                x.SwiftCode, x.RoutingNumber, x.IBANNumber, x.ContactPerson, x.ContactPhone,
-               x.ContactEmail, x.Address, x.OpeningBalance, x.CurrentBalance, x.Description,
+               x.ContactEmail, x.Address, x.OpeningBalance, 
+               x.OpeningBalance + x.BankTransactions.Where(bt => bt.IsActive && !bt.IsDeleted).Sum(bt => bt.TransactionType == "Deposit" ? bt.Amount : -bt.Amount), 
+               x.Description,
                x.IsMainAccount, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt
             );
 
@@ -234,6 +243,11 @@ public class BankService : IBankService
     {
         var bank = await _repository.GetByIdAsync(bankId, cancellationToken);
         if (bank is null) throw new ArgumentNullException(nameof(bank), "Bank not found");
-        return bank.CurrentBalance;
+        
+        var transactionSum = await _bankTransactionRepository.Query()
+            .Where(bt => bt.BankId == bankId && bt.IsActive && !bt.IsDeleted)
+            .SumAsync(bt => bt.TransactionType == "Deposit" ? bt.Amount : -bt.Amount, cancellationToken);
+            
+        return bank.OpeningBalance + transactionSum;
     }
 }
