@@ -1,4 +1,4 @@
-using Application.Common;
+﻿using Application.Common;
 using Application.Contractors;
 using Application.Contractors.Authentication;
 using Application.Framework;
@@ -63,7 +63,7 @@ public class SalaryPaymentService : ISalaryPaymentService
 
         var employeeIds = employees.Select(e => e.Id).ToList();
 
-        // Single projection query � fetch only needed fields for active employees
+        // Single projection query — fetch only needed fields for active employees
         var lastPaymentData = await _salaryPaymentRepository.Query()
             .Include(sp => sp.Transaction)
             .Where(sp => sp.TenantId == tenantId
@@ -115,7 +115,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             throw new NotFoundException("Employee not found");
 
         var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(th => th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.DEBIT, cancellationToken);
+            .FirstOrDefaultAsync(th => th.UsageFor == UsageFor.SALARY && th.IsActive && th.Type == TransactionHeadTypes.CREDIT, cancellationToken);
         if (transactionHead == null)
             throw new BusinessRuleException("Salary Transaction Head not configured");
 

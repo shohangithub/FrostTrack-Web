@@ -59,7 +59,8 @@ public class DashboardService : IDashboardService
                 && x.TransactionDate >= fromUtc
                 && x.TransactionDate < toUtc
                 && !x.IsDeleted
-                && !x.IsArchived);
+                && !x.IsArchived
+                && x.PaymentMethod != PaymentMethods.CREDIT);
 
         // Apply branch filter if provided
         if (branchId.HasValue)
@@ -89,11 +90,11 @@ public class DashboardService : IDashboardService
 
         // Get revenue from transactions (IN flow = revenue, OUT flow = expense)
         var revenueTransactions = await transactionsQuery
-            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .SumAsync(x => x.NetAmount, cancellationToken);
 
         var expenseTransactions = await transactionsQuery
-            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .SumAsync(x => Math.Abs(x.NetAmount), cancellationToken);
 
         var netRevenue = revenueTransactions - expenseTransactions;
@@ -142,11 +143,10 @@ public class DashboardService : IDashboardService
 
         var transactionsQuery = _transactionRepository.Query()
             .Include(t => t.TransactionHead)
-            .Where(x => x.TenantId == _tenantId
-                && x.TransactionDate >= fromUtc
-                && x.TransactionDate < toUtc
-                && !x.IsDeleted
-                && !x.IsArchived);
+            .Where(x => x.TenantId == _tenantId && !x.IsDeleted && !x.IsArchived && x.PaymentMethod != PaymentMethods.CREDIT &&
+                        x.TransactionDate >= fromUtc && x.TransactionDate < toUtc &&
+                        x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         // Apply branch filter
         if (branchId.HasValue)
@@ -167,7 +167,7 @@ public class DashboardService : IDashboardService
 
         // Revenue trend (IN transactions) - convert to local time for grouping
         var revenueTrend = transactions
-            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .GroupBy(t => t.TransactionDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(g.Key, g.Sum(x => x.NetAmount), g.Count()))
             .OrderBy(d => d.Date)
@@ -175,7 +175,7 @@ public class DashboardService : IDashboardService
 
         // Expense trend (OUT transactions) - convert to local time for grouping
         var expenseTrend = transactions
-            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .GroupBy(t => t.TransactionDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(g.Key, Math.Abs(g.Sum(x => x.NetAmount)), g.Count()))
             .OrderBy(d => d.Date)

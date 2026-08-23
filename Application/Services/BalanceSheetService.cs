@@ -53,6 +53,7 @@ public class BalanceSheetService : IBalanceSheetService
                      && t.TransactionDate >= fromUtc && t.TransactionDate < toUtc
                      && !t.IsDeleted
                      && !t.IsArchived
+                     && t.PaymentMethod != PaymentMethods.CREDIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
                      && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE).ToListAsync(cancellationToken);
 
@@ -76,7 +77,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // ASSETS: Calculate cash in hand from transactions
         //  var cashInflow = transactions.Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived).Sum(t => t.NetAmount);
-        var transactionAmount = transactions.Sum(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT ? t.NetAmount : -t.NetAmount);
+        var transactionAmount = transactions.Sum(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT ? t.NetAmount : -t.NetAmount);
         var bankTransactionAmount = bankTransactions.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount);
 
         var cashInHand = openingBalance + transactionAmount + bankTransactionAmount;
@@ -109,7 +110,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // LIABILITIES: Calculate accounts payable (unpaid bills)
         var accountsPayable = transactions
-            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
+            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
             .Sum(t => t.NetAmount);
 
         if (accountsPayable > 0)
@@ -119,18 +120,18 @@ public class BalanceSheetService : IBalanceSheetService
                 AccountName = "Accounts Payable",
                 AccountCategory = "Liability",
                 Amount = accountsPayable,
-                TransactionCount = transactions.Count(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
+                TransactionCount = transactions.Count(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
             });
         }
 
         // EQUITY: Calculate from bill collections and revenue
         var revenue = transactions
-            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
+            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
             .Sum(t => t.NetAmount);
 
         var expenses = transactions
             .Where(t => (t.TransactionHead?.UsageFor == UsageFor.TRANSACTION || t.TransactionHead?.UsageFor == UsageFor.SALARY)
-                     && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
+                     && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
             .Sum(t => t.NetAmount);
 
         var retainedEarnings = revenue - expenses;
@@ -183,10 +184,10 @@ public class BalanceSheetService : IBalanceSheetService
 
         // Calculate closing balance
         var closingCashInflow = transactions
-            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
             .Sum(t => t.NetAmount);
         var closingCashOutflow = transactions
-            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
+            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
             .Sum(t => t.NetAmount);
 
         // Add bank balances to closing balance

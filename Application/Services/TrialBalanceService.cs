@@ -45,7 +45,7 @@ public class TrialBalanceService : ITrialBalanceService
         var transactionQuery = _transactionRepository.Query().Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId
                      && t.TransactionDate >= fromUtc && t.TransactionDate < toUtc
-                     && !t.IsDeleted && !t.IsArchived
+                     && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         var transactions = await transactionQuery.ToListAsync(cancellationToken);
@@ -66,14 +66,14 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
-                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT) // Money IN = Debit
+                DebitAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT) // Money IN = Debit
                               .Sum(t => t.NetAmount),
-                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT) // Money OUT = Credit
+                CreditAmount = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT) // Money OUT = Credit
                                .Sum(t => t.NetAmount),
                 TransactionCount = g.Count(),
-                Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+                Balance = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
                            .Sum(t => t.NetAmount) -
-                          g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+                          g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
                            .Sum(t => t.NetAmount)
             })
             .ToList();

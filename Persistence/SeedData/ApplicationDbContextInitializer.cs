@@ -304,105 +304,112 @@ public class ApplicationDbContextInitializer
         #region SET TRANSACTION HEADS
         var userId = _context.Users.Select(x => x.Id).FirstOrDefault();
 
-        if (!_context.TransactionHeads.Any())
+      if (!_context.TransactionHeads.Any())
+{
+    var transactionHeads = new List<TransactionHead>
+    {
+        new TransactionHead
         {
-            var transactionHeads = new List<TransactionHead> {
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "CLOSING_BALANCE",
-                Name = "Closing Balance",
-                Type = TransactionHeadTypes.CREDIT,
-                DisplayType = "",
-                Description = "Balance carried forward at the end of an accounting period",
-                UsageFor = UsageFor.CLOSING_BALANCE,
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 1,
-                ColorCode = "#28a745",
-                IconClass = "fa-money-bill-wave",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId,
-                TenantId = _tenantId
-            },
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "OPENING_BALANCE",
-                Name = "Opening Balance",
-                Type = TransactionHeadTypes.CREDIT,
-                DisplayType = "",
-                Description = "Initial balance for new accounts",
-                UsageFor = UsageFor.OPENING_BALANCE,
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 1,
-                ColorCode = "#28a745",
-                IconClass = "fa-money-bill-wave",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId,
-                TenantId = _tenantId
-            },
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "BILL_COLLECTION",
-                Name = "Bill Collection",
-                Type = TransactionHeadTypes.CREDIT,
-                DisplayType = "",
-                Description = "Money received from customers for cold storage services",
-                UsageFor = UsageFor.BILL_COLLECTION,
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 1,
-                ColorCode = "#28a745",
-                IconClass = "fa-money-bill-wave",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId,
-                TenantId = _tenantId
-            },
-              new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "LABOUR_CHARGE",
-                Name = "Labour Charge",
-                Type = TransactionHeadTypes.CREDIT,
-                DisplayType = "",
-                Description = "Charges for labour services provided",
-                UsageFor = UsageFor.LABOUR_CHARGE,
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 1,
-                ColorCode = "#28a745",
-                IconClass = "fa-money-bill-wave",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId,
-                TenantId = _tenantId
-            },
-            new TransactionHead
-            {
-                Id = Guid.NewGuid(),
-                Code = "SALARY",
-                Name = "Salary Payment",
-                Type = TransactionHeadTypes.DEBIT,
-                DisplayType = "",
-                UsageFor = UsageFor.SALARY,
-                Description = "Employee salary and wage payments",
-                IsSystem = true,
-                IsActive = true,
-                SortOrder = 7,
-                ColorCode = "#fd7e14",
-                IconClass = "fa-wallet",
-                CreatedTime = DateTime.UtcNow,
-                CreatedById = userId,
-                TenantId = _tenantId
-            }
-        };
+            Id = Guid.NewGuid(),
+            Code = "OPENING_BALANCE",
+            Name = "Opening Balance",
+            Type = TransactionHeadTypes.DEBIT,
+            DisplayType = "Receipt",
+            Description = "Initial balance for new accounts",
+            UsageFor = UsageFor.OPENING_BALANCE,
+            IsSystem = true,
+            IsActive = true,
+            SortOrder = 1,
+            ColorCode = "#28a745",
+            IconClass = "fa-money-bill-wave",
+            CreatedTime = DateTime.UtcNow,
+            CreatedById = userId,
+            TenantId = _tenantId
+        },
 
+        new TransactionHead
+        {
+            Id = Guid.NewGuid(),
+            Code = "BILL_COLLECTION",
+            Name = "Bill Collection",
+            Type = TransactionHeadTypes.DEBIT,
+            DisplayType = "Receipt",
+            Description = "Money received from customers for cold storage services",
+            UsageFor = UsageFor.BILL_COLLECTION,
+            IsSystem = true,
+            IsActive = true,
+            SortOrder = 2,
+            ColorCode = "#28a745",
+            IconClass = "fa-money-bill-wave",
+            CreatedTime = DateTime.UtcNow,
+            CreatedById = userId,
+            TenantId = _tenantId
+        },
 
-            _context.TransactionHeads.AddRange(transactionHeads);
-            await _context.SaveChangesAsync();
+        new TransactionHead
+        {
+            Id = Guid.NewGuid(),
+            Code = "LABOUR_CHARGE",
+            Name = "Labour Charge",
+            Type = TransactionHeadTypes.DEBIT,
+            DisplayType = "Receipt",
+            Description = "Charges received from customers for labour services",
+            UsageFor = UsageFor.LABOUR_CHARGE,
+            IsSystem = true,
+            IsActive = true,
+            SortOrder = 3,
+            ColorCode = "#28a745",
+            IconClass = "fa-money-bill-wave",
+            CreatedTime = DateTime.UtcNow,
+            CreatedById = userId,
+            TenantId = _tenantId
+        },
+
+        new TransactionHead
+        {
+            Id = Guid.NewGuid(),
+            Code = "SALARY",
+            Name = "Salary Payment",
+            Type = TransactionHeadTypes.CREDIT,
+            DisplayType = "Payment",
+            Description = "Employee salary and wage payments",
+            UsageFor = UsageFor.SALARY,
+            IsSystem = true,
+            IsActive = true,
+            SortOrder = 4,
+            ColorCode = "#fd7e14",
+            IconClass = "fa-wallet",
+            CreatedTime = DateTime.UtcNow,
+            CreatedById = userId,
+            TenantId = _tenantId
+        },
+
+        new TransactionHead
+        {
+            Id = Guid.NewGuid(),
+            Code = "CLOSING_BALANCE",
+            Name = "Closing Balance",
+            Type = TransactionHeadTypes.CREDIT,
+            DisplayType = "Payment",
+            Description = "Balance carried forward at the end of an accounting period",
+            UsageFor = UsageFor.CLOSING_BALANCE,
+            IsSystem = true,
+            IsActive = true,
+            SortOrder = 5,
+            ColorCode = "#6c757d",
+            IconClass = "fa-calculator",
+            CreatedTime = DateTime.UtcNow,
+            CreatedById = userId,
+            TenantId = _tenantId
         }
+    };
+
+    _context.TransactionHeads.AddRange(transactionHeads);
+    await _context.SaveChangesAsync();
+}
+
+
+
 
 
         if (!_context.Transactions.Any())
@@ -710,102 +717,102 @@ public class ApplicationDbContextInitializer
                     IsActive = true,
                     TenantId = _tenantId
                 },
-                new Product
-                {
-                    ProductName = "খেজুর (মাবরুম)",
-                    ProductCode = "P-00003",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 40.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (সুক্কারি)",
-                    ProductCode = "P-00004",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 300.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (সাফাওয়ি)",
-                    ProductCode = "P-00005",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 120.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (দাব্বাস)",
-                    ProductCode = "P-00006",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 90.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (বরই / পালম)",
-                    ProductCode = "P-00007",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 100.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (জাহেদি)",
-                    ProductCode = "P-00008",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 130.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (কালমি)",
-                    ProductCode = "P-00009",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 160.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
-                new Product
-                {
-                    ProductName = "খেজুর (পিয়ারম)",
-                    ProductCode = "P-00010",
-                    CategoryId = categoryId,
-                    BranchId = branchId,
-                    DefaultUnitId = unitConversionId,
-                    BookingRate = 140.00m,
-                    CreatedById = userId,
-                    IsActive = true,
-                    TenantId = _tenantId
-                },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (মাবরুম)",
+                //     ProductCode = "P-00003",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 40.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (সুক্কারি)",
+                //     ProductCode = "P-00004",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 300.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (সাফাওয়ি)",
+                //     ProductCode = "P-00005",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 120.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (দাব্বাস)",
+                //     ProductCode = "P-00006",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 90.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (বরই / পালম)",
+                //     ProductCode = "P-00007",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 100.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (জাহেদি)",
+                //     ProductCode = "P-00008",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 130.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (কালমি)",
+                //     ProductCode = "P-00009",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 160.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
+                // new Product
+                // {
+                //     ProductName = "খেজুর (পিয়ারম)",
+                //     ProductCode = "P-00010",
+                //     CategoryId = categoryId,
+                //     BranchId = branchId,
+                //     DefaultUnitId = unitConversionId,
+                //     BookingRate = 140.00m,
+                //     CreatedById = userId,
+                //     IsActive = true,
+                //     TenantId = _tenantId
+                // },
 
             };
 

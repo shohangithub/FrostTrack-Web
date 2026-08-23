@@ -25,6 +25,7 @@ public class CustomerDueDetailResponse
     public string BookingNumber { get; set; } = string.Empty;
     public DateTime BookingDate { get; set; }
     public string? ReferenceNumber { get; set; }
+    public decimal BookingLabourCharge { get; set; }
     public decimal OpeningBalance { get; set; }
     public decimal TotalAccruedAmount { get; set; }  // delivery charges + pending accrual
     public decimal PendingRecurringChargeAmount { get; set; } // cycles since last delivery not yet recorded

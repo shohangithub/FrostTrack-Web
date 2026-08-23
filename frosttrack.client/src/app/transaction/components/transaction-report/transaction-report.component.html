@@ -294,16 +294,8 @@
                                 }}
                               </td>
                               <td class="text-center">
-                                <span
-                                  [class]="
-                                    'flow-badge ' +
-                                    (transaction.transactionHead?.type ===
-                                    _TRANSACTION_TYPE.CREDIT
-                                      ? 'flow-in'
-                                      : 'flow-out')
-                                  "
-                                >
-                                  {{ transaction.transactionHead?.type }}
+                                <span [class]="getFlowBadgeClass(transaction)">
+                                  {{ getFlowLabel(transaction) }}
                                 </span>
                               </td>
                               <td class="text-end">

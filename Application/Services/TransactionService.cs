@@ -383,17 +383,17 @@ public class TransactionService : ITransactionService
 
         var transactions = await query.ToListAsync(cancellationToken);
 
-        var totalIncome = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount);
-        var totalExpense = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(x => x.NetAmount);
+        var totalIncome = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(x => x.NetAmount);
+        var totalExpense = transactions.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount);
         var netCashFlow = totalIncome - totalExpense;
 
         var incomeByType = transactions
-            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .GroupBy(x => x.TransactionHead!.Name)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.NetAmount));
 
         var expenseByCategory = transactions
-            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
+            .Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .GroupBy(x => x.TransactionHead!.Name)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.NetAmount));
 
@@ -421,8 +421,8 @@ public class TransactionService : ITransactionService
             .GroupBy(x => x.TransactionDate.Date)
             .Select(g => new CashFlowResponse(
                 g.Key,
-                g.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount),
                 g.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(x => x.NetAmount),
+                g.Where(x => x.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(x => x.NetAmount),
                 g.Sum(x => x.NetAmount)
             ))
             .OrderBy(x => x.Date)

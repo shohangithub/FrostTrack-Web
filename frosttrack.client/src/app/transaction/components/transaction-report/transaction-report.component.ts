@@ -132,11 +132,11 @@ export class TransactionReportComponent {
 
   calculateTotals(): void {
     this.totalInflow = this.transactions
-      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.CREDIT)
+      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.CREDIT && t.paymentMethod !== 'CREDIT')
       .reduce((sum, t) => sum + t.netAmount, 0);
 
     this.totalOutflow = this.transactions
-      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.DEBIT)
+      .filter((t) => t.transactionHead?.type === TRANSACTION_TYPE.DEBIT && t.paymentMethod !== 'CREDIT')
       .reduce((sum, t) => sum + Math.abs(t.netAmount), 0);
 
     this.netAmount = this.totalInflow - this.totalOutflow;
@@ -177,11 +177,17 @@ export class TransactionReportComponent {
     return methods[method] || method;
   }
 
-  getFlowBadgeClass(flow: string): string {
-    return flow === 'IN' ? 'badge-success' : 'badge-danger';
+  getFlowBadgeClass(transaction: ITransactionListResponse): string {
+    if (transaction.paymentMethod === 'CREDIT') {
+      return 'flow-badge flow-accrual';
+    }
+    return 'flow-badge ' + (transaction.transactionHead?.type === this._TRANSACTION_TYPE.CREDIT ? 'flow-in' : 'flow-out');
   }
 
-  getFlowLabel(flow: string): string {
-    return flow === 'IN' ? 'IN' : 'OUT';
+  getFlowLabel(transaction: ITransactionListResponse): string {
+    if (transaction.paymentMethod === 'CREDIT') {
+      return 'ACCRUAL';
+    }
+    return transaction.transactionHead?.type || 'UNKNOWN';
   }
 }

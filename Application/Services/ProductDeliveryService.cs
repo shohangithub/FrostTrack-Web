@@ -121,7 +121,7 @@ public class DeliveryService : IDeliveryService
 
             // Get BILL_COLLECTION transaction head
             var transactionHead = await _transactionHeadRepository.Query()
-                .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.CREDIT && th.UsageFor == UsageFor.BILL_COLLECTION && th.IsActive);
+                .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.DEBIT && th.UsageFor == UsageFor.BILL_COLLECTION && th.IsActive);
 
             if (transactionHead == null)
                 throw new Exception("BILL_COLLECTION transaction head not found");
@@ -185,7 +185,7 @@ public class DeliveryService : IDeliveryService
             {
                 // Get LABOUR_CHARGE transaction head
                 var transactionHeadForLabourCharge = await _transactionHeadRepository.Query()
-                    .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.CREDIT && th.UsageFor == UsageFor.LABOUR_CHARGE && th.IsActive);
+                    .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.DEBIT && th.UsageFor == UsageFor.LABOUR_CHARGE && th.IsActive);
                 if (transactionHeadForLabourCharge == null)
                     throw new Exception("LABOUR_CHARGE transaction head not found");
 
@@ -885,7 +885,7 @@ public class DeliveryService : IDeliveryService
                 .Where(t => !t.IsDeleted
                             && t.BookingId == bookingId
                             && t.TransactionHead != null
-                            && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                            && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                             && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                                 || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
                 .SumAsync(t => t.Amount);
@@ -902,7 +902,7 @@ public class DeliveryService : IDeliveryService
                         && t.DeliveryId.HasValue
                         && deliveryIds.Contains(t.DeliveryId.Value)
                         && t.TransactionHead != null
-                        && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .SumAsync(t => t.Amount);

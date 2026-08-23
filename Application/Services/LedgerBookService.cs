@@ -39,7 +39,7 @@ namespace Application.Services
             // Get transactions for the report date
             var transactions = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
-                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .OrderBy(t => t.CreatedTime)
                 .ToListAsync(cancellationToken);
 
@@ -49,7 +49,7 @@ namespace Application.Services
 
             foreach (var transaction in transactions)
             {
-                var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
+                var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.DEBIT;
                 var debitAmount = isMoneyIn ? transaction.NetAmount : 0; // Money IN = Debit
                 var creditAmount = !isMoneyIn ? transaction.NetAmount : 0; // Money OUT = Credit
 

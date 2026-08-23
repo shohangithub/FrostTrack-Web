@@ -45,6 +45,7 @@ public class GeneralLedgerService : IGeneralLedgerService
                 t.TransactionDate < toUtc &&
                 !t.IsDeleted &&
                 !t.IsArchived &&
+                t.PaymentMethod != PaymentMethods.CREDIT &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                 t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .OrderBy(t => t.CreatedTime)
@@ -57,7 +58,8 @@ public class GeneralLedgerService : IGeneralLedgerService
         // Add cash transactions
         foreach (var transaction in transactions)
         {
-            var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.CREDIT;
+            // Determine if the transaction is Money IN (DEBIT) or Money OUT (CREDIT)
+            var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.DEBIT;
             var debitAmount = isMoneyIn ? transaction.NetAmount : 0; // Money IN = Debit
             var creditAmount = !isMoneyIn ? transaction.NetAmount : 0; // Money OUT = Credit
 

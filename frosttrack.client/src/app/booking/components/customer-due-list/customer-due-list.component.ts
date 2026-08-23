@@ -187,6 +187,11 @@ export class CustomerDueListComponent implements OnInit {
 
   // ── Summary stats ──────────────────────────────────────────────────────────
 
+  getBookingTotalLabour(booking: any): number {
+    if (!booking || !booking.deliveries) return 0;
+    return booking.deliveries.reduce((sum: number, del: any) => sum + Number(del.labourCharge || 0), 0);
+  }
+
   getTotalCustomers(): number {
     return this.filteredData.length;
   }

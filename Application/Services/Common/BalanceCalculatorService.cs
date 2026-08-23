@@ -50,7 +50,7 @@ public class BalanceCalculatorService : IBalanceCalculatorService
             {
                 t.TransactionDate,
                 // CREDIT is positive (money in), DEBIT is negative (money out)
-                NetAmount = t.TransactionHead!.Type == TransactionHeadTypes.CREDIT ? t.NetAmount : -t.NetAmount
+                NetAmount = t.TransactionHead!.Type == TransactionHeadTypes.DEBIT ? t.NetAmount : -t.NetAmount
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -66,10 +66,11 @@ public class BalanceCalculatorService : IBalanceCalculatorService
                 !t.IsArchived &&
                 t.TransactionDate >= openingDate &&
                 t.TransactionDate < fromUtc &&
+                t.PaymentMethod != PaymentMethods.CREDIT &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                 t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             // Fix: properly sign the NetAmount based on CREDIT/DEBIT
-            .SumAsync(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT ? t.NetAmount : -t.NetAmount, cancellationToken);
+            .SumAsync(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT ? t.NetAmount : -t.NetAmount, cancellationToken);
 
         return openingBalanceAmount + previousCashAmount;
     }

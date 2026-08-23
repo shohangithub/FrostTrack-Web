@@ -482,7 +482,7 @@ public class BookingService : IBookingService
 
         // Get all transactions for this booking
         var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
             .ToListAsync(cancellationToken);
 
         // Get all deliveries for this booking
@@ -543,7 +543,7 @@ public class BookingService : IBookingService
                         && t.BookingId.HasValue
                         && bookingIds.Contains(t.BookingId.Value)
                         && t.TransactionHead != null
-                        && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .Select(t => new
@@ -679,7 +679,7 @@ public class BookingService : IBookingService
                         && t.BookingId.HasValue
                         && bookingIds.Contains(t.BookingId.Value)
                         && t.TransactionHead != null
-                        && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE)
                             )
@@ -784,6 +784,7 @@ public class BookingService : IBookingService
                 BookingNumber = booking.BookingNumber,
                 BookingDate = booking.BookingDate,
                 ReferenceNumber = booking.ReferenceNumber,
+                BookingLabourCharge = booking.BookingDetails.Sum(bd => bd.LabourCharge),
                 OpeningBalance = 0m,         // per-booking; customer-level set at caller
                 TotalAccruedAmount = totalAccrued,
                 PendingRecurringChargeAmount = pendingRecurringCharge,
@@ -857,7 +858,7 @@ public class BookingService : IBookingService
                         && t.BookingId.HasValue
                         && bookingIds.Contains(t.BookingId.Value)
                         && t.TransactionHead != null
-                        && t.TransactionHead.Type == TransactionHeadTypes.CREDIT
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .Select(t => new { BookingId = t.BookingId!.Value, t.Amount })

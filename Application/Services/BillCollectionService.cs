@@ -61,7 +61,7 @@ public class BillCollectionService : IBillCollectionService
         var paidAmountsMap = await _transactionRepository.Query()
             .Where(t => t.BookingId != null && bookingIds.Contains(t.BookingId.Value) &&
                         !t.IsDeleted &&
-                        t.TransactionHead!.Type == TransactionHeadTypes.CREDIT &&
+                        t.TransactionHead!.Type == TransactionHeadTypes.DEBIT &&
                         (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
                          t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
             .GroupBy(t => t.BookingId!.Value)
@@ -161,7 +161,7 @@ public class BillCollectionService : IBillCollectionService
         var paidAmount = await _transactionRepository.Query()
             .Where(t => t.BookingId == bookingId &&
                        !t.IsDeleted &&
-                       t.TransactionHead!.Type == TransactionHeadTypes.CREDIT &&
+                       t.TransactionHead!.Type == TransactionHeadTypes.DEBIT &&
                        (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
                         t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
             .SumAsync(t => t.NetAmount, cancellationToken);

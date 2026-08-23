@@ -70,7 +70,7 @@ namespace Application.Services
 
             foreach (var group in groupedTransactions)
             {
-                var isMoneyIn = group.TransactionType == TransactionHeadTypes.CREDIT;
+                var isMoneyIn = group.TransactionType == TransactionHeadTypes.DEBIT;
                 var debitAmount = isMoneyIn ? group.TotalAmount : 0; // Money IN = Debit
                 var creditAmount = !isMoneyIn ? group.TotalAmount : 0; // Money OUT = Credit
 

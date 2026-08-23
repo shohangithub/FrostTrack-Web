@@ -16,15 +16,9 @@
                           <label for="due-search">
                             <i class="material-icons search-icon">search</i>
                           </label>
-                          <input
-                            id="due-search"
-                            placeholder="Search by name, mobile or address"
-                            type="text"
-                            class="browser-default search-field"
-                            [(ngModel)]="searchText"
-                            (keyup)="onSearch($event)"
-                            aria-label="Search box"
-                          />
+                          <input id="due-search" placeholder="Search by name, mobile or address" type="text"
+                            class="browser-default search-field" [(ngModel)]="searchText" (keyup)="onSearch($event)"
+                            aria-label="Search box" />
                         </div>
                       </div>
                     </div>
@@ -32,34 +26,20 @@
                 </div>
               </div>
               <div class="col-lg-6 d-flex align-items-center justify-content-end pe-3 gap-2">
-                <select
-                  class="form-select border-1"
-                  [(ngModel)]="selectedStatus"
-                  (change)="onStatusFilter($event)"
+                <select class="form-select border-1" [(ngModel)]="selectedStatus" (change)="onStatusFilter($event)"
                   style="height: 35px; width: 200px; padding: 0.375rem 2.25rem 0.375rem 0.75rem;"
-                  aria-label="Filter by status"
-                >
+                  aria-label="Filter by status">
                   <option value="all">All Status</option>
                   <option value="normal">Current</option>
                   <option value="warning">Due Soon (25+ days)</option>
                   <option value="danger">Overdue (30+ days)</option>
                 </select>
-                <button
-                  class="btn btn-outline-success h-auto m-0"
-                  (click)="exportCsv()"
-                  [disabled]="filteredData.length === 0"
-                  title="Export CSV"
-                  style="padding: 6px 12px;"
-                >
+                <button class="btn btn-outline-success h-auto m-0" (click)="exportCsv()"
+                  [disabled]="filteredData.length === 0" title="Export CSV" style="padding: 6px 12px;">
                   <i class="material-icons" style="font-size: 18px; vertical-align: middle;">download</i> Export
                 </button>
-                <button
-                  class="btn btn-primary h-auto m-0 ms-2"
-                  (click)="fetchData()"
-                  [disabled]="loadingIndicator"
-                  title="Refresh"
-                  style="padding: 6px 12px;"
-                >
+                <button class="btn btn-primary h-auto m-0 ms-2" (click)="fetchData()" [disabled]="loadingIndicator"
+                  title="Refresh" style="padding: 6px 12px;">
                   <i class="material-icons" style="font-size: 18px; vertical-align: middle;">refresh</i> Refresh
                 </button>
               </div>
@@ -69,16 +49,10 @@
             <div class="row mb-3 g-2">
               <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100">
-                  <div
-                    class="card-body py-2 px-3 d-flex align-items-center gap-2"
-                  >
-                    <div
-                      class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                      style="width: 42px; height: 42px; flex-shrink: 0"
-                    >
-                      <i class="material-icons" style="font-size: 20px"
-                        >people</i
-                      >
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                      style="width: 42px; height: 42px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 20px">people</i>
                     </div>
                     <div>
                       <div class="small text-muted">Customers</div>
@@ -92,16 +66,10 @@
               </div>
               <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100">
-                  <div
-                    class="card-body py-2 px-3 d-flex align-items-center gap-2"
-                  >
-                    <div
-                      class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center"
-                      style="width: 42px; height: 42px; flex-shrink: 0"
-                    >
-                      <i class="material-icons" style="font-size: 20px"
-                        >account_balance</i
-                      >
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center"
+                      style="width: 42px; height: 42px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 20px">account_balance</i>
                     </div>
                     <div>
                       <div class="small text-muted">Total Billed</div>
@@ -110,7 +78,7 @@
                       </div>
                       <div class="small text-warning">
                         {{
-                          getTotalPendingRecurringCharge() | number: "1.2-2"
+                        getTotalPendingRecurringCharge() | number: "1.2-2"
                         }}
                         pending
                       </div>
@@ -120,16 +88,10 @@
               </div>
               <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100">
-                  <div
-                    class="card-body py-2 px-3 d-flex align-items-center gap-2"
-                  >
-                    <div
-                      class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
-                      style="width: 42px; height: 42px; flex-shrink: 0"
-                    >
-                      <i class="material-icons" style="font-size: 20px"
-                        >payments</i
-                      >
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                      style="width: 42px; height: 42px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 20px">payments</i>
                     </div>
                     <div>
                       <div class="small text-muted">Total Paid</div>
@@ -142,16 +104,10 @@
               </div>
               <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100">
-                  <div
-                    class="card-body py-2 px-3 d-flex align-items-center gap-2"
-                  >
-                    <div
-                      class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
-                      style="width: 42px; height: 42px; flex-shrink: 0"
-                    >
-                      <i class="material-icons" style="font-size: 20px"
-                        >warning</i
-                      >
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
+                      style="width: 42px; height: 42px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 20px">warning</i>
                     </div>
                     <div>
                       <div class="small text-muted">Total Outstanding</div>
@@ -166,666 +122,530 @@
 
             <!-- ── Loading / Empty ────────────────────────────────────────── -->
             @if (loadingIndicator) {
-              <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
-                <div class="mt-2 text-muted small">Loading customers…</div>
-              </div>
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+              <div class="mt-2 text-muted small">Loading customers…</div>
+            </div>
             } @else if (filteredData.length === 0) {
-              <div
-                class="alert alert-info d-flex align-items-center gap-2 mb-0"
-              >
-                <i class="material-icons">info</i>
-                No customers found matching the current filter.
-              </div>
+            <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+              <i class="material-icons">info</i>
+              No customers found matching the current filter.
+            </div>
             } @else {
-              <!-- ── Main Table ────────────────────────────────────────────── -->
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="color: rgba(0, 0, 0, 0.87); font-size: 14px;">
-                  <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
-                    <tr>
-                      <th style="width: 32px; border-bottom: none;"></th>
-                      <th style="border-bottom: none;">Customer</th>
-                      <th class="text-center" style="width: 56px; border-bottom: none;">Bkg#</th>
-                      <th class="text-end" style="border-bottom: none;">Billed</th>
-                      <th class="text-end" style="border-bottom: none;">Paid</th>
-                      <th class="text-end" style="border-bottom: none;">Outstanding</th>
-                      <th class="text-center" style="width: 115px; border-bottom: none;">
-                        Last Payment
-                      </th>
-                      <th class="text-center" style="width: 100px; border-bottom: none;">Status</th>
-                      <th class="text-center" style="width: 60px; border-bottom: none;">Print</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of filteredData; track row.customerId) {
-                      <!-- ── Customer summary row ── -->
-                      <tr
-                        [class.table-danger]="row.status === 'danger'"
-                        [class.table-warning]="row.status === 'warning'"
-                        style="cursor: pointer"
-                        (click)="toggleExpand(row)"
-                      >
-                        <!-- Expand toggle -->
-                        <td class="text-center p-1">
-                          <i
-                            class="material-icons"
-                            style="font-size: 20px; color: #6c757d"
-                          >
-                            {{
-                              isExpanded(row.customerId)
-                                ? "expand_less"
-                                : "expand_more"
-                            }}
-                          </i>
-                        </td>
+            <!-- ── Main Table ────────────────────────────────────────────── -->
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="color: rgba(0, 0, 0, 0.87); font-size: 14px;">
+                <thead
+                  style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
+                  <tr>
+                    <th style="width: 32px; border-bottom: none;"></th>
+                    <th style="border-bottom: none;">Customer</th>
+                    <th class="text-center" style="width: 56px; border-bottom: none;">Bkg#</th>
+                    <th class="text-end" style="border-bottom: none;">Billed</th>
+                    <th class="text-end" style="border-bottom: none;">Paid</th>
+                    <th class="text-end" style="border-bottom: none;">Outstanding</th>
+                    <th class="text-center" style="width: 115px; border-bottom: none;">
+                      Last Payment
+                    </th>
+                    <th class="text-center" style="width: 100px; border-bottom: none;">Status</th>
+                    <th class="text-center" style="width: 60px; border-bottom: none;">Print</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of filteredData; track row.customerId) {
+                  <!-- ── Customer summary row ── -->
+                  <tr [class.table-danger]="row.status === 'danger'" [class.table-warning]="row.status === 'warning'"
+                    style="cursor: pointer" (click)="toggleExpand(row)">
+                    <!-- Expand toggle -->
+                    <td class="text-center p-1">
+                      <i class="material-icons" style="font-size: 20px; color: #6c757d">
+                        {{
+                        isExpanded(row.customerId)
+                        ? "expand_less"
+                        : "expand_more"
+                        }}
+                      </i>
+                    </td>
 
-                        <!-- Customer info -->
-                        <td>
-                          <div class="fw-semibold">{{ row.customerName }}</div>
-                          <div class="small text-muted">
-                            {{ row.customerMobile }}
+                    <!-- Customer info -->
+                    <td>
+                      <div class="fw-semibold">{{ row.customerName }}</div>
+                      <div class="small text-muted">
+                        {{ row.customerMobile }}
+                      </div>
+                      @if (row.customerAddress) {
+                      <div class="small text-muted">
+                        {{ row.customerAddress }}
+                      </div>
+                      }
+                    </td>
+
+                    <!-- Bookings count -->
+                    <td class="text-center">
+                      <span class="badge bg-secondary">{{
+                        row.totalBookings
+                        }}</span>
+                    </td>
+
+                    <!-- Billed -->
+                    <td class="text-end">
+                      {{ row.totalAmount | number: "1.2-2" }}
+                      @if (row.pendingRecurringChargeAmount > 0) {
+                      <div class="small text-warning">
+                        <i class="material-icons" style="font-size: 12px; vertical-align: middle">schedule</i>
+                        +{{
+                        row.pendingRecurringChargeAmount
+                        | number: "1.0-0"
+                        }}
+                        pending
+                      </div>
+                      }
+                    </td>
+
+                    <!-- Paid -->
+                    <td class="text-end fw-semibold text-success">
+                      {{ row.totalPaid | number: "1.2-2" }}
+                    </td>
+
+                    <!-- Outstanding -->
+                    <td class="text-end">
+                      <strong [class.text-danger]="row.totalDue > 0">
+                        {{ row.totalDue | number: "1.2-2" }}
+                      </strong>
+                    </td>
+
+                    <!-- Last payment / age -->
+                    <td class="text-center">
+                      <span class="fw-semibold" [class.text-danger]="row.status === 'danger'"
+                        [class.text-warning]="row.status === 'warning'">{{ row.daysSinceLastPayment }}d ago</span>
+                      @if (row.lastPaymentDate) {
+                      <div class="small text-muted">
+                        {{ row.lastPaymentDate | date: "dd/MM/yy" }}
+                      </div>
+                      } @else {
+                      <div class="small text-muted">No payments</div>
+                      }
+                    </td>
+
+                    <!-- Status badge -->
+                    <td class="text-center">
+                      <span [ngClass]="getStatusClass(row.status)">
+                        <i class="material-icons" style="font-size: 12px; vertical-align: middle">
+                          {{ getStatusIcon(row.status) }}
+                        </i>
+                        {{ getStatusText(row.status) }}
+                      </span>
+                    </td>
+
+                    <!-- Print (stop row click propagation) -->
+                    <td class="text-center" (click)="$event.stopPropagation()">
+                      <button class="btn btn-sm btn-outline-secondary" (click)="printCustomerDue(row.customerId)"
+                        title="Print statement">
+                        <i class="material-icons" style="font-size: 16px; vertical-align: middle">print</i>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- ── Expand detail row ── -->
+                  @if (isExpanded(row.customerId)) {
+                  <tr>
+                    <td colspan="9" class="p-0 border-top-0">
+                      <div class="bg-light border-start border-4 border-primary px-3 py-3">
+                        @if (isDetailLoading(row.customerId)) {
+                        <div class="text-center py-3">
+                          <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                          Loading booking details…
+                        </div>
+                        } @else if (
+                        getCustomerDetails(row.customerId).length === 0
+                        ) {
+                        <div class="alert alert-info mb-0">
+                          No booking records found.
+                        </div>
+                        } @else {
+                        <!-- Opening balance banner -->
+                        @if (row.openingBalance > 0) {
+                        <div class="alert alert-secondary py-2 mb-3 d-flex align-items-center gap-2">
+                          <i class="material-icons" style="font-size: 16px">account_balance</i>
+                          Opening Balance:
+                          <strong class="ms-1">{{
+                            row.openingBalance | number: "1.2-2"
+                            }}</strong>
+                        </div>
+                        }
+
+                        <!-- One card per booking -->
+                        @for (
+                        booking of getCustomerDetails(row.customerId);
+                        track booking.bookingId
+                        ) {
+                        <div class="card mb-3 shadow-sm border-0">
+                          <!-- Booking header bar -->
+                          <div class="card-header py-2 px-3" [class.bg-danger]="booking.status === 'danger'"
+                            [class.text-white]="booking.status === 'danger'" [class.bg-warning]="booking.status === 'warning'"
+                            [class.bg-light]="booking.status === 'normal'">
+                            <div class="row align-items-center gx-4 gy-2 w-100 m-0">
+                              <div class="col-auto ps-0">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Booking #</span>
+                                <strong>{{ booking.bookingNumber }}</strong>
+                              </div>
+                              <div class="col-auto">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Date</span>
+                                {{ booking.bookingDate | date: "dd/MM/yyyy" }}
+                              </div>
+                              @if (booking.referenceNumber) {
+                              <div class="col-auto">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Ref#</span>
+                                {{ booking.referenceNumber }}
+                              </div>
+                              }
+                              <div class="col-auto">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Age</span>
+                                {{ booking.daysSinceBooking }}d
+                              </div>
+
+                              <div class="col-auto text-end border-start border-secondary border-opacity-25 ps-4 ms-2">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Labour Charge</span>
+                                {{ booking.bookingLabourCharge | number: "1.2-2" }}
+                              </div>
+                              <div class="col-auto text-end">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Billed</span>
+                                {{ booking.totalAccruedAmount | number: "1.2-2" }}
+                              </div>
+                              <div class="col-auto text-end">
+                                <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Paid</span>
+                                <span class="text-success fw-semibold">{{ booking.totalPaid | number: "1.2-2" }}</span>
+                              </div>
+
+                              <div class="col pe-0 text-end d-flex justify-content-end align-items-center gap-3">
+                                <div>
+                                  <span class="small d-block text-uppercase fw-semibold" style="opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px;">Outstanding</span>
+                                  <strong>{{ booking.totalDue | number: "1.2-2" }}</strong>
+                                </div>
+                                <span [ngClass]="getStatusClass(booking.status)">
+                                  {{ getStatusText(booking.status) }}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          @if (row.customerAddress) {
-                            <div class="small text-muted">
-                              {{ row.customerAddress }}
-                            </div>
-                          }
-                        </td>
 
-                        <!-- Bookings count -->
-                        <td class="text-center">
-                          <span class="badge bg-secondary">{{
-                            row.totalBookings
-                          }}</span>
-                        </td>
-
-                        <!-- Billed -->
-                        <td class="text-end">
-                          {{ row.totalAmount | number: "1.2-2" }}
-                          @if (row.pendingRecurringChargeAmount > 0) {
-                            <div class="small text-warning">
-                              <i
-                                class="material-icons"
-                                style="font-size: 12px; vertical-align: middle"
-                                >schedule</i
-                              >
-                              +{{
-                                row.pendingRecurringChargeAmount
-                                  | number: "1.0-0"
-                              }}
-                              pending
-                            </div>
-                          }
-                        </td>
-
-                        <!-- Paid -->
-                        <td class="text-end fw-semibold text-success">
-                          {{ row.totalPaid | number: "1.2-2" }}
-                        </td>
-
-                        <!-- Outstanding -->
-                        <td class="text-end">
-                          <strong [class.text-danger]="row.totalDue > 0">
-                            {{ row.totalDue | number: "1.2-2" }}
-                          </strong>
-                        </td>
-
-                        <!-- Last payment / age -->
-                        <td class="text-center">
-                          <span
-                            class="fw-semibold"
-                            [class.text-danger]="row.status === 'danger'"
-                            [class.text-warning]="row.status === 'warning'"
-                            >{{ row.daysSinceLastPayment }}d ago</span
-                          >
-                          @if (row.lastPaymentDate) {
-                            <div class="small text-muted">
-                              {{ row.lastPaymentDate | date: "dd/MM/yy" }}
-                            </div>
-                          } @else {
-                            <div class="small text-muted">No payments</div>
-                          }
-                        </td>
-
-                        <!-- Status badge -->
-                        <td class="text-center">
-                          <span [ngClass]="getStatusClass(row.status)">
-                            <i
-                              class="material-icons"
-                              style="font-size: 12px; vertical-align: middle"
-                            >
-                              {{ getStatusIcon(row.status) }}
-                            </i>
-                            {{ getStatusText(row.status) }}
-                          </span>
-                        </td>
-
-                        <!-- Print (stop row click propagation) -->
-                        <td
-                          class="text-center"
-                          (click)="$event.stopPropagation()"
-                        >
-                          <button
-                            class="btn btn-sm btn-outline-secondary"
-                            (click)="printCustomerDue(row.customerId)"
-                            title="Print statement"
-                          >
-                            <i
-                              class="material-icons"
-                              style="font-size: 16px; vertical-align: middle"
-                              >print</i
-                            >
-                          </button>
-                        </td>
-                      </tr>
-
-                      <!-- ── Expand detail row ── -->
-                      @if (isExpanded(row.customerId)) {
-                        <tr>
-                          <td colspan="9" class="p-0 border-top-0">
-                            <div
-                              class="bg-light border-start border-4 border-primary px-3 py-3"
-                            >
-                              @if (isDetailLoading(row.customerId)) {
-                                <div class="text-center py-3">
-                                  <div
-                                    class="spinner-border spinner-border-sm text-primary me-2"
-                                  ></div>
-                                  Loading booking details…
-                                </div>
-                              } @else if (
-                                getCustomerDetails(row.customerId).length === 0
+                          <!-- Deliveries table -->
+                          <div class="card-body p-0">
+                            @if (booking.deliveries.length === 0) {
+                            <div class="p-3 fst-italic text-muted">
+                              No deliveries recorded yet.
+                              @if (
+                              booking.pendingRecurringChargeAmount >
+                              0
                               ) {
-                                <div class="alert alert-info mb-0">
-                                  No booking records found.
-                                </div>
-                              } @else {
-                                <!-- Opening balance banner -->
-                                @if (row.openingBalance > 0) {
-                                  <div
-                                    class="alert alert-secondary py-2 mb-3 d-flex align-items-center gap-2"
-                                  >
-                                    <i
-                                      class="material-icons"
-                                      style="font-size: 16px"
-                                      >account_balance</i
-                                    >
-                                    Opening Balance:
-                                    <strong class="ms-1">{{
-                                      row.openingBalance | number: "1.2-2"
-                                    }}</strong>
-                                  </div>
-                                }
-
-                                <!-- One card per booking -->
-                                @for (
-                                  booking of getCustomerDetails(row.customerId);
-                                  track booking.bookingId
-                                ) {
-                                  <div class="card mb-3 shadow-sm border-0">
-                                    <!-- Booking header bar -->
-                                    <div
-                                      class="card-header py-2 d-flex flex-wrap align-items-center gap-3"
-                                      [class.bg-danger]="
-                                        booking.status === 'danger'
-                                      "
-                                      [class.text-white]="
-                                        booking.status === 'danger'
-                                      "
-                                      [class.bg-warning]="
-                                        booking.status === 'warning'
-                                      "
-                                      [class.bg-light]="
-                                        booking.status === 'normal'
-                                      "
-                                    >
-                                      <div>
-                                        <span
-                                          class="small d-block"
-                                          style="opacity: 0.7"
-                                          >Booking #</span
-                                        >
-                                        <strong>{{
-                                          booking.bookingNumber
-                                        }}</strong>
-                                      </div>
-                                      <div>
-                                        <span
-                                          class="small d-block"
-                                          style="opacity: 0.7"
-                                          >Date</span
-                                        >
+                              <span class="ms-2 badge bg-warning text-dark">
+                                {{
+                                booking.pendingRecurringChargeAmount
+                                | number: "1.2-2"
+                                }}
+                                pending recurring charge
+                              </span>
+                              }
+                            </div>
+                            } @else {
+                            <div class="table-responsive">
+                              <table class="table table-sm table-bordered table-hover mb-0"
+                                style="color: rgba(0, 0, 0, 0.87); font-size: 14px;">
+                                <thead
+                                  style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
+                                  <tr>
+                                    <th>Delivery #</th>
+                                    <th>Date</th>
+                                    <th>Products Delivered</th>
+                                    <th class="text-end">Charge</th>
+                                    <th class="text-end">Labour</th>
+                                    <th class="text-end">Adj.</th>
+                                    <th class="text-end">Paid</th>
+                                    <th class="text-end">Due</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (
+                                  delivery of booking.deliveries;
+                                  track delivery.deliveryId
+                                  ) {
+                                  <tr>
+                                    <td class="fw-semibold">
+                                      {{
+                                      delivery.deliveryNumber
+                                      }}
+                                    </td>
+                                    <td>
+                                      {{
+                                      delivery.deliveryDate
+                                      | date: "dd/MM/yyyy"
+                                      }}
+                                    </td>
+                                    <td>
+                                      @for (
+                                      detail of delivery.deliveryDetails;
+                                      track detail.id
+                                      ) {
+                                      <div class="small">
                                         {{
-                                          booking.bookingDate
-                                            | date: "dd/MM/yyyy"
+                                        detail.productName
+                                        }}:
+                                        {{
+                                        detail.deliveryQuantity
+                                        }}
+                                        {{
+                                        detail.deliveryUnitName
                                         }}
                                       </div>
-                                      @if (booking.referenceNumber) {
-                                        <div>
-                                          <span
-                                            class="small d-block"
-                                            style="opacity: 0.7"
-                                            >Ref#</span
-                                          >
-                                          {{ booking.referenceNumber }}
-                                        </div>
                                       }
-                                      <div>
-                                        <span
-                                          class="small d-block"
-                                          style="opacity: 0.7"
-                                          >Age</span
-                                        >
-                                        {{ booking.daysSinceBooking }}d
-                                      </div>
-                                      <div>
-                                        <span
-                                          class="small d-block"
-                                          style="opacity: 0.7"
-                                          >Billed</span
-                                        >
-                                        {{
-                                          booking.totalAccruedAmount
-                                            | number: "1.2-2"
-                                        }}
-                                      </div>
-                                      <div>
-                                        <span
-                                          class="small d-block"
-                                          style="opacity: 0.7"
-                                          >Paid</span
-                                        >
-                                        {{
-                                          booking.totalPaid | number: "1.2-2"
-                                        }}
-                                      </div>
-                                      <div
-                                        class="ms-auto d-flex align-items-center gap-2"
-                                      >
-                                        <div class="text-end">
-                                          <span
-                                            class="small d-block"
-                                            style="opacity: 0.7"
-                                            >Outstanding</span
-                                          >
-                                          <strong>{{
-                                            booking.totalDue | number: "1.2-2"
-                                          }}</strong>
-                                        </div>
-                                        <span
-                                          [ngClass]="
-                                            getStatusClass(booking.status)
-                                          "
-                                        >
-                                          {{ getStatusText(booking.status) }}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <!-- Deliveries table -->
-                                    <div class="card-body p-0">
-                                      @if (booking.deliveries.length === 0) {
-                                        <div class="p-3 fst-italic text-muted">
-                                          No deliveries recorded yet.
-                                          @if (
-                                            booking.pendingRecurringChargeAmount >
-                                            0
-                                          ) {
-                                            <span
-                                              class="ms-2 badge bg-warning text-dark"
-                                            >
-                                              {{
-                                                booking.pendingRecurringChargeAmount
-                                                  | number: "1.2-2"
-                                              }}
-                                              pending recurring charge
-                                            </span>
-                                          }
-                                        </div>
-                                      } @else {
-                                        <div class="table-responsive">
-                                          <table
-                                            class="table table-sm table-bordered table-hover mb-0"
-                                            style="color: rgba(0, 0, 0, 0.87); font-size: 14px;"
-                                          >
-                                            <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
-                                              <tr>
-                                                <th>Delivery #</th>
-                                                <th>Date</th>
-                                                <th>Products Delivered</th>
-                                                <th class="text-end">Charge</th>
-                                                <th class="text-end">Labour</th>
-                                                <th class="text-end">Adj.</th>
-                                                <th class="text-end">Paid</th>
-                                                <th class="text-end">Due</th>
-                                              </tr>
-                                            </thead>
-                                            <tbody>
-                                              @for (
-                                                delivery of booking.deliveries;
-                                                track delivery.deliveryId
-                                              ) {
-                                                <tr>
-                                                  <td class="fw-semibold">
-                                                    {{
-                                                      delivery.deliveryNumber
-                                                    }}
-                                                  </td>
-                                                  <td>
-                                                    {{
-                                                      delivery.deliveryDate
-                                                        | date: "dd/MM/yyyy"
-                                                    }}
-                                                  </td>
-                                                  <td>
-                                                    @for (
-                                                      detail of delivery.deliveryDetails;
-                                                      track detail.id
-                                                    ) {
-                                                      <div class="small">
-                                                        {{
-                                                          detail.productName
-                                                        }}:
-                                                        {{
-                                                          detail.deliveryQuantity
-                                                        }}
-                                                        {{
-                                                          detail.deliveryUnitName
-                                                        }}
-                                                      </div>
-                                                    }
-                                                  </td>
-                                                  <td class="text-end">
-                                                    {{
-                                                      delivery.chargeAmount
-                                                        | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                  <td class="text-end">
-                                                    {{
-                                                      delivery.labourCharge
-                                                        | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                  <td class="text-end">
-                                                    {{
-                                                      delivery.adjustmentValue
-                                                        | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                  <td
-                                                    class="text-end text-success"
-                                                  >
-                                                    {{
-                                                      delivery.paidAmount
-                                                        | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                  <td class="text-end">
-                                                    <strong
-                                                      [class.text-danger]="
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                      delivery.chargeAmount
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                      delivery.labourCharge
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                      delivery.adjustmentValue
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end text-success">
+                                      {{
+                                      delivery.paidAmount
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end">
+                                      <strong [class.text-danger]="
                                                         delivery.dueAmount > 0
-                                                      "
-                                                    >
-                                                      {{
-                                                        delivery.dueAmount
-                                                          | number: "1.2-2"
-                                                      }}
-                                                    </strong>
-                                                  </td>
-                                                </tr>
-                                              }
-                                            </tbody>
-                                            <tfoot>
-                                              <tr
-                                                class="table-active fw-semibold"
-                                              >
-                                                <td
-                                                  colspan="7"
-                                                  class="text-end"
-                                                >
-                                                  Booking Total Outstanding:
-                                                </td>
-                                                <td
-                                                  class="text-end text-danger"
-                                                >
-                                                  {{
-                                                    booking.totalDue
-                                                      | number: "1.2-2"
-                                                  }}
-                                                </td>
-                                              </tr>
-                                              @if (
-                                                booking.pendingRecurringChargeAmount >
-                                                0
-                                              ) {
-                                                <tr class="table-warning">
-                                                  <td
-                                                    colspan="7"
-                                                    class="text-end small"
-                                                  >
-                                                    <i
-                                                      class="material-icons"
-                                                      style="
+                                                      ">
+                                        {{
+                                        delivery.dueAmount
+                                        | number: "1.2-2"
+                                        }}
+                                      </strong>
+                                    </td>
+                                  </tr>
+                                  }
+                                </tbody>
+                                <tfoot>
+                                  <tr class="table-active fw-semibold">
+                                    <td colspan="7" class="text-end">
+                                      Booking Total Outstanding:
+                                    </td>
+                                    <td class="text-end text-danger">
+                                      {{
+                                      booking.totalDue
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                  </tr>
+                                  @if (
+                                  booking.pendingRecurringChargeAmount >
+                                  0
+                                  ) {
+                                  <tr class="table-warning">
+                                    <td colspan="7" class="text-end small">
+                                      <i class="material-icons" style="
                                                         font-size: 14px;
                                                         vertical-align: middle;
-                                                      "
-                                                      >schedule</i
-                                                    >
-                                                    Pending cycles (not yet
-                                                    delivered):
-                                                  </td>
-                                                  <td
-                                                    class="text-end small fw-semibold"
-                                                  >
-                                                    {{
-                                                      booking.pendingRecurringChargeAmount
-                                                        | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                </tr>
-                                              }
-                                            </tfoot>
-                                          </table>
-                                        </div>
-                                      }
-                                    </div>
+                                                      ">schedule</i>
+                                      Pending cycles (not yet
+                                      delivered):
+                                    </td>
+                                    <td class="text-end small fw-semibold">
+                                      {{
+                                      booking.pendingRecurringChargeAmount
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                  </tr>
+                                  }
+                                </tfoot>
+                              </table>
+                            </div>
+                            }
+                          </div>
 
-                                    <!-- ── Recurring Charge History ── -->
-                                    @if (
-                                      booking.recurringChargeEntries.length > 0
-                                    ) {
-                                      <div class="card-footer p-0 border-top">
-                                        <button
-                                          class="btn btn-link btn-sm text-decoration-none w-100 text-start px-3 py-2 d-flex align-items-center gap-2"
-                                          (click)="
+                          <!-- ── Recurring Charge History ── -->
+                          @if (
+                          booking.recurringChargeEntries.length > 0
+                          ) {
+                          <div class="card-footer p-0 border-top">
+                            <button
+                              class="btn btn-link btn-sm text-decoration-none w-100 text-start px-3 py-2 d-flex align-items-center gap-2"
+                              (click)="
                                             toggleRecurringChargeHistory(
                                               booking.bookingId
                                             );
                                             $event.stopPropagation()
-                                          "
-                                          type="button"
-                                        >
-                                          <i
-                                            class="material-icons"
-                                            style="font-size: 18px"
-                                          >
-                                            {{
-                                              isRecurringChargeHistoryExpanded(
-                                                booking.bookingId
-                                              )
-                                                ? "expand_less"
-                                                : "expand_more"
-                                            }}
-                                          </i>
-                                          <span
-                                            class="fw-semibold text-secondary small"
-                                          >
-                                            Recurring Charge History ({{
-                                              booking.recurringChargeEntries
-                                                .length
-                                            }}
-                                            entries — Total:
-                                            {{
-                                              sumRecurringChargeEntries(
-                                                booking.recurringChargeEntries
-                                              ) | number: "1.2-2"
-                                            }})
-                                          </span>
-                                        </button>
-                                        @if (
-                                          isRecurringChargeHistoryExpanded(
-                                            booking.bookingId
-                                          )
-                                        ) {
-                                          <div
-                                            class="table-responsive border-top"
-                                          >
-                                            <table
-                                              class="table table-sm table-bordered mb-0"
-                                              style="color: rgba(0, 0, 0, 0.87); font-size: 14px;"
-                                            >
-                                              <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
-                                                <tr>
-                                                  <th>Product</th>
-                                                  <th>Bill Period</th>
-                                                  <th class="text-center">
-                                                    Type
-                                                  </th>
-                                                  <th class="text-center">
-                                                    Cycles
-                                                  </th>
-                                                  <th class="text-end">Qty</th>
-                                                  <th class="text-end">Rate</th>
-                                                  <th class="text-end">
-                                                    Amount
-                                                  </th>
-                                                  <th class="text-center">
-                                                    Source
-                                                  </th>
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                @for (
-                                                  entry of booking.recurringChargeEntries;
-                                                  track entry.id
-                                                ) {
-                                                  <tr>
-                                                    <td class="small">
-                                                      {{ entry.productName }}
-                                                    </td>
-                                                    <td
-                                                      class="small text-nowrap"
-                                                    >
-                                                      {{
-                                                        entry.billPeriodFrom
-                                                          | date: "dd/MM/yy"
-                                                      }}
-                                                      –
-                                                      {{
-                                                        entry.billPeriodTo
-                                                          | date: "dd/MM/yy"
-                                                      }}
-                                                    </td>
-                                                    <td class="text-center">
-                                                      <span
-                                                        class="badge bg-secondary small"
-                                                        >{{
-                                                          entry.billType
-                                                        }}</span
-                                                      >
-                                                    </td>
-                                                    <td class="text-center">
-                                                      {{ entry.cycles }}
-                                                    </td>
-                                                    <td class="text-end small">
-                                                      {{
-                                                        entry.quantity
-                                                          | number: "1.0-2"
-                                                      }}
-                                                    </td>
-                                                    <td class="text-end small">
-                                                      {{
-                                                        entry.rate
-                                                          | number: "1.2-2"
-                                                      }}
-                                                    </td>
-                                                    <td
-                                                      class="text-end fw-semibold"
-                                                    >
-                                                      {{
-                                                        entry.amount
-                                                          | number: "1.2-2"
-                                                      }}
-                                                    </td>
-                                                    <td class="text-center">
-                                                      <span
-                                                        [class]="
+                                          " type="button">
+                              <i class="material-icons" style="font-size: 18px">
+                                {{
+                                isRecurringChargeHistoryExpanded(
+                                booking.bookingId
+                                )
+                                ? "expand_less"
+                                : "expand_more"
+                                }}
+                              </i>
+                              <span class="fw-semibold text-secondary small">
+                                Recurring Charge History ({{
+                                booking.recurringChargeEntries
+                                .length
+                                }}
+                                entries — Total:
+                                {{
+                                sumRecurringChargeEntries(
+                                booking.recurringChargeEntries
+                                ) | number: "1.2-2"
+                                }})
+                              </span>
+                            </button>
+                            @if (
+                            isRecurringChargeHistoryExpanded(
+                            booking.bookingId
+                            )
+                            ) {
+                            <div class="table-responsive border-top">
+                              <table class="table table-sm table-bordered mb-0"
+                                style="color: rgba(0, 0, 0, 0.87); font-size: 14px;">
+                                <thead
+                                  style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
+                                  <tr>
+                                    <th>Product</th>
+                                    <th>Bill Period</th>
+                                    <th class="text-center">
+                                      Type
+                                    </th>
+                                    <th class="text-center">
+                                      Cycles
+                                    </th>
+                                    <th class="text-end">Qty</th>
+                                    <th class="text-end">Rate</th>
+                                    <th class="text-end">
+                                      Amount
+                                    </th>
+                                    <th class="text-center">
+                                      Source
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (
+                                  entry of booking.recurringChargeEntries;
+                                  track entry.id
+                                  ) {
+                                  <tr>
+                                    <td class="small">
+                                      {{ entry.productName }}
+                                    </td>
+                                    <td class="small text-nowrap">
+                                      {{
+                                      entry.billPeriodFrom
+                                      | date: "dd/MM/yy"
+                                      }}
+                                      –
+                                      {{
+                                      entry.billPeriodTo
+                                      | date: "dd/MM/yy"
+                                      }}
+                                    </td>
+                                    <td class="text-center">
+                                      <span class="badge bg-secondary small">{{
+                                        entry.billType
+                                        }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                      {{ entry.cycles }}
+                                    </td>
+                                    <td class="text-end small">
+                                      {{
+                                      entry.quantity
+                                      | number: "1.0-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end small">
+                                      {{
+                                      entry.rate
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                      {{
+                                      entry.amount
+                                      | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td class="text-center">
+                                      <span [class]="
                                                           entry.source ===
                                                           'INITIAL'
                                                             ? 'badge bg-info text-dark small'
                                                             : 'badge bg-primary small'
-                                                        "
-                                                      >
-                                                        {{ entry.source }}
-                                                      </span>
-                                                    </td>
-                                                  </tr>
-                                                }
-                                              </tbody>
-                                              <tfoot>
-                                                <tr
-                                                  class="table-active fw-semibold"
-                                                >
-                                                  <td
-                                                    colspan="6"
-                                                    class="text-end small"
-                                                  >
-                                                    Total Recurring Charges:
-                                                  </td>
-                                                  <td class="text-end">
-                                                    {{
-                                                      sumRecurringChargeEntries(
-                                                        booking.recurringChargeEntries
-                                                      ) | number: "1.2-2"
-                                                    }}
-                                                  </td>
-                                                  <td></td>
-                                                </tr>
-                                              </tfoot>
-                                            </table>
-                                          </div>
-                                        }
-                                      </div>
-                                    }
-                                  </div>
-                                }
-                              }
+                                                        ">
+                                        {{ entry.source }}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                  }
+                                </tbody>
+                                <tfoot>
+                                  <tr class="table-active fw-semibold">
+                                    <td colspan="6" class="text-end small">
+                                      Total Recurring Charges:
+                                    </td>
+                                    <td class="text-end">
+                                      {{
+                                      sumRecurringChargeEntries(
+                                      booking.recurringChargeEntries
+                                      ) | number: "1.2-2"
+                                      }}
+                                    </td>
+                                    <td></td>
+                                  </tr>
+                                </tfoot>
+                              </table>
                             </div>
-                          </td>
-                        </tr>
-                      }
-                    }
-                  </tbody>
+                            }
+                          </div>
+                          }
+                        </div>
+                        }
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                  }
+                  }
+                </tbody>
 
-                  <!-- ── Page totals footer ── -->
-                  <tfoot class="table-light fw-semibold">
-                    <tr>
-                      <td colspan="3" class="text-end">Page Totals:</td>
-                      <td class="text-end">
-                        {{ getTotalAmount() | number: "1.2-2" }}
-                      </td>
-                      <td class="text-end text-success">
-                        {{ getTotalPaid() | number: "1.2-2" }}
-                      </td>
-                      <td class="text-end text-danger">
-                        {{ getTotalDue() | number: "1.2-2" }}
-                      </td>
-                      <td colspan="3"></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                <!-- ── Page totals footer ── -->
+                <tfoot class="table-light fw-semibold">
+                  <tr>
+                    <td colspan="3" class="text-end">Page Totals:</td>
+                    <td class="text-end">
+                      {{ getTotalAmount() | number: "1.2-2" }}
+                    </td>
+                    <td class="text-end text-success">
+                      {{ getTotalPaid() | number: "1.2-2" }}
+                    </td>
+                    <td class="text-end text-danger">
+                      {{ getTotalDue() | number: "1.2-2" }}
+                    </td>
+                    <td colspan="3"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
             }
           </div>
         </div>
