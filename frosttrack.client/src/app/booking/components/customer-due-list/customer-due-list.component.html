@@ -6,32 +6,37 @@
           <span class="card-label">Customer Due List</span>
           <div class="p-10">
             <!-- ── Toolbar ──────────────────────────────────────────────── -->
-            <div class="row align-items-center mb-3 g-2">
-              <div class="col-lg-4 col-md-6">
-                <div class="ngxTableHeader">
-                  <div class="table-search-area">
-                    <label for="due-search">
-                      <i class="material-icons search-icon">search</i>
-                    </label>
-                    <input
-                      id="due-search"
-                      placeholder="Search by name, mobile or address"
-                      type="text"
-                      class="browser-default search-field"
-                      [(ngModel)]="searchText"
-                      (keyup)="onSearch($event)"
-                      aria-label="Search customers"
-                    />
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="row m-0">
+                  <div class="col-lg-8 p-0">
+                    <div class="ngxTableHeader">
+                      <div class="table-search-area">
+                        <div>
+                          <label for="due-search">
+                            <i class="material-icons search-icon">search</i>
+                          </label>
+                          <input
+                            id="due-search"
+                            placeholder="Search by name, mobile or address"
+                            type="text"
+                            class="browser-default search-field"
+                            [(ngModel)]="searchText"
+                            (keyup)="onSearch($event)"
+                            aria-label="Search box"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div class="col-lg-3 col-md-4 col-sm-6">
+              <div class="col-lg-6 d-flex align-items-center justify-content-end pe-3 gap-2">
                 <select
-                  class="form-control"
+                  class="form-select border-1"
                   [(ngModel)]="selectedStatus"
                   (change)="onStatusFilter($event)"
-                  style="height: 40px"
+                  style="height: 35px; width: 200px; padding: 0.375rem 2.25rem 0.375rem 0.75rem;"
                   aria-label="Filter by status"
                 >
                   <option value="all">All Status</option>
@@ -39,44 +44,23 @@
                   <option value="warning">Due Soon (25+ days)</option>
                   <option value="danger">Overdue (30+ days)</option>
                 </select>
-              </div>
-
-              <div
-                class="col-lg-5 col-md-12 d-flex gap-2 justify-content-end flex-wrap"
-              >
                 <button
-                  class="btn btn-outline-success"
+                  class="btn btn-outline-success h-auto m-0"
                   (click)="exportCsv()"
                   [disabled]="filteredData.length === 0"
-                  title="Export visible rows to CSV"
-                  style="height: 40px"
+                  title="Export CSV"
+                  style="padding: 6px 12px;"
                 >
-                  <i
-                    class="material-icons"
-                    style="vertical-align: middle; font-size: 18px"
-                    >download</i
-                  >
-                  <span style="vertical-align: middle"> Export CSV</span>
+                  <i class="material-icons" style="font-size: 18px; vertical-align: middle;">download</i> Export
                 </button>
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-primary h-auto m-0 ms-2"
                   (click)="fetchData()"
                   [disabled]="loadingIndicator"
-                  style="height: 40px"
+                  title="Refresh"
+                  style="padding: 6px 12px;"
                 >
-                  @if (loadingIndicator) {
-                    <span
-                      class="spinner-border spinner-border-sm me-1"
-                      role="status"
-                    ></span>
-                  } @else {
-                    <i
-                      class="material-icons"
-                      style="vertical-align: middle; font-size: 18px"
-                      >refresh</i
-                    >
-                  }
-                  <span style="vertical-align: middle"> Refresh</span>
+                  <i class="material-icons" style="font-size: 18px; vertical-align: middle;">refresh</i> Refresh
                 </button>
               </div>
             </div>
@@ -196,20 +180,20 @@
             } @else {
               <!-- ── Main Table ────────────────────────────────────────────── -->
               <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                  <thead class="table-light">
+                <table class="table table-hover align-middle mb-0" style="color: rgba(0, 0, 0, 0.87); font-size: 14px;">
+                  <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
                     <tr>
-                      <th style="width: 32px"></th>
-                      <th>Customer</th>
-                      <th class="text-center" style="width: 56px">Bkg#</th>
-                      <th class="text-end">Billed</th>
-                      <th class="text-end">Paid</th>
-                      <th class="text-end">Outstanding</th>
-                      <th class="text-center" style="width: 115px">
+                      <th style="width: 32px; border-bottom: none;"></th>
+                      <th style="border-bottom: none;">Customer</th>
+                      <th class="text-center" style="width: 56px; border-bottom: none;">Bkg#</th>
+                      <th class="text-end" style="border-bottom: none;">Billed</th>
+                      <th class="text-end" style="border-bottom: none;">Paid</th>
+                      <th class="text-end" style="border-bottom: none;">Outstanding</th>
+                      <th class="text-center" style="width: 115px; border-bottom: none;">
                         Last Payment
                       </th>
-                      <th class="text-center" style="width: 100px">Status</th>
-                      <th class="text-center" style="width: 60px">Print</th>
+                      <th class="text-center" style="width: 100px; border-bottom: none;">Status</th>
+                      <th class="text-center" style="width: 60px; border-bottom: none;">Print</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -502,8 +486,9 @@
                                         <div class="table-responsive">
                                           <table
                                             class="table table-sm table-bordered table-hover mb-0"
+                                            style="color: rgba(0, 0, 0, 0.87); font-size: 14px;"
                                           >
-                                            <thead class="table-secondary">
+                                            <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
                                               <tr>
                                                 <th>Delivery #</th>
                                                 <th>Date</th>
@@ -698,8 +683,9 @@
                                           >
                                             <table
                                               class="table table-sm table-bordered mb-0"
+                                              style="color: rgba(0, 0, 0, 0.87); font-size: 14px;"
                                             >
-                                              <thead class="table-light">
+                                              <thead style="font-size: 13px; font-weight: 500; color: rgba(0, 0, 0, 0.54); border-bottom: 1px solid rgba(0, 0, 0, 0.12); background-color: #f8f9fa;">
                                                 <tr>
                                                   <th>Product</th>
                                                   <th>Bill Period</th>

@@ -68,7 +68,7 @@ export class DeliveryComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.initForm();
@@ -397,7 +397,7 @@ export class DeliveryComponent implements OnInit {
     // Suggest collection amount = previous customer due + this delivery charge.
     if (this.deliveryForm.get('createTransaction')?.value) {
       const previousDue = this.customerOutstanding?.totalDue ?? 0;
-      const receivableAmount = grandTotal + previousDue;
+      const receivableAmount = grandTotal + previousDue - total;
       this.deliveryForm.patchValue(
         { transactionAmount: receivableAmount > 0 ? receivableAmount : 0 },
         { emitEvent: false },
@@ -584,8 +584,7 @@ export class DeliveryComponent implements OnInit {
           const convertedRemainingQty =
             control.get('convertedRemainingQty')?.value || 0;
           this.toastr.error(
-            `Item ${
-              i + 1
+            `Item ${i + 1
             }: Delivery quantity (${deliveryQty}) cannot exceed remaining quantity (${convertedRemainingQty.toFixed(
               2,
             )})`,
