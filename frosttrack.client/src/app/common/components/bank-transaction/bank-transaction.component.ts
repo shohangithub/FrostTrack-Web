@@ -111,6 +111,11 @@ export class BankTransactionComponent implements OnInit {
   selectedBankName: string = '';
   isLoadingBalance: boolean = false;
 
+  depositSources = [
+    { value: 'CASH', label: 'Office Cash (নগদ তহবিল থেকে)' },
+    { value: 'EXTERNAL', label: 'External / Direct Deposit (সরাসরি ব্যাংক জমা)' },
+  ];
+
   // Form state
   isSubmitted = false;
   isGeneratingCode = false;
@@ -143,39 +148,37 @@ export class BankTransactionComponent implements OnInit {
   selection!: SelectionType;
 
   MessageHub = {
-    ADD: 'Transaction added successfully',
-    UPDATE: 'Transaction updated successfully',
-    DELETE_CONFIRM: 'Are you sure?',
-    DELETE: 'Transaction deleted successfully',
+    CONFIRMATION: 'Are you sure?',
+    DELETE_CONFIRM: 'Are you sure you want to delete this record?',
+    DELETE_SUCCESS: 'Record deleted successfully',
+    CREATE_SUCCESS: 'Bank transaction created successfully',
+    UPDATE_SUCCESS: 'Bank transaction updated successfully',
   };
 
   constructor(
     private fb: UntypedFormBuilder,
-    private modalService: NgbModal,
-    private toastr: ToastrService,
     private bankTransactionService: BankTransactionService,
     private bankService: BankService,
+    private modalService: NgbModal,
+    private toastr: ToastrService,
     private layoutService: LayoutService,
   ) {
-    window.onresize = () => {
-      this.scrollBarHorizontal = window.innerWidth < 1200;
-    };
-    this.selection = SelectionType.checkbox;
     this.layoutService.loadCurrentRoute();
-
-    this.initializeForms();
   }
 
-  ngOnInit() {
-    this.fetchData();
+  ngOnInit(): void {
+    this.initializeForms();
     this.loadBanks();
+    this.fetchData();
     this.generateCode();
 
-    //subject call change open text search
+    // Set default tab to deposit
+    this.activeTab = 'deposit';
+
+    // Handle search input debounce
     this.searchSubject
       .pipe(debounceTime(1000), distinctUntilChanged())
-      .subscribe((value: any) => {
-        this.pagination.openText = value;
+      .subscribe(() => {
         this.fetchData();
       });
   }
@@ -190,6 +193,7 @@ export class BankTransactionComponent implements OnInit {
       ],
       bankId: [null, [Validators.required]],
       transactionType: [this.bankTransactionType.Deposit],
+      sourceType: ['CASH', [Validators.required]],
       amount: [null, [Validators.required, Validators.min(0.01)]],
       reference: [''],
       description: [''],

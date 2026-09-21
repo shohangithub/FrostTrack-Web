@@ -89,5 +89,6 @@ export interface IDeliveryBillCollectionRequest {
   amount: number;
   paymentMethod: string;
   paymentReference?: string;
+  bankId?: number | null;
   note?: string;
 }

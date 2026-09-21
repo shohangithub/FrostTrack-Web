@@ -8,5 +8,6 @@ public record DeliveryBillCollectionRequest(
     decimal Amount,
     string PaymentMethod,
     string? PaymentReference,
-    string? Note
+    string? Note,
+    int? BankId = null
 );

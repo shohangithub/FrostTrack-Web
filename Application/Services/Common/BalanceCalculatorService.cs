@@ -54,10 +54,14 @@ public class BalanceCalculatorService : IBalanceCalculatorService
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var openingDate = lastOpeningBalance?.TransactionDate ?? DateTime.MinValue;
+        // Normalize opening balance date to the start of that day (00:00:00 local) in UTC,
+        // so any transactions recorded on that day (regardless of timestamp) are properly counted.
+        var openingDate = lastOpeningBalance != null
+            ? DateTime.SpecifyKind(lastOpeningBalance.TransactionDate.ToLocalTime().Date, DateTimeKind.Local).ToUniversalTime()
+            : DateTime.MinValue;
         var openingBalanceAmount = lastOpeningBalance?.NetAmount ?? 0m;
 
-        // 2. Sum all active transactions between the last opening balance and the report start date (fromUtc)
+        // 2. Sum all active cash transactions between the last opening balance day and the report start date (fromUtc)
         var previousCashAmount = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t =>
@@ -66,44 +70,35 @@ public class BalanceCalculatorService : IBalanceCalculatorService
                 !t.IsArchived &&
                 t.TransactionDate >= openingDate &&
                 t.TransactionDate < fromUtc &&
-                t.PaymentMethod != PaymentMethods.CREDIT &&
+                t.PaymentMethod == PaymentMethods.CASH &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                 t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-            // Fix: properly sign the NetAmount based on CREDIT/DEBIT
             .SumAsync(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT ? t.NetAmount : -t.NetAmount, cancellationToken);
 
-        return openingBalanceAmount + previousCashAmount;
+        // 3. Account for internal cash-to-bank deposits (cash outflow) and bank-to-cash withdrawals (cash inflow)
+        var previousBankCashTransfers = await _bankTransactionRepository.Query()
+            .Where(bt =>
+                bt.TenantId == _tenantId &&
+                bt.IsActive &&
+                !bt.IsDeleted &&
+                bt.TransactionDate >= openingDate &&
+                bt.TransactionDate < fromUtc &&
+                (bt.SourceType == null || bt.SourceType == BankSourceTypes.CASH))
+            .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Withdraw ? bt.Amount : -bt.Amount, cancellationToken);
+
+        return openingBalanceAmount + previousCashAmount + previousBankCashTransfers;
     }
 
     public async Task<decimal> GetBankOpeningBalanceAsync(DateTime fromUtc, DateTime toDate, CancellationToken cancellationToken = default)
     {
-        // We only sum up to fromUtc because bank doesn't have an explicit OPENING_BALANCE transaction logic 
-        // linked to a specific date like cash does in this system (or if it does, it's not implemented yet).
-        // Since we are replacing the old logic, we replicate exactly what it did:
-        
-        // Find the cash opening balance date to bound the bank query, matching legacy logic
-        var lastOpeningBalanceDate = await _transactionRepository.Query()
-            .Include(t => t.TransactionHead)
-            .Where(t =>
-                t.TenantId == _tenantId &&
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
-                t.TransactionDate < toDate)
-            .OrderByDescending(t => t.TransactionDate)
-            .Select(t => (DateTime?)t.TransactionDate)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var openingDate = lastOpeningBalanceDate ?? DateTime.MinValue;
-
+        // Calculate bank opening balance as all active bank transactions prior to the report date (matching BankBook logic).
+        // Bank deposits = money IN (+), Withdrawals = money OUT (-).
         var previousBankAmount = await _bankTransactionRepository.Query()
             .Where(bt =>
                 bt.TenantId == _tenantId &&
                 bt.IsActive &&
-                bt.TransactionDate >= openingDate &&
+                !bt.IsDeleted &&
                 bt.TransactionDate < fromUtc)
-            // Bank transaction Deposit = money IN (positive). Withdraw = money OUT (negative).
-            // (Note: Legacy CashBook subtracted deposits! That was a bug. Deposit adds to bank balance.)
             .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
 
         return previousBankAmount;

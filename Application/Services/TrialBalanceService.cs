@@ -55,7 +55,9 @@ public class TrialBalanceService : ITrialBalanceService
             .Include(bt => bt.Bank)
             .Where(bt => bt.TenantId == _tenantId
                       && bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc
-                      && bt.IsActive);
+                      && bt.IsActive && !bt.IsDeleted
+                      && bt.SourceType != BankSourceTypes.BILL_COLLECTION
+                      && bt.TransactionId == null);
 
         var bankTransactions = await bankTransactionQuery.ToListAsync(cancellationToken);
 

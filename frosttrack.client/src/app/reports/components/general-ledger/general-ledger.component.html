@@ -156,14 +156,14 @@
                         <table class="products-table">
                           <thead>
                             <tr>
-                              <th>ক্রমিক / SL No.</th>
-                              <th>তারিখ / Date</th>
+                              <th class="col-sl">ক্রমিক<br><span style="font-size: 9px; font-weight: normal;">SL No.</span></th>
+                              <th class="col-date">তারিখ / Date</th>
                               <th>অ্যাকাউন্ট / Account</th>
-                              <th>ধরন / Type</th>
+                              <th class="col-type">ধরন / Type</th>
                               <th>বিবরণ / Description</th>
                               <!-- <th>পেমেন্ট পদ্ধতি / Payment Method</th> -->
-                              <th>ডেবিট / Debit Tk.</th>
-                              <th>ক্রেডিট / Credit Tk.</th>
+                              <th class="col-amount">ডেবিট / Debit Tk.</th>
+                              <th class="col-amount">ক্রেডিট / Credit Tk.</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -188,18 +188,23 @@
                               let i = $index
                             ) {
                               <tr>
-                                <td>{{ i + 1 }}</td>
+                                <td class="col-sl text-center">{{ i + 1 }}</td>
                                 <td>
                                   {{ item.date | date: "dd-MMM-yyyy HH:mm a" }}
                                 </td>
                                 <td>
-                                  {{ item.accountName }}
-                                  <!-- <span class="badge bg-info ms-1">{{
-                              item.accountType
-                            }}</span> -->
+                                  <div>{{ item.accountName }}</div>
+                                  @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
+                                    <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
+                                  }
                                 </td>
                                 <td>{{ item.transactionType | titlecase }}</td>
-                                <td>{{ item.description }}</td>
+                                <td>
+                                  <div>{{ item.description }}</div>
+                                  @if (item.referenceNo && !item.description.includes(item.referenceNo)) {
+                                    <small class="text-muted" style="font-size: 10px;">Ref: {{ item.referenceNo }}</small>
+                                  }
+                                </td>
                                 <!-- <td>{{ item.paymentMethod | titlecase }}</td> -->
                                 <td class="text-end">
                                   @if (item.debitAmount > 0) {

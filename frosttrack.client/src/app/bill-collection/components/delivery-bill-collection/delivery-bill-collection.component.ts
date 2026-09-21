@@ -21,6 +21,8 @@ import { DeliveryService } from 'app/product-delivery/services/product-delivery.
 import { IDeliveryResponse } from 'app/product-delivery/models/product-delivery.interface';
 import { CustomerService } from 'app/common/services/customer.service';
 import { ICustomerListResponse } from 'app/common/models/customer.interface';
+import { BankService } from 'app/common/services/bank.service';
+import { ILookup } from '@core/models/lookup';
 
 @Component({
   selector: 'app-delivery-bill-collection',
@@ -37,6 +39,7 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 export class DeliveryBillCollectionComponent implements OnInit {
   billCollectionForm!: FormGroup;
   customers: ICustomerListResponse[] = [];
+  banks: ILookup<number>[] = [];
   deliveryCodes: Array<{ value: string; text: string; customerId: number }> =
     [];
   unpaidDeliveries: IDeliveryResponse[] = [];
@@ -55,10 +58,9 @@ export class DeliveryBillCollectionComponent implements OnInit {
   selectedDeliveryCode: string | null = null;
 
   paymentMethods = [
-    { value: 'CASH', label: 'Cash' },
-    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CHEQUE', label: 'Cheque' },
-    { value: 'MOBILE_BANKING', label: 'Mobile Banking' },
+    { value: 'CASH', label: 'Cash (নগদ)' },
+    { value: 'BANK_TRANSFER', label: 'Bank Transfer (ব্যাংক ট্রান্সফার)' },
+    { value: 'CHEQUE', label: 'Bank Cheque (চেক)' },
   ];
 
   constructor(
@@ -66,6 +68,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     private billCollectionService: BillCollectionService,
     private deliveryService: DeliveryService,
     private customerService: CustomerService,
+    private bankService: BankService,
     private transactionService: TransactionService,
     private toastr: ToastrService,
     private router: Router,
@@ -80,6 +83,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.selectedBranch = this.authService.currentBranchId;
     this.initForm();
     this.loadCustomers();
+    this.loadBanks();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -88,6 +92,13 @@ export class DeliveryBillCollectionComponent implements OnInit {
     } else {
       this.generateTransactionCode();
     }
+  }
+
+  loadBanks() {
+    this.bankService.getLookup().subscribe({
+      next: (res) => (this.banks = res),
+      error: (err) => console.error('Failed to load banks:', err),
+    });
   }
 
   initForm() {
@@ -102,6 +113,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
       branchId: [this.selectedBranch, Validators.required],
       amount: [{ value: 0, disabled: true }],
       paymentMethod: ['CASH', Validators.required],
+      bankId: [null],
       paymentReference: [''],
       note: [''],
     });
@@ -117,6 +129,19 @@ export class DeliveryBillCollectionComponent implements OnInit {
           this.selectedDeliveries.clear();
           this.billCollectionForm.patchValue({ amount: 0 });
         }
+      });
+
+    this.billCollectionForm
+      .get('paymentMethod')
+      ?.valueChanges.subscribe((pm) => {
+        const bankControl = this.billCollectionForm.get('bankId');
+        if (pm === 'BANK_TRANSFER' || pm === 'CHEQUE') {
+          bankControl?.setValidators([Validators.required]);
+        } else {
+          bankControl?.clearValidators();
+          bankControl?.setValue(null);
+        }
+        bankControl?.updateValueAndValidity();
       });
   }
 
@@ -285,6 +310,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
           branchId: transaction.branchId,
           amount: transaction.amount,
           paymentMethod: transaction.paymentMethod,
+          bankId: (transaction as any).bankId || null,
           paymentReference: transaction.paymentReference,
           note: transaction.note,
         });
@@ -361,6 +387,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
       deliveryIds: Array.from(this.selectedDeliveries),
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
+      bankId: formValue.bankId,
       paymentReference: formValue.paymentReference,
       note: formValue.note,
     };

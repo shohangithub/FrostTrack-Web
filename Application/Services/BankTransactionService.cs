@@ -51,6 +51,10 @@ public class BankTransactionService : IBankTransactionService
         var entity = bankTransaction.Adapt<BankTransaction>();
         entity.BranchId = _currentUser.BranchId;
         entity.TransactionDate = DateTime.UtcNow;
+        if (string.IsNullOrEmpty(entity.SourceType))
+        {
+            entity.SourceType = BankSourceTypes.CASH;
+        }
 
         // Calculate new balance
         var currentBalance = bank.OpeningBalance + await _repository.Query()

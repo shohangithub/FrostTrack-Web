@@ -170,6 +170,25 @@
                       </div>
                     </div>
 
+                    <div class="row" *ngIf="activeTab === 'deposit'">
+                      <div class="col-xl-6 col-lg-6 col-md-8 col-sm-12 mb-2">
+                        <label>Deposit Source / Purpose <span class="text-danger">*</span></label>
+                        <ng-select
+                          formControlName="sourceType"
+                          placeholder="Select Deposit Source"
+                          [clearable]="false"
+                          [items]="depositSources"
+                          bindLabel="label"
+                          bindValue="value"
+                        >
+                        </ng-select>
+                        <small class="form-text text-muted">
+                          <i class="fas fa-info-circle me-1"></i>
+                          {{ depositForm.get('sourceType')?.value === 'CASH' ? 'Cash will be deducted from Cash Register (নগদ বই থেকে কমবে)' : 'Direct External Deposit (নগদ বই অপরিবর্তিত থাকবে)' }}
+                        </small>
+                      </div>
+                    </div>
+
                     <div class="row">
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-2">
                         <label>Amount <span class="text-danger">*</span></label>

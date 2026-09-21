@@ -11,5 +11,6 @@ public record BankTransactionRequest
     public string? Reference { get; set; }
     public string? Description { get; set; }
     public string? ReceiptNumber { get; set; }
+    public string? SourceType { get; set; } = BankSourceTypes.CASH;
     public required bool IsActive { get; set; } = true;
 }

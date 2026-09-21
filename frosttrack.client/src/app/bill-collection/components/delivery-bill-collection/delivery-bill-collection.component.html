@@ -160,14 +160,14 @@
                         </div>
                       </div>
                     </div>
-                    <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
                         <label
                           for="paymentMethod"
-                          class="col-sm-5 col-form-label"
-                          >Payment:</label
+                          class="col-sm-4 col-form-label"
+                          >Payment: <span class="text-danger">*</span></label
                         >
-                        <div class="col-sm-7">
+                        <div class="col-sm-8">
                           <ng-select
                             id="paymentMethod"
                             formControlName="paymentMethod"
@@ -180,13 +180,49 @@
                           </ng-select>
                         </div>
                       </div>
-                    </div> -->
+                    </div>
+
+                    @if (billCollectionForm.get('paymentMethod')?.value !== 'CASH') {
+                      <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group row">
+                          <label
+                            for="bankId"
+                            class="col-sm-4 col-form-label"
+                            >Deposit Bank: <span class="text-danger">*</span></label
+                          >
+                          <div class="col-sm-8">
+                            <ng-select
+                              id="bankId"
+                              formControlName="bankId"
+                              [items]="banks"
+                              bindLabel="text"
+                              bindValue="value"
+                              [clearable]="true"
+                              placeholder="Select bank"
+                              class="ng-select-sm"
+                              [class.is-invalid]="
+                                billCollectionForm.get('bankId')?.invalid &&
+                                billCollectionForm.get('bankId')?.touched
+                              "
+                            >
+                            </ng-select>
+                            @if (
+                              billCollectionForm.get('bankId')?.invalid &&
+                              billCollectionForm.get('bankId')?.touched
+                            ) {
+                              <small class="text-danger">Bank is required</small>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
                         <label
                           for="paymentReference"
                           class="col-sm-4 col-form-label"
-                          >Reference:</label
+                          >Ref / Cheque:</label
                         >
                         <div class="col-sm-8">
                           <input
@@ -194,7 +230,7 @@
                             class="form-control form-control-sm"
                             id="paymentReference"
                             formControlName="paymentReference"
-                            placeholder="Optional"
+                            placeholder="e.g. Cheque # or Trx ID"
                           />
                         </div>
                       </div>

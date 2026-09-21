@@ -16,6 +16,8 @@ public class BillCollectionService : IBillCollectionService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
+    private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IRepository<Bank, int> _bankRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly Guid _tenantId;
 
@@ -24,6 +26,8 @@ public class BillCollectionService : IBillCollectionService
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         IRepository<Delivery, Guid> deliveryRepository,
+        IRepository<BankTransaction, long> bankTransactionRepository,
+        IRepository<Bank, int> bankRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider)
     {
@@ -31,6 +35,8 @@ public class BillCollectionService : IBillCollectionService
         _transactionRepository = transactionRepository;
         _transactionHeadRepository = transactionHeadRepository;
         _deliveryRepository = deliveryRepository;
+        _bankTransactionRepository = bankTransactionRepository;
+        _bankRepository = bankRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantId = tenantProvider.GetTenantId();
     }
@@ -199,6 +205,7 @@ public class BillCollectionService : IBillCollectionService
             Amount = request.Amount,
             PaymentMethod = request.PaymentMethod,
             PaymentReference = request.PaymentReference,
+            BankId = request.BankId,
             Note = request.Note,
             Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}",
             DiscountAmount = 0,
@@ -208,6 +215,36 @@ public class BillCollectionService : IBillCollectionService
 
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
         await _transactionRepository.AddAsync(entity, cancellationToken);
+
+        // If paid by bank or cheque, automatically record deposit in BankTransaction
+        if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
+        {
+            var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
+            if (bank != null)
+            {
+                var currentBalance = bank.OpeningBalance + await _bankTransactionRepository.Query()
+                    .Where(bt => bt.BankId == request.BankId.Value && bt.IsActive && !bt.IsDeleted)
+                    .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
+
+                var bankTx = new BankTransaction
+                {
+                    TransactionNumber = request.TransactionCode,
+                    TransactionDate = request.TransactionDate,
+                    BankId = request.BankId.Value,
+                    TransactionType = BankTransactionTypes.Deposit,
+                    Amount = request.Amount,
+                    Reference = request.PaymentReference,
+                    Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName} ({request.PaymentMethod})",
+                    BalanceAfter = currentBalance + request.Amount,
+                    SourceType = BankSourceTypes.BILL_COLLECTION,
+                    TransactionId = entity.Id,
+                    BranchId = request.BranchId,
+                    IsActive = true
+                };
+                _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
+                await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
+            }
+        }
 
         var response = entity.Adapt<TransactionResponse>();
         return response;
@@ -246,6 +283,7 @@ public class BillCollectionService : IBillCollectionService
         entity.Amount = request.Amount;
         entity.PaymentMethod = request.PaymentMethod;
         entity.PaymentReference = request.PaymentReference;
+        entity.BankId = request.BankId;
         entity.Note = request.Note;
         entity.Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}";
         entity.NetAmount = request.Amount;
@@ -314,6 +352,7 @@ public class BillCollectionService : IBillCollectionService
             Amount = totalCharges,
             PaymentMethod = request.PaymentMethod,
             PaymentReference = request.PaymentReference,
+            BankId = request.BankId,
             Note = request.Note,
             Description = $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}",
             DiscountAmount = 0,
@@ -339,6 +378,7 @@ public class BillCollectionService : IBillCollectionService
                 Amount = totalLabourCharges,
                 PaymentMethod = request.PaymentMethod,
                 PaymentReference = request.PaymentReference,
+                BankId = request.BankId,
                 Note = request.Note,
                 Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
                 DiscountAmount = 0,
@@ -348,6 +388,36 @@ public class BillCollectionService : IBillCollectionService
 
             _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);
             await _transactionRepository.AddAsync(labourEntity, cancellationToken);
+        }
+
+        // If paid by bank or cheque, automatically record deposit in BankTransaction for grand total
+        if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
+        {
+            var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
+            if (bank != null)
+            {
+                var currentBalance = bank.OpeningBalance + await _bankTransactionRepository.Query()
+                    .Where(bt => bt.BankId == request.BankId.Value && bt.IsActive && !bt.IsDeleted)
+                    .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
+
+                var bankTx = new BankTransaction
+                {
+                    TransactionNumber = request.TransactionCode,
+                    TransactionDate = request.TransactionDate,
+                    BankId = request.BankId.Value,
+                    TransactionType = BankTransactionTypes.Deposit,
+                    Amount = request.Amount,
+                    Reference = request.PaymentReference,
+                    Description = $"Delivery Bill Collection - {deliveryCodes} - {customerName} ({request.PaymentMethod})",
+                    BalanceAfter = currentBalance + request.Amount,
+                    SourceType = BankSourceTypes.BILL_COLLECTION,
+                    TransactionId = entity.Id,
+                    BranchId = request.BranchId,
+                    IsActive = true
+                };
+                _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
+                await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
+            }
         }
 
         // Mark all deliveries as paid

@@ -12,6 +12,7 @@ export interface IBankTransactionListResponse {
   description?: string;
   balanceAfter: number;
   receiptNumber?: string;
+  sourceType?: string;
   isDeleted: boolean;
   isArchived: boolean;
   deletedAt?: Date;
@@ -31,6 +32,7 @@ export interface IBankTransactionResponse {
   description?: string;
   balanceAfter: number;
   receiptNumber?: string;
+  sourceType?: string;
   isActive: boolean;
   isDeleted: boolean;
   isArchived: boolean;
@@ -49,6 +51,7 @@ export interface IBankTransactionRequest {
   reference?: string;
   description?: string;
   receiptNumber?: string;
+  sourceType?: string;
   isActive: boolean;
 }
 

@@ -49,6 +49,8 @@ public class Transaction : AuditableEntity<Guid>
     // Payment details
     public required string PaymentMethod { get; set; } // CASH, BANK_TRANSFER, CHEQUE, etc.
     public string? PaymentReference { get; set; } // Cheque/Transaction number
+    public int? BankId { get; set; }
+    public Bank? Bank { get; set; }
 
     // Description and notes
     public required string Description { get; set; }

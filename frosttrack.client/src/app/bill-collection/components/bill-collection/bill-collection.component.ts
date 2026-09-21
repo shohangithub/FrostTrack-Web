@@ -17,6 +17,8 @@ import { IBillCollectionRequest } from 'app/transaction/models/transaction.inter
 import { BillCollectionService } from '../../services/bill-collection.service';
 import { IBookingWithDueResponse } from '../../models/bill-collection.interface';
 import { BillCollectionReceiptPrintComponent } from '../bill-collection-receipt-print/bill-collection-receipt-print.component';
+import { BankService } from 'app/common/services/bank.service';
+import { ILookup } from '@core/models/lookup';
 
 @Component({
   selector: 'app-bill-collection',
@@ -35,6 +37,7 @@ export class BillCollectionComponent implements OnInit {
   @ViewChild(BillCollectionReceiptPrintComponent) receiptComponent!: BillCollectionReceiptPrintComponent;
   billCollectionForm!: FormGroup;
   bookings: { value: string; text: string }[] = [];
+  banks: ILookup<number>[] = [];
   selectedBooking: IBookingWithDueResponse | null = null;
   bookingLoading = false;
   isLoading = false;
@@ -50,16 +53,16 @@ export class BillCollectionComponent implements OnInit {
   shouldAutoPrint: boolean = false;
 
   paymentMethods = [
-    { value: 'CASH', label: 'Cash' },
-    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CHEQUE', label: 'Cheque' },
-    { value: 'MOBILE_BANKING', label: 'Mobile Banking' },
+    { value: 'CASH', label: 'Cash (নগদ)' },
+    { value: 'BANK_TRANSFER', label: 'Bank Transfer (ব্যাংক ট্রান্সফার)' },
+    { value: 'CHEQUE', label: 'Bank Cheque (চেক)' },
   ];
 
   constructor(
     private fb: FormBuilder,
     private billCollectionService: BillCollectionService,
     private transactionService: TransactionService,
+    private bankService: BankService,
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
@@ -73,6 +76,7 @@ export class BillCollectionComponent implements OnInit {
     this.selectedBranch = this.authService.currentBranchId;
     this.initForm();
     this.loadBookingsWithDue();
+    this.loadBanks();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -81,6 +85,17 @@ export class BillCollectionComponent implements OnInit {
     } else {
       this.generateTransactionCode();
     }
+  }
+
+  loadBanks() {
+    this.bankService.getLookup().subscribe({
+      next: (res) => {
+        this.banks = res;
+      },
+      error: (err) => {
+        console.error('Failed to load banks:', err);
+      },
+    });
   }
 
   initForm() {
@@ -95,6 +110,8 @@ export class BillCollectionComponent implements OnInit {
       branchId: [this.selectedBranch, Validators.required],
       amount: [null, [Validators.required, Validators.min(0)]],
       paymentMethod: ['CASH', Validators.required],
+      bankId: [null],
+      paymentReference: [''],
       note: [''],
     });
 
@@ -105,6 +122,20 @@ export class BillCollectionComponent implements OnInit {
         if (bookingId) {
           this.onBookingChange(bookingId);
         }
+      });
+
+    // Watch for payment method changes to toggle bank validation
+    this.billCollectionForm
+      .get('paymentMethod')
+      ?.valueChanges.subscribe((pm) => {
+        const bankControl = this.billCollectionForm.get('bankId');
+        if (pm === 'BANK_TRANSFER' || pm === 'CHEQUE') {
+          bankControl?.setValidators([Validators.required]);
+        } else {
+          bankControl?.clearValidators();
+          bankControl?.setValue(null);
+        }
+        bankControl?.updateValueAndValidity();
       });
   }
 
@@ -228,6 +259,8 @@ export class BillCollectionComponent implements OnInit {
       bookingId: formValue.bookingId,
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
+      bankId: formValue.bankId,
+      paymentReference: formValue.paymentReference,
       note: formValue.note,
     };
 
@@ -283,6 +316,8 @@ export class BillCollectionComponent implements OnInit {
       bookingId: formValue.bookingId,
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
+      bankId: formValue.bankId,
+      paymentReference: formValue.paymentReference,
       note: formValue.note,
     };
 
@@ -335,6 +370,8 @@ export class BillCollectionComponent implements OnInit {
           branchId: transaction.branchId,
           amount: Math.abs(transaction.amount),
           paymentMethod: transaction.paymentMethod,
+          bankId: (transaction as any).bankId || null,
+          paymentReference: transaction.paymentReference || '',
           note: transaction.note || '',
         });
 

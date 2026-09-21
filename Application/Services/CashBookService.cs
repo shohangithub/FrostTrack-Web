@@ -37,7 +37,7 @@ namespace Application.Services
             var dateWithUTCTime = reportDate.GetDateUtcTime();
             var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
 
-            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
+            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, false, cancellationToken);
 
             // Get cash transactions for the report date
             var transactions = await _transactionRepository.Query()
@@ -88,30 +88,35 @@ namespace Application.Services
                 });
             }
 
-            // Get bank transactions
+            // Get cash-related bank transactions (internal transfers: cash to bank or bank to cash)
             var bankTransactions = await _bankTransactionRepository.Query()
                 .Include(bt => bt.Bank)
-                .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsArchived)
+                .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsArchived && !bt.IsDeleted
+                    && (bt.SourceType == null || bt.SourceType == BankSourceTypes.CASH))
                 .GroupBy(bt => bt.TransactionType)
                 .Select(g => new
                 {
                     TransactionType = g.Key,
                     Count = g.Count(),
-                TotalAmount = g.Sum(bt => bt.Amount)
-            })
-            .ToListAsync(cancellationToken);
-        foreach (var bankGroup in bankTransactions)
-        {
-            var isDeposit = bankGroup.TransactionType == BankTransactionTypes.Deposit;
-            var debitAmount2 = isDeposit ? bankGroup.TotalAmount : 0; // Money IN = Debit
-            var creditAmount2 = !isDeposit ? bankGroup.TotalAmount : 0; // Money OUT = Credit
+                    TotalAmount = g.Sum(bt => bt.Amount)
+                })
+                .ToListAsync(cancellationToken);
 
-            runningBalance += debitAmount2 - creditAmount2;
+            foreach (var bankGroup in bankTransactions)
+            {
+                // In Cash Book (Physical Cash):
+                // Bank Deposit: Money taken OUT of cash drawer into Bank -> Credit (Cash OUT)
+                // Bank Withdrawal: Money taken from Bank INTO cash drawer -> Debit (Cash IN)
+                var isDeposit = bankGroup.TransactionType == BankTransactionTypes.Deposit;
+                var debitAmount2 = !isDeposit ? bankGroup.TotalAmount : 0; // Money IN to Cash = Withdrawal
+                var creditAmount2 = isDeposit ? bankGroup.TotalAmount : 0; // Money OUT from Cash = Deposit
+
+                runningBalance += debitAmount2 - creditAmount2;
 
                 items.Add(new CashBookItemResponse
                 {
                     TransactionHeadId = Guid.Empty,
-                    TransactionHeadName = $"Bank Transaction - {bankGroup.TransactionType}",
+                    TransactionHeadName = isDeposit ? "Bank Deposit (নগদ জমা)" : "Bank Withdrawal (নগদ উত্তোলন)",
                     TransactionType = bankGroup.TransactionType.ToString(),
                     TransactionCount = bankGroup.Count,
                     DebitAmount = debitAmount2,

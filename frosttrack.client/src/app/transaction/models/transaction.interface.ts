@@ -49,6 +49,7 @@ export interface ITransactionRequest {
   adjustmentValue?: number;
   paymentMethod?: PaymentMethod | string;
   paymentReference?: string;
+  bankId?: number | null;
   description?: string;
   vendorName?: string;
   vendorContact?: string;
@@ -70,6 +71,7 @@ export interface IBillCollectionRequest {
   adjustmentValue?: number;
   paymentMethod?: PaymentMethod | string;
   paymentReference?: string;
+  bankId?: number | null;
   description?: string;
 }
 

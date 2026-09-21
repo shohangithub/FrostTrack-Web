@@ -20,6 +20,16 @@ public class BankTransaction : AuditableEntity<long>
 
     public int? BranchId { get; set; }
 
+    public string? SourceType { get; set; } = BankSourceTypes.CASH; // CASH, BILL_COLLECTION, EXTERNAL
+    public Guid? TransactionId { get; set; } // Link to finance Transaction
+
     // Navigation properties
     public Bank Bank { get; set; } = null!;
+}
+
+public static class BankSourceTypes
+{
+    public const string CASH = "CASH";
+    public const string BILL_COLLECTION = "BILL_COLLECTION";
+    public const string EXTERNAL = "EXTERNAL";
 }
