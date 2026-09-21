@@ -47,71 +47,64 @@ public class BalanceSheetService : IBalanceSheetService
 
         var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
 
-        // Fetch all cash transactions up to and including the report date (excluding system transactions)
-        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => t.TenantId == _tenantId
-                     && t.TransactionDate >= fromUtc && t.TransactionDate < toUtc
-                     && !t.IsDeleted
-                     && !t.IsArchived
-                     && t.PaymentMethod != PaymentMethods.CREDIT
-                     && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE).ToListAsync(cancellationToken);
-
-        // Fetch all bank transactions up to the date
-        var bankTransactions = await _bankTransactionRepository.Query()
-            .Include(bt => bt.Bank)
-            .Where(bt => bt.TenantId == _tenantId
-                      && bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc
-                      && bt.IsActive
-                      && !bt.IsArchived).ToListAsync(cancellationToken);
-
-        // Fetch bank accounts for current balances
-        // var bankQuery = _bankRepository.Query()
-        //     .Where(b => b.TenantId == _tenantId && b.IsActive);
-
-        // var banks = await bankQuery.ToListAsync(cancellationToken);
-
         var assets = new List<BalanceSheetItemResponse>();
         var liabilities = new List<BalanceSheetItemResponse>();
         var equity = new List<BalanceSheetItemResponse>();
 
-        // ASSETS: Calculate cash in hand from transactions
-        //  var cashInflow = transactions.Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived).Sum(t => t.NetAmount);
-        var transactionAmount = transactions.Sum(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT ? t.NetAmount : -t.NetAmount);
-        var bankTransactionAmount = bankTransactions.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount);
+        // 1. ASSETS: Bank balances as of the report date (up to toUtc)
+        var banks = await _bankRepository.Query()
+            .Where(b => b.TenantId == _tenantId && b.IsActive)
+            .ToListAsync(cancellationToken);
 
-        var cashInHand = openingBalance + transactionAmount + bankTransactionAmount;
+        foreach (var bank in banks)
+        {
+            var txCount = await _bankTransactionRepository.Query()
+                .Where(bt => bt.BankId == bank.Id && bt.IsActive && !bt.IsDeleted && bt.TransactionDate < toUtc)
+                .CountAsync(cancellationToken);
 
+            var bankTxSum = await _bankTransactionRepository.Query()
+                .Where(bt => bt.BankId == bank.Id && bt.IsActive && !bt.IsDeleted && bt.TransactionDate < toUtc)
+                .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
+
+            var currentBankBalance = bank.OpeningBalance + bankTxSum;
+            if (currentBankBalance > 0)
+            {
+                assets.Add(new BalanceSheetItemResponse
+                {
+                    AccountName = $"Bank - {bank.BankName}",
+                    AccountCategory = "Asset",
+                    Amount = currentBankBalance,
+                    TransactionCount = txCount
+                });
+            }
+        }
+
+        // 2. ASSETS: Physical Cash in Hand as of report date (up to toUtc)
+        var cashInHand = await _balanceCalculatorService.GetCashOpeningBalanceAsync(toUtc, toDate, cancellationToken);
         if (cashInHand != 0)
         {
+            var cashTxCount = await _transactionRepository.Query()
+                .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
+                         && t.PaymentMethod == PaymentMethods.CASH
+                         && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                         && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .CountAsync(cancellationToken);
+
             assets.Add(new BalanceSheetItemResponse
             {
                 AccountName = "Cash in Hand",
                 AccountCategory = "Asset",
                 Amount = cashInHand,
-                TransactionCount = transactions.Count
+                TransactionCount = cashTxCount
             });
         }
 
-        // ASSETS: Add bank balances
-
-        var groupBankTransactions = bankTransactions
-             .GroupBy(bt => new { bt.BankId, bt.Bank.BankName })
-             .Select(g => new BalanceSheetItemResponse
-             {
-                 AccountName = $"Bank - {g.Key.BankName}",
-                 AccountCategory = "Asset",
-                 Amount = g.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount),
-                 TransactionCount = g.Count()
-             }).ToList();
-
-        assets.AddRange(groupBankTransactions.Where(b => b.Amount > 0));
-
-
-        // LIABILITIES: Calculate accounts payable (unpaid bills)
-        var accountsPayable = transactions
-            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
-            .Sum(t => t.NetAmount);
+        // 3. LIABILITIES: Accounts payable up to the report date
+        var accountsPayable = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
+                     && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+            .SumAsync(t => t.NetAmount, cancellationToken);
 
         if (accountsPayable > 0)
         {
@@ -120,21 +113,34 @@ public class BalanceSheetService : IBalanceSheetService
                 AccountName = "Accounts Payable",
                 AccountCategory = "Liability",
                 Amount = accountsPayable,
-                TransactionCount = transactions.Count(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
+                TransactionCount = 1
             });
         }
 
-        // EQUITY: Calculate from bill collections and revenue
-        var revenue = transactions
-            .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead?.Type == TransactionHeadTypes.DEBIT)
-            .Sum(t => t.NetAmount);
+        // 4. EQUITY: Cumulative Net Retained Earnings (Revenue - Expenses up to toUtc)
+        var cumulativeRevenue = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
+                     && t.TransactionHead!.Type == TransactionHeadTypes.DEBIT
+                     && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+            .SumAsync(t => t.NetAmount, cancellationToken);
 
-        var expenses = transactions
-            .Where(t => (t.TransactionHead?.UsageFor == UsageFor.TRANSACTION || t.TransactionHead?.UsageFor == UsageFor.SALARY)
-                     && t.TransactionHead?.Type == TransactionHeadTypes.CREDIT)
-            .Sum(t => t.NetAmount);
+        var cumulativeExpenses = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
+                     && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT
+                     && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+            .SumAsync(t => t.NetAmount, cancellationToken);
 
-        var retainedEarnings = revenue - expenses;
+        var retainedEarnings = cumulativeRevenue - cumulativeExpenses;
+        var revenueExpenseCount = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
+                     && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+            .CountAsync(cancellationToken);
 
         if (retainedEarnings != 0)
         {
@@ -143,10 +149,7 @@ public class BalanceSheetService : IBalanceSheetService
                 AccountName = "Retained Earnings",
                 AccountCategory = "Equity",
                 Amount = retainedEarnings,
-                TransactionCount = transactions.Count(t =>
-                    t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION ||
-                    t.TransactionHead?.UsageFor == UsageFor.TRANSACTION ||
-                    t.TransactionHead?.UsageFor == UsageFor.SALARY)
+                TransactionCount = revenueExpenseCount
             });
         }
 
@@ -154,9 +157,10 @@ public class BalanceSheetService : IBalanceSheetService
         var totalLiabilities = liabilities.Sum(l => l.Amount);
         var totalEquity = equity.Sum(e => e.Amount);
 
-        // Balance the equation: Assets = Liabilities + Equity
+        // 5. Balance the equation: Assets = Liabilities + Equity
+        // The difference between Net Assets and Retained Earnings is Owner's Capital
         var difference = totalAssets - (totalLiabilities + totalEquity);
-        if (Math.Abs(difference) > 0.01m) // Add balancing item if needed
+        if (Math.Abs(difference) > 0.01m)
         {
             if (difference > 0)
             {
@@ -182,18 +186,6 @@ public class BalanceSheetService : IBalanceSheetService
             }
         }
 
-        // Calculate closing balance
-        var closingCashInflow = transactions
-            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.DEBIT && !t.IsArchived)
-            .Sum(t => t.NetAmount);
-        var closingCashOutflow = transactions
-            .Where(t => t.TransactionHead?.Type == TransactionHeadTypes.CREDIT && !t.IsArchived)
-            .Sum(t => t.NetAmount);
-
-        // Add bank balances to closing balance
-        var bankBalance = bankTransactions.Sum(bt => bt.TransactionType == BankTransactionTypes.Deposit ? -bt.Amount : bt.Amount);
-        var closingBalance = openingBalance + closingCashInflow - closingCashOutflow + bankBalance;
-
         return new BalanceSheetSummaryResponse
         {
             TotalAssets = totalAssets,
@@ -201,9 +193,9 @@ public class BalanceSheetService : IBalanceSheetService
             TotalEquity = totalEquity,
             NetWorth = totalAssets - totalLiabilities,
             ReportDate = reportDate,
-            TotalTransactions = transactions.Count + bankTransactions.Count,
+            TotalTransactions = assets.Sum(a => a.TransactionCount),
             OpeningBalance = openingBalance,
-            ClosingBalance = closingBalance,
+            ClosingBalance = totalAssets,
             Assets = assets.OrderBy(a => a.AccountName).ToList(),
             Liabilities = liabilities.OrderBy(l => l.AccountName).ToList(),
             Equity = equity.OrderBy(e => e.AccountName).ToList()
