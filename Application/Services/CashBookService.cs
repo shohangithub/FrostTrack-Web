@@ -60,7 +60,7 @@ namespace Application.Services
                     g.Key.TransactionHeadName,
                     g.Key.TransactionType,
                     Count = g.Count(),
-                    TotalAmount = g.Sum(t => t.NetAmount)
+                    TotalAmount = g.Sum(t => Math.Abs(t.NetAmount))
                 })
                 .OrderBy(g => g.TransactionHeadName)
                 .ToList();

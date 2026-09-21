@@ -1,4 +1,4 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.Contractors;
 using Application.Contractors.Authentication;
 using Application.Framework;
@@ -129,8 +129,8 @@ public class SalaryPaymentService : ISalaryPaymentService
             TransactionDate = DateTime.UtcNow,
             TransactionHeadId = transactionHead.Id,
             EmployeeId = employee.Id,
-            Amount = (-1) * netAmount,
-            NetAmount = (-1) * netAmount,
+            Amount = Math.Abs(netAmount),
+            NetAmount = Math.Abs(netAmount),
             PaymentMethod = request.PaymentMethod,
             Description = $"Salary payment for {period}",
             Note = string.IsNullOrEmpty(request.Note) ? null : request.Note,
@@ -365,8 +365,8 @@ public class SalaryPaymentService : ISalaryPaymentService
         var period = $"{request.Month:D2}/{request.Year}";
 
         sp.Transaction.EmployeeId = employee.Id;
-        sp.Transaction.Amount = (-1) * netAmount;
-        sp.Transaction.NetAmount = (-1) * netAmount;
+        sp.Transaction.Amount = Math.Abs(netAmount);
+        sp.Transaction.NetAmount = Math.Abs(netAmount);
         sp.Transaction.PaymentMethod = request.PaymentMethod;
         sp.Transaction.Description = $"Salary payment for {period}";
         sp.Transaction.Note = string.IsNullOrEmpty(request.Note) ? null : request.Note;

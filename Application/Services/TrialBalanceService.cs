@@ -64,9 +64,9 @@ public class TrialBalanceService : ITrialBalanceService
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
                 DebitAmount = 0,
-                CreditAmount = g.Sum(t => t.NetAmount),
+                CreditAmount = g.Sum(t => Math.Abs(t.NetAmount)),
                 TransactionCount = g.Count(),
-                Balance = g.Sum(t => t.NetAmount)
+                Balance = g.Sum(t => Math.Abs(t.NetAmount))
             })
             .ToList();
 
@@ -78,10 +78,10 @@ public class TrialBalanceService : ITrialBalanceService
             {
                 AccountName = g.Key.Name,
                 AccountType = g.Key.Name,
-                DebitAmount = g.Sum(t => t.NetAmount),
+                DebitAmount = g.Sum(t => Math.Abs(t.NetAmount)),
                 CreditAmount = 0,
                 TransactionCount = g.Count(),
-                Balance = g.Sum(t => t.NetAmount)
+                Balance = g.Sum(t => Math.Abs(t.NetAmount))
             })
             .ToList();
 

@@ -61,8 +61,9 @@ public class GeneralLedgerService : IGeneralLedgerService
         {
             // Determine if the transaction is Money IN (DEBIT) or Money OUT (CREDIT)
             var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.DEBIT;
-            var debitAmount = isMoneyIn ? transaction.NetAmount : 0; // Money IN = Debit
-            var creditAmount = !isMoneyIn ? transaction.NetAmount : 0; // Money OUT = Credit
+            var netAmount = Math.Abs(transaction.NetAmount);
+            var debitAmount = isMoneyIn ? netAmount : 0; // Money IN = Debit
+            var creditAmount = !isMoneyIn ? netAmount : 0; // Money OUT = Credit
 
             totalDebit += debitAmount;
             totalCredit += creditAmount;
