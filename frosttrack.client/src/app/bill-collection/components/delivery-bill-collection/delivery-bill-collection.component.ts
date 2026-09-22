@@ -22,6 +22,8 @@ import { IDeliveryResponse } from 'app/product-delivery/models/product-delivery.
 import { CustomerService } from 'app/common/services/customer.service';
 import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { BankService } from 'app/common/services/bank.service';
+import { BookingService } from 'app/booking/services/booking.service';
+import { ICustomerDueDetailResponse } from 'app/booking/models/booking.interface';
 import { ILookup } from '@core/models/lookup';
 
 @Component({
@@ -39,13 +41,14 @@ import { ILookup } from '@core/models/lookup';
 export class DeliveryBillCollectionComponent implements OnInit {
   billCollectionForm!: FormGroup;
   customers: ICustomerListResponse[] = [];
+  customerBookings: ICustomerDueDetailResponse[] = [];
   banks: ILookup<number>[] = [];
-  deliveryCodes: Array<{ value: string; text: string; customerId: number }> =
-    [];
+  deliveryCodes: Array<{ value: string; text: string; customerId: number }> = [];
   unpaidDeliveries: IDeliveryResponse[] = [];
   selectedDeliveries = new Set<string>();
   deliveryLoading = false;
   customerLoading = false;
+  customerBookingsLoading = false;
   deliveryCodesLoading = false;
   isLoading = false;
   isSubmitting = false;
@@ -54,7 +57,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
   saveAndPrint = false;
   transactionCode = '';
   selectedBranch!: number;
-  searchMode: 'customer' | 'code' = 'customer';
+  searchMode: 'customer' | 'code' | 'advance' = 'customer';
   selectedDeliveryCode: string | null = null;
 
   paymentMethods = [
@@ -68,6 +71,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     private billCollectionService: BillCollectionService,
     private deliveryService: DeliveryService,
     private customerService: CustomerService,
+    private bookingService: BookingService,
     private bankService: BankService,
     private transactionService: TransactionService,
     private toastr: ToastrService,
@@ -110,8 +114,9 @@ export class DeliveryBillCollectionComponent implements OnInit {
         Validators.required,
       ],
       customerId: [null],
+      bookingId: [null],
       branchId: [this.selectedBranch, Validators.required],
-      amount: [{ value: 0, disabled: true }],
+      amount: [0, [Validators.required, Validators.min(0.01)]],
       paymentMethod: ['CASH', Validators.required],
       bankId: [null],
       paymentReference: [''],
@@ -121,13 +126,22 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.billCollectionForm
       .get('customerId')
       ?.valueChanges.subscribe((customerId) => {
-        if (customerId && this.searchMode === 'customer') {
-          this.loadUnpaidDeliveriesByCustomer(customerId);
-        } else if (!customerId && this.searchMode === 'customer') {
-          // Clear deliveries when customer is cleared
+        this.customerBookings = [];
+        this.billCollectionForm.patchValue(
+          { bookingId: null },
+          { emitEvent: false }
+        );
+        if (customerId) {
+          this.loadCustomerBookings(customerId);
+          if (this.searchMode === 'customer') {
+            this.loadUnpaidDeliveriesByCustomer(customerId);
+          }
+        } else {
           this.unpaidDeliveries = [];
           this.selectedDeliveries.clear();
-          this.billCollectionForm.patchValue({ amount: 0 });
+          if (this.searchMode !== 'advance') {
+            this.billCollectionForm.patchValue({ amount: 0 });
+          }
         }
       });
 
@@ -160,10 +174,22 @@ export class DeliveryBillCollectionComponent implements OnInit {
     });
   }
 
+  loadCustomerBookings(customerId: number) {
+    this.customerBookingsLoading = true;
+    this.bookingService.getCustomerDueDetail(customerId).subscribe({
+      next: (bookings) => {
+        this.customerBookings = bookings || [];
+        this.customerBookingsLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load customer bookings:', err);
+        this.customerBookingsLoading = false;
+      },
+    });
+  }
+
   loadAllUnpaidDeliveryCodes() {
     this.deliveryCodesLoading = true;
-
-    // Single optimized API call to get all unpaid deliveries
     this.deliveryService.getAllUnpaidDeliveries().subscribe({
       next: (deliveries) => {
         this.deliveryCodes = deliveries.map((d) => ({
@@ -189,7 +215,6 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.deliveryService.getUnpaidDeliveriesByCustomer(customerId).subscribe({
       next: (deliveries) => {
         this.unpaidDeliveries = deliveries;
-        // Select all deliveries by default
         deliveries.forEach((delivery) =>
           this.selectedDeliveries.add(delivery.id),
         );
@@ -219,11 +244,11 @@ export class DeliveryBillCollectionComponent implements OnInit {
       next: (delivery) => {
         this.unpaidDeliveries = [delivery];
         this.selectedDeliveries.add(delivery.id);
-        // Auto-fill customer
         if (delivery.customerId) {
           this.billCollectionForm.patchValue({
             customerId: delivery.customerId,
           });
+          this.loadCustomerBookings(delivery.customerId);
         }
         this.updateTotalAmount();
         this.deliveryLoading = false;
@@ -236,16 +261,34 @@ export class DeliveryBillCollectionComponent implements OnInit {
     });
   }
 
-  switchSearchMode(mode: 'customer' | 'code') {
+  switchSearchMode(mode: 'customer' | 'code' | 'advance') {
     this.searchMode = mode;
     this.unpaidDeliveries = [];
     this.selectedDeliveries.clear();
     this.selectedDeliveryCode = null;
-    this.billCollectionForm.patchValue({ customerId: null, amount: 0 });
+    this.customerBookings = [];
+    this.billCollectionForm.patchValue({
+      customerId: null,
+      bookingId: null,
+      amount: 0,
+    });
 
-    // Load delivery codes when switching to code mode
     if (mode === 'code' && this.deliveryCodes.length === 0) {
       this.loadAllUnpaidDeliveryCodes();
+    }
+  }
+
+  switchToAdvanceWithCurrentCustomer() {
+    const currentCustomer = this.billCollectionForm.get('customerId')?.value;
+    this.searchMode = 'advance';
+    this.unpaidDeliveries = [];
+    this.selectedDeliveries.clear();
+    if (currentCustomer) {
+      this.billCollectionForm.patchValue({
+        customerId: currentCustomer,
+        amount: 0,
+      });
+      this.loadCustomerBookings(currentCustomer);
     }
   }
 
@@ -263,22 +306,16 @@ export class DeliveryBillCollectionComponent implements OnInit {
   }
 
   updateTotalAmount() {
-    const total = this.unpaidDeliveries
-      .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce(
-        (sum, d) => sum + d.chargeAmount + d.labourCharge + d.adjustmentValue,
-        0,
-      );
-
-    this.billCollectionForm.patchValue({ amount: total });
+    const total = this.selectedTotal;
+    if (this.searchMode !== 'advance') {
+      this.billCollectionForm.patchValue({ amount: total });
+    }
   }
 
   toggleSelectAll() {
     if (this.selectedCount === this.unpaidDeliveries.length) {
-      // Unselect all
       this.selectedDeliveries.clear();
     } else {
-      // Select all
       this.unpaidDeliveries.forEach((d) => this.selectedDeliveries.add(d.id));
     }
     this.updateTotalAmount();
@@ -293,8 +330,42 @@ export class DeliveryBillCollectionComponent implements OnInit {
       );
   }
 
+  get selectedCharges(): number {
+    return this.unpaidDeliveries
+      .filter((d) => this.selectedDeliveries.has(d.id))
+      .reduce((sum, d) => sum + d.chargeAmount + d.adjustmentValue, 0);
+  }
+
+  get selectedLabour(): number {
+    return this.unpaidDeliveries
+      .filter((d) => this.selectedDeliveries.has(d.id))
+      .reduce((sum, d) => sum + d.labourCharge, 0);
+  }
+
   get selectedCount(): number {
     return this.selectedDeliveries.size;
+  }
+
+  get formAmount(): number {
+    return Number(this.billCollectionForm?.get('amount')?.value) || 0;
+  }
+
+  get advanceExcess(): number {
+    if (this.searchMode === 'advance') {
+      return this.formAmount;
+    }
+    return Math.max(0, this.formAmount - this.selectedTotal);
+  }
+
+  get isSubmitDisabled(): boolean {
+    if (this.isSubmitting) return true;
+    if (this.formAmount <= 0) return true;
+    if (this.searchMode === 'advance') {
+      return !this.billCollectionForm.get('customerId')?.value;
+    }
+    if (this.selectedDeliveries.size === 0) return true;
+    if (this.formAmount < this.selectedTotal - 0.01) return true;
+    return false;
   }
 
   loadExistingTransaction(id: string) {
@@ -308,6 +379,8 @@ export class DeliveryBillCollectionComponent implements OnInit {
             .toISOString()
             .split('T')[0],
           branchId: transaction.branchId,
+          customerId: transaction.customerId,
+          bookingId: transaction.bookingId,
           amount: transaction.amount,
           paymentMethod: transaction.paymentMethod,
           bankId: (transaction as any).bankId || null,
@@ -315,18 +388,22 @@ export class DeliveryBillCollectionComponent implements OnInit {
           note: transaction.note,
         });
 
+        if (transaction.customerId) {
+          this.loadCustomerBookings(transaction.customerId);
+        }
+
         // Load deliveries associated with this transaction
         this.deliveryService.getDeliveriesByTransactionId(id).subscribe({
           next: (deliveries) => {
             this.unpaidDeliveries = deliveries;
-            // Mark all deliveries as selected
             deliveries.forEach((d) => this.selectedDeliveries.add(d.id));
-            this.updateTotalAmount();
+            if (deliveries.length === 0) {
+              this.searchMode = 'advance';
+            }
             this.isLoading = false;
           },
           error: (err) => {
             console.error('Failed to load deliveries:', err);
-            this.toastr.error('Failed to load deliveries');
             this.isLoading = false;
           },
         });
@@ -365,35 +442,63 @@ export class DeliveryBillCollectionComponent implements OnInit {
       return;
     }
 
-    if (this.selectedDeliveries.size === 0) {
-      this.toastr.error('Please select at least one delivery');
-      return;
-    }
-
     const formValue = this.billCollectionForm.getRawValue();
 
-    if (formValue.amount <= 0) {
-      this.toastr.error('Amount must be greater than 0');
-      return;
+    if (this.searchMode === 'advance') {
+      if (!formValue.customerId) {
+        this.toastr.error('Please select a customer for advance payment');
+        return;
+      }
+      if (formValue.amount <= 0) {
+        this.toastr.error('Advance amount must be greater than 0');
+        return;
+      }
+    } else {
+      if (this.selectedDeliveries.size === 0) {
+        this.toastr.error(
+          'Please select at least one delivery or switch to Advance mode',
+        );
+        return;
+      }
+      if (formValue.amount < this.selectedTotal - 0.01) {
+        this.toastr.error(
+          `Amount (৳${formValue.amount}) cannot be less than total delivery bill (৳${this.selectedTotal})`,
+        );
+        return;
+      }
     }
 
     this.isSubmitting = true;
     this.saveAndPrint = printAfterSave;
 
+    const advanceAmount =
+      this.searchMode === 'advance'
+        ? Number(formValue.amount)
+        : Math.max(0, Number(formValue.amount) - this.selectedTotal);
+
     const payload: IDeliveryBillCollectionRequest = {
       transactionCode: formValue.transactionCode,
       transactionDate: formValue.transactionDate,
       branchId: formValue.branchId,
-      deliveryIds: Array.from(this.selectedDeliveries),
-      amount: formValue.amount,
+      deliveryIds:
+        this.searchMode === 'advance' ? [] : Array.from(this.selectedDeliveries),
+      amount: Number(formValue.amount),
       paymentMethod: formValue.paymentMethod,
       bankId: formValue.bankId,
       paymentReference: formValue.paymentReference,
       note: formValue.note,
+      customerId: formValue.customerId,
+      bookingId: formValue.bookingId,
+      advanceAmount: advanceAmount,
     };
 
     this.billCollectionService.createDeliveryBillCollection(payload).subscribe({
       next: (response) => {
+        this.toastr.success(
+          advanceAmount > 0
+            ? 'Bill collection & advance recorded successfully!'
+            : 'Delivery bill collection created successfully!',
+        );
         if (printAfterSave) {
           this.router.navigate([
             '/transaction/receipt-print',
@@ -404,8 +509,9 @@ export class DeliveryBillCollectionComponent implements OnInit {
           this.router.navigate(['/bill-collection/list']);
         }
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
+        console.error('Failed to create bill collection:', err);
       },
     });
   }
@@ -418,6 +524,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.unpaidDeliveries = [];
     this.selectedDeliveries.clear();
     this.selectedDeliveryCode = null;
+    this.customerBookings = [];
     this.initForm();
     this.generateTransactionCode();
   }

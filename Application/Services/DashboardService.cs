@@ -60,7 +60,10 @@ public class DashboardService : IDashboardService
                 && x.TransactionDate < toUtc
                 && !x.IsDeleted
                 && !x.IsArchived
-                && x.PaymentMethod != PaymentMethods.CREDIT);
+                && x.PaymentMethod != PaymentMethods.CREDIT
+                && x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                && x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
+                && x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
 
         // Apply branch filter if provided
         if (branchId.HasValue)
@@ -146,7 +149,8 @@ public class DashboardService : IDashboardService
             .Where(x => x.TenantId == _tenantId && !x.IsDeleted && !x.IsArchived && x.PaymentMethod != PaymentMethods.CREDIT &&
                         x.TransactionDate >= fromUtc && x.TransactionDate < toUtc &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
 
         // Apply branch filter
         if (branchId.HasValue)

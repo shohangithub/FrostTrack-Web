@@ -18,6 +18,7 @@ public class BillCollectionService : IBillCollectionService
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
     private readonly IRepository<Bank, int> _bankRepository;
+    private readonly IRepository<Customer, int> _customerRepository;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly Guid _tenantId;
 
@@ -28,6 +29,7 @@ public class BillCollectionService : IBillCollectionService
         IRepository<Delivery, Guid> deliveryRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
         IRepository<Bank, int> bankRepository,
+        IRepository<Customer, int> customerRepository,
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider)
     {
@@ -37,6 +39,7 @@ public class BillCollectionService : IBillCollectionService
         _deliveryRepository = deliveryRepository;
         _bankTransactionRepository = bankTransactionRepository;
         _bankRepository = bankRepository;
+        _customerRepository = customerRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantId = tenantProvider.GetTenantId();
     }
@@ -56,12 +59,9 @@ public class BillCollectionService : IBillCollectionService
             .Where(d => bookingIds.Contains(d.BookingId) && d.TenantId == _tenantId && !d.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        var deliveryChargeMap = deliveriesGrouped
+        var deliveriesByBooking = deliveriesGrouped
             .GroupBy(d => d.BookingId)
-            .ToDictionary(
-                g => g.Key, 
-                g => g.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m))
-            );
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         // Fetch bulk paid amounts and group by bookingId
         var paidAmountsMap = await _transactionRepository.Query()
@@ -80,13 +80,13 @@ public class BillCollectionService : IBillCollectionService
         foreach (var booking in bookings)
         {
             var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
-            var deliveryCharge = deliveryChargeMap.GetValueOrDefault(booking.Id, 0m);
+            var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
             var paidAmount = paidAmountsMap.GetValueOrDefault(booking.Id, 0m);
             
-            var (totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+            var (_, _, totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedDetails(
                 booking,
                 activeDetails,
-                deliveryCharge,
+                bDeliveries,
                 now);
 
             var dueAmount = totalAccrued - paidAmount;
@@ -151,12 +151,10 @@ public class BillCollectionService : IBillCollectionService
             .Where(d => d.BookingId == bookingId && d.TenantId == _tenantId && !d.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        var deliveryCharge = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m));
-
-        var (totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+        var (_, _, totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedDetails(
             booking,
             activeDetails,
-            deliveryCharge,
+            deliveries,
             DateTime.UtcNow);
 
         return totalAccrued;
@@ -311,83 +309,151 @@ public class BillCollectionService : IBillCollectionService
         if (labourChargeHead == null)
             throw new Exception("LABOUR_CHARGE transaction head not found");
 
-        // Get deliveries and verify they are all unpaid
-        var deliveries = await _deliveryRepository.Query()
-            .Include(d => d.Booking)
-            .ThenInclude(b => b!.Customer)
-            .Include(d => d.DeliveryDetails)
-            .Where(d => request.DeliveryIds.Contains(d.Id) && d.PaymentStatus == PaymentStatuses.UNPAID)
-            .ToListAsync(cancellationToken);
+        Transaction entity;
+        var hasDeliveries = request.DeliveryIds != null && request.DeliveryIds.Count > 0;
 
-        if (deliveries.Count != request.DeliveryIds.Count)
-            throw new Exception("Some deliveries are not found or already paid");
-
-        // Calculate total charges including labour
-        var totalCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.AdjustmentValue));
-        var totalLabourCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
-        var grandTotal = totalCharges + totalLabourCharges;
-
-        if (Math.Abs(grandTotal - request.Amount) > 0.01m)
-            throw new Exception($"Payment amount ({request.Amount}) does not match total delivery charges ({grandTotal})");
-
-        // Create main transaction for delivery charges
-        var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
-        var firstDelivery = deliveries.FirstOrDefault();
-        var customer = await _bookingRepository.Query()
-            .Where(b => b.Id == firstDelivery!.BookingId)
-            .Include(b => b.Customer)
-            .Select(b => b.Customer)
-            .FirstOrDefaultAsync(cancellationToken);
-        var customerName = customer?.CustomerName ?? "N/A";
-
-        var entity = new Transaction
+        if (hasDeliveries)
         {
-            Id = Guid.NewGuid(),
-            TransactionCode = request.TransactionCode,
-            TransactionDate = request.TransactionDate,
-            TransactionHeadId = transactionHead.Id,
-            BranchId = request.BranchId,
-            BookingId = deliveries.FirstOrDefault()?.BookingId,
-            CustomerId = deliveries.FirstOrDefault()?.Booking?.CustomerId,
-            Amount = totalCharges,
-            PaymentMethod = request.PaymentMethod,
-            PaymentReference = request.PaymentReference,
-            BankId = request.BankId,
-            Note = request.Note,
-            Description = $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}",
-            DiscountAmount = 0,
-            AdjustmentValue = 0,
-            NetAmount = totalCharges
-        };
+            // Get deliveries and verify they are all unpaid
+            var deliveries = await _deliveryRepository.Query()
+                .Include(d => d.Booking)
+                .ThenInclude(b => b!.Customer)
+                .Include(d => d.DeliveryDetails)
+                .Where(d => request.DeliveryIds!.Contains(d.Id) && d.PaymentStatus == PaymentStatuses.UNPAID)
+                .ToListAsync(cancellationToken);
 
-        _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
-        await _transactionRepository.AddAsync(entity, cancellationToken);
+            if (deliveries.Count != request.DeliveryIds!.Count)
+                throw new Exception("Some deliveries are not found or already paid");
 
-        // Create separate transaction for labour charges if any
-        if (totalLabourCharges > 0)
-        {
-            var labourEntity = new Transaction
+            // Calculate total charges including labour
+            var totalCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.AdjustmentValue));
+            var totalLabourCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
+            var deliveryGrandTotal = totalCharges + totalLabourCharges;
+
+            if (request.Amount < deliveryGrandTotal - 0.01m)
+                throw new Exception($"Payment amount ({request.Amount:N2}) cannot be less than total delivery charges ({deliveryGrandTotal:N2})");
+
+            var excessAdvance = Math.Max(0m, request.Amount - deliveryGrandTotal);
+
+            var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
+            var firstDelivery = deliveries.FirstOrDefault();
+            var customerId = firstDelivery?.Booking?.CustomerId ?? request.CustomerId;
+            var bookingId = firstDelivery?.BookingId ?? request.BookingId;
+
+            var customer = customerId.HasValue
+                ? await _customerRepository.GetByIdAsync(customerId.Value, cancellationToken)
+                : null;
+            var customerName = customer?.CustomerName ?? firstDelivery?.Booking?.Customer?.CustomerName ?? "Customer";
+
+            var mainAmount = totalCharges + excessAdvance;
+            var description = excessAdvance > 0
+                ? $"Bill Collection - Deliveries: {deliveryCodes} (Advance: {excessAdvance:N2}) - {customerName}"
+                : $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}";
+
+            entity = new Transaction
             {
                 Id = Guid.NewGuid(),
-                TransactionCode = request.TransactionCode + "-L",
+                TransactionCode = request.TransactionCode,
                 TransactionDate = request.TransactionDate,
-                TransactionHeadId = labourChargeHead.Id,
+                TransactionHeadId = transactionHead.Id,
                 BranchId = request.BranchId,
-                BookingId = deliveries.FirstOrDefault()?.BookingId,
-                CustomerId = deliveries.FirstOrDefault()?.Booking?.CustomerId,
-                Amount = totalLabourCharges,
+                BookingId = bookingId,
+                CustomerId = customerId,
+                Amount = mainAmount,
                 PaymentMethod = request.PaymentMethod,
                 PaymentReference = request.PaymentReference,
                 BankId = request.BankId,
                 Note = request.Note,
-                Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
+                Description = description,
                 DiscountAmount = 0,
                 AdjustmentValue = 0,
-                NetAmount = totalLabourCharges
+                NetAmount = mainAmount
             };
 
-            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);
-            await _transactionRepository.AddAsync(labourEntity, cancellationToken);
+            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
+            await _transactionRepository.AddAsync(entity, cancellationToken);
+
+            // Create separate transaction for labour charges if any
+            if (totalLabourCharges > 0)
+            {
+                var labourEntity = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    TransactionCode = request.TransactionCode + "-L",
+                    TransactionDate = request.TransactionDate,
+                    TransactionHeadId = labourChargeHead.Id,
+                    BranchId = request.BranchId,
+                    BookingId = bookingId,
+                    CustomerId = customerId,
+                    Amount = totalLabourCharges,
+                    PaymentMethod = request.PaymentMethod,
+                    PaymentReference = request.PaymentReference,
+                    BankId = request.BankId,
+                    Note = request.Note,
+                    Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
+                    DiscountAmount = 0,
+                    AdjustmentValue = 0,
+                    NetAmount = totalLabourCharges
+                };
+
+                _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);
+                await _transactionRepository.AddAsync(labourEntity, cancellationToken);
+            }
+
+            // Mark all deliveries as paid
+            foreach (var delivery in deliveries)
+            {
+                delivery.PaymentStatus = PaymentStatuses.PAID;
+                delivery.PaymentDate = request.TransactionDate;
+                delivery.TransactionId = entity.Id;
+                _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(delivery);
+                await _deliveryRepository.UpdateAsync(delivery, cancellationToken);
+            }
+        }
+        else
+        {
+            // Pure advance payment (no delivery selected)
+            if (!request.CustomerId.HasValue)
+                throw new Exception("Please select a customer for advance payment");
+
+            if (request.Amount <= 0)
+                throw new Exception("Advance payment amount must be greater than zero");
+
+            var customer = await _customerRepository.GetByIdAsync(request.CustomerId.Value, cancellationToken);
+            var customerName = customer?.CustomerName ?? "Customer";
+
+            var bookingInfo = "";
+            if (request.BookingId.HasValue)
+            {
+                var booking = await _bookingRepository.GetByIdAsync(request.BookingId.Value, cancellationToken);
+                if (booking != null)
+                {
+                    bookingInfo = $" - Booking: {booking.BookingNumber}";
+                }
+            }
+
+            entity = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                TransactionCode = request.TransactionCode,
+                TransactionDate = request.TransactionDate,
+                TransactionHeadId = transactionHead.Id,
+                BranchId = request.BranchId,
+                BookingId = request.BookingId,
+                CustomerId = request.CustomerId,
+                Amount = request.Amount,
+                PaymentMethod = request.PaymentMethod,
+                PaymentReference = request.PaymentReference,
+                BankId = request.BankId,
+                Note = request.Note,
+                Description = $"Customer Advance Payment - {customerName}{bookingInfo}",
+                DiscountAmount = 0,
+                AdjustmentValue = 0,
+                NetAmount = request.Amount
+            };
+
+            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
+            await _transactionRepository.AddAsync(entity, cancellationToken);
         }
 
         // If paid by bank or cheque, automatically record deposit in BankTransaction for grand total
@@ -408,7 +474,7 @@ public class BillCollectionService : IBillCollectionService
                     TransactionType = BankTransactionTypes.Deposit,
                     Amount = request.Amount,
                     Reference = request.PaymentReference,
-                    Description = $"Delivery Bill Collection - {deliveryCodes} - {customerName} ({request.PaymentMethod})",
+                    Description = $"Delivery Bill Collection - {request.TransactionCode} ({request.PaymentMethod})",
                     BalanceAfter = currentBalance + request.Amount,
                     SourceType = BankSourceTypes.BILL_COLLECTION,
                     TransactionId = entity.Id,
@@ -418,16 +484,6 @@ public class BillCollectionService : IBillCollectionService
                 _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
                 await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
             }
-        }
-
-        // Mark all deliveries as paid
-        foreach (var delivery in deliveries)
-        {
-            delivery.PaymentStatus = PaymentStatuses.PAID;
-            delivery.PaymentDate = request.TransactionDate;
-            delivery.TransactionId = entity.Id;
-            _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(delivery);
-            await _deliveryRepository.UpdateAsync(delivery, cancellationToken);
         }
 
         var response = entity.Adapt<TransactionResponse>();

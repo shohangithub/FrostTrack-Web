@@ -10,12 +10,19 @@
           <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
               <div class="card mb-3">
-                <span class="card-label">Delivery Bill Collection</span>
+                <span class="card-label">
+                  <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+                  @if (searchMode === 'advance') {
+                    Customer Advance Collection (অগ্রিম বিল আদায়)
+                  } @else {
+                    Delivery Bill Collection (ডেলিভারি বিল আদায়)
+                  }
+                </span>
                 <div class="card-body">
-                  <!-- Search Mode Toggle -->
-                  <div class="row mt-2">
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                      <div class="btn-group btn-group-sm mb-3" role="group">
+                  <!-- Mode Selection Toggle -->
+                  <div class="row mt-2 mb-3">
+                    <div class="col-12">
+                      <div class="btn-group btn-group-sm" role="group">
                         <button
                           type="button"
                           class="btn"
@@ -27,7 +34,7 @@
                           (click)="switchSearchMode('customer')"
                           [disabled]="isEditing"
                         >
-                          <i class="fas fa-user"></i> By Customer
+                          <i class="fas fa-user me-1"></i> By Customer (কাস্টমার দ্বারা)
                         </button>
                         <button
                           type="button"
@@ -40,19 +47,33 @@
                           (click)="switchSearchMode('code')"
                           [disabled]="isEditing"
                         >
-                          <i class="fas fa-barcode"></i> By Delivery Code
+                          <i class="fas fa-barcode me-1"></i> By Delivery Code (ডেলিভারি কোড)
+                        </button>
+                        <button
+                          type="button"
+                          class="btn"
+                          [ngClass]="
+                            searchMode === 'advance'
+                              ? 'btn-success'
+                              : 'btn-outline-success'
+                          "
+                          (click)="switchSearchMode('advance')"
+                          [disabled]="isEditing"
+                        >
+                          <i class="fas fa-hand-holding-usd me-1"></i> Direct Advance (সরাসরি অগ্রিম গ্রহণ)
                         </button>
                       </div>
                     </div>
-                    <!-- Search by Customer -->
-                    @if (searchMode === "customer") {
-                      <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+                  </div>
+
+                  <!-- Customer / Delivery Selector Row -->
+                  <div class="row mb-3">
+                    @if (searchMode === 'customer' || searchMode === 'advance') {
+                      <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group row">
-                          <label
-                            for="customerId"
-                            class="col-sm-3 col-form-label"
-                            >Customer:</label
-                          >
+                          <label for="customerId" class="col-sm-3 col-form-label">
+                            Customer: <span class="text-danger">*</span>
+                          </label>
                           <div class="col-sm-9">
                             <ng-select
                               id="customerId"
@@ -63,21 +84,51 @@
                               [loading]="customerLoading"
                               [clearable]="true"
                               [disabled]="isEditing"
-                              placeholder="Select customer"
+                              placeholder="Select customer..."
                               class="ng-select-sm"
                             >
                             </ng-select>
                           </div>
                         </div>
                       </div>
+
+                      @if (searchMode === 'advance') {
+                        <div class="col-lg-6 col-md-6 col-sm-12">
+                          <div class="form-group row">
+                            <label for="bookingId" class="col-sm-3 col-form-label">
+                              Booking: <small class="text-muted">(Opt)</small>
+                            </label>
+                            <div class="col-sm-9">
+                              <ng-select
+                                id="bookingId"
+                                formControlName="bookingId"
+                                [items]="customerBookings"
+                                bindLabel="bookingNumber"
+                                bindValue="bookingId"
+                                [loading]="customerBookingsLoading"
+                                [clearable]="true"
+                                placeholder="Select booking (optional)"
+                                class="ng-select-sm"
+                              >
+                                <ng-template ng-option-tmp let-item="item">
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <span><strong>{{ item.bookingNumber }}</strong> ({{ item.bookingDate | date: 'dd-MMM-yyyy' }})</span>
+                                    @if (item.totalDue > 0) {
+                                      <span class="badge bg-danger">Due: ৳{{ item.totalDue | number: '1.2-2' }}</span>
+                                    }
+                                  </div>
+                                </ng-template>
+                              </ng-select>
+                            </div>
+                          </div>
+                        </div>
+                      }
                     }
-                    <!-- Search by Delivery Code -->
-                    @if (searchMode === "code") {
-                      <div class="col-lg-8 col-md-8 col-sm-6 col-xs-12">
+
+                    @if (searchMode === 'code') {
+                      <div class="col-lg-8 col-md-8 col-sm-12">
                         <div class="form-group row">
-                          <label class="col-sm-3 col-form-label"
-                            >Delivery Code:</label
-                          >
+                          <label class="col-sm-3 col-form-label">Delivery Code: <span class="text-danger">*</span></label>
                           <div class="col-sm-9">
                             <ng-select
                               id="deliveryCode"
@@ -89,10 +140,8 @@
                               [loading]="deliveryCodesLoading"
                               [clearable]="true"
                               [disabled]="isEditing"
-                              (change)="
-                                onDeliveryCodeSelect(selectedDeliveryCode || '')
-                              "
-                              placeholder="Select delivery code"
+                              (change)="onDeliveryCodeSelect(selectedDeliveryCode || '')"
+                              placeholder="Select delivery code..."
                               class="ng-select-sm"
                             >
                             </ng-select>
@@ -106,11 +155,7 @@
                   <div class="row">
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
-                        <label
-                          for="transactionCode"
-                          class="col-sm-4 col-form-label"
-                          >Tr. Code:</label
-                        >
+                        <label for="transactionCode" class="col-sm-4 col-form-label">Tr. Code:</label>
                         <div class="col-sm-8">
                           <div class="input-group">
                             <input
@@ -126,9 +171,7 @@
                               (click)="generateTransactionCode()"
                               [class.disabled]="isEditing"
                             >
-                              <span
-                                class="input-group-text input-group-text-append"
-                              >
+                              <span class="input-group-text input-group-text-append">
                                 <i
                                   class="fas"
                                   [ngClass]="
@@ -143,13 +186,10 @@
                         </div>
                       </div>
                     </div>
+
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
-                        <label
-                          for="transactionDate"
-                          class="col-sm-4 col-form-label"
-                          >Date:</label
-                        >
+                        <label for="transactionDate" class="col-sm-4 col-form-label">Date: <span class="text-danger">*</span></label>
                         <div class="col-sm-8">
                           <input
                             type="date"
@@ -160,13 +200,32 @@
                         </div>
                       </div>
                     </div>
+
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
-                        <label
-                          for="paymentMethod"
-                          class="col-sm-4 col-form-label"
-                          >Payment: <span class="text-danger">*</span></label
-                        >
+                        <label for="amount" class="col-sm-4 col-form-label text-primary fw-bold">
+                          Amount: <span class="text-danger">*</span>
+                        </label>
+                        <div class="col-sm-8">
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">৳</span>
+                            <input
+                              type="number"
+                              class="form-control form-control-sm text-end fw-bold"
+                              id="amount"
+                              formControlName="amount"
+                              placeholder="0.00"
+                              min="0.01"
+                              step="any"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <div class="form-group row">
+                        <label for="paymentMethod" class="col-sm-4 col-form-label">Payment: <span class="text-danger">*</span></label>
                         <div class="col-sm-8">
                           <ng-select
                             id="paymentMethod"
@@ -185,11 +244,7 @@
                     @if (billCollectionForm.get('paymentMethod')?.value !== 'CASH') {
                       <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                         <div class="form-group row">
-                          <label
-                            for="bankId"
-                            class="col-sm-4 col-form-label"
-                            >Deposit Bank: <span class="text-danger">*</span></label
-                          >
+                          <label for="bankId" class="col-sm-4 col-form-label">Bank: <span class="text-danger">*</span></label>
                           <div class="col-sm-8">
                             <ng-select
                               id="bankId"
@@ -198,7 +253,7 @@
                               bindLabel="text"
                               bindValue="value"
                               [clearable]="true"
-                              placeholder="Select bank"
+                              placeholder="Select deposit bank"
                               class="ng-select-sm"
                               [class.is-invalid]="
                                 billCollectionForm.get('bankId')?.invalid &&
@@ -219,11 +274,7 @@
 
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
                       <div class="form-group row">
-                        <label
-                          for="paymentReference"
-                          class="col-sm-4 col-form-label"
-                          >Ref / Cheque:</label
-                        >
+                        <label for="paymentReference" class="col-sm-4 col-form-label">Ref / Cheque:</label>
                         <div class="col-sm-8">
                           <input
                             type="text"
@@ -236,14 +287,81 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- Financial Calculation Strips -->
+                  @if (searchMode === 'advance') {
+                    <div class="alert alert-info border d-flex align-items-center py-2 px-3 mt-2 mb-0">
+                      <i class="fas fa-hand-holding-usd fa-2x me-3 text-info"></i>
+                      <div>
+                        <strong>Direct Advance Mode (অগ্রিম জমা):</strong>
+                        <span>
+                          Entering ৳ <strong>{{ formAmount | number: '1.2-2' }}</strong> as an advance deposit will immediately be credited to the customer and reduce their outstanding dues in customer due reports.
+                        </span>
+                      </div>
+                    </div>
+                  } @else if (selectedDeliveries.size > 0) {
+                    <div class="card bg-light border p-2 mt-2 mb-0">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                          <span class="text-muted me-2">Selected Deliveries Total:</span>
+                          <strong class="fs-6 text-dark">৳ {{ selectedTotal | number: '1.2-2' }}</strong>
+                          <span class="text-muted ms-2 small">
+                            (Storage Charge: ৳ {{ selectedCharges | number: '1.2-2' }} + Labour: ৳ {{ selectedLabour | number: '1.2-2' }})
+                          </span>
+                        </div>
+
+                        <div>
+                          @if (formAmount > selectedTotal) {
+                            <span class="badge bg-success py-2 px-3 fs-6">
+                              <i class="fas fa-arrow-circle-up me-1"></i>
+                              Advance Surplus: ৳ {{ (formAmount - selectedTotal) | number: '1.2-2' }} (will be credited as customer advance)
+                            </span>
+                          } @else if (formAmount < selectedTotal && formAmount > 0) {
+                            <span class="badge bg-danger py-2 px-3 fs-6">
+                              <i class="fas fa-exclamation-triangle me-1"></i>
+                              Amount is less than total bill (৳ {{ selectedTotal | number: '1.2-2' }})
+                            </span>
+                          } @else {
+                            <span class="badge bg-primary py-2 px-3 fs-6">
+                              <i class="fas fa-check-circle me-1"></i>
+                              Exact Payment: ৳ {{ formAmount | number: '1.2-2' }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               </div>
 
-              <!-- Unpaid Deliveries Table -->
-              @if (unpaidDeliveries.length > 0) {
+              <!-- Customer with zero unpaid deliveries alert -->
+              @if (
+                searchMode === 'customer' &&
+                billCollectionForm.get('customerId')?.value &&
+                unpaidDeliveries.length === 0 &&
+                !deliveryLoading
+              ) {
+                <div class="alert alert-warning border d-flex justify-content-between align-items-center py-3 px-3 mb-3">
+                  <div>
+                    <i class="fas fa-info-circle me-2 text-warning fs-5"></i>
+                    <strong>No unpaid deliveries found for this customer.</strong>
+                    <span class="ms-2">All previous deliveries are paid, or no deliveries exist yet.</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-success text-white shadow-sm"
+                    (click)="switchToAdvanceWithCurrentCustomer()"
+                  >
+                    <i class="fas fa-hand-holding-usd me-1"></i> Collect Advance for this Customer
+                  </button>
+                </div>
+              }
+
+              <!-- Unpaid Deliveries Table (for customer and code modes) -->
+              @if (searchMode !== 'advance' && unpaidDeliveries.length > 0) {
                 <div class="card mb-3">
                   <span class="card-label">
-                    Unpaid Deliveries
+                    Unpaid Deliveries (বকেয়া ডেলিভারি তালিকা)
                     <span class="badge bg-info text-white ms-2"
                       >{{ selectedCount }} selected</span
                     >
@@ -266,10 +384,10 @@
                             <th>Delivery Date</th>
                             <th>Booking Number</th>
                             <th>Customer</th>
-                            <th class="text-end">Charge</th>
-                            <th class="text-end">Labour</th>
+                            <th class="text-end">Storage Charge</th>
+                            <th class="text-end">Labour Charge</th>
                             <th class="text-end">Adjustment</th>
-                            <th class="text-end">Total</th>
+                            <th class="text-end">Total Bill</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -291,7 +409,7 @@
                                   "
                                 />
                               </td>
-                              <td>{{ delivery.deliveryNumber }}</td>
+                              <td><strong class="text-primary">{{ delivery.deliveryNumber }}</strong></td>
                               <td>
                                 {{
                                   delivery.deliveryDate | date: "dd-MMM-yyyy"
@@ -303,7 +421,9 @@
                                 {{ delivery.chargeAmount | number: "1.2-2" }}
                               </td>
                               <td class="text-end">
-                                {{ delivery.labourCharge | number: "1.2-2" }}
+                                <span class="badge bg-secondary text-white">
+                                  {{ delivery.labourCharge | number: "1.2-2" }}
+                                </span>
                               </td>
                               <td class="text-end">
                                 {{ delivery.adjustmentValue | number: "1.2-2" }}
@@ -321,10 +441,10 @@
                         <tfoot class="table-light">
                           <tr>
                             <td colspan="8" class="text-end">
-                              <strong>Total Selected Amount:</strong>
+                              <strong>Total Selected Bill (মোট বিল):</strong>
                             </td>
                             <td class="text-end">
-                              <strong class="text-primary">{{
+                              <strong class="text-primary fs-6">{{
                                 selectedTotal | number: "1.2-2"
                               }}</strong>
                             </td>
@@ -341,14 +461,14 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col-12">
-                      <div class="form-group">
-                        <label for="note" class="form-label">Note:</label>
+                      <div class="form-group mb-0">
+                        <label for="note" class="form-label">Note / মন্তব্য:</label>
                         <textarea
                           class="form-control form-control-sm"
                           id="note"
                           formControlName="note"
                           rows="2"
-                          placeholder="Optional notes..."
+                          placeholder="Optional notes or remarks..."
                         ></textarea>
                       </div>
                     </div>
@@ -377,9 +497,9 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-sm btn-info me-2"
+                    class="btn btn-sm btn-info me-2 text-white"
                     (click)="onSubmit(true)"
-                    [disabled]="isSubmitting || selectedCount === 0"
+                    [disabled]="isSubmitDisabled"
                   >
                     <i
                       class="fas"
@@ -398,7 +518,7 @@
                   <button
                     type="submit"
                     class="btn btn-sm btn-success"
-                    [disabled]="isSubmitting || selectedCount === 0"
+                    [disabled]="isSubmitDisabled"
                   >
                     <i
                       class="fas"

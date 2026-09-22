@@ -26,6 +26,8 @@ public class CustomerDueDetailResponse
     public DateTime BookingDate { get; set; }
     public string? ReferenceNumber { get; set; }
     public decimal BookingLabourCharge { get; set; }
+    public decimal TotalRentAmount { get; set; }
+    public decimal TotalLabourAmount { get; set; }
     public decimal OpeningBalance { get; set; }
     public decimal TotalAccruedAmount { get; set; }  // delivery charges + pending accrual
     public decimal PendingRecurringChargeAmount { get; set; } // cycles since last delivery not yet recorded

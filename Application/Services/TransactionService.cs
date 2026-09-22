@@ -277,13 +277,15 @@ public class TransactionService : ITransactionService
             "archived" => predicate.And(x =>
                 !x.IsDeleted && x.IsArchived &&
                 x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE),
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                (requestQuery.UsageFor != null || x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)),
             "deleted" => predicate.And(x =>
                 x.IsDeleted && x.TenantId == _tenantId),
             _ => predicate.And(x =>
                 !x.IsDeleted && !x.IsArchived &&
                 x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                (requestQuery.UsageFor != null || x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE))
         };
 
         if (requestQuery.UsageFor != null && status != "deleted")
@@ -376,7 +378,10 @@ public class TransactionService : ITransactionService
     public async Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
         var query = _repository.Query().Include(x => x.TransactionHead)
-            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate);
+            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
+                        x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
 
         if (branchId.HasValue)
             query = query.Where(x => x.BranchId == branchId.Value);
@@ -410,7 +415,10 @@ public class TransactionService : ITransactionService
     public async Task<IEnumerable<CashFlowResponse>> GetCashFlowAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
         var query = _repository.Query().Include(x => x.TransactionHead)
-            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate);
+            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
+                        x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
 
         if (branchId.HasValue)
             query = query.Where(x => x.BranchId == branchId.Value);

@@ -196,8 +196,35 @@ export class CustomerDueListComponent implements OnInit {
   }
 
   getBookingStorageCharge(booking: ICustomerDueDetailResponse): number {
+    if (booking.totalRentAmount !== undefined && booking.totalRentAmount !== null) {
+      return booking.totalRentAmount;
+    }
     const labour = booking.bookingLabourCharge || 0;
     return Math.max(booking.totalAccruedAmount - labour, 0);
+  }
+
+  getBookingLabourCharge(booking: ICustomerDueDetailResponse): number {
+    if (booking.totalLabourAmount !== undefined && booking.totalLabourAmount !== null) {
+      return booking.totalLabourAmount;
+    }
+    return booking.bookingLabourCharge || 0;
+  }
+
+  getBookingDeliveriesTotal(booking: ICustomerDueDetailResponse): number {
+    return (
+      booking.deliveries?.reduce(
+        (sum, d) => sum + (d.chargeAmount + d.labourCharge + (d.adjustmentValue || 0)),
+        0
+      ) ?? 0
+    );
+  }
+
+  getBookingDeliveriesPaid(booking: ICustomerDueDetailResponse): number {
+    return booking.deliveries?.reduce((sum, d) => sum + (d.paidAmount || 0), 0) ?? 0;
+  }
+
+  getBookingDeliveriesDue(booking: ICustomerDueDetailResponse): number {
+    return booking.deliveries?.reduce((sum, d) => sum + (d.dueAmount || 0), 0) ?? 0;
   }
 
   isBookingSettled(booking: ICustomerDueDetailResponse): boolean {

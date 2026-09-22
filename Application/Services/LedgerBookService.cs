@@ -39,7 +39,7 @@ namespace Application.Services
             // Get transactions for the report date
             var transactions = await _transactionRepository.Query()
                 .Include(t => t.TransactionHead)
-                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
                 .OrderBy(t => t.CreatedTime)
                 .ToListAsync(cancellationToken);
 

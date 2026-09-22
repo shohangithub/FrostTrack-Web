@@ -83,7 +83,7 @@ export class BillCollectionService extends BaseService {
 
 export interface IDeliveryBillCollectionRequest {
   transactionCode: string;
-  transactionDate: Date;
+  transactionDate: Date | string;
   branchId: number;
   deliveryIds: string[];
   amount: number;
@@ -91,4 +91,7 @@ export interface IDeliveryBillCollectionRequest {
   paymentReference?: string;
   bankId?: number | null;
   note?: string;
+  customerId?: number | null;
+  bookingId?: string | null;
+  advanceAmount?: number;
 }

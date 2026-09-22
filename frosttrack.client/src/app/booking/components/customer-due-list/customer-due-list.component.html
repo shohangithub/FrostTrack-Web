@@ -378,7 +378,7 @@
                                       <div class="finance-box">
                                         <div class="box-title">Labour / Handling</div>
                                         <div class="box-amount">
-                                          ৳{{ (booking.bookingLabourCharge || 0) | number: "1.2-2" }}
+                                          ৳{{ getBookingLabourCharge(booking) | number: "1.2-2" }}
                                         </div>
                                       </div>
                                       <div class="finance-box">
@@ -467,13 +467,13 @@
                                               <tr>
                                                 <td colspan="5" class="text-end">Booking Delivery Subtotal:</td>
                                                 <td class="text-end fw-bold">
-                                                  ৳{{ booking.totalAccruedAmount | number: "1.2-2" }}
+                                                  ৳{{ getBookingDeliveriesTotal(booking) | number: "1.2-2" }}
                                                 </td>
                                                 <td class="text-end fw-bold text-success">
-                                                  ৳{{ booking.totalPaid | number: "1.2-2" }}
+                                                  ৳{{ getBookingDeliveriesPaid(booking) | number: "1.2-2" }}
                                                 </td>
-                                                <td class="text-end fw-bold text-danger">
-                                                  ৳{{ booking.totalDue | number: "1.2-2" }}
+                                                <td class="text-end fw-bold" [class.text-danger]="getBookingDeliveriesDue(booking) > 0" [class.text-success]="getBookingDeliveriesDue(booking) <= 0">
+                                                  ৳{{ getBookingDeliveriesDue(booking) | number: "1.2-2" }}
                                                 </td>
                                               </tr>
                                             </tfoot>

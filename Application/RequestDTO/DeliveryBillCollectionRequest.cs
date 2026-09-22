@@ -9,5 +9,8 @@ public record DeliveryBillCollectionRequest(
     string PaymentMethod,
     string? PaymentReference,
     string? Note,
-    int? BankId = null
+    int? BankId = null,
+    int? CustomerId = null,
+    Guid? BookingId = null,
+    decimal AdvanceAmount = 0
 );

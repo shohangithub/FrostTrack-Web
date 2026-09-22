@@ -537,33 +537,39 @@ public class BookingService : IBookingService
             .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted)
             .ToListAsync(cancellationToken);
 
+        var customerIds = bookings.Select(b => b.CustomerId).Distinct().ToList();
+
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
-                        && t.BookingId.HasValue
-                        && bookingIds.Contains(t.BookingId.Value)
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId.HasValue && customerIds.Contains(t.CustomerId.Value)))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .Select(t => new
             {
-                BookingId = t.BookingId!.Value,
+                t.BookingId,
+                t.CustomerId,
                 t.Amount,
                 t.TransactionDate
             })
             .ToListAsync(cancellationToken);
 
         var paymentsByBooking = payments
-            .GroupBy(x => x.BookingId)
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
-        var deliveryAccruedByBooking = deliveries
+        var unassignedPaymentsByCustomer = payments
+            .Where(x => !x.BookingId.HasValue && x.CustomerId.HasValue)
+            .GroupBy(x => x.CustomerId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+        var deliveriesByBooking = deliveries
             .GroupBy(d => d.BookingId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m))
-            );
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         var customerGroups = bookings.GroupBy(b => b.CustomerId);
         var summaries = new List<CustomerDueSummaryResponse>();
@@ -582,12 +588,12 @@ public class BookingService : IBookingService
             foreach (var booking in customerBookings)
             {
                 var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
-                var deliveryCharge = deliveryAccruedByBooking.TryGetValue(booking.Id, out var val) ? val : 0m;
+                var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
                 
-                var (bookingAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedAmount(
+                var (_, _, bookingAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
                     booking, 
                     activeDetails, 
-                    deliveryCharge, 
+                    bDeliveries, 
                     now);
 
                 totalAccrued += bookingAccrued;
@@ -599,15 +605,20 @@ public class BookingService : IBookingService
                 }
             }
 
+            if (unassignedPaymentsByCustomer.TryGetValue(group.Key, out var unassignedPaid))
+            {
+                totalPaid += unassignedPaid;
+            }
+
             var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
 
             var oldestBooking = customerBookings.OrderBy(b => b.BookingDate).First();
             var daysSinceOldestBooking = (now - oldestBooking.BookingDate).Days;
 
-            // Determine last payment date across all bookings of this customer
+            // Determine last payment date across all bookings or customer-level payments of this customer
             var customerBookingIds = customerBookings.Select(b => b.Id).ToHashSet();
             var lastPaymentDate = payments
-                .Where(p => customerBookingIds.Contains(p.BookingId))
+                .Where(p => (p.BookingId.HasValue && customerBookingIds.Contains(p.BookingId.Value)) || (p.CustomerId.HasValue && p.CustomerId.Value == group.Key))
                 .Select(p => (DateTime?)p.TransactionDate)
                 .DefaultIfEmpty(null)
                 .Max();
@@ -676,8 +687,8 @@ public class BookingService : IBookingService
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
-                        && t.BookingId.HasValue
-                        && bookingIds.Contains(t.BookingId.Value)
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId == customerId))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
@@ -685,14 +696,15 @@ public class BookingService : IBookingService
                             )
             .Select(t => new
             {
-                BookingId = t.BookingId!.Value,
+                t.BookingId,
                 t.DeliveryId,
                 t.Amount
             })
             .ToListAsync(cancellationToken);
 
         var paymentsByBooking = payments
-            .GroupBy(x => x.BookingId)
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
         var paymentsByDelivery = payments
@@ -725,7 +737,10 @@ public class BookingService : IBookingService
                 foreach (var delivery in bookingDeliveries)
                 {
                     var labourCharge = delivery.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m;
-                    var deliveryTotal = delivery.ChargeAmount + labourCharge + delivery.AdjustmentValue;
+                    var rentCharge = delivery.DeliveryDetails?.Any() == true
+                        ? delivery.DeliveryDetails.Sum(dd => dd.ChargeAmount)
+                        : Math.Max(0m, delivery.ChargeAmount - labourCharge);
+                    var deliveryTotal = rentCharge + labourCharge + delivery.AdjustmentValue;
                     var paidAmount = paymentsByDelivery.TryGetValue(delivery.Id, out var paid) ? paid : 0m;
 
                     if (paidAmount < deliveryTotal && unallocatedBookingPayment > 0)
@@ -740,7 +755,7 @@ public class BookingService : IBookingService
                         DeliveryId = delivery.Id,
                         DeliveryNumber = delivery.DeliveryNumber,
                         DeliveryDate = delivery.DeliveryDate,
-                        ChargeAmount = delivery.ChargeAmount,
+                        ChargeAmount = rentCharge,
                         LabourCharge = labourCharge,
                         AdjustmentValue = delivery.AdjustmentValue,
                         DiscountAmount = 0,
@@ -767,19 +782,11 @@ public class BookingService : IBookingService
                     : bookingDeliveries.Max(d => (DateTime?)d.DeliveryDate);
             }
 
-            // Compute pending recurring charge (cycles elapsed since last delivery or booking date)
-            decimal pendingRecurringCharge;
-            if (lastDeliveryDate.HasValue)
-            {
-                pendingRecurringCharge = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, lastDeliveryDate.Value, now);
-            }
-            else
-            {
-                var computed = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, booking.BookingDate, now);
-                pendingRecurringCharge = GetInitialBookingAccruedAmount(booking) + computed;
-            }
-
-            var totalAccrued = deliveryCharge + pendingRecurringCharge;
+            var (totalRent, totalLabour, totalAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
+                booking,
+                activeDetails,
+                bookingDeliveries,
+                now);
             var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
             var daysSinceBooking = (now - booking.BookingDate).Days;
 
@@ -796,6 +803,8 @@ public class BookingService : IBookingService
                 BookingDate = booking.BookingDate,
                 ReferenceNumber = booking.ReferenceNumber,
                 BookingLabourCharge = booking.BookingDetails.Sum(bd => bd.LabourCharge),
+                TotalRentAmount = totalRent,
+                TotalLabourAmount = totalLabour,
                 OpeningBalance = 0m,         // per-booking; customer-level set at caller
                 TotalAccruedAmount = totalAccrued,
                 PendingRecurringChargeAmount = pendingRecurringCharge,
@@ -879,38 +888,22 @@ public class BookingService : IBookingService
             .GroupBy(x => x.BookingId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
-        var deliveryAccruedByBooking = deliveries
+        var deliveriesByBooking = deliveries
             .GroupBy(d => d.BookingId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m))
-            );
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         var now = DateTime.UtcNow;
         var bookingItems = new List<BookingOutstandingItem>();
         foreach (var booking in bookings)
         {
             var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
-            decimal accrued;
+            var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
 
-            if (deliveryAccruedByBooking.TryGetValue(booking.Id, out var deliveryCharge))
-            {
-                // Delivered periods: use recorded delivery charges.
-                // Undelivered periods since last delivery: compute dynamically.
-                var lastDeliveryDate = activeDetails.Count > 0
-                    ? activeDetails.Max(d => (DateTime?)d.LastDeliveryDate) ?? booking.BookingDate
-                    : booking.BookingDate;
-
-                var pendingRecurringCharge = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, lastDeliveryDate, now);
-                accrued = deliveryCharge + pendingRecurringCharge;
-            }
-            else
-            {
-                // No deliveries yet: compute full recurring charge from booking date.
-                var computed = RecurringChargeCalculator.PendingRecurringChargeAmount(activeDetails, booking.BookingDate, now);
-                // Before first billing cycle completes, show initial booking charge.
-                accrued = GetInitialBookingAccruedAmount(booking) + computed;
-            }
+            var (_, _, accrued, _) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
+                booking,
+                activeDetails,
+                bDeliveries,
+                now);
 
             var paid = paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m;
 

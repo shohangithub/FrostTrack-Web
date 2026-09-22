@@ -72,7 +72,8 @@ public class BalanceCalculatorService : IBalanceCalculatorService
                 t.TransactionDate < fromUtc &&
                 t.PaymentMethod == PaymentMethods.CASH &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
             .SumAsync(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT ? Math.Abs(t.NetAmount) : -Math.Abs(t.NetAmount), cancellationToken);
 
         // 3. Account for internal cash-to-bank deposits (cash outflow) and bank-to-cash withdrawals (cash inflow)

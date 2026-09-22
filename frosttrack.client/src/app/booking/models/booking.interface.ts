@@ -159,6 +159,8 @@ export interface ICustomerDueDetailResponse {
   bookingDate: string;
   referenceNumber?: string;
   bookingLabourCharge: number;
+  totalRentAmount?: number;
+  totalLabourAmount?: number;
   openingBalance: number;
   totalAccruedAmount: number;
   pendingRecurringChargeAmount: number;

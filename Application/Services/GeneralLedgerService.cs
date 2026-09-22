@@ -48,7 +48,8 @@ public class GeneralLedgerService : IGeneralLedgerService
                 !t.IsArchived &&
                 t.PaymentMethod != PaymentMethods.CREDIT &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
+                t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
             .OrderBy(t => t.CreatedTime)
             .ToListAsync(cancellationToken);
 
