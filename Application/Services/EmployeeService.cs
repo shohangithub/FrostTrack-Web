@@ -201,7 +201,7 @@ public class EmployeeService : IEmployeeService
             var nextNumber = lastEmployee != null ?
                 ExtractNumberFromCode(lastEmployee.EmployeeCode) + 1 : 1;
 
-            return $"EMP-{branchId:D3}-{nextNumber:D6}";
+            return $"EMP-{branchId:D3}-{nextNumber:D3}";
         }
         else
         {
@@ -212,7 +212,7 @@ public class EmployeeService : IEmployeeService
             var nextNumber = lastEmployee != null ?
                 ExtractNumberFromCode(lastEmployee.EmployeeCode) + 1 : 1;
 
-            return $"EMP-{nextNumber:D6}";
+            return $"EMP-{nextNumber:D3}";
         }
     }
 
