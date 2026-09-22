@@ -128,7 +128,11 @@ export class MonthlySalaryReportComponent implements OnInit {
       )
       .subscribe({
         next: (data: ISalaryPaymentList[]) => {
-          this.salaryPayments = data;
+          this.salaryPayments = (data || []).map((p) => ({
+            ...p,
+            basicSalary: Math.abs(p.basicSalary || 0),
+            netAmount: Math.abs(p.netAmount || 0),
+          }));
           this.calculateSummary();
           this.showReport = true;
           this.isLoading = false;
@@ -162,8 +166,8 @@ export class MonthlySalaryReportComponent implements OnInit {
     this.totalEmployees = this.salaryPayments.length;
 
     this.salaryPayments.forEach((payment) => {
-      this.totalBasicSalary += payment.basicSalary;
-      this.totalNetAmount += payment.netAmount;
+      this.totalBasicSalary += Math.abs(payment.basicSalary || 0);
+      this.totalNetAmount += Math.abs(payment.netAmount || 0);
     });
   }
 

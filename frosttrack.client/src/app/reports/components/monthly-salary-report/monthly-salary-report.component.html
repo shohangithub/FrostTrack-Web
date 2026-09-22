@@ -196,13 +196,13 @@
                         <div class="summary-card">
                           <div class="summary-label">মোট মূল বেতন</div>
                           <div class="summary-value">
-                            ৳{{ -1 * totalBasicSalary | number: "1.2-2" }}
+                            ৳{{ totalBasicSalary | number: "1.2-2" }}
                           </div>
                         </div>
                         <div class="summary-card">
                           <div class="summary-label">মোট প্রদত্ত বেতন</div>
                           <div class="summary-value highlight">
-                            ৳{{ -1 * totalNetAmount | number: "1.2-2" }}
+                            ৳{{ totalNetAmount | number: "1.2-2" }}
                           </div>
                         </div>
                       </div>
@@ -253,7 +253,7 @@
                                 </td>
                                 <td>{{ payment.paymentMethod }}</td>
                                 <td class="text-end">
-                                  {{ -1 * payment.netAmount | number: "1.2-2" }}
+                                  {{ payment.netAmount | number: "1.2-2" }}
                                 </td>
                               </tr>
                             }
@@ -265,12 +265,12 @@
                               </td>
                               <!-- <td class="text-end">
                                 <strong>{{
-                                  -1 * totalBasicSalary | number: "1.2-2"
+                                  totalBasicSalary | number: "1.2-2"
                                 }}</strong>
                               </td> -->
                               <td class="text-end">
                                 <strong>{{
-                                  -1 * totalNetAmount | number: "1.2-2"
+                                  totalNetAmount | number: "1.2-2"
                                 }}</strong>
                               </td>
                             </tr>
