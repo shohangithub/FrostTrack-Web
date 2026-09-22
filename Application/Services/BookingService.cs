@@ -714,14 +714,26 @@ public class BookingService : IBookingService
             var deliveryResponses = new List<CustomerDueDeliveryResponse>();
             decimal deliveryCharge = 0m;
             DateTime? lastDeliveryDate = null;
+            var totalPaid = paymentsByBooking.TryGetValue(booking.Id, out var bPaid) ? bPaid : 0m;
 
             if (bookingDeliveries.Any())
             {
+                var explicitDeliveryPaymentsTotal = bookingDeliveries
+                    .Sum(d => paymentsByDelivery.TryGetValue(d.Id, out var dp) ? dp : 0m);
+                var unallocatedBookingPayment = Math.Max(totalPaid - explicitDeliveryPaymentsTotal, 0m);
+
                 foreach (var delivery in bookingDeliveries)
                 {
                     var labourCharge = delivery.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m;
                     var deliveryTotal = delivery.ChargeAmount + labourCharge + delivery.AdjustmentValue;
                     var paidAmount = paymentsByDelivery.TryGetValue(delivery.Id, out var paid) ? paid : 0m;
+
+                    if (paidAmount < deliveryTotal && unallocatedBookingPayment > 0)
+                    {
+                        var additionalAlloc = Math.Min(deliveryTotal - paidAmount, unallocatedBookingPayment);
+                        paidAmount += additionalAlloc;
+                        unallocatedBookingPayment -= additionalAlloc;
+                    }
 
                     deliveryResponses.Add(new CustomerDueDeliveryResponse
                     {
@@ -768,7 +780,6 @@ public class BookingService : IBookingService
             }
 
             var totalAccrued = deliveryCharge + pendingRecurringCharge;
-            var totalPaid = paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m;
             var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
             var daysSinceBooking = (now - booking.BookingDate).Days;
 

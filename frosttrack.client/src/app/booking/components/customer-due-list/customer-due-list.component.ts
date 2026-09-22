@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-customer-due-list',
   templateUrl: './customer-due-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./customer-due-list.component.scss'],
   standalone: true,
   imports: [DatePipe, DecimalPipe, CommonModule, FormsModule],
 })
@@ -183,6 +183,32 @@ export class CustomerDueListComponent implements OnInit {
 
   printCustomerDue(customerId: number) {
     this.router.navigate(['/booking/customer-due-print', customerId]);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  getInitials(name: string): string {
+    if (!name) return 'CU';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, Math.min(name.length, 2)).toUpperCase();
+  }
+
+  getBookingStorageCharge(booking: ICustomerDueDetailResponse): number {
+    const labour = booking.bookingLabourCharge || 0;
+    return Math.max(booking.totalAccruedAmount - labour, 0);
+  }
+
+  isBookingSettled(booking: ICustomerDueDetailResponse): boolean {
+    return (booking.totalDue || 0) <= 0;
+  }
+
+  getDeliveredProductsSummary(delivery: any): string {
+    if (!delivery || !delivery.deliveryDetails || delivery.deliveryDetails.length === 0) return 'Products Delivered';
+    return delivery.deliveryDetails
+      .map((d: any) => `${d.productName || 'Product'} (${d.deliveryQuantity} ${d.deliveryUnitName || 'Unit'})`)
+      .join(', ');
   }
 
   // ── Summary stats ──────────────────────────────────────────────────────────
