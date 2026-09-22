@@ -158,10 +158,6 @@ export class DeliveryComponent implements OnInit {
         next: (booking) => {
           this.bookingData = booking;
           this.populateDeliveryDetails(booking);
-
-          // Load full customer due so operators can collect old dues + current charge.
-          this.loadCustomerOutstanding(booking.customerId);
-
           this.isLoading = false;
         },
         error: (err) => {
@@ -172,27 +168,7 @@ export class DeliveryComponent implements OnInit {
   }
 
   loadCustomerOutstanding(customerId: number) {
-    this.outstandingLoading = true;
-    this.customerOutstanding = null;
-
-    this.bookingService.getCustomerOutstanding(customerId).subscribe({
-      next: (outstanding) => {
-        this.customerOutstanding = outstanding;
-        this.deliveryForm.patchValue(
-          { totalPreviousPayments: outstanding.totalDue },
-          { emitEvent: false },
-        );
-        this.calculateTotalCharge();
-        this.outstandingLoading = false;
-      },
-      error: () => {
-        this.outstandingLoading = false;
-        this.deliveryForm.patchValue(
-          { totalPreviousPayments: 0 },
-          { emitEvent: false },
-        );
-      },
-    });
+    // No longer used: delivery form focuses strictly on this delivery's charges
   }
 
   populateDeliveryDetails(booking: IBookingForDeliveryResponse) {
@@ -393,16 +369,6 @@ export class DeliveryComponent implements OnInit {
       { chargeAmount: grandTotal },
       { emitEvent: false },
     );
-
-    // Suggest collection amount = previous customer due + this delivery charge.
-    if (this.deliveryForm.get('createTransaction')?.value) {
-      const previousDue = this.customerOutstanding?.totalDue ?? 0;
-      const receivableAmount = grandTotal + previousDue - total;
-      this.deliveryForm.patchValue(
-        { transactionAmount: receivableAmount > 0 ? receivableAmount : 0 },
-        { emitEvent: false },
-      );
-    }
   }
 
   recalculateAllCharges() {
@@ -593,24 +559,104 @@ export class DeliveryComponent implements OnInit {
         }
       }
     }
-    // If all remaining quantities will be zero and no payment, show confirmation
-    const formData = this.deliveryForm.value;
-    const isShowConfirm =
-      allRemainingWillBeZero &&
-      !this.deliveryForm.get('createTransaction')?.value;
 
-    if (isShowConfirm) {
+    const txAmount = Number(this.deliveryForm.get('transactionAmount')?.value) || 0;
+    const chargeAmount = Number(this.deliveryForm.get('chargeAmount')?.value) || 0;
+
+    if (txAmount < 0) {
+      this.toastr.error('Collection amount cannot be negative');
+      return;
+    }
+
+    if (txAmount > chargeAmount + 0.01) {
+      this.toastr.error(
+        `Collection amount (৳${txAmount.toFixed(2)}) cannot exceed delivery total (৳${chargeAmount.toFixed(2)})`,
+      );
+      return;
+    }
+
+    const formData = this.deliveryForm.value;
+
+    // If amount is not set (<= 0) or less than total charge, show confirmation
+    if (txAmount < chargeAmount - 0.01) {
+      let title = '';
+      let confirmHtml = '';
+
+      if (txAmount <= 0) {
+        title = 'Confirm Unpaid Delivery';
+        confirmHtml = `
+          <div class="mt-2 text-start">
+            <div class="p-3 rounded-3 bg-light border mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <span class="text-muted small">Total Delivery Bill</span>
+                <span class="fw-bold text-dark fs-6">৳${chargeAmount.toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <span class="text-muted small">Collected Amount</span>
+                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">৳0.00 (None)</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-danger fw-semibold small">Remaining Customer Due</span>
+                <span class="fw-bold text-danger fs-6">৳${chargeAmount.toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="alert alert-warning py-2 px-3 small border-0 rounded-2 mb-0 d-flex align-items-start">
+              <i class="fas fa-exclamation-triangle text-warning me-2 mt-1 fs-6"></i>
+              <span>No payment is being collected now. The entire <strong>৳${chargeAmount.toFixed(2)}</strong> will be recorded as outstanding customer due.</span>
+            </div>
+            <p class="text-center text-muted small mt-3 mb-0">Are you sure you want to complete this delivery without collecting payment?</p>
+          </div>
+        `;
+      } else {
+        const remainingDue = chargeAmount - txAmount;
+        title = 'Confirm Partial Payment';
+        confirmHtml = `
+          <div class="mt-2 text-start">
+            <div class="p-3 rounded-3 bg-light border mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <span class="text-muted small">Total Delivery Bill</span>
+                <span class="fw-bold text-dark fs-6">৳${chargeAmount.toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <span class="text-muted small">Collecting Now</span>
+                <span class="fw-bold text-success fs-6">৳${txAmount.toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-danger fw-semibold small">Remaining Customer Due</span>
+                <span class="fw-bold text-danger fs-6">৳${remainingDue.toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="alert alert-info py-2 px-3 small border-0 rounded-2 mb-0 d-flex align-items-start">
+              <i class="fas fa-info-circle text-info me-2 mt-1 fs-6"></i>
+              <span>Partial payment recorded. The remaining <strong>৳${remainingDue.toFixed(2)}</strong> will remain unpaid on the customer's balance.</span>
+            </div>
+            <p class="text-center text-muted small mt-3 mb-0">Are you sure you want to proceed with this partial payment?</p>
+          </div>
+        `;
+      }
+
       Swal.fire({
-        title: 'Confirmation',
-        text: 'This delivery will complete all remaining quantities without collecting payment. Are you sure?',
+        title: title,
+        html: confirmHtml,
+        icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: SwalConfirm.confirmButtonColor,
-        cancelButtonColor: SwalConfirm.cancelButtonColor,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'No',
+        buttonsStyling: false,
+        width: '460px',
+        customClass: {
+          popup: 'rounded-4 shadow-lg p-3',
+          title: 'fs-5 fw-bold text-dark pt-2 pb-0',
+          htmlContainer: 'p-0 m-0',
+          actions: 'd-flex justify-content-center gap-2 mt-3 mb-2',
+          confirmButton: 'btn btn-primary px-4 py-2 fw-semibold rounded-2 shadow-sm',
+          cancelButton: 'btn btn-light border px-4 py-2 fw-semibold rounded-2 shadow-sm text-secondary',
+        },
+        confirmButtonText: 'Yes, Proceed',
+        cancelButtonText: 'No, Cancel',
       }).then((result) => {
         if (result.value) {
           this.submitDelivery(formData);
+        } else {
+          this.shouldAutoPrint = false;
         }
       });
     } else {
@@ -620,6 +666,9 @@ export class DeliveryComponent implements OnInit {
 
   submitDelivery(formData: any) {
     this.isSubmitting = true;
+    const txAmount = Number(formData.transactionAmount) || 0;
+    const hasPayment = txAmount > 0;
+
     // Prepare payload (filter out zero quantity items)
     const payload: IDeliveryRequest = {
       deliveryNumber: formData.deliveryNumber,
@@ -640,16 +689,10 @@ export class DeliveryComponent implements OnInit {
           labourCharge: d.labourCharge || 0,
           adjustmentValue: 0,
         })),
-      createTransaction: formData.createTransaction,
-      transactionAmount: formData.createTransaction
-        ? formData.transactionAmount
-        : undefined,
-      paymentMethod: formData.createTransaction
-        ? formData.paymentMethod
-        : undefined,
-      transactionNotes: formData.createTransaction
-        ? formData.transactionNotes
-        : undefined,
+      createTransaction: hasPayment,
+      transactionAmount: hasPayment ? txAmount : undefined,
+      paymentMethod: hasPayment ? formData.paymentMethod || 'CASH' : undefined,
+      transactionNotes: formData.transactionNotes || undefined,
     };
 
     const id = this.route.snapshot.paramMap.get('id');

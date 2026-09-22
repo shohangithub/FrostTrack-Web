@@ -119,6 +119,10 @@ export interface IDeliveryInfoResponse {
   deliveryDate: string;
   chargeAmount: number;
   adjustmentValue: number;
+  paymentStatus?: string;
+  paidRentAmount?: number;
+  paidLabourAmount?: number;
+  totalPaidAmount?: number;
   deliveryDetails: IDeliveryDetailInfoResponse[];
 }
 

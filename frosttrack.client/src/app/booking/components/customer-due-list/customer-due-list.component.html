@@ -380,6 +380,11 @@
                                         <div class="box-amount">
                                           ৳{{ getBookingLabourCharge(booking) | number: "1.2-2" }}
                                         </div>
+                                        @if (getBookingDeliveryLabour(booking) > 0) {
+                                          <div class="text-muted" style="font-size: 0.72rem; margin-top: 2px;">
+                                            (Inward: ৳{{ (booking.bookingLabourCharge || 0) | number: "1.2-2" }} + Del: ৳{{ getBookingDeliveryLabour(booking) | number: "1.2-2" }})
+                                          </div>
+                                        }
                                       </div>
                                       <div class="finance-box">
                                         <div class="box-title">Total Billed (মোট বিল)</div>

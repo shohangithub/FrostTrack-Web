@@ -40,6 +40,10 @@ public class DeliveryInfoResponse
     public DateTime DeliveryDate { get; set; }
     public decimal ChargeAmount { get; set; }
     public decimal AdjustmentValue { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
+    public decimal PaidRentAmount { get; set; }
+    public decimal PaidLabourAmount { get; set; }
+    public decimal TotalPaidAmount { get; set; }
     public List<DeliveryDetailInfoResponse> DeliveryDetails { get; set; } = [];
 }
 

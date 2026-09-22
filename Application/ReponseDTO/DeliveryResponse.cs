@@ -15,6 +15,8 @@ public class DeliveryResponse
     public decimal ChargeAmount { get; set; }
     public decimal LabourCharge { get; set; }
     public decimal AdjustmentValue { get; set; }
+    public decimal PaidAmount { get; set; }
+    public decimal DueAmount { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
     public Guid? TransactionId { get; set; }

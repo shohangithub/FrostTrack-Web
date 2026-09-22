@@ -46,6 +46,7 @@ export interface IDeliveryResponse {
   adjustmentValue: number;
   discountAmount: number;
   paidAmount: number;
+  dueAmount?: number;
   paymentStatus?: string;
   paymentDate?: Date;
   transactionId?: string;

@@ -1,476 +1,422 @@
 <section class="main-content">
   <div class="section-body">
     <div class="row">
-      <form
-        class="register-form"
-        [formGroup]="billCollectionForm"
-        (ngSubmit)="onSubmit()"
-      >
+      <form class="register-form" [formGroup]="billCollectionForm" (ngSubmit)="onSubmit()">
         <div class="container mt-2">
           <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+
+              <!-- Collection Information Card -->
               <div class="card mb-3">
                 <span class="card-label">
-                  <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
                   @if (searchMode === 'advance') {
-                    Customer Advance Collection (অগ্রিম বিল আদায়)
+                  Customer Advance Collection
                   } @else {
-                    Delivery Bill Collection (ডেলিভারি বিল আদায়)
+                  Delivery Bill Collection
                   }
                 </span>
                 <div class="card-body">
                   <!-- Mode Selection Toggle -->
-                  <div class="row mt-2 mb-3">
-                    <div class="col-12">
-                      <div class="btn-group btn-group-sm" role="group">
-                        <button
-                          type="button"
-                          class="btn"
-                          [ngClass]="
-                            searchMode === 'customer'
-                              ? 'btn-primary'
-                              : 'btn-outline-primary'
-                          "
-                          (click)="switchSearchMode('customer')"
-                          [disabled]="isEditing"
-                        >
-                          <i class="fas fa-user me-1"></i> By Customer (কাস্টমার দ্বারা)
-                        </button>
-                        <button
-                          type="button"
-                          class="btn"
-                          [ngClass]="
-                            searchMode === 'code'
-                              ? 'btn-primary'
-                              : 'btn-outline-primary'
-                          "
-                          (click)="switchSearchMode('code')"
-                          [disabled]="isEditing"
-                        >
-                          <i class="fas fa-barcode me-1"></i> By Delivery Code (ডেলিভারি কোড)
-                        </button>
-                        <button
-                          type="button"
-                          class="btn"
-                          [ngClass]="
-                            searchMode === 'advance'
-                              ? 'btn-success'
-                              : 'btn-outline-success'
-                          "
-                          (click)="switchSearchMode('advance')"
-                          [disabled]="isEditing"
-                        >
-                          <i class="fas fa-hand-holding-usd me-1"></i> Direct Advance (সরাসরি অগ্রিম গ্রহণ)
-                        </button>
-                      </div>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn" [ngClass]="
+                          searchMode === 'customer'
+                            ? 'btn-primary'
+                            : 'btn-outline-primary'
+                        " (click)="switchSearchMode('customer')" [disabled]="isEditing">
+                        <i class="fas fa-user me-1"></i> By Customer
+                      </button>
+                      <button type="button" class="btn" [ngClass]="
+                          searchMode === 'code'
+                            ? 'btn-primary'
+                            : 'btn-outline-primary'
+                        " (click)="switchSearchMode('code')" [disabled]="isEditing">
+                        <i class="fas fa-barcode me-1"></i> By Delivery Code
+                      </button>
+                      <!-- <button
+                        type="button"
+                        class="btn"
+                        [ngClass]="
+                          searchMode === 'advance'
+                            ? 'btn-success'
+                            : 'btn-outline-success'
+                        "
+                        (click)="switchSearchMode('advance')"
+                        [disabled]="isEditing"
+                      >
+                        <i class="fas fa-hand-holding-usd me-1"></i> Direct Advance
+                      </button> -->
                     </div>
-                  </div>
 
-                  <!-- Customer / Delivery Selector Row -->
-                  <div class="row mb-3">
-                    @if (searchMode === 'customer' || searchMode === 'advance') {
-                      <div class="col-lg-6 col-md-6 col-sm-12">
-                        <div class="form-group row">
-                          <label for="customerId" class="col-sm-3 col-form-label">
-                            Customer: <span class="text-danger">*</span>
-                          </label>
-                          <div class="col-sm-9">
-                            <ng-select
-                              id="customerId"
-                              formControlName="customerId"
-                              [items]="customers"
-                              bindLabel="customerName"
-                              bindValue="id"
-                              [loading]="customerLoading"
-                              [clearable]="true"
-                              [disabled]="isEditing"
-                              placeholder="Select customer..."
-                              class="ng-select-sm"
-                            >
-                            </ng-select>
-                          </div>
-                        </div>
-                      </div>
-
-                      @if (searchMode === 'advance') {
-                        <div class="col-lg-6 col-md-6 col-sm-12">
-                          <div class="form-group row">
-                            <label for="bookingId" class="col-sm-3 col-form-label">
-                              Booking: <small class="text-muted">(Opt)</small>
-                            </label>
-                            <div class="col-sm-9">
-                              <ng-select
-                                id="bookingId"
-                                formControlName="bookingId"
-                                [items]="customerBookings"
-                                bindLabel="bookingNumber"
-                                bindValue="bookingId"
-                                [loading]="customerBookingsLoading"
-                                [clearable]="true"
-                                placeholder="Select booking (optional)"
-                                class="ng-select-sm"
-                              >
-                                <ng-template ng-option-tmp let-item="item">
-                                  <div class="d-flex justify-content-between align-items-center">
-                                    <span><strong>{{ item.bookingNumber }}</strong> ({{ item.bookingDate | date: 'dd-MMM-yyyy' }})</span>
-                                    @if (item.totalDue > 0) {
-                                      <span class="badge bg-danger">Due: ৳{{ item.totalDue | number: '1.2-2' }}</span>
-                                    }
-                                  </div>
-                                </ng-template>
-                              </ng-select>
-                            </div>
-                          </div>
-                        </div>
-                      }
-                    }
-
-                    @if (searchMode === 'code') {
-                      <div class="col-lg-8 col-md-8 col-sm-12">
-                        <div class="form-group row">
-                          <label class="col-sm-3 col-form-label">Delivery Code: <span class="text-danger">*</span></label>
-                          <div class="col-sm-9">
-                            <ng-select
-                              id="deliveryCode"
-                              [(ngModel)]="selectedDeliveryCode"
-                              [ngModelOptions]="{ standalone: true }"
-                              [items]="deliveryCodes"
-                              bindLabel="text"
-                              bindValue="value"
-                              [loading]="deliveryCodesLoading"
-                              [clearable]="true"
-                              [disabled]="isEditing"
-                              (change)="onDeliveryCodeSelect(selectedDeliveryCode || '')"
-                              placeholder="Select delivery code..."
-                              class="ng-select-sm"
-                            >
-                            </ng-select>
-                          </div>
-                        </div>
-                      </div>
+                    @if (searchMode === 'customer' && selectedCount > 0) {
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+                      {{ selectedCount }} of {{ unpaidDeliveries.length }} deliveries selected
+                    </span>
                     }
                   </div>
 
-                  <!-- Transaction Info Row -->
+                  <!-- Two-Column Symmetrical Form Grid (Matching Booking Layout) -->
                   <div class="row">
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <!-- Left Column -->
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                      <!-- Customer (in customer / advance mode) or Delivery Code (in code mode) -->
+                      @if (searchMode === 'customer' || searchMode === 'advance') {
                       <div class="form-group row">
-                        <label for="transactionCode" class="col-sm-4 col-form-label">Tr. Code:</label>
+                        <label for="customerId" class="col-sm-4 col-form-label">
+                          Customer:
+                        </label>
+                        <div class="col-sm-8">
+                          <ng-select id="customerId" formControlName="customerId" [items]="customers"
+                            bindLabel="customerName" bindValue="id" [loading]="customerLoading" [clearable]="true"
+                            [disabled]="isEditing" placeholder="Select customer..." class="ng-select-sm">
+                          </ng-select>
+                        </div>
+                      </div>
+                      } @else {
+                      <div class="form-group row">
+                        <label for="deliveryCode" class="col-sm-4 col-form-label">
+                          Delivery Code:
+                        </label>
+                        <div class="col-sm-8">
+                          <ng-select id="deliveryCode" [(ngModel)]="selectedDeliveryCode"
+                            [ngModelOptions]="{ standalone: true }" [items]="deliveryCodes" bindLabel="text"
+                            bindValue="value" [loading]="deliveryCodesLoading" [clearable]="true" [disabled]="isEditing"
+                            (change)="onDeliveryCodeSelect(selectedDeliveryCode || '')"
+                            placeholder="Select delivery code..." class="ng-select-sm">
+                          </ng-select>
+                        </div>
+                      </div>
+                      }
+
+                      <!-- Transaction Code -->
+                      <div class="form-group row">
+                        <label for="transactionCode" class="col-sm-4 col-form-label">
+                          Tr. Code:
+                        </label>
                         <div class="col-sm-8">
                           <div class="input-group">
-                            <input
-                              type="text"
-                              class="form-control form-control-sm"
-                              id="transactionCode"
-                              formControlName="transactionCode"
-                              readonly
-                            />
-                            <div
-                              class="input-group-append"
-                              style="cursor: pointer"
-                              (click)="generateTransactionCode()"
-                              [class.disabled]="isEditing"
-                            >
+                            <input type="text" class="form-control form-control-sm" id="transactionCode"
+                              formControlName="transactionCode" readonly />
+                            <div class="input-group-append" style="cursor: pointer" (click)="generateTransactionCode()"
+                              [class.disabled]="isEditing">
                               <span class="input-group-text input-group-text-append">
-                                <i
-                                  class="fas"
-                                  [ngClass]="
+                                <i class="fas" [ngClass]="
                                     isGeneratingCode
                                       ? 'fa-spinner fa-spin'
                                       : 'fa-sync'
-                                  "
-                                ></i>
+                                  "></i>
                               </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <!-- Payment Method -->
                       <div class="form-group row">
-                        <label for="transactionDate" class="col-sm-4 col-form-label">Date: <span class="text-danger">*</span></label>
+                        <label for="paymentMethod" class="col-sm-4 col-form-label">
+                          Payment:
+                        </label>
                         <div class="col-sm-8">
-                          <input
-                            type="date"
-                            class="form-control form-control-sm"
-                            id="transactionDate"
-                            formControlName="transactionDate"
-                          />
+                          <ng-select id="paymentMethod" formControlName="paymentMethod" [items]="paymentMethods"
+                            bindLabel="label" bindValue="value" [clearable]="false" class="ng-select-sm">
+                          </ng-select>
                         </div>
                       </div>
+
+                      <!-- Bank (Only when Non-Cash) -->
+                      @if (billCollectionForm.get('paymentMethod')?.value !== 'CASH') {
+                      <div class="form-group row">
+                        <label for="bankId" class="col-sm-4 col-form-label">
+                          Bank:
+                        </label>
+                        <div class="col-sm-8">
+                          <ng-select id="bankId" formControlName="bankId" [items]="banks" bindLabel="text"
+                            bindValue="value" [clearable]="true" placeholder="Select deposit bank" class="ng-select-sm"
+                            [class.is-invalid]="
+                                billCollectionForm.get('bankId')?.invalid &&
+                                billCollectionForm.get('bankId')?.touched
+                              ">
+                          </ng-select>
+                          @if (
+                          billCollectionForm.get('bankId')?.invalid &&
+                          billCollectionForm.get('bankId')?.touched
+                          ) {
+                          <small class="text-danger">Bank is required</small>
+                          }
+                        </div>
+                      </div>
+                      }
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <!-- Right Column -->
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                      <!-- Row 1 Right: Booking (if advance) or Date -->
+                      @if (searchMode === 'advance') {
                       <div class="form-group row">
-                        <label for="amount" class="col-sm-4 col-form-label text-primary fw-bold">
-                          Amount: <span class="text-danger">*</span>
+                        <label for="bookingId" class="col-sm-4 col-form-label">
+                          Booking:
+                        </label>
+                        <div class="col-sm-8">
+                          <ng-select id="bookingId" formControlName="bookingId" [items]="customerBookings"
+                            bindLabel="bookingNumber" bindValue="bookingId" [loading]="customerBookingsLoading"
+                            [clearable]="true" placeholder="Select booking (optional)" class="ng-select-sm">
+                            <ng-template ng-option-tmp let-item="item">
+                              <div class="d-flex justify-content-between align-items-center">
+                                <span><strong>{{ item.bookingNumber }}</strong> ({{ item.bookingDate | date:
+                                  'dd-MMM-yyyy' }})</span>
+                                @if (item.totalDue > 0) {
+                                <span class="badge bg-danger">Due: ৳{{ item.totalDue | number: '1.2-2' }}</span>
+                                }
+                              </div>
+                            </ng-template>
+                          </ng-select>
+                        </div>
+                      </div>
+                      } @else {
+                      <div class="form-group row">
+                        <label for="transactionDate" class="col-sm-4 col-form-label">
+                          Date:
+                        </label>
+                        <div class="col-sm-8">
+                          <input type="date" class="form-control form-control-sm" id="transactionDate"
+                            formControlName="transactionDate" />
+                        </div>
+                      </div>
+                      }
+
+                      <!-- Row 2 Right: Date (if advance) or Amount -->
+                      @if (searchMode === 'advance') {
+                      <div class="form-group row">
+                        <label for="transactionDate" class="col-sm-4 col-form-label">
+                          Date:
+                        </label>
+                        <div class="col-sm-8">
+                          <input type="date" class="form-control form-control-sm" id="transactionDate"
+                            formControlName="transactionDate" />
+                        </div>
+                      </div>
+                      } @else {
+                      <div class="form-group row">
+                        <label for="amount" class="col-sm-4 col-form-label">
+                          Amount:
                         </label>
                         <div class="col-sm-8">
                           <div class="input-group input-group-sm">
                             <span class="input-group-text">৳</span>
-                            <input
-                              type="number"
-                              class="form-control form-control-sm text-end fw-bold"
-                              id="amount"
-                              formControlName="amount"
-                              placeholder="0.00"
-                              min="0.01"
-                              step="any"
-                            />
+                            <input type="number" class="form-control form-control-sm text-end fw-bold" id="amount"
+                              formControlName="amount" placeholder="0.00" min="0.01" step="any" />
                           </div>
                         </div>
                       </div>
-                    </div>
+                      }
 
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      <!-- Row 3 Right: Amount (if advance) or Ref / Cheque -->
+                      @if (searchMode === 'advance') {
                       <div class="form-group row">
-                        <label for="paymentMethod" class="col-sm-4 col-form-label">Payment: <span class="text-danger">*</span></label>
+                        <label for="amount" class="col-sm-4 col-form-label">
+                          Amount:
+                        </label>
                         <div class="col-sm-8">
-                          <ng-select
-                            id="paymentMethod"
-                            formControlName="paymentMethod"
-                            [items]="paymentMethods"
-                            bindLabel="label"
-                            bindValue="value"
-                            [clearable]="false"
-                            class="ng-select-sm"
-                          >
-                          </ng-select>
-                        </div>
-                      </div>
-                    </div>
-
-                    @if (billCollectionForm.get('paymentMethod')?.value !== 'CASH') {
-                      <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                        <div class="form-group row">
-                          <label for="bankId" class="col-sm-4 col-form-label">Bank: <span class="text-danger">*</span></label>
-                          <div class="col-sm-8">
-                            <ng-select
-                              id="bankId"
-                              formControlName="bankId"
-                              [items]="banks"
-                              bindLabel="text"
-                              bindValue="value"
-                              [clearable]="true"
-                              placeholder="Select deposit bank"
-                              class="ng-select-sm"
-                              [class.is-invalid]="
-                                billCollectionForm.get('bankId')?.invalid &&
-                                billCollectionForm.get('bankId')?.touched
-                              "
-                            >
-                            </ng-select>
-                            @if (
-                              billCollectionForm.get('bankId')?.invalid &&
-                              billCollectionForm.get('bankId')?.touched
-                            ) {
-                              <small class="text-danger">Bank is required</small>
-                            }
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">৳</span>
+                            <input type="number" class="form-control form-control-sm text-end fw-bold" id="amount"
+                              formControlName="amount" placeholder="0.00" min="0.01" step="any" />
                           </div>
                         </div>
                       </div>
-                    }
-
-                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                      } @else {
                       <div class="form-group row">
-                        <label for="paymentReference" class="col-sm-4 col-form-label">Ref / Cheque:</label>
+                        <label for="paymentReference" class="col-sm-4 col-form-label">
+                          Ref / Cheque:
+                        </label>
                         <div class="col-sm-8">
-                          <input
-                            type="text"
-                            class="form-control form-control-sm"
-                            id="paymentReference"
-                            formControlName="paymentReference"
-                            placeholder="e.g. Cheque # or Trx ID"
-                          />
+                          <input type="text" class="form-control form-control-sm" id="paymentReference"
+                            formControlName="paymentReference" placeholder="e.g. Cheque # or Trx ID" />
                         </div>
                       </div>
+                      }
+
+                      <!-- Row 4 Right: Ref / Cheque (if advance) -->
+                      @if (searchMode === 'advance') {
+                      <div class="form-group row">
+                        <label for="paymentReference" class="col-sm-4 col-form-label">
+                          Ref / Cheque:
+                        </label>
+                        <div class="col-sm-8">
+                          <input type="text" class="form-control form-control-sm" id="paymentReference"
+                            formControlName="paymentReference" placeholder="e.g. Cheque # or Trx ID" />
+                        </div>
+                      </div>
+                      }
                     </div>
                   </div>
 
                   <!-- Financial Calculation Strips -->
                   @if (searchMode === 'advance') {
-                    <div class="alert alert-info border d-flex align-items-center py-2 px-3 mt-2 mb-0">
-                      <i class="fas fa-hand-holding-usd fa-2x me-3 text-info"></i>
+                  <div class="alert alert-info border d-flex align-items-center py-2 px-3 mt-3 mb-0">
+                    <i class="fas fa-hand-holding-usd fa-2x me-3 text-info"></i>
+                    <div>
+                      <strong>Direct Advance Mode:</strong>
+                      <span>
+                        Entering ৳ <strong>{{ formAmount | number: '1.2-2' }}</strong> as an advance deposit will
+                        immediately be credited to the customer and reduce their outstanding dues in customer due
+                        reports.
+                      </span>
+                    </div>
+                  </div>
+                  } @else if (selectedDeliveries.size > 0) {
+                  <div class="card bg-light border p-2 mt-3 mb-0">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                       <div>
-                        <strong>Direct Advance Mode (অগ্রিম জমা):</strong>
-                        <span>
-                          Entering ৳ <strong>{{ formAmount | number: '1.2-2' }}</strong> as an advance deposit will immediately be credited to the customer and reduce their outstanding dues in customer due reports.
+                        <span class="text-muted me-2">Selected Deliveries Total:</span>
+                        <strong class="fs-6 text-dark">৳ {{ selectedTotal | number: '1.2-2' }}</strong>
+                        <span class="text-muted ms-2 small">
+                          (Storage Charge: ৳ {{ selectedCharges | number: '1.2-2' }} + Labour: ৳ {{ selectedLabour |
+                          number: '1.2-2' }})
                         </span>
                       </div>
-                    </div>
-                  } @else if (selectedDeliveries.size > 0) {
-                    <div class="card bg-light border p-2 mt-2 mb-0">
-                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <div>
-                          <span class="text-muted me-2">Selected Deliveries Total:</span>
-                          <strong class="fs-6 text-dark">৳ {{ selectedTotal | number: '1.2-2' }}</strong>
-                          <span class="text-muted ms-2 small">
-                            (Storage Charge: ৳ {{ selectedCharges | number: '1.2-2' }} + Labour: ৳ {{ selectedLabour | number: '1.2-2' }})
-                          </span>
-                        </div>
 
-                        <div>
-                          @if (formAmount > selectedTotal) {
-                            <span class="badge bg-success py-2 px-3 fs-6">
-                              <i class="fas fa-arrow-circle-up me-1"></i>
-                              Advance Surplus: ৳ {{ (formAmount - selectedTotal) | number: '1.2-2' }} (will be credited as customer advance)
-                            </span>
-                          } @else if (formAmount < selectedTotal && formAmount > 0) {
-                            <span class="badge bg-danger py-2 px-3 fs-6">
-                              <i class="fas fa-exclamation-triangle me-1"></i>
-                              Amount is less than total bill (৳ {{ selectedTotal | number: '1.2-2' }})
-                            </span>
+                      <div>
+                        @if (formAmount > selectedTotal) {
+                        <span class="badge bg-success py-2 px-3 fs-6">
+                          <i class="fas fa-arrow-circle-up me-1"></i>
+                          Advance Surplus: ৳ {{ (formAmount - selectedTotal) | number: '1.2-2' }} (will be credited as
+                          customer advance)
+                        </span>
+                        } @else if (formAmount < selectedTotal && formAmount> 0) {
+                          <span class="badge bg-danger py-2 px-3 fs-6">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Amount is less than total bill (৳ {{ selectedTotal | number: '1.2-2' }})
+                          </span>
                           } @else {
-                            <span class="badge bg-primary py-2 px-3 fs-6">
-                              <i class="fas fa-check-circle me-1"></i>
-                              Exact Payment: ৳ {{ formAmount | number: '1.2-2' }}
-                            </span>
+                          <span class="badge bg-primary py-2 px-3 fs-6">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Exact Payment: ৳ {{ formAmount | number: '1.2-2' }}
+                          </span>
                           }
-                        </div>
                       </div>
                     </div>
+                  </div>
                   }
                 </div>
               </div>
 
               <!-- Customer with zero unpaid deliveries alert -->
               @if (
-                searchMode === 'customer' &&
-                billCollectionForm.get('customerId')?.value &&
-                unpaidDeliveries.length === 0 &&
-                !deliveryLoading
+              searchMode === 'customer' &&
+              billCollectionForm.get('customerId')?.value &&
+              unpaidDeliveries.length === 0 &&
+              !deliveryLoading
               ) {
-                <div class="alert alert-warning border d-flex justify-content-between align-items-center py-3 px-3 mb-3">
-                  <div>
-                    <i class="fas fa-info-circle me-2 text-warning fs-5"></i>
-                    <strong>No unpaid deliveries found for this customer.</strong>
-                    <span class="ms-2">All previous deliveries are paid, or no deliveries exist yet.</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-success text-white shadow-sm"
-                    (click)="switchToAdvanceWithCurrentCustomer()"
-                  >
-                    <i class="fas fa-hand-holding-usd me-1"></i> Collect Advance for this Customer
-                  </button>
+              <div class="alert alert-warning border d-flex justify-content-between align-items-center py-3 px-3 mb-3">
+                <div>
+                  <i class="fas fa-info-circle me-2 text-warning fs-5"></i>
+                  <strong>No unpaid deliveries found for this customer.</strong>
+                  <span class="ms-2">All previous deliveries are paid, or no deliveries exist yet.</span>
                 </div>
+                <button type="button" class="btn btn-sm btn-success text-white shadow-sm"
+                  (click)="switchToAdvanceWithCurrentCustomer()">
+                  <i class="fas fa-hand-holding-usd me-1"></i> Collect Advance for this Customer
+                </button>
+              </div>
               }
 
               <!-- Unpaid Deliveries Table (for customer and code modes) -->
               @if (searchMode !== 'advance' && unpaidDeliveries.length > 0) {
-                <div class="card mb-3">
-                  <span class="card-label">
-                    Unpaid Deliveries (বকেয়া ডেলিভারি তালিকা)
-                    <span class="badge bg-info text-white ms-2"
-                      >{{ selectedCount }} selected</span
-                    >
-                  </span>
-                  <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table table-sm table-bordered table-hover">
-                        <thead class="table-light">
-                          <tr>
-                            <th class="text-center" style="width: 50px">
-                              <input
-                                type="checkbox"
-                                [checked]="
+              <div class="card mb-3">
+                <span class="card-label">Unpaid Deliveries</span>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Select deliveries to collect payment</span>
+                    <span class="badge bg-primary text-white">{{ selectedCount }} selected</span>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                      <thead class="table-light">
+                        <tr>
+                          <th class="text-center" style="width: 50px">
+                            <input type="checkbox" [checked]="
                                   selectedCount === unpaidDeliveries.length
-                                "
-                                (change)="toggleSelectAll()"
-                              />
-                            </th>
-                            <th>Delivery Code</th>
-                            <th>Delivery Date</th>
-                            <th>Booking Number</th>
-                            <th>Customer</th>
-                            <th class="text-end">Storage Charge</th>
-                            <th class="text-end">Labour Charge</th>
-                            <th class="text-end">Adjustment</th>
-                            <th class="text-end">Total Bill</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (
-                            delivery of unpaidDeliveries;
-                            track delivery.id
-                          ) {
-                            <tr
-                              [class.table-active]="
+                                " (change)="toggleSelectAll()" />
+                          </th>
+                          <th>Delivery Code</th>
+                          <th>Delivery Date</th>
+                          <th>Booking Number</th>
+                          <th>Customer</th>
+                          <th class="text-end">Storage Charge</th>
+                          <th class="text-end">Labour Charge</th>
+                          <th class="text-end">Adjustment</th>
+                          <th class="text-end">Total Bill</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (
+                        delivery of unpaidDeliveries;
+                        track delivery.id
+                        ) {
+                        <tr [class.table-active]="
                                 isDeliverySelected(delivery.id)
-                              "
-                            >
-                              <td class="text-center">
-                                <input
-                                  type="checkbox"
-                                  [checked]="isDeliverySelected(delivery.id)"
-                                  (change)="
+                              ">
+                          <td class="text-center">
+                            <input type="checkbox" [checked]="isDeliverySelected(delivery.id)" (change)="
                                     toggleDeliverySelection(delivery.id)
-                                  "
-                                />
-                              </td>
-                              <td><strong class="text-primary">{{ delivery.deliveryNumber }}</strong></td>
-                              <td>
-                                {{
-                                  delivery.deliveryDate | date: "dd-MMM-yyyy"
-                                }}
-                              </td>
-                              <td>{{ delivery.bookingNumber }}</td>
-                              <td>{{ delivery.customerName }}</td>
-                              <td class="text-end">
-                                {{ delivery.chargeAmount | number: "1.2-2" }}
-                              </td>
-                              <td class="text-end">
-                                <span class="badge bg-secondary text-white">
-                                  {{ delivery.labourCharge | number: "1.2-2" }}
-                                </span>
-                              </td>
-                              <td class="text-end">
-                                {{ delivery.adjustmentValue | number: "1.2-2" }}
-                              </td>
-                              <td class="text-end">
-                                <strong>{{
-                                  delivery.chargeAmount +
-                                    delivery.labourCharge +
-                                    delivery.adjustmentValue | number: "1.2-2"
-                                }}</strong>
-                              </td>
-                            </tr>
-                          }
-                        </tbody>
-                        <tfoot class="table-light">
-                          <tr>
-                            <td colspan="8" class="text-end">
-                              <strong>Total Selected Bill (মোট বিল):</strong>
-                            </td>
-                            <td class="text-end">
-                              <strong class="text-primary fs-6">{{
-                                selectedTotal | number: "1.2-2"
+                                  " />
+                          </td>
+                          <td><strong class="text-primary">{{ delivery.deliveryNumber }}</strong></td>
+                          <td>
+                            {{
+                            delivery.deliveryDate | date: "dd-MMM-yyyy"
+                            }}
+                          </td>
+                          <td>{{ delivery.bookingNumber }}</td>
+                          <td>{{ delivery.customerName }}</td>
+                          <td class="text-end">
+                            {{ delivery.chargeAmount | number: "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            <span class="badge bg-secondary text-white">
+                              {{ delivery.labourCharge | number: "1.2-2" }}
+                            </span>
+                          </td>
+                          <td class="text-end">
+                            {{ delivery.adjustmentValue | number: "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            <strong>{{
+                              delivery.chargeAmount +
+                              delivery.labourCharge +
+                              delivery.adjustmentValue | number: "1.2-2"
                               }}</strong>
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot class="table-light">
+                        <tr>
+                          <td colspan="8" class="text-end">
+                            <strong>Total Selected Bill (মোট বিল):</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong class="text-primary fs-6">{{
+                              selectedTotal | number: "1.2-2"
+                              }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 </div>
+              </div>
               }
 
               <!-- Note Section -->
               <div class="card mb-3">
+                <span class="card-label">Note</span>
                 <div class="card-body">
                   <div class="row">
                     <div class="col-12">
-                      <div class="form-group mb-0">
-                        <label for="note" class="form-label">Note / মন্তব্য:</label>
-                        <textarea
-                          class="form-control form-control-sm"
-                          id="note"
-                          formControlName="note"
-                          rows="2"
-                          placeholder="Optional notes or remarks..."
-                        ></textarea>
-                      </div>
+                      <textarea class="form-control form-control-sm" id="note" formControlName="note" rows="2"
+                        placeholder="Optional notes or remarks..."></textarea>
                     </div>
                   </div>
                 </div>
@@ -478,60 +424,39 @@
 
               <!-- Action Buttons -->
               <div class="card mb-3">
-                <div class="card-body text-end">
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-secondary me-2"
-                    (click)="cancel()"
-                    [disabled]="isSubmitting"
-                  >
-                    <i class="fas fa-times"></i> Cancel
+                <div class="card-body text-end py-2">
+                  <button type="button" class="btn btn-sm btn-secondary me-2" (click)="cancel()"
+                    [disabled]="isSubmitting">
+                    <i class="fas fa-times me-1"></i> Cancel
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-warning me-2"
-                    (click)="reset()"
-                    [disabled]="isSubmitting || isEditing"
-                  >
-                    <i class="fas fa-redo"></i> Reset
+                  <button type="button" class="btn btn-sm btn-warning me-2 text-white" (click)="reset()"
+                    [disabled]="isSubmitting || isEditing">
+                    <i class="fas fa-redo me-1"></i> Reset
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-info me-2 text-white"
-                    (click)="onSubmit(true)"
-                    [disabled]="isSubmitDisabled"
-                  >
-                    <i
-                      class="fas"
-                      [ngClass]="
+                  <button type="button" class="btn btn-sm btn-info me-2 text-white" (click)="onSubmit(true)"
+                    [disabled]="isSubmitDisabled">
+                    <i class="fas" [ngClass]="
                         isSubmitting && saveAndPrint
                           ? 'fa-spinner fa-spin'
-                          : 'fa-print'
-                      "
-                    ></i>
+                          : 'fa-print me-1'
+                      "></i>
                     {{
-                      isSubmitting && saveAndPrint
-                        ? "Saving..."
-                        : "Save & Print"
+                    isSubmitting && saveAndPrint
+                    ? "Saving..."
+                    : "Save & Print"
                     }}
                   </button>
-                  <button
-                    type="submit"
-                    class="btn btn-sm btn-success"
-                    [disabled]="isSubmitDisabled"
-                  >
-                    <i
-                      class="fas"
-                      [ngClass]="
+                  <button type="submit" class="btn btn-sm btn-success" [disabled]="isSubmitDisabled">
+                    <i class="fas" [ngClass]="
                         isSubmitting && !saveAndPrint
                           ? 'fa-spinner fa-spin'
-                          : 'fa-save'
-                      "
-                    ></i>
+                          : 'fa-save me-1'
+                      "></i>
                     {{ isSubmitting && !saveAndPrint ? "Saving..." : "Save" }}
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
         </div>

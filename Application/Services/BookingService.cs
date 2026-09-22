@@ -480,11 +480,6 @@ public class BookingService : IBookingService
             }).ToList()
         };
 
-        // Get all transactions for this booking
-        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => t.BookingId == id && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
-            .ToListAsync(cancellationToken);
-
         // Get all deliveries for this booking
         var deliveries = await _deliveryRepository.Query()
             .Where(d => d.BookingId == id && d.TenantId == _tenantId)
@@ -496,25 +491,71 @@ public class BookingService : IBookingService
             .OrderBy(d => d.DeliveryDate)
             .ToListAsync(cancellationToken);
 
-        response.Deliveries = deliveries.Select(d => new DeliveryInfoResponse
+        var deliveryIds = deliveries.Select(d => d.Id).ToList();
+
+        // Get all transactions for this booking and its deliveries
+        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted && (
+                t.BookingId == id || 
+                (t.DeliveryId.HasValue && deliveryIds.Contains(t.DeliveryId.Value))
+            ))
+            .ToListAsync(cancellationToken);
+
+        response.Deliveries = deliveries.Select(d =>
         {
-            Id = d.Id,
-            DeliveryNumber = d.DeliveryNumber,
-            DeliveryDate = d.DeliveryDate,
-            ChargeAmount = transactions.FirstOrDefault(t => t.DeliveryId == d.Id)?.Amount ?? 0,
-            AdjustmentValue = d.AdjustmentValue,
-            DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
+            var delTransactions = transactions.Where(t => t.DeliveryId == d.Id).ToList();
+            var totalRent = d.DeliveryDetails.Any() ? d.DeliveryDetails.Sum(dd => dd.ChargeAmount) : d.ChargeAmount;
+            var totalLabour = d.DeliveryDetails.Sum(dd => dd.LabourCharge);
+
+            decimal paidRent = 0m;
+            decimal paidLabour = 0m;
+
+            if (delTransactions.Any())
             {
-                Id = dd.Id,
-                ProductId = dd.BookingDetail?.ProductId ?? 0,
-                ProductName = dd.BookingDetail?.Product?.ProductName ?? "",
-                DeliveryUnitId = dd.DeliveryUnitId,
-                DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
-                DeliveryQuantity = dd.DeliveryQuantity,
-                BaseQuantity = dd.BaseQuantity,
-                ChargeAmount = dd.ChargeAmount,
-                LabourCharge = dd.LabourCharge
-            }).ToList()
+                paidRent = delTransactions
+                    .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION)
+                    .Sum(t => t.Amount);
+
+                paidLabour = delTransactions
+                    .Where(t => t.TransactionHead?.UsageFor == UsageFor.LABOUR_CHARGE)
+                    .Sum(t => t.Amount);
+            }
+            else if (d.PaymentStatus == PaymentStatuses.PAID)
+            {
+                paidRent = totalRent;
+                paidLabour = totalLabour;
+            }
+            else
+            {
+                // Non-payment delivery: strictly 0 paid
+                paidRent = 0m;
+                paidLabour = 0m;
+            }
+
+            return new DeliveryInfoResponse
+            {
+                Id = d.Id,
+                DeliveryNumber = d.DeliveryNumber,
+                DeliveryDate = d.DeliveryDate,
+                ChargeAmount = totalRent,
+                AdjustmentValue = d.AdjustmentValue,
+                PaymentStatus = d.PaymentStatus,
+                PaidRentAmount = paidRent,
+                PaidLabourAmount = paidLabour,
+                TotalPaidAmount = paidRent + paidLabour,
+                DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
+                {
+                    Id = dd.Id,
+                    ProductId = dd.BookingDetail?.ProductId ?? 0,
+                    ProductName = dd.BookingDetail?.Product?.ProductName ?? "",
+                    DeliveryUnitId = dd.DeliveryUnitId,
+                    DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
+                    DeliveryQuantity = dd.DeliveryQuantity,
+                    BaseQuantity = dd.BaseQuantity,
+                    ChargeAmount = dd.ChargeAmount,
+                    LabourCharge = dd.LabourCharge
+                }).ToList()
+            };
         }).ToList();
 
         return response;
@@ -696,6 +737,7 @@ public class BookingService : IBookingService
                             )
             .Select(t => new
             {
+                t.Id,
                 t.BookingId,
                 t.DeliveryId,
                 t.Amount
@@ -742,6 +784,16 @@ public class BookingService : IBookingService
                         : Math.Max(0m, delivery.ChargeAmount - labourCharge);
                     var deliveryTotal = rentCharge + labourCharge + delivery.AdjustmentValue;
                     var paidAmount = paymentsByDelivery.TryGetValue(delivery.Id, out var paid) ? paid : 0m;
+
+                    if (paidAmount == 0 && delivery.TransactionId.HasValue)
+                    {
+                        paidAmount = payments.Where(p => p.Id == delivery.TransactionId.Value).Sum(p => p.Amount);
+                    }
+
+                    if (delivery.PaymentStatus == PaymentStatuses.PAID && paidAmount < deliveryTotal)
+                    {
+                        paidAmount = deliveryTotal;
+                    }
 
                     if (paidAmount < deliveryTotal && unallocatedBookingPayment > 0)
                     {

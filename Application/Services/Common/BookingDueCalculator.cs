@@ -22,6 +22,7 @@ public static class BookingDueCalculator
         decimal totalDeliveryAdjustments = 0m;
         decimal totalRemainingRent = 0m;
         decimal totalBookingLabour = 0m;
+        decimal pendingRecurringCharge = 0m;
 
         var deliveryList = deliveries?.Where(d => !d.IsDeleted).ToList() ?? new List<Delivery>();
         var detailList = activeDetails?.Where(d => !d.IsDeleted).ToList() ?? new List<BookingDetail>();
@@ -58,6 +59,11 @@ public static class BookingDueCalculator
             if (remainingQty > 0)
             {
                 int additionalCycles = RecurringChargeCalculator.CompletedCycles(bd.BillType, booking.BookingDate, asOfDate);
+                if (additionalCycles > 0)
+                {
+                    pendingRecurringCharge += remainingQty * bd.BookingRate * additionalCycles;
+                }
+
                 // 1 initial cycle + any additional completed cycles elapsed since booking
                 int totalCycles = 1 + additionalCycles;
                 totalRemainingRent += remainingQty * bd.BookingRate * totalCycles;
@@ -65,9 +71,8 @@ public static class BookingDueCalculator
         }
 
         decimal totalRent = totalDeliveredRent + totalRemainingRent + totalDeliveryAdjustments;
-        decimal totalLabour = Math.Max(totalBookingLabour, totalDeliveredLabour);
+        decimal totalLabour = totalBookingLabour + totalDeliveredLabour;
         decimal totalAccrued = totalRent + totalLabour;
-        decimal pendingRecurringCharge = totalRemainingRent;
 
         return (totalRent, totalLabour, totalAccrued, pendingRecurringCharge);
     }

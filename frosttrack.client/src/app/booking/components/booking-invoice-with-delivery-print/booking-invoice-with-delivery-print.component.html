@@ -280,30 +280,21 @@
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{ delivery.chargeAmount | number: "1.2-2" }}
+                              {{ (delivery.paidRentAmount ?? 0) | number: "1.2-2" }}
                             </td>
                             <td
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{
-                                getTotalLabourCharge(delivery.deliveryDetails)
-                                  | number: "1.2-2"
-                              }}
+                              {{ (delivery.paidLabourAmount ?? 0) | number: "1.2-2" }}
                             </td>
                             <td
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{
-                                delivery.chargeAmount +
-                                  getTotalLabourCharge(
-                                    delivery.deliveryDetails
-                                  ) +
-                                  delivery.adjustmentValue | number: "1.2-2"
-                              }}
+                              {{ (delivery.totalPaidAmount ?? 0) | number: "1.2-2" }}
                             </td>
                             <td class="text-center">
                               {{

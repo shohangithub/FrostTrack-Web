@@ -114,12 +114,12 @@ public class TransactionService : ITransactionService
         }
 
         // Fetch related labour charge if this is a BILL_COLLECTION linked to a delivery
-        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION && result.DeliveryId.HasValue)
+        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION)
         {
             var labourCharge = await _repository.Query()
-                .Where(t => t.TransactionCode == result.TransactionCode + "-L" &&
-                           t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
-                           t.DeliveryId == result.DeliveryId)
+                .Where(t => !t.IsDeleted &&
+                            t.TransactionCode == result.TransactionCode + "-L" &&
+                            t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE)
                 .Select(t => (decimal?)t.NetAmount)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -335,11 +335,11 @@ public class TransactionService : ITransactionService
             x.DeletedAt,
             x.ArchivedAt,
             // Find related labour charge transaction for this BILL_COLLECTION
-            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && x.DeliveryId != null
+            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
                 ? _repository.Query()
-                    .Where(t => t.TransactionCode == x.TransactionCode + "-L" &&
-                               t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE &&
-                               t.DeliveryId == x.DeliveryId)
+                    .Where(t => !t.IsDeleted &&
+                                t.TransactionCode == x.TransactionCode + "-L" &&
+                                t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE)
                     .Select(t => (decimal?)t.NetAmount)
                     .FirstOrDefault()
                 : null

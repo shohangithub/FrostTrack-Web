@@ -199,7 +199,7 @@ export class CustomerDueListComponent implements OnInit {
     if (booking.totalRentAmount !== undefined && booking.totalRentAmount !== null) {
       return booking.totalRentAmount;
     }
-    const labour = booking.bookingLabourCharge || 0;
+    const labour = this.getBookingLabourCharge(booking);
     return Math.max(booking.totalAccruedAmount - labour, 0);
   }
 
@@ -207,7 +207,14 @@ export class CustomerDueListComponent implements OnInit {
     if (booking.totalLabourAmount !== undefined && booking.totalLabourAmount !== null) {
       return booking.totalLabourAmount;
     }
-    return booking.bookingLabourCharge || 0;
+    const bookingLabour = booking.bookingLabourCharge || 0;
+    const deliveryLabour = this.getBookingDeliveryLabour(booking);
+    return bookingLabour + deliveryLabour;
+  }
+
+  getBookingDeliveryLabour(booking: any): number {
+    if (!booking || !booking.deliveries) return 0;
+    return booking.deliveries.reduce((sum: number, del: any) => sum + Number(del.labourCharge || 0), 0);
   }
 
   getBookingDeliveriesTotal(booking: ICustomerDueDetailResponse): number {
