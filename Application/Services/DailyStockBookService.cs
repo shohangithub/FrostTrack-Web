@@ -68,7 +68,7 @@ public class DailyStockBookService : IDailyStockBookService
             .Where(t => t.TenantId == _tenantId &&
                        t.TransactionDate >= startOfDay &&
                        t.TransactionDate <= endOfDay &&
-                       t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION &&
+                       t.TransactionHead!.UsageFor == UsageFor.CUSTOMER_PAYMENT &&
                        t.BookingId != null)
             .ToListAsync(cancellationToken);
 

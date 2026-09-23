@@ -1,4 +1,6 @@
 using Application.Contractors;
+using Application.ReponseDTO;
+using Application.RequestDTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FrostTrack.Server.Controllers;
@@ -14,51 +16,21 @@ public class BillCollectionController : ControllerBase
         _billCollectionService = billCollectionService;
     }
 
-    [HttpGet("bookings-with-due")]
-    public async Task<IActionResult> GetBookingsWithDue(CancellationToken cancellationToken)
-    {
-        var bookings = await _billCollectionService.GetBookingsWithDueAsync(cancellationToken);
-        return Ok(bookings);
-    }
-
-    [HttpGet("booking/{bookingId}")]
-    public async Task<IActionResult> GetBookingForBillCollection(
-        string bookingId,
+    [HttpGet("customer-balance/{customerId}")]
+    public async Task<ActionResult<CustomerBalanceSummaryResponse>> GetCustomerBalance(
+        int customerId,
         CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(bookingId, out var id))
-        {
-            return BadRequest(new { message = "Invalid booking ID format" });
-        }
-
-        var booking = await _billCollectionService.GetBookingForBillCollectionAsync(
-            id,
-            cancellationToken);
-
-        if (booking == null)
-        {
-            return NotFound(new { message = "Booking not found" });
-        }
-
-        return Ok(booking);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<TransactionResponse>> CreateBillCollection(
-        BillCollectionRequest request,
-        CancellationToken cancellationToken)
-    {
-        var response = await _billCollectionService.CreateBillCollectionAsync(request, cancellationToken);
+        var response = await _billCollectionService.GetCustomerBalanceSummaryAsync(customerId, cancellationToken);
         return Ok(response);
     }
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<TransactionResponse>> UpdateBillCollection(
-        Guid id,
-        BillCollectionRequest request,
+    [HttpPost("customer-payment")]
+    public async Task<ActionResult<TransactionResponse>> CreateCustomerPayment(
+        CustomerPaymentRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await _billCollectionService.UpdateBillCollectionAsync(id, request, cancellationToken);
+        var response = await _billCollectionService.CreateCustomerPaymentAsync(request, cancellationToken);
         return Ok(response);
     }
 
@@ -68,6 +40,18 @@ public class BillCollectionController : ControllerBase
         CancellationToken cancellationToken)
     {
         var response = await _billCollectionService.CreateDeliveryBillCollectionAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpGet("report")]
+    public async Task<ActionResult<List<CustomerPaymentReportItemResponse>>> GetCustomerPaymentReport(
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] int? customerId,
+        [FromQuery] string? paymentMethod,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.GetCustomerPaymentReportAsync(startDate, endDate, customerId, paymentMethod, cancellationToken);
         return Ok(response);
     }
 }

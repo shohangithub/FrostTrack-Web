@@ -8,10 +8,12 @@ namespace Application.Services;
 public class BankBookService : IBankBookService
 {
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IRepository<Bank, int> _bankRepository;
 
-    public BankBookService(IRepository<BankTransaction, long> bankTransactionRepository)
+    public BankBookService(IRepository<BankTransaction, long> bankTransactionRepository, IRepository<Bank, int> bankRepository)
     {
         _bankTransactionRepository = bankTransactionRepository;
+        _bankRepository = bankRepository;
     }
 
     public async Task<BankBookResponse> GetBankBookAsync(DateTime reportDate, CancellationToken cancellationToken = default)
@@ -24,8 +26,12 @@ public class BankBookService : IBankBookService
         var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local)
             .ToUniversalTime();
 
-        // Calculate opening balance (all bank transactions before report date)
-        var openingBalance = await _bankTransactionRepository.Query()
+        // Calculate opening balance (all active bank initial opening balances + all bank transactions before report date)
+        var bankInitialOpening = await _bankRepository.Query()
+            .Where(b => b.IsActive && !b.IsDeleted)
+            .SumAsync(b => b.OpeningBalance, cancellationToken);
+
+        var openingBalance = bankInitialOpening + await _bankTransactionRepository.Query()
             .Where(bt => bt.IsActive && bt.TransactionDate < fromUtc)
             .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
 

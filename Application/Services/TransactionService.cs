@@ -113,19 +113,6 @@ public class TransactionService : ITransactionService
             };
         }
 
-        // Fetch related labour charge if this is a BILL_COLLECTION linked to a delivery
-        if (result.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION)
-        {
-            var labourCharge = await _repository.Query()
-                .Where(t => !t.IsDeleted &&
-                            t.TransactionCode == result.TransactionCode + "-L" &&
-                            t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE)
-                .Select(t => (decimal?)t.NetAmount)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            response = response with { RelatedLabourCharge = labourCharge };
-        }
-
         return response;
     }
 
@@ -277,15 +264,13 @@ public class TransactionService : ITransactionService
             "archived" => predicate.And(x =>
                 !x.IsDeleted && x.IsArchived &&
                 x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                (requestQuery.UsageFor != null || x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)),
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE),
             "deleted" => predicate.And(x =>
                 x.IsDeleted && x.TenantId == _tenantId),
             _ => predicate.And(x =>
                 !x.IsDeleted && !x.IsArchived &&
                 x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                (requestQuery.UsageFor != null || x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE))
+                x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
         };
 
         if (requestQuery.UsageFor != null && status != "deleted")
@@ -334,15 +319,7 @@ public class TransactionService : ITransactionService
             x.IsArchived,
             x.DeletedAt,
             x.ArchivedAt,
-            // Find related labour charge transaction for this BILL_COLLECTION
-            x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION
-                ? _repository.Query()
-                    .Where(t => !t.IsDeleted &&
-                                t.TransactionCode == x.TransactionCode + "-L" &&
-                                t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE)
-                    .Select(t => (decimal?)t.NetAmount)
-                    .FirstOrDefault()
-                : null
+            null
         );
 
         // For the "deleted" view, bypass the global IsDeleted query filter
@@ -380,8 +357,7 @@ public class TransactionService : ITransactionService
         var query = _repository.Query().Include(x => x.TransactionHead)
             .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         if (branchId.HasValue)
             query = query.Where(x => x.BranchId == branchId.Value);
@@ -417,8 +393,7 @@ public class TransactionService : ITransactionService
         var query = _repository.Query().Include(x => x.TransactionHead)
             .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         if (branchId.HasValue)
             query = query.Where(x => x.BranchId == branchId.Value);

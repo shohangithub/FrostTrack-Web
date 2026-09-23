@@ -44,153 +44,137 @@ public class BillCollectionService : IBillCollectionService
         _tenantId = tenantProvider.GetTenantId();
     }
 
-    public async Task<IEnumerable<Lookup<Guid>>> GetBookingsWithDueAsync(CancellationToken cancellationToken = default)
+    public async Task<CustomerBalanceSummaryResponse> GetCustomerBalanceSummaryAsync(
+        int customerId,
+        CancellationToken cancellationToken = default)
     {
+        var customer = await _customerRepository.GetByIdAsync(customerId, cancellationToken);
+        if (customer == null)
+            throw new Exception("Customer not found");
+
         var bookings = await _bookingRepository.Query()
-            .Where(b => b.TenantId == _tenantId)
             .Include(b => b.BookingDetails)
+            .Where(b => b.CustomerId == customerId && !b.IsDeleted && !b.IsArchived)
             .ToListAsync(cancellationToken);
 
         var bookingIds = bookings.Select(b => b.Id).ToList();
-        
-        // Fetch bulk deliveries and group by bookingId
-        var deliveriesGrouped = await _deliveryRepository.Query()
+
+        var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails)
-            .Where(d => bookingIds.Contains(d.BookingId) && d.TenantId == _tenantId && !d.IsDeleted)
+            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        var deliveriesByBooking = deliveriesGrouped
+        var deliveriesByBooking = deliveries
             .GroupBy(d => d.BookingId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Fetch bulk paid amounts and group by bookingId
-        var paidAmountsMap = await _transactionRepository.Query()
-            .Where(t => t.BookingId != null && bookingIds.Contains(t.BookingId.Value) &&
-                        !t.IsDeleted &&
-                        t.TransactionHead!.Type == TransactionHeadTypes.DEBIT &&
-                        (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
-                         t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
-            .GroupBy(t => t.BookingId!.Value)
-            .Select(g => new { BookingId = g.Key, PaidAmount = g.Sum(t => t.NetAmount) })
-            .ToDictionaryAsync(x => x.BookingId, x => x.PaidAmount, cancellationToken);
+        var payments = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Include(t => t.Bank)
+            .Where(t => !t.IsDeleted
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)) || (t.CustomerId == customerId))
+                        && t.TransactionHead != null
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
+                        && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
+            .OrderByDescending(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
 
-        var bookingsWithDue = new List<Lookup<Guid>>();
         var now = DateTime.UtcNow;
+        decimal totalBookingCharges = 0m;
+        decimal totalDeliveryCharges = 0m;
+        decimal totalRecurringCharges = 0m;
 
         foreach (var booking in bookings)
         {
             var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
             var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
-            var paidAmount = paidAmountsMap.GetValueOrDefault(booking.Id, 0m);
-            
-            var (_, _, totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedDetails(
-                booking,
-                activeDetails,
-                bDeliveries,
-                now);
 
-            var dueAmount = totalAccrued - paidAmount;
+            var (_, _, _, pendingRecurringCharge) =
+                BookingDueCalculator.CalculateBookingAccruedDetails(booking, activeDetails, bDeliveries, now);
 
-            // Only include bookings with due amount > 0
-            if (dueAmount > 0)
-            {
-                bookingsWithDue.Add(new Lookup<Guid>(booking.Id, booking.BookingNumber));
-            }
+            totalBookingCharges += activeDetails.Sum(d => d.LabourCharge);
+
+            var bDeliveryRent = bDeliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
+            var bDeliveryLabour = bDeliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
+            var bDeliveryAdj = bDeliveries.Sum(d => d.AdjustmentValue);
+            totalDeliveryCharges += (bDeliveryRent + bDeliveryLabour + bDeliveryAdj);
+
+            totalRecurringCharges += pendingRecurringCharge;
         }
 
-        return bookingsWithDue;
-    }
+        var openingBalance = customer.OpeningBalance;
+        var totalAccrued = openingBalance + totalBookingCharges + totalDeliveryCharges + totalRecurringCharges;
+        var totalPaid = payments.Sum(p => p.Amount);
+        var netDue = Math.Max(0m, totalAccrued - totalPaid);
 
-    public async Task<BookingWithDueResponse?> GetBookingForBillCollectionAsync(Guid bookingId, CancellationToken cancellationToken = default)
-    {
-        var booking = await _bookingRepository.Query()
-            .Where(b => b.Id == bookingId && b.TenantId == _tenantId)
-            .Include(b => b.Customer)
-            .Include(b => b.BookingDetails)
-            .FirstOrDefaultAsync(cancellationToken);
+        var recentPayments = payments.Take(10).Select(p => new RecentCustomerPaymentDto(
+            p.Id,
+            p.TransactionCode,
+            p.TransactionDate,
+            p.Amount,
+            p.PaymentMethod,
+            p.PaymentReference,
+            p.Note,
+            p.Bank?.BankName
+        )).ToList();
 
-        if (booking == null)
-            return null;
-
-        var totalAmount = await GetBookingTotalAmountAsync(bookingId, cancellationToken);
-        var paidAmount = await GetBookingPaidAmountAsync(bookingId, cancellationToken);
-        var dueAmount = totalAmount - paidAmount;
-
-        // Get last delivery date
-        var lastDeliveryDate = await _deliveryRepository.Query()
-            .Where(d => d.BookingId == bookingId && d.TenantId == _tenantId)
-            .OrderByDescending(d => d.DeliveryDate)
-            .Select(d => (DateTime?)d.DeliveryDate)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        return new BookingWithDueResponse(
-            BookingId: booking.Id,
-            BookingNumber: booking.BookingNumber,
-            BookingDate: booking.BookingDate,
-            CustomerId: booking.CustomerId,
-            CustomerName: booking.Customer?.CustomerName ?? "N/A",
-            LastDeliveryDate: lastDeliveryDate,
-            TotalAmount: totalAmount,
-            PaidAmount: paidAmount,
-            DueAmount: dueAmount
+        return new CustomerBalanceSummaryResponse(
+            customerId,
+            customer.CustomerName,
+            customer.CustomerMobile ?? string.Empty,
+            openingBalance,
+            totalBookingCharges,
+            totalDeliveryCharges,
+            totalRecurringCharges,
+            totalAccrued,
+            totalPaid,
+            netDue,
+            bookings.Count,
+            recentPayments
         );
     }
 
-    public async Task<decimal> GetBookingTotalAmountAsync(Guid bookingId, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponse> CreateCustomerPaymentAsync(
+        CustomerPaymentRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var booking = await _bookingRepository.Query()
-            .Include(b => b.BookingDetails)
-            .FirstOrDefaultAsync(b => b.Id == bookingId && b.TenantId == _tenantId, cancellationToken);
+        if (request.CustomerId <= 0)
+            throw new Exception("Please select a valid customer");
 
-        if (booking == null) return 0m;
+        if (request.Amount <= 0)
+            throw new Exception("Payment amount must be greater than zero");
 
-        var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
+        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
+        if (customer == null)
+            throw new Exception("Customer not found");
 
-        var deliveries = await _deliveryRepository.Query()
-            .Include(d => d.DeliveryDetails)
-            .Where(d => d.BookingId == bookingId && d.TenantId == _tenantId && !d.IsDeleted)
-            .ToListAsync(cancellationToken);
-
-        var (_, _, totalAccrued, _) = Application.Services.Common.BookingDueCalculator.CalculateBookingAccruedDetails(
-            booking,
-            activeDetails,
-            deliveries,
-            DateTime.UtcNow);
-
-        return totalAccrued;
-    }
-
-    public async Task<decimal> GetBookingPaidAmountAsync(Guid bookingId, CancellationToken cancellationToken = default)
-    {
-        var paidAmount = await _transactionRepository.Query()
-            .Where(t => t.BookingId == bookingId &&
-                       !t.IsDeleted &&
-                       t.TransactionHead!.Type == TransactionHeadTypes.DEBIT &&
-                       (t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION ||
-                        t.TransactionHead!.UsageFor == UsageFor.LABOUR_CHARGE))
-            .SumAsync(t => t.NetAmount, cancellationToken);
-
-        return paidAmount;
-    }
-
-    public async Task<TransactionResponse> CreateBillCollectionAsync(BillCollectionRequest request, CancellationToken cancellationToken = default)
-    {
-        // Get BILL_COLLECTION transaction head
+        // Ensure CUSTOMER_PAYMENT TransactionHead exists
         var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.CUSTOMER_PAYMENT && x.IsActive, cancellationToken);
 
         if (transactionHead == null)
-            throw new Exception("BILL_COLLECTION transaction head not found");
+        {
+            transactionHead = new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "CUSTOMER_PAYMENT",
+                Name = "Customer Payment",
+                Type = TransactionHeadTypes.DEBIT,
+                DisplayType = "Debit",
+                Description = "Direct payments received from customers",
+                UsageFor = UsageFor.CUSTOMER_PAYMENT,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 1,
+                ColorCode = "#10B981",
+                IconClass = "fa-hand-holding-usd",
+                TenantId = _tenantId
+            };
+            _defaultValueInjector.InjectCreatingAudit<TransactionHead, Guid>(transactionHead);
+            await _transactionHeadRepository.AddAsync(transactionHead, cancellationToken);
+        }
 
-        // Get booking and customer info
-        var booking = await _bookingRepository.Query()
-            .Include(b => b.Customer)
-            .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
-
-        if (booking == null)
-            throw new Exception("Booking not found");
-
-        // Create transaction entity
+        var refPart = string.IsNullOrWhiteSpace(request.PaymentReference) ? "" : $" (Ref: {request.PaymentReference})";
         var entity = new Transaction
         {
             Id = Guid.NewGuid(),
@@ -198,14 +182,14 @@ public class BillCollectionService : IBillCollectionService
             TransactionDate = request.TransactionDate,
             TransactionHeadId = transactionHead.Id,
             BranchId = request.BranchId,
+            CustomerId = request.CustomerId,
             BookingId = request.BookingId,
-            CustomerId = booking.CustomerId,
             Amount = request.Amount,
             PaymentMethod = request.PaymentMethod,
             PaymentReference = request.PaymentReference,
             BankId = request.BankId,
             Note = request.Note,
-            Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}",
+            Description = $"Customer Payment - {customer.CustomerName}{refPart}",
             DiscountAmount = 0,
             AdjustmentValue = 0,
             NetAmount = request.Amount
@@ -214,7 +198,7 @@ public class BillCollectionService : IBillCollectionService
         _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
         await _transactionRepository.AddAsync(entity, cancellationToken);
 
-        // If paid by bank or cheque, automatically record deposit in BankTransaction
+        // If paid by Bank / Cheque, record deposit in BankTransaction
         if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
         {
             var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
@@ -232,9 +216,9 @@ public class BillCollectionService : IBillCollectionService
                     TransactionType = BankTransactionTypes.Deposit,
                     Amount = request.Amount,
                     Reference = request.PaymentReference,
-                    Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName} ({request.PaymentMethod})",
+                    Description = $"Customer Payment - {request.TransactionCode} ({request.PaymentMethod}) - {customer.CustomerName}",
                     BalanceAfter = currentBalance + request.Amount,
-                    SourceType = BankSourceTypes.BILL_COLLECTION,
+                    SourceType = BankSourceTypes.CUSTOMER_PAYMENT,
                     TransactionId = entity.Id,
                     BranchId = request.BranchId,
                     IsActive = true
@@ -248,290 +232,98 @@ public class BillCollectionService : IBillCollectionService
         return response;
     }
 
-    public async Task<TransactionResponse> UpdateBillCollectionAsync(Guid id, BillCollectionRequest request, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponse> CreateDeliveryBillCollectionAsync(
+        DeliveryBillCollectionRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var entity = await _transactionRepository.Query()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        if (entity == null)
-            throw new Exception("Transaction not found");
-
-        // Get BILL_COLLECTION transaction head
-        var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
-
-        if (transactionHead == null)
-            throw new Exception("BILL_COLLECTION transaction head not found");
-
-        // Get booking and customer info
-        var booking = await _bookingRepository.Query()
-            .Include(b => b.Customer)
-            .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
-
-        if (booking == null)
-            throw new Exception("Booking not found");
-
-        // Update entity
-        entity.TransactionCode = request.TransactionCode;
-        entity.TransactionDate = request.TransactionDate;
-        entity.TransactionHeadId = transactionHead.Id;
-        entity.BranchId = request.BranchId;
-        entity.BookingId = request.BookingId;
-        entity.CustomerId = booking.CustomerId;
-        entity.Amount = request.Amount;
-        entity.PaymentMethod = request.PaymentMethod;
-        entity.PaymentReference = request.PaymentReference;
-        entity.BankId = request.BankId;
-        entity.Note = request.Note;
-        entity.Description = $"Bill Collection - {booking.BookingNumber} - {booking.Customer?.CustomerName}";
-        entity.NetAmount = request.Amount;
-
-        _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);
-        await _transactionRepository.UpdateAsync(entity, cancellationToken);
-
-        var response = entity.Adapt<TransactionResponse>();
-        return response;
-    }
-
-    public async Task<TransactionResponse> CreateDeliveryBillCollectionAsync(DeliveryBillCollectionRequest request, CancellationToken cancellationToken = default)
-    {
-        // Get BILL_COLLECTION transaction head
-        var transactionHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_COLLECTION && x.IsActive, cancellationToken);
-
-        if (transactionHead == null)
-            throw new Exception("BILL_COLLECTION transaction head not found");
-
-        // Get LABOUR_CHARGE transaction head
-        var labourChargeHead = await _transactionHeadRepository.Query()
-            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.LABOUR_CHARGE && x.IsActive, cancellationToken);
-
-        if (labourChargeHead == null)
-            throw new Exception("LABOUR_CHARGE transaction head not found");
-
-        Transaction entity;
-        var hasDeliveries = request.DeliveryIds != null && request.DeliveryIds.Count > 0;
-
-        if (hasDeliveries)
+        // Resolve customer ID
+        int customerId = request.CustomerId ?? 0;
+        if (customerId == 0 && request.DeliveryIds != null && request.DeliveryIds.Count > 0)
         {
-            // Get deliveries and verify they are all unpaid
-            var deliveries = await _deliveryRepository.Query()
+            var firstDelivery = await _deliveryRepository.Query()
                 .Include(d => d.Booking)
-                .ThenInclude(b => b!.Customer)
-                .Include(d => d.DeliveryDetails)
-                .Where(d => request.DeliveryIds!.Contains(d.Id) && d.PaymentStatus == PaymentStatuses.UNPAID)
-                .ToListAsync(cancellationToken);
-
-            if (deliveries.Count != request.DeliveryIds!.Count)
-                throw new Exception("Some deliveries are not found or already paid");
-
-            // Query existing payments for these deliveries to account for prior payments (e.g. paid during delivery)
-            var deliveryIds = deliveries.Select(d => d.Id).ToList();
-            var deliveryTxIds = deliveries.Where(d => d.TransactionId.HasValue).Select(d => d.TransactionId!.Value).ToList();
-
-            var existingPayments = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t => !t.IsDeleted
-                         && t.TransactionHead != null
-                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE)
-                         && ((t.DeliveryId.HasValue && deliveryIds.Contains(t.DeliveryId.Value)) || deliveryTxIds.Contains(t.Id)))
-                .Select(t => new { t.Id, t.DeliveryId, t.Amount, UsageFor = t.TransactionHead!.UsageFor })
-                .ToListAsync(cancellationToken);
-
-            decimal remainingStorageCharges = 0m;
-            decimal remainingLabourCharges = 0m;
-
-            foreach (var delivery in deliveries)
+                .FirstOrDefaultAsync(d => request.DeliveryIds.Contains(d.Id), cancellationToken);
+            if (firstDelivery?.Booking != null)
             {
-                var delStorageCharge = delivery.DeliveryDetails.Sum(dd => dd.ChargeAmount) + delivery.AdjustmentValue;
-                var delLabourCharge = delivery.DeliveryDetails.Sum(dd => dd.LabourCharge);
-                var delTotalBill = delStorageCharge + delLabourCharge;
-
-                var delStoragePaid = existingPayments
-                    .Where(p => (p.DeliveryId.HasValue && p.DeliveryId.Value == delivery.Id) || (delivery.TransactionId.HasValue && p.Id == delivery.TransactionId.Value))
-                    .Where(p => p.UsageFor == UsageFor.BILL_COLLECTION)
-                    .Sum(p => p.Amount);
-
-                var delLabourPaid = existingPayments
-                    .Where(p => (p.DeliveryId.HasValue && p.DeliveryId.Value == delivery.Id) || (delivery.TransactionId.HasValue && p.Id == delivery.TransactionId.Value))
-                    .Where(p => p.UsageFor == UsageFor.LABOUR_CHARGE)
-                    .Sum(p => p.Amount);
-
-                var delTotalPaid = delStoragePaid + delLabourPaid;
-                var delDue = Math.Max(0m, delTotalBill - delTotalPaid);
-
-                var remLabour = Math.Max(0m, delLabourCharge - delLabourPaid);
-                var remStorage = Math.Max(0m, delStorageCharge - delStoragePaid);
-
-                if (remStorage + remLabour > delDue)
-                {
-                    remLabour = Math.Min(remLabour, delDue);
-                    remStorage = delDue - remLabour;
-                }
-
-                remainingStorageCharges += remStorage;
-                remainingLabourCharges += remLabour;
-            }
-
-            var deliveryGrandDue = remainingStorageCharges + remainingLabourCharges;
-
-            if (request.Amount < deliveryGrandDue - 0.01m)
-                throw new Exception($"Payment amount ({request.Amount:N2}) cannot be less than remaining delivery dues ({deliveryGrandDue:N2})");
-
-            var excessAdvance = Math.Max(0m, request.Amount - deliveryGrandDue);
-
-            var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
-            var firstDelivery = deliveries.FirstOrDefault();
-            var customerId = firstDelivery?.Booking?.CustomerId ?? request.CustomerId;
-            var bookingId = firstDelivery?.BookingId ?? request.BookingId;
-
-            var customer = customerId.HasValue
-                ? await _customerRepository.GetByIdAsync(customerId.Value, cancellationToken)
-                : null;
-            var customerName = customer?.CustomerName ?? firstDelivery?.Booking?.Customer?.CustomerName ?? "Customer";
-
-            var mainAmount = remainingStorageCharges + excessAdvance;
-            var description = excessAdvance > 0
-                ? $"Bill Collection - Deliveries: {deliveryCodes} (Advance: {excessAdvance:N2}) - {customerName}"
-                : $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}";
-
-            entity = new Transaction
-            {
-                Id = Guid.NewGuid(),
-                TransactionCode = request.TransactionCode,
-                TransactionDate = request.TransactionDate,
-                TransactionHeadId = transactionHead.Id,
-                BranchId = request.BranchId,
-                BookingId = bookingId,
-                CustomerId = customerId,
-                Amount = mainAmount,
-                PaymentMethod = request.PaymentMethod,
-                PaymentReference = request.PaymentReference,
-                BankId = request.BankId,
-                Note = request.Note,
-                Description = description,
-                DiscountAmount = 0,
-                AdjustmentValue = 0,
-                NetAmount = mainAmount
-            };
-
-            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
-            await _transactionRepository.AddAsync(entity, cancellationToken);
-
-            // Create separate transaction for remaining unpaid labour charges if any
-            if (remainingLabourCharges > 0)
-            {
-                var labourEntity = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    TransactionCode = request.TransactionCode + "-L",
-                    TransactionDate = request.TransactionDate,
-                    TransactionHeadId = labourChargeHead.Id,
-                    BranchId = request.BranchId,
-                    BookingId = bookingId,
-                    CustomerId = customerId,
-                    Amount = remainingLabourCharges,
-                    PaymentMethod = request.PaymentMethod,
-                    PaymentReference = request.PaymentReference,
-                    BankId = request.BankId,
-                    Note = request.Note,
-                    Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
-                    DiscountAmount = 0,
-                    AdjustmentValue = 0,
-                    NetAmount = remainingLabourCharges
-                };
-
-                _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);
-                await _transactionRepository.AddAsync(labourEntity, cancellationToken);
-            }
-
-            // Mark all deliveries as paid
-            foreach (var delivery in deliveries)
-            {
-                delivery.PaymentStatus = PaymentStatuses.PAID;
-                delivery.PaymentDate = request.TransactionDate;
-                delivery.TransactionId = entity.Id;
-                _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(delivery);
-                await _deliveryRepository.UpdateAsync(delivery, cancellationToken);
+                customerId = firstDelivery.Booking.CustomerId;
             }
         }
-        else
+
+        var customerPaymentRequest = new CustomerPaymentRequest(
+            request.TransactionCode,
+            request.TransactionDate,
+            request.BranchId,
+            customerId,
+            request.Amount,
+            request.PaymentMethod,
+            request.PaymentReference,
+            request.Note,
+            request.BankId,
+            request.BookingId
+        );
+
+        return await CreateCustomerPaymentAsync(customerPaymentRequest, cancellationToken);
+    }
+
+    public async Task<List<CustomerPaymentReportItemResponse>> GetCustomerPaymentReportAsync(
+        DateTime? startDate,
+        DateTime? endDate,
+        int? customerId,
+        string? paymentMethod,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _transactionRepository.Query()
+            .Include(t => t.Customer)
+            .Include(t => t.Bank)
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId
+                     && !t.IsDeleted
+                     && !t.IsArchived
+                     && t.TransactionHead != null
+                     && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT);
+
+        if (startDate.HasValue)
         {
-            // Pure advance payment (no delivery selected)
-            if (!request.CustomerId.HasValue)
-                throw new Exception("Please select a customer for advance payment");
-
-            if (request.Amount <= 0)
-                throw new Exception("Advance payment amount must be greater than zero");
-
-            var customer = await _customerRepository.GetByIdAsync(request.CustomerId.Value, cancellationToken);
-            var customerName = customer?.CustomerName ?? "Customer";
-
-            var bookingInfo = "";
-            if (request.BookingId.HasValue)
-            {
-                var booking = await _bookingRepository.GetByIdAsync(request.BookingId.Value, cancellationToken);
-                if (booking != null)
-                {
-                    bookingInfo = $" - Booking: {booking.BookingNumber}";
-                }
-            }
-
-            entity = new Transaction
-            {
-                Id = Guid.NewGuid(),
-                TransactionCode = request.TransactionCode,
-                TransactionDate = request.TransactionDate,
-                TransactionHeadId = transactionHead.Id,
-                BranchId = request.BranchId,
-                BookingId = request.BookingId,
-                CustomerId = request.CustomerId,
-                Amount = request.Amount,
-                PaymentMethod = request.PaymentMethod,
-                PaymentReference = request.PaymentReference,
-                BankId = request.BankId,
-                Note = request.Note,
-                Description = $"Customer Advance Payment - {customerName}{bookingInfo}",
-                DiscountAmount = 0,
-                AdjustmentValue = 0,
-                NetAmount = request.Amount
-            };
-
-            _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
-            await _transactionRepository.AddAsync(entity, cancellationToken);
+            var fromUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Local).ToUniversalTime();
+            query = query.Where(t => t.TransactionDate >= fromUtc);
         }
 
-        // If paid by bank or cheque, automatically record deposit in BankTransaction for grand total
-        if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
+        if (endDate.HasValue)
         {
-            var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
-            if (bank != null)
-            {
-                var currentBalance = bank.OpeningBalance + await _bankTransactionRepository.Query()
-                    .Where(bt => bt.BankId == request.BankId.Value && bt.IsActive && !bt.IsDeleted)
-                    .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
-
-                var bankTx = new BankTransaction
-                {
-                    TransactionNumber = request.TransactionCode,
-                    TransactionDate = request.TransactionDate,
-                    BankId = request.BankId.Value,
-                    TransactionType = BankTransactionTypes.Deposit,
-                    Amount = request.Amount,
-                    Reference = request.PaymentReference,
-                    Description = $"Delivery Bill Collection - {request.TransactionCode} ({request.PaymentMethod})",
-                    BalanceAfter = currentBalance + request.Amount,
-                    SourceType = BankSourceTypes.BILL_COLLECTION,
-                    TransactionId = entity.Id,
-                    BranchId = request.BranchId,
-                    IsActive = true
-                };
-                _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
-                await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
-            }
+            var toUtc = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+            query = query.Where(t => t.TransactionDate < toUtc);
         }
 
-        var response = entity.Adapt<TransactionResponse>();
-        return response;
+        if (customerId.HasValue && customerId.Value > 0)
+        {
+            query = query.Where(t => t.CustomerId == customerId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
+        }
+
+        var results = await query
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.CreatedTime)
+            .Select(t => new CustomerPaymentReportItemResponse(
+                t.Id,
+                t.TransactionCode,
+                t.TransactionDate,
+                t.CustomerId ?? 0,
+                t.Customer != null ? t.Customer.CustomerName : "Unknown",
+                t.Customer != null ? t.Customer.CustomerMobile : null,
+                t.Customer != null ? t.Customer.Address : null,
+                t.Amount,
+                t.PaymentMethod,
+                t.Bank != null ? t.Bank.BankName : null,
+                t.PaymentReference,
+                t.Note,
+                t.CreatedTime
+            ))
+            .ToListAsync(cancellationToken);
+
+        return results;
     }
 }

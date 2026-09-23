@@ -30,6 +30,9 @@ public class BankTransaction : AuditableEntity<long>
 public static class BankSourceTypes
 {
     public const string CASH = "CASH";
+    [Obsolete("Use CUSTOMER_PAYMENT instead.")]
     public const string BILL_COLLECTION = "BILL_COLLECTION";
+    public const string CUSTOMER_PAYMENT = "CUSTOMER_PAYMENT";
+    public const string DELIVERY = "DELIVERY";
     public const string EXTERNAL = "EXTERNAL";
 }

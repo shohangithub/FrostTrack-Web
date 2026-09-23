@@ -49,7 +49,7 @@ export class BillCollectionListComponent implements OnInit {
   reorderable = true;
   selected: ITransactionListResponse[] = [];
   pagination: ITransactionPaginationQuery = {
-    usageFor: USAGE_FOR.BILL_COLLECTION,
+    usageFor: USAGE_FOR.CUSTOMER_PAYMENT,
     status: 'active',
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
@@ -128,25 +128,11 @@ export class BillCollectionListComponent implements OnInit {
   }
 
   add() {
-    this.router.navigate(['/bill-collection/add']);
+    this.router.navigate(['/bill-collection/delivery-based']);
   }
 
   edit(id: string) {
-    // Find the transaction in the data to check its type
-    const transaction = this.data.find((t) => t.id === id);
-
-    // Check if this is a delivery-based transaction
-    // Delivery-based transactions have description containing "Delivery" or related keywords
-    if (
-      transaction &&
-      transaction.description &&
-      (transaction.description.toLowerCase().includes('delivery') ||
-        transaction.description.toLowerCase().includes('deliveries'))
-    ) {
-      this.router.navigate(['/bill-collection/delivery-based/edit', id]);
-    } else {
-      this.router.navigate(['/bill-collection/edit', id]);
-    }
+    this.router.navigate(['/bill-collection/delivery-based/edit', id]);
   }
 
   view(id: string) {

@@ -48,8 +48,7 @@ public class GeneralLedgerService : IGeneralLedgerService
                 !t.IsArchived &&
                 t.PaymentMethod != PaymentMethods.CREDIT &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .OrderBy(t => t.CreatedTime)
             .ToListAsync(cancellationToken);
 
@@ -113,7 +112,7 @@ public class GeneralLedgerService : IGeneralLedgerService
         var bankTransactions = await _bankTransactionRepository.Query()
             .Include(bt => bt.Bank)
             .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsDeleted
-                && bt.SourceType != BankSourceTypes.BILL_COLLECTION
+                && bt.SourceType != BankSourceTypes.CUSTOMER_PAYMENT
                 && bt.TransactionId == null)
             .OrderBy(bt => bt.CreatedTime)
             .ToListAsync(cancellationToken);

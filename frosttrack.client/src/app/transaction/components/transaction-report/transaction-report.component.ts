@@ -45,7 +45,8 @@ export class TransactionReportComponent {
   _TRANSACTION_TYPE = TRANSACTION_TYPE;
   transactionTypeOptions = [
     { value: '', text: 'All Types' },
-    { value: 'BILL_COLLECTION', text: 'Bill Collection' },
+    { value: 'CUSTOMER_PAYMENT', text: 'Customer Payment' },
+    { value: 'BILL_COLLECTION', text: 'Bill Collection (Legacy)' },
     { value: 'OFFICE_EXPENSE', text: 'Office Expense' },
     { value: 'BILL_PAYMENT', text: 'Bill Payment' },
     { value: 'ADVANCE_PAYMENT', text: 'Advance Payment' },
@@ -156,6 +157,7 @@ export class TransactionReportComponent {
 
   getTransactionTypeLabel(type: string): string {
     const types: { [key: string]: string } = {
+      CUSTOMER_PAYMENT: 'Customer Payment',
       BILL_COLLECTION: 'Bill Collection',
       OFFICE_EXPENSE: 'Office Expense',
       BILL_PAYMENT: 'Bill Payment',

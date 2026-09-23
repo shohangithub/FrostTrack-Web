@@ -18,6 +18,7 @@ public record TransactionRequest(
     decimal NetAmount = 0,
     string? PaymentMethod = null, // Will be set to CASH in service if null
     string? PaymentReference = null,
+    int? BankId = null,
     string? Category = null,
     string? SubCategory = null,
     string Description = ""

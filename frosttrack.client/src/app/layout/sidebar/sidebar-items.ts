@@ -273,7 +273,7 @@ export const ROUTES: RouteInfo[] = [
   },
   {
     path: 'bill-collection',
-    title: 'Bill Collection',
+    title: 'Customer Payment',
     iconType: 'feather',
     icon: 'credit-card',
     class: 'menu-toggle',
@@ -281,20 +281,9 @@ export const ROUTES: RouteInfo[] = [
     badge: '',
     badgeClass: '',
     submenu: [
-      // {
-      //   path: '/bill-collection/add',
-      //   title: 'New Bill Collection',
-      //   iconType: '',
-      //   icon: '',
-      //   class: 'ml-menu',
-      //   groupTitle: false,
-      //   badge: '',
-      //   badgeClass: '',
-      //   submenu: [],
-      // },
       {
         path: '/bill-collection/delivery-based',
-        title: 'New Bill Collection',
+        title: 'New Payment',
         iconType: '',
         icon: '',
         class: 'ml-menu',
@@ -305,7 +294,7 @@ export const ROUTES: RouteInfo[] = [
       },
       {
         path: '/bill-collection/list',
-        title: 'Bill Collection List',
+        title: 'Payment List',
         iconType: '',
         icon: '',
         class: 'ml-menu',
@@ -317,6 +306,17 @@ export const ROUTES: RouteInfo[] = [
       {
         path: '/bill-collection/receipt-print',
         title: 'Print Receipt',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
+        path: '/bill-collection/report',
+        title: 'Payment Report',
         iconType: '',
         icon: '',
         class: 'ml-menu',

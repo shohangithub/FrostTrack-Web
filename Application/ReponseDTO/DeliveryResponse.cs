@@ -102,6 +102,7 @@ public class BookingDetailForDeliveryResponse
     public decimal BaseQuantity { get; set; }
     public decimal BaseRate { get; set; }
     public decimal TotalCharge { get; set; } // Charge per delivery unit
+    public decimal LabourCharge { get; set; } // Booking inward labour charge
 
     // Tracking delivered quantities
     public float TotalDeliveredQuantity { get; set; }

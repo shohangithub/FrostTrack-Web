@@ -62,8 +62,7 @@ public class DashboardService : IDashboardService
                 && !x.IsArchived
                 && x.PaymentMethod != PaymentMethods.CREDIT
                 && x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                && x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                && x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
+                && x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         // Apply branch filter if provided
         if (branchId.HasValue)
@@ -85,8 +84,8 @@ public class DashboardService : IDashboardService
             .SelectMany(d => d.DeliveryDetails)
             .SumAsync(d => (decimal)d.DeliveryQuantity * d.BookingDetail!.BookingRate, cancellationToken);
 
-        // Get bill collection statistics (from transactions with BILL_COLLECTION type)
-        var billCollectionQuery = transactionsQuery.Where(x => x.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION);
+        // Get customer payment statistics (from transactions with CUSTOMER_PAYMENT type)
+        var billCollectionQuery = transactionsQuery.Where(x => x.TransactionHead!.UsageFor == UsageFor.CUSTOMER_PAYMENT);
         var totalBillCollections = await billCollectionQuery.CountAsync(cancellationToken);
         var totalBillCollectionAmount = await billCollectionQuery
             .SumAsync(bc => bc.NetAmount, cancellationToken);
@@ -149,8 +148,7 @@ public class DashboardService : IDashboardService
             .Where(x => x.TenantId == _tenantId && !x.IsDeleted && !x.IsArchived && x.PaymentMethod != PaymentMethods.CREDIT &&
                         x.TransactionDate >= fromUtc && x.TransactionDate < toUtc &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                        x.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE);
+                        x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
         // Apply branch filter
         if (branchId.HasValue)
@@ -225,7 +223,7 @@ public class DashboardService : IDashboardService
         // Transaction category trends (for stacked bar chart)
         var categoryTrends = new Dictionary<string, List<decimal>>();
         var transactionTypes = new[] {
-            UsageFor.BILL_COLLECTION,
+            UsageFor.CUSTOMER_PAYMENT,
             UsageFor.SALARY,
             UsageFor.TRANSACTION
         };

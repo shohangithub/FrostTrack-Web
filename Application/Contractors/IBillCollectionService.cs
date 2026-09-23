@@ -1,15 +1,12 @@
-using Application.Framework;
 using Application.ReponseDTO;
+using Application.RequestDTO;
 
 namespace Application.Contractors;
 
 public interface IBillCollectionService
 {
-    Task<IEnumerable<Lookup<Guid>>> GetBookingsWithDueAsync(CancellationToken cancellationToken = default);
-    Task<BookingWithDueResponse?> GetBookingForBillCollectionAsync(Guid bookingId, CancellationToken cancellationToken = default);
-    Task<decimal> GetBookingTotalAmountAsync(Guid bookingId, CancellationToken cancellationToken = default);
-    Task<decimal> GetBookingPaidAmountAsync(Guid bookingId, CancellationToken cancellationToken = default);
-    Task<TransactionResponse> CreateBillCollectionAsync(BillCollectionRequest request, CancellationToken cancellationToken = default);
-    Task<TransactionResponse> UpdateBillCollectionAsync(Guid id, BillCollectionRequest request, CancellationToken cancellationToken = default);
+    Task<CustomerBalanceSummaryResponse> GetCustomerBalanceSummaryAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<TransactionResponse> CreateCustomerPaymentAsync(CustomerPaymentRequest request, CancellationToken cancellationToken = default);
     Task<TransactionResponse> CreateDeliveryBillCollectionAsync(DeliveryBillCollectionRequest request, CancellationToken cancellationToken = default);
+    Task<List<CustomerPaymentReportItemResponse>> GetCustomerPaymentReportAsync(DateTime? startDate, DateTime? endDate, int? customerId, string? paymentMethod, CancellationToken cancellationToken = default);
 }

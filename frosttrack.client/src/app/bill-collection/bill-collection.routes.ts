@@ -16,9 +16,16 @@ export const billCollectionRoutes: Route[] = [
   {
     path: 'add',
     loadComponent: () =>
-      import('./components/bill-collection/bill-collection.component').then(
-        (m) => m.BillCollectionComponent
-      ),
+      import(
+        './components/delivery-bill-collection/delivery-bill-collection.component'
+      ).then((m) => m.DeliveryBillCollectionComponent),
+  },
+  {
+    path: 'customer-payment',
+    loadComponent: () =>
+      import(
+        './components/delivery-bill-collection/delivery-bill-collection.component'
+      ).then((m) => m.DeliveryBillCollectionComponent),
   },
   {
     path: 'delivery-based',
@@ -37,9 +44,9 @@ export const billCollectionRoutes: Route[] = [
   {
     path: 'edit/:id',
     loadComponent: () =>
-      import('./components/bill-collection/bill-collection.component').then(
-        (m) => m.BillCollectionComponent
-      ),
+      import(
+        './components/delivery-bill-collection/delivery-bill-collection.component'
+      ).then((m) => m.DeliveryBillCollectionComponent),
   },
   {
     path: 'receipt-print',
@@ -54,5 +61,12 @@ export const billCollectionRoutes: Route[] = [
       import(
         './components/bill-collection-receipt-print/bill-collection-receipt-print.component'
       ).then((m) => m.BillCollectionReceiptPrintComponent),
+  },
+  {
+    path: 'report',
+    loadComponent: () =>
+      import(
+        './components/customer-payment-report/customer-payment-report.component'
+      ).then((m) => m.CustomerPaymentReportComponent),
   },
 ];

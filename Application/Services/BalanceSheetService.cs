@@ -87,8 +87,7 @@ public class BalanceSheetService : IBalanceSheetService
                 .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
                          && t.PaymentMethod == PaymentMethods.CASH
                          && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                         && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                         && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                         && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
                 .CountAsync(cancellationToken);
 
             assets.Add(new BalanceSheetItemResponse
@@ -104,7 +103,7 @@ public class BalanceSheetService : IBalanceSheetService
         var accountsPayable = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
-                     && t.TransactionHead!.UsageFor == UsageFor.BILL_COLLECTION && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
+                     && t.TransactionHead!.UsageFor == UsageFor.CUSTOMER_PAYMENT && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
             .SumAsync(t => t.NetAmount, cancellationToken);
 
         if (accountsPayable > 0)
@@ -124,8 +123,7 @@ public class BalanceSheetService : IBalanceSheetService
             .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
                      && t.TransactionHead!.Type == TransactionHeadTypes.DEBIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .SumAsync(t => t.NetAmount, cancellationToken);
 
         var cumulativeExpenses = await _transactionRepository.Query()
@@ -133,8 +131,7 @@ public class BalanceSheetService : IBalanceSheetService
             .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
                      && t.TransactionHead!.Type == TransactionHeadTypes.CREDIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .SumAsync(t => t.NetAmount, cancellationToken);
 
         var retainedEarnings = cumulativeRevenue - cumulativeExpenses;
@@ -142,8 +139,7 @@ public class BalanceSheetService : IBalanceSheetService
             .Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId && t.TransactionDate < toUtc && !t.IsDeleted && !t.IsArchived
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .CountAsync(cancellationToken);
 
         if (retainedEarnings != 0)

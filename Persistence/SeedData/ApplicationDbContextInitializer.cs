@@ -330,34 +330,15 @@ public class ApplicationDbContextInitializer
         new TransactionHead
         {
             Id = Guid.NewGuid(),
-            Code = "BILL_COLLECTION",
-            Name = "Bill Collection",
+            Code = "CUSTOMER_PAYMENT",
+            Name = "Customer Payment",
             Type = TransactionHeadTypes.DEBIT,
             DisplayType = "Receipt",
             Description = "Money received from customers for cold storage services",
-            UsageFor = UsageFor.BILL_COLLECTION,
+            UsageFor = UsageFor.CUSTOMER_PAYMENT,
             IsSystem = true,
             IsActive = true,
             SortOrder = 2,
-            ColorCode = "#28a745",
-            IconClass = "fa-money-bill-wave",
-            CreatedTime = DateTime.UtcNow,
-            CreatedById = userId,
-            TenantId = _tenantId
-        },
-
-        new TransactionHead
-        {
-            Id = Guid.NewGuid(),
-            Code = "LABOUR_CHARGE",
-            Name = "Labour Charge",
-            Type = TransactionHeadTypes.DEBIT,
-            DisplayType = "Receipt",
-            Description = "Charges received from customers for labour services",
-            UsageFor = UsageFor.LABOUR_CHARGE,
-            IsSystem = true,
-            IsActive = true,
-            SortOrder = 3,
             ColorCode = "#28a745",
             IconClass = "fa-money-bill-wave",
             CreatedTime = DateTime.UtcNow,

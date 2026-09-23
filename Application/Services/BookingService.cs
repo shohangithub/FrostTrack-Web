@@ -573,8 +573,7 @@ public class BookingService : IBookingService
                             || (t.CustomerId.HasValue && customerIds.Contains(t.CustomerId.Value)))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
-                        && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
-                            || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
+                        && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
             .Select(t => new
             {
                 t.Id,
@@ -774,9 +773,7 @@ public class BookingService : IBookingService
                             || (t.CustomerId == customerId))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
-                        && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
-                            || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE)
-                            )
+                        && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
             .Select(t => new
             {
                 t.Id,
@@ -969,17 +966,17 @@ public class BookingService : IBookingService
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
-                        && t.BookingId.HasValue
-                        && bookingIds.Contains(t.BookingId.Value)
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId == customerId))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
-                        && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION
-                            || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
-            .Select(t => new { BookingId = t.BookingId!.Value, t.Amount })
+                        && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
+            .Select(t => new { t.BookingId, t.Amount })
             .ToListAsync(cancellationToken);
 
         var paymentsByBooking = payments
-            .GroupBy(x => x.BookingId)
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
         var deliveriesByBooking = deliveries
@@ -1014,7 +1011,7 @@ public class BookingService : IBookingService
 
         var openingBalance = customer?.OpeningBalance ?? 0m;
         var totalAccrued = openingBalance + bookingItems.Sum(x => x.AccruedAmount);
-        var totalPaid = bookingItems.Sum(x => x.PaidAmount);
+        var totalPaid = payments.Sum(x => x.Amount);
         var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
 
         return new CustomerOutstandingResponse

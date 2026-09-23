@@ -18,6 +18,8 @@ import {
   IBookingForDeliveryResponse,
   IDeliveryRequest,
 } from 'app/delivery/models/delivery.interface';
+import { BankService } from 'app/common/services/bank.service';
+import { ILookup } from '@core/models/lookup';
 import Swal from 'sweetalert2';
 import { SwalConfirm } from 'app/theme-config';
 import { DeliveryInvoiceComponent } from '../delivery-invoice/delivery-invoice.component';
@@ -54,17 +56,20 @@ export class DeliveryComponent implements OnInit {
   customerOutstanding: ICustomerOutstandingResponse | null = null;
   outstandingLoading: boolean = false;
 
+  banks: ILookup<number>[] = [];
+
   paymentMethods = [
-    { value: 'CASH', label: 'Cash' },
-    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CHEQUE', label: 'Cheque' },
-    { value: 'MOBILE_BANKING', label: 'Mobile Banking' },
+    { value: 'CASH', label: 'Cash (নগদ)' },
+    { value: 'BANK_TRANSFER', label: 'Bank Transfer (ব্যাংক ট্রান্সফার)' },
+    { value: 'CHEQUE', label: 'Cheque (চেক)' },
+    { value: 'MOBILE_BANKING', label: 'Mobile Banking (মোবাইল ব্যাংকিং)' },
   ];
 
   constructor(
     private fb: FormBuilder,
     private deliveryService: DeliveryService,
     private bookingService: BookingService,
+    private bankService: BankService,
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
@@ -74,6 +79,7 @@ export class DeliveryComponent implements OnInit {
     this.initForm();
     this.generateDeliveryNumber();
     this.loadBookingLookup();
+    this.loadBanks();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -99,6 +105,8 @@ export class DeliveryComponent implements OnInit {
       createTransaction: [true], // Changed to true by default
       transactionAmount: [null],
       paymentMethod: ['CASH'],
+      bankId: [null],
+      paymentReference: [''],
       transactionNotes: [''],
     });
 
@@ -109,9 +117,28 @@ export class DeliveryComponent implements OnInit {
       }
     });
 
+    // Watch for payment method changes to toggle bank requirement
+    this.deliveryForm.get('paymentMethod')?.valueChanges.subscribe((pm) => {
+      const bankControl = this.deliveryForm.get('bankId');
+      if (pm === 'BANK_TRANSFER' || pm === 'CHEQUE') {
+        bankControl?.setValidators([Validators.required]);
+      } else {
+        bankControl?.clearValidators();
+        bankControl?.setValue(null);
+      }
+      bankControl?.updateValueAndValidity();
+    });
+
     // Watch for delivery date changes to recalculate billing cycles
     this.deliveryForm.get('deliveryDate')?.valueChanges.subscribe(() => {
       this.recalculateAllCharges();
+    });
+  }
+
+  loadBanks() {
+    this.bankService.getLookup().subscribe({
+      next: (res) => (this.banks = res),
+      error: (err) => console.error('Failed to load banks:', err),
     });
   }
 
@@ -355,18 +382,21 @@ export class DeliveryComponent implements OnInit {
   }
 
   calculateTotalCharge() {
-    let total = 0;
-    let totalLabour = 0;
+    let totalRent = 0;
+    let totalDeliveryLabour = 0;
     this.deliveryDetails.controls.forEach((control) => {
       const charge = control.get('totalCharge')?.value || 0;
       const labour = control.get('labourCharge')?.value || 0;
-      total += Number(charge);
-      totalLabour += Number(labour);
+      totalRent += Number(charge);
+      totalDeliveryLabour += Number(labour);
     });
 
-    const grandTotal = total + totalLabour;
+    const grandTotal = totalRent + totalDeliveryLabour;
     this.deliveryForm.patchValue(
-      { chargeAmount: grandTotal },
+      {
+        chargeAmount: grandTotal,
+        transactionAmount: grandTotal
+      },
       { emitEvent: false },
     );
   }
@@ -579,79 +609,137 @@ export class DeliveryComponent implements OnInit {
 
     // If amount is not set (<= 0) or less than total charge, show confirmation
     if (txAmount < chargeAmount - 0.01) {
-      let title = '';
       let confirmHtml = '';
 
       if (txAmount <= 0) {
-        title = 'Confirm Unpaid Delivery';
         confirmHtml = `
-          <div class="mt-2 text-start">
-            <div class="p-3 rounded-3 bg-light border mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                <span class="text-muted small">Total Delivery Bill</span>
-                <span class="fw-bold text-dark fs-6">৳${chargeAmount.toFixed(2)}</span>
+          <div style="font-family: inherit; text-align: start; padding: 6px 2px 2px;">
+            <!-- Header Icon & Title -->
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="width: 58px; height: 58px; border-radius: 50%; background: #FEF2F2; border: 2px solid #FEE2E2; color: #DC2626; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12);">
+                <i class="fas fa-exclamation-triangle"></i>
               </div>
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                <span class="text-muted small">Collected Amount</span>
-                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">৳0.00 (None)</span>
+              <h4 style="margin: 14px 0 4px; font-weight: 700; color: #0F172A; font-size: 19px; letter-spacing: -0.01em;">Confirm Unpaid Delivery</h4>
+              <p style="margin: 0; color: #64748B; font-size: 13px;">No payment will be collected for this delivery</p>
+            </div>
+
+            <!-- Summary Card -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #EDF2F7;">
+                <span style="color: #475569; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center;">
+                  <i class="fas fa-file-invoice-dollar me-2" style="color: #64748B; font-size: 14px;"></i>Total Delivery Bill
+                </span>
+                <span style="color: #0F172A; font-weight: 700; font-size: 15px;">
+                  ৳${chargeAmount.toFixed(2)}
+                </span>
               </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="text-danger fw-semibold small">Remaining Customer Due</span>
-                <span class="fw-bold text-danger fs-6">৳${chargeAmount.toFixed(2)}</span>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #EDF2F7;">
+                <span style="color: #475569; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center;">
+                  <i class="fas fa-coins me-2" style="color: #94A3B8; font-size: 14px;"></i>Collected Amount
+                </span>
+                <span style="background: #F1F5F9; color: #64748B; font-weight: 600; font-size: 12px; padding: 3px 8px; border-radius: 6px;">
+                  ৳0.00 (None)
+                </span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px;">
+                <span style="color: #B91C1C; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center;">
+                  <i class="fas fa-exclamation-circle me-2" style="color: #DC2626; font-size: 14px;"></i>Remaining Customer Due
+                </span>
+                <span style="color: #DC2626; font-weight: 800; font-size: 16px;">
+                  ৳${chargeAmount.toFixed(2)}
+                </span>
               </div>
             </div>
-            <div class="alert alert-warning py-2 px-3 small border-0 rounded-2 mb-0 d-flex align-items-start">
-              <i class="fas fa-exclamation-triangle text-warning me-2 mt-1 fs-6"></i>
-              <span>No payment is being collected now. The entire <strong>৳${chargeAmount.toFixed(2)}</strong> will be recorded as outstanding customer due.</span>
+
+            <!-- Warning Notice Box -->
+            <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; text-align: left;">
+              <i class="fas fa-info-circle me-2 mt-1" style="color: #D97706; font-size: 14px; flex-shrink: 0;"></i>
+              <div style="color: #92400E; font-size: 12.5px; line-height: 1.5;">
+                No payment is being collected now. The entire <strong>৳${chargeAmount.toFixed(2)}</strong> will be recorded as outstanding customer due.
+              </div>
             </div>
-            <p class="text-center text-muted small mt-3 mb-0">Are you sure you want to complete this delivery without collecting payment?</p>
+
+            <p style="color: #475569; font-size: 13px; font-weight: 500; text-align: center; margin: 4px 0 0;">
+              Are you sure you want to complete this delivery without payment?
+            </p>
           </div>
         `;
       } else {
         const remainingDue = chargeAmount - txAmount;
-        title = 'Confirm Partial Payment';
         confirmHtml = `
-          <div class="mt-2 text-start">
-            <div class="p-3 rounded-3 bg-light border mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                <span class="text-muted small">Total Delivery Bill</span>
-                <span class="fw-bold text-dark fs-6">৳${chargeAmount.toFixed(2)}</span>
+          <div style="font-family: inherit; text-align: start; padding: 6px 2px 2px;">
+            <!-- Header Icon & Title -->
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="width: 58px; height: 58px; border-radius: 50%; background: #EFF6FF; border: 2px solid #DBEAFE; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);">
+                <i class="fas fa-hand-holding-usd"></i>
               </div>
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                <span class="text-muted small">Collecting Now</span>
-                <span class="fw-bold text-success fs-6">৳${txAmount.toFixed(2)}</span>
+              <h4 style="margin: 14px 0 4px; font-weight: 700; color: #0F172A; font-size: 19px; letter-spacing: -0.01em;">Confirm Partial Payment</h4>
+              <p style="margin: 0; color: #64748B; font-size: 13px;">Review the payment summary before completing delivery</p>
+            </div>
+
+            <!-- Summary Card -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #EDF2F7;">
+                <span style="color: #475569; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center;">
+                  <i class="fas fa-file-invoice-dollar me-2" style="color: #64748B; font-size: 14px;"></i>Total Delivery Bill
+                </span>
+                <span style="color: #0F172A; font-weight: 700; font-size: 15px;">
+                  ৳${chargeAmount.toFixed(2)}
+                </span>
               </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="text-danger fw-semibold small">Remaining Customer Due</span>
-                <span class="fw-bold text-danger fs-6">৳${remainingDue.toFixed(2)}</span>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #EDF2F7;">
+                <span style="color: #475569; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center;">
+                  <i class="fas fa-coins me-2" style="color: #10B981; font-size: 14px;"></i>Collecting Now
+                </span>
+                <span style="color: #059669; font-weight: 700; font-size: 15px;">
+                  ৳${txAmount.toFixed(2)}
+                </span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px;">
+                <span style="color: #B91C1C; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center;">
+                  <i class="fas fa-exclamation-circle me-2" style="color: #DC2626; font-size: 14px;"></i>Remaining Customer Due
+                </span>
+                <span style="color: #DC2626; font-weight: 800; font-size: 16px;">
+                  ৳${remainingDue.toFixed(2)}
+                </span>
               </div>
             </div>
-            <div class="alert alert-info py-2 px-3 small border-0 rounded-2 mb-0 d-flex align-items-start">
-              <i class="fas fa-info-circle text-info me-2 mt-1 fs-6"></i>
-              <span>Partial payment recorded. The remaining <strong>৳${remainingDue.toFixed(2)}</strong> will remain unpaid on the customer's balance.</span>
+
+            <!-- Soft Info Box -->
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; text-align: left;">
+              <i class="fas fa-info-circle me-2 mt-1" style="color: #2563EB; font-size: 14px; flex-shrink: 0;"></i>
+              <div style="color: #1E40AF; font-size: 12.5px; line-height: 1.5;">
+                Partial payment recorded. The remaining <strong>৳${remainingDue.toFixed(2)}</strong> will remain unpaid on the customer's balance.
+              </div>
             </div>
-            <p class="text-center text-muted small mt-3 mb-0">Are you sure you want to proceed with this partial payment?</p>
+
+            <p style="color: #475569; font-size: 13px; font-weight: 500; text-align: center; margin: 4px 0 0;">
+              Are you sure you want to proceed with this partial payment?
+            </p>
           </div>
         `;
       }
 
       Swal.fire({
-        title: title,
         html: confirmHtml,
-        icon: 'warning',
         showCancelButton: true,
         buttonsStyling: false,
         width: '460px',
+        background: '#FFFFFF',
+        padding: '24px 20px',
         customClass: {
-          popup: 'rounded-4 shadow-lg p-3',
-          title: 'fs-5 fw-bold text-dark pt-2 pb-0',
+          popup: 'rounded-4 shadow-lg border-0',
           htmlContainer: 'p-0 m-0',
-          actions: 'd-flex justify-content-center gap-2 mt-3 mb-2',
-          confirmButton: 'btn btn-primary px-4 py-2 fw-semibold rounded-2 shadow-sm',
-          cancelButton: 'btn btn-light border px-4 py-2 fw-semibold rounded-2 shadow-sm text-secondary',
+          actions: 'd-flex justify-content-center gap-3 mt-3 mb-1 w-100',
+          confirmButton: 'btn btn-primary px-4 py-2 fw-semibold rounded-2 shadow-sm d-inline-flex align-items-center',
+          cancelButton: 'btn btn-outline-secondary px-4 py-2 fw-semibold rounded-2 d-inline-flex align-items-center',
         },
-        confirmButtonText: 'Yes, Proceed',
-        cancelButtonText: 'No, Cancel',
+        confirmButtonText: '<i class="fas fa-check-circle me-2"></i> Yes, Proceed',
+        cancelButtonText: '<i class="fas fa-times me-2"></i> No, Cancel',
       }).then((result) => {
         if (result.value) {
           this.submitDelivery(formData);
@@ -692,6 +780,8 @@ export class DeliveryComponent implements OnInit {
       createTransaction: hasPayment,
       transactionAmount: hasPayment ? txAmount : undefined,
       paymentMethod: hasPayment ? formData.paymentMethod || 'CASH' : undefined,
+      bankId: hasPayment && formData.paymentMethod !== 'CASH' ? formData.bankId : undefined,
+      paymentReference: hasPayment && formData.paymentMethod !== 'CASH' ? formData.paymentReference : undefined,
       transactionNotes: formData.transactionNotes || undefined,
     };
 

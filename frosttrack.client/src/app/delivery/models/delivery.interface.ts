@@ -11,6 +11,8 @@ export interface IDeliveryRequest {
   createTransaction?: boolean;
   transactionAmount?: number;
   paymentMethod?: string;
+  bankId?: number;
+  paymentReference?: string;
   transactionNotes?: string;
 }
 

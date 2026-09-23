@@ -179,7 +179,7 @@
                             <!-- Transaction Head Rows -->
                             @for (
                               item of cashBookReport.items;
-                              track item.transactionHeadId;
+                              track i;
                               let i = $index
                             ) {
                               <tr>

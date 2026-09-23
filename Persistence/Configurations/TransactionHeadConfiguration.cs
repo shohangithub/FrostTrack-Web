@@ -15,13 +15,13 @@ public class TransactionHeadConfiguration : IEntityTypeConfiguration<Transaction
         builder.HasData(
             new TransactionHead
             {
-                Id = Guid.NewGuid(),
-                Code = "BILL_COLLECTION",
-                Name = "Bill Collection",
+                Id = Guid.Parse("601f7a40-0ea6-4cfd-b0c4-26e2b3f4e636"),
+                Code = "CUSTOMER_PAYMENT",
+                Name = "Customer Payment",
                 Type = TransactionHeadTypes.DEBIT,
-                DisplayType = "",
+                DisplayType = "Receipt",
                 Description = "Money received from customers for cold storage services",
-                UsageFor = UsageFor.BILL_COLLECTION,
+                UsageFor = UsageFor.CUSTOMER_PAYMENT,
                 IsSystem = true,
                 IsActive = true,
                 SortOrder = 1,

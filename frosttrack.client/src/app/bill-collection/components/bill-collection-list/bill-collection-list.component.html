@@ -3,7 +3,7 @@
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card mt-2">
-          <span class="card-label">Bill Collection Records</span>
+          <span class="card-label">Customer Payment Records</span>
           <div class="p-10">
             <div class="row">
               <div class="col-lg-6">
@@ -29,16 +29,9 @@
                           <button
                             class="btn btn-icon icon-left btn-primary rounded-button"
                             (click)="add()"
-                            title="Customer Bill Collection"
+                            title="New Customer Payment"
                           >
                             <i class="material-icons">add</i>
-                          </button>
-                          <button
-                            class="btn btn-icon icon-left btn-success rounded-button"
-                            [routerLink]="['/bill-collection/delivery-based']"
-                            title="Delivery Bill Collection"
-                          >
-                            <i class="material-icons">local_shipping</i>
                           </button>
                           @if (canDelete && isRowSelected) {
                             <button
@@ -121,29 +114,22 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <span class="text-success fw-bold">
-                    {{
-                      row.netAmount + (row.relatedLabourCharge || 0)
-                        | number: "1.2-2"
-                    }}
+                    ৳ {{ row.netAmount | number: "1.2-2" }}
                   </span>
-                  @if (row.relatedLabourCharge) {
-                    <small class="d-block text-muted">
-                      Charge: {{ row.netAmount | number: "1.2-2" }}<br />
-                      Labour: {{ row.relatedLabourCharge | number: "1.2-2" }}
-                    </small>
-                  }
                 </ng-template>
               </ngx-datatable-column>
 
-              <!-- <ngx-datatable-column
+              <ngx-datatable-column
                 name="Payment Method"
                 prop="paymentMethod"
-                [flexGrow]="1.2"
+                [flexGrow]="1"
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ getPaymentMethodLabel(row.paymentMethod) }}
+                  <span class="badge" [ngClass]="row.paymentMethod === 'CASH' ? 'bg-success' : 'bg-primary'">
+                    {{ row.paymentMethod }}
+                  </span>
                 </ng-template>
-              </ngx-datatable-column> -->
+              </ngx-datatable-column>
 
               <ngx-datatable-column
                 name="Description"

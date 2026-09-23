@@ -4,81 +4,46 @@ import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 import { BaseService } from '@core/service/base.service';
 import { ErrorHandlerService } from '@core/service/error-handler.service';
-import {
-  IBookingWithDueResponse,
-  IBookingLookupWithDue,
-} from '../models/bill-collection.interface';
-import {
-  IBillCollectionRequest,
-  ITransactionDetailResponse,
-} from 'app/transaction/models/transaction.interface';
+import { ITransactionDetailResponse } from 'app/transaction/models/transaction.interface';
 import { MessageHub } from '@config/message-hub';
 
-@Injectable({ providedIn: 'root' })
-export class BillCollectionService extends BaseService {
-  constructor(
-    httpClient: HttpClient,
-    errorHandlerService: ErrorHandlerService
-  ) {
-    super(httpClient, errorHandlerService);
-  }
+export interface IRecentCustomerPayment {
+  id: string;
+  transactionCode: string;
+  transactionDate: string;
+  amount: number;
+  paymentMethod: string;
+  paymentReference?: string;
+  note?: string;
+  bankName?: string;
+}
 
-  path: string = `${environment.apiUrl}/BillCollection`;
+export interface ICustomerBalanceSummary {
+  customerId: number;
+  customerName: string;
+  customerMobile: string;
+  openingBalance: number;
+  totalBookingCharges: number;
+  totalDeliveryCharges: number;
+  totalRecurringCharges: number;
+  totalAccrued: number;
+  totalPaid: number;
+  netDue: number;
+  activeBookingsCount: number;
+  recentPayments: IRecentCustomerPayment[];
+}
 
-  // Get bookings with due amounts for lookup
-  getBookingsWithDue(): Observable<IBookingLookupWithDue[]> {
-    return this.get<IBookingLookupWithDue[]>(
-      `${this.path}/bookings-with-due`,
-      'Load Bookings with Due'
-    );
-  }
-
-  // Get booking details including financial information
-  getBookingForBillCollection(
-    bookingId: string
-  ): Observable<IBookingWithDueResponse> {
-    return this.get<IBookingWithDueResponse>(
-      `${this.path}/booking/${bookingId}`,
-      'Load Booking Details'
-    );
-  }
-
-  // Create bill collection
-  createBillCollection(
-    payload: IBillCollectionRequest
-  ): Observable<ITransactionDetailResponse> {
-    return this.postWithSuccess<ITransactionDetailResponse>(
-      this.path,
-      payload,
-      'Create Bill Collection',
-      MessageHub.ADD
-    );
-  }
-
-  // Update bill collection
-  updateBillCollection(
-    id: string,
-    payload: IBillCollectionRequest
-  ): Observable<ITransactionDetailResponse> {
-    return this.putWithSuccess<ITransactionDetailResponse>(
-      `${this.path}/${id}`,
-      payload,
-      'Update Bill Collection',
-      MessageHub.UPDATE
-    );
-  }
-
-  // Create delivery-based bill collection
-  createDeliveryBillCollection(
-    payload: IDeliveryBillCollectionRequest
-  ): Observable<ITransactionDetailResponse> {
-    return this.postWithSuccess<ITransactionDetailResponse>(
-      `${this.path}/delivery-based`,
-      payload,
-      'Create Delivery Bill Collection',
-      MessageHub.ADD
-    );
-  }
+export interface ICustomerPaymentRequest {
+  transactionCode: string;
+  transactionDate: Date | string;
+  branchId: number;
+  customerId: number;
+  amount: number;
+  paymentMethod: string;
+  paymentReference?: string;
+  note?: string;
+  bankId?: number | null;
+  bookingId?: string | null;
 }
 
 export interface IDeliveryBillCollectionRequest {
@@ -94,4 +59,87 @@ export interface IDeliveryBillCollectionRequest {
   customerId?: number | null;
   bookingId?: string | null;
   advanceAmount?: number;
+}
+
+export interface ICustomerPaymentReportItem {
+  id: string;
+  transactionCode: string;
+  transactionDate: string;
+  customerId: number;
+  customerName: string;
+  customerMobile?: string;
+  customerAddress?: string;
+  amount: number;
+  paymentMethod: string;
+  bankName?: string;
+  paymentReference?: string;
+  note?: string;
+  createdTime: string;
+}
+
+export interface ICustomerPaymentReportFilter {
+  startDate?: string;
+  endDate?: string;
+  customerId?: number;
+  paymentMethod?: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class BillCollectionService extends BaseService {
+  path: string = `${environment.apiUrl}/BillCollection`;
+
+  constructor(
+    httpClient: HttpClient,
+    errorHandlerService: ErrorHandlerService
+  ) {
+    super(httpClient, errorHandlerService);
+  }
+
+  // Get live customer balance breakdown & recent payments
+  getCustomerBalance(customerId: number): Observable<ICustomerBalanceSummary> {
+    return this.get<ICustomerBalanceSummary>(
+      `${this.path}/customer-balance/${customerId}`,
+      'Get Customer Balance'
+    );
+  }
+
+  // Create independent customer payment
+  createCustomerPayment(
+    payload: ICustomerPaymentRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.postWithSuccess<ITransactionDetailResponse>(
+      `${this.path}/customer-payment`,
+      payload,
+      'Customer Payment',
+      MessageHub.ADD
+    );
+  }
+
+  // Legacy delivery-based bill collection fallback
+  createDeliveryBillCollection(
+    payload: IDeliveryBillCollectionRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.postWithSuccess<ITransactionDetailResponse>(
+      `${this.path}/delivery-based`,
+      payload,
+      'Delivery Bill Collection',
+      MessageHub.ADD
+    );
+  }
+
+  // Customer Payment Report
+  getCustomerPaymentReport(
+    filters: ICustomerPaymentReportFilter
+  ): Observable<ICustomerPaymentReportItem[]> {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.set('startDate', filters.startDate);
+    if (filters.endDate) params.set('endDate', filters.endDate);
+    if (filters.customerId) params.set('customerId', filters.customerId.toString());
+    if (filters.paymentMethod) params.set('paymentMethod', filters.paymentMethod);
+
+    return this.get<ICustomerPaymentReportItem[]>(
+      `${this.path}/report?${params.toString()}`,
+      'Get Customer Payment Report'
+    );
+  }
 }

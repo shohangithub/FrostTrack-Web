@@ -14,6 +14,8 @@ public class CreateDeliveryRequest
     public bool CreateTransaction { get; set; } = false;
     public decimal? TransactionAmount { get; set; }
     public string? PaymentMethod { get; set; }
+    public int? BankId { get; set; }
+    public string? PaymentReference { get; set; }
     public string? TransactionNotes { get; set; }
 }
 

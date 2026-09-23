@@ -435,8 +435,8 @@ export class MainComponent implements OnInit {
     this.stackBarChart = {
       series: [
         {
-          name: 'Bill Collection',
-          data: categoryTrends['BILL_COLLECTION'] || [],
+          name: 'Customer Payment',
+          data: categoryTrends['CUSTOMER_PAYMENT'] || categoryTrends['BILL_COLLECTION'] || [],
         },
         {
           name: 'Bill Payment',

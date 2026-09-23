@@ -51,8 +51,7 @@ public class TrialBalanceService : ITrialBalanceService
                      && t.TransactionDate >= fromUtc && t.TransactionDate < toUtc
                      && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE
-                     && t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                     && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .ToListAsync(cancellationToken);
 
         // Under standard accounting rules:

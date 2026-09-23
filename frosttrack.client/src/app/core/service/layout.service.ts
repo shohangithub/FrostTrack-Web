@@ -20,12 +20,13 @@ export class LayoutService {
   private routePath: any = [];
 
   loadCurrentRoute() {
-    const route_url = this.router.url;
-    if (route_url) {
-      const url_module = route_url.split('/').filter((x) => x != '');
+    const raw_url = this.router.url;
+    if (raw_url) {
+      const clean_url = raw_url.split('?')[0];
+      const url_module = clean_url.split('/').filter((x) => x != '');
 
       const route = ROUTES.find(
-        (x) => x.path == url_module[0] || x.path == route_url
+        (x) => x.path == url_module[0] || x.path == clean_url || '/' + x.path == clean_url
       );
       if (route) {
         this.routePath.length = 0;
@@ -34,7 +35,7 @@ export class LayoutService {
           title: route.title,
         });
         if (route.submenu.length > 0) {
-          this.deepDragSubMenu(route.submenu, url_module, route_url, 1);
+          this.deepDragSubMenu(route.submenu, url_module, clean_url, 1);
         }
       }
     }
@@ -46,7 +47,7 @@ export class LayoutService {
     route: string,
     loop: number
   ) {
-    const x = menus.find((x) => x.path == url_module[loop] || x.path == route);
+    const x = menus.find((x) => x.path == url_module[loop] || x.path == route || x.path == '/' + url_module.slice(0, loop + 1).join('/'));
     if (x) {
       this.routePath.push({ path: x.path, title: x.title });
       if (x.submenu.length > 0) {

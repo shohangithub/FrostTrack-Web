@@ -52,8 +52,11 @@ public static class UsageFor
 {
     public const string OPENING_BALANCE = "OPENING_BALANCE";
     public const string CLOSING_BALANCE = "CLOSING_BALANCE";
-    public const string BILL_COLLECTION = "BILL_COLLECTION"; // Money IN from customer bill payments
-    public const string LABOUR_CHARGE = "LABOUR_CHARGE"; // Money IN from customer bill payments
+    public const string CUSTOMER_PAYMENT = "CUSTOMER_PAYMENT"; // Independent customer payment (money IN)
+    [Obsolete("Use CUSTOMER_PAYMENT instead.")]
+    public const string BILL_COLLECTION = "BILL_COLLECTION";
+    [Obsolete("Use CUSTOMER_PAYMENT instead.")]
+    public const string LABOUR_CHARGE = "LABOUR_CHARGE";
     public const string TRANSACTION = "TRANSACTION"; // Generic money IN/OUT
     public const string BANK_TRANSACTION = "BANK_TRANSACTION"; // Money IN/OUT via bank
     public const string BOOKING = "BOOKING"; // Money IN from bookings

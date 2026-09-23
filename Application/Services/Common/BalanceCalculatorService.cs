@@ -9,15 +9,18 @@ public class BalanceCalculatorService : IBalanceCalculatorService
 {
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IRepository<Bank, int> _bankRepository;
     private readonly Guid _tenantId;
 
     public BalanceCalculatorService(
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
+        IRepository<Bank, int> bankRepository,
         ITenantProvider tenantProvider)
     {
         _transactionRepository = transactionRepository;
         _bankTransactionRepository = bankTransactionRepository;
+        _bankRepository = bankRepository;
         _tenantId = tenantProvider.GetTenantId();
     }
 
@@ -72,8 +75,7 @@ public class BalanceCalculatorService : IBalanceCalculatorService
                 t.TransactionDate < fromUtc &&
                 t.PaymentMethod == PaymentMethods.CASH &&
                 t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.LABOUR_CHARGE)
+                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
             .SumAsync(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT ? Math.Abs(t.NetAmount) : -Math.Abs(t.NetAmount), cancellationToken);
 
         // 3. Account for internal cash-to-bank deposits (cash outflow) and bank-to-cash withdrawals (cash inflow)
@@ -92,8 +94,12 @@ public class BalanceCalculatorService : IBalanceCalculatorService
 
     public async Task<decimal> GetBankOpeningBalanceAsync(DateTime fromUtc, DateTime toDate, CancellationToken cancellationToken = default)
     {
-        // Calculate bank opening balance as all active bank transactions prior to the report date (matching BankBook logic).
+        // Calculate bank opening balance as all active bank initial opening balances plus all active bank transactions prior to the report date (matching BankBook logic).
         // Bank deposits = money IN (+), Withdrawals = money OUT (-).
+        var bankInitialOpening = await _bankRepository.Query()
+            .Where(b => b.TenantId == _tenantId && b.IsActive && !b.IsDeleted)
+            .SumAsync(b => b.OpeningBalance, cancellationToken);
+
         var previousBankAmount = await _bankTransactionRepository.Query()
             .Where(bt =>
                 bt.TenantId == _tenantId &&
@@ -102,6 +108,6 @@ public class BalanceCalculatorService : IBalanceCalculatorService
                 bt.TransactionDate < fromUtc)
             .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
 
-        return previousBankAmount;
+        return bankInitialOpening + previousBankAmount;
     }
 }
