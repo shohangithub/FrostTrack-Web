@@ -366,3 +366,4 @@ FodyWeavers.xsd
 /frosttrack.client/.vscode/extensions.json
 /frosttrack.client/dist/
 /frosttrack.client/node_modules/
+/FrostTrack.Server/appsettings.Development.json
