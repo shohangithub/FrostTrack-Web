@@ -161,22 +161,23 @@ public class DeliveryService : IDeliveryService
             var datePart = currentDate.ToString("yyMMdd");
             var prefix = "DEL";
 
-            var lastCode = await _transactionRepository.Query()
+            var existingCodes = await _transactionRepository.Query()
                 .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
-                .OrderByDescending(x => x.TransactionCode)
                 .Select(x => x.TransactionCode)
-                .FirstOrDefaultAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            int nextSequence = 1;
-            if (!string.IsNullOrEmpty(lastCode))
+            int maxSequence = 0;
+            var seqPattern = new System.Text.RegularExpressions.Regex($@"^{System.Text.RegularExpressions.Regex.Escape(prefix)}-{datePart}-(\d+)");
+            foreach (var code in existingCodes)
             {
-                var parts = lastCode.Split('-');
-                if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+                var match = seqPattern.Match(code);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int seq))
                 {
-                    nextSequence = lastSequence + 1;
+                    if (seq > maxSequence) maxSequence = seq;
                 }
             }
 
+            int nextSequence = maxSequence + 1;
             var baseTransactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence);
             Guid? mainTxId = null;
 

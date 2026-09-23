@@ -87,26 +87,24 @@ public class CodeGenerationService : ICodeGenerationService
             var datePart = DateTime.UtcNow.ToString("yyMMdd");
             var searchPattern = $"{prefix}-{datePart}-";
 
-            // Optimized query with pattern matching - using Expression for EF Core translation
-            var lastCode = await query
+            var existingCodes = await query
                 .AsNoTracking()
                 .Select(codeSelector)
                 .Where(code => code.StartsWith(searchPattern))
-                .OrderByDescending(code => code)
-                .FirstOrDefaultAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            int nextSequence = 1;
-
-            if (!string.IsNullOrEmpty(lastCode))
+            int maxSequence = 0;
+            var seqPattern = new Regex($@"^{Regex.Escape(prefix)}-{datePart}-(\d+)");
+            foreach (var code in existingCodes)
             {
-                // Use regex for safer parsing
-                var match = Regex.Match(lastCode, @"-(\d+)$");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int lastSequence))
+                var match = seqPattern.Match(code);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int seq))
                 {
-                    nextSequence = lastSequence + 1;
+                    if (seq > maxSequence) maxSequence = seq;
                 }
             }
 
+            int nextSequence = maxSequence + 1;
             return $"{prefix}-{datePart}-{nextSequence:D3}";
         }
         finally
