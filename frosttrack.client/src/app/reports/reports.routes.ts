@@ -43,6 +43,13 @@ export const reportRoutes: Route[] = [
         (m) => m.CashbookComponent,
       ),
   },
+  {
+    path: 'customer-due-report',
+    loadComponent: () =>
+      import(
+        './components/customer-due-report/customer-due-report.component'
+      ).then((m) => m.CustomerDueReportComponent),
+  },
   // {
   //   path: 'ledger-book',
   //   loadComponent: () =>

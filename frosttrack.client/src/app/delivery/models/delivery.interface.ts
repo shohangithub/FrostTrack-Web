@@ -78,6 +78,7 @@ export interface IDeliveryResponse {
   notes?: string;
   chargeAmount: number;
   adjustmentValue: number;
+  collectedAmount?: number;
   paymentStatus: string;
   paymentDate?: Date;
   transactionId?: string;
@@ -112,6 +113,7 @@ export interface IDeliveryDetailResponse {
   baseQuantity: number;
   chargeAmount: number;
   adjustmentValue: number;
+  collectedAmount?: number;
   bookingQuantity: number;
   totalDeliveredQuantity: number;
   remainingQuantity: number;

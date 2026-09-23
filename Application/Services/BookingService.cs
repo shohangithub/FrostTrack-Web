@@ -1,3 +1,5 @@
+using Application.Framework;
+
 namespace Application.Services;
 
 public class BookingService : IBookingService
@@ -491,83 +493,65 @@ public class BookingService : IBookingService
             .OrderBy(d => d.DeliveryDate)
             .ToListAsync(cancellationToken);
 
-        var deliveryIds = deliveries.Select(d => d.Id).ToList();
-
-        // Get all transactions for this booking and its deliveries
-        var transactions = await _transactionRepository.Query().Include(t => t.TransactionHead)
-            .Where(t => !t.IsDeleted && (
-                t.BookingId == id || 
-                (t.DeliveryId.HasValue && deliveryIds.Contains(t.DeliveryId.Value))
-            ))
-            .ToListAsync(cancellationToken);
-
-        response.Deliveries = deliveries.Select(d =>
+        response.Deliveries = deliveries.Select(d => new DeliveryInfoResponse
         {
-            var delTransactions = transactions.Where(t => t.DeliveryId == d.Id).ToList();
-            var totalRent = d.DeliveryDetails.Any() ? d.DeliveryDetails.Sum(dd => dd.ChargeAmount) : d.ChargeAmount;
-            var totalLabour = d.DeliveryDetails.Sum(dd => dd.LabourCharge);
-
-            decimal paidRent = 0m;
-            decimal paidLabour = 0m;
-
-            if (delTransactions.Any())
+            Id = d.Id,
+            DeliveryNumber = d.DeliveryNumber,
+            DeliveryDate = d.DeliveryDate,
+            ChargeAmount = d.DeliveryDetails.Any() ? d.DeliveryDetails.Sum(dd => dd.ChargeAmount) : d.ChargeAmount,
+            AdjustmentValue = d.AdjustmentValue,
+            PaymentStatus = d.PaymentStatus,
+            CollectedAmount = d.CollectedAmount,
+            DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
             {
-                paidRent = delTransactions
-                    .Where(t => t.TransactionHead?.UsageFor == UsageFor.BILL_COLLECTION)
-                    .Sum(t => t.Amount);
-
-                paidLabour = delTransactions
-                    .Where(t => t.TransactionHead?.UsageFor == UsageFor.LABOUR_CHARGE)
-                    .Sum(t => t.Amount);
-            }
-            else if (d.PaymentStatus == PaymentStatuses.PAID)
-            {
-                paidRent = totalRent;
-                paidLabour = totalLabour;
-            }
-            else
-            {
-                // Non-payment delivery: strictly 0 paid
-                paidRent = 0m;
-                paidLabour = 0m;
-            }
-
-            return new DeliveryInfoResponse
-            {
-                Id = d.Id,
-                DeliveryNumber = d.DeliveryNumber,
-                DeliveryDate = d.DeliveryDate,
-                ChargeAmount = totalRent,
-                AdjustmentValue = d.AdjustmentValue,
-                PaymentStatus = d.PaymentStatus,
-                PaidRentAmount = paidRent,
-                PaidLabourAmount = paidLabour,
-                TotalPaidAmount = paidRent + paidLabour,
-                DeliveryDetails = d.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
-                {
-                    Id = dd.Id,
-                    ProductId = dd.BookingDetail?.ProductId ?? 0,
-                    ProductName = dd.BookingDetail?.Product?.ProductName ?? "",
-                    DeliveryUnitId = dd.DeliveryUnitId,
-                    DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
-                    DeliveryQuantity = dd.DeliveryQuantity,
-                    BaseQuantity = dd.BaseQuantity,
-                    ChargeAmount = dd.ChargeAmount,
-                    LabourCharge = dd.LabourCharge
-                }).ToList()
-            };
+                Id = dd.Id,
+                ProductId = dd.BookingDetail?.ProductId ?? 0,
+                ProductName = dd.BookingDetail?.Product?.ProductName ?? "",
+                DeliveryUnitId = dd.DeliveryUnitId,
+                DeliveryUnitName = dd.DeliveryUnit?.UnitName ?? "",
+                DeliveryQuantity = dd.DeliveryQuantity,
+                BaseQuantity = dd.BaseQuantity,
+                ChargeAmount = dd.ChargeAmount,
+                LabourCharge = dd.LabourCharge,
+                CollectedAmount = dd.CollectedAmount
+            }).ToList()
         }).ToList();
 
         return response;
     }
 
-    public async Task<IEnumerable<CustomerDueSummaryResponse>> GetCustomerDueSummaryAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CustomerDueSummaryResponse>> GetCustomerDueSummaryAsync(
+        DateTime? reportDate = null,
+        int? customerId = null,
+        string? status = null,
+        bool? dueOnly = null,
+        string? searchTerm = null,
+        CancellationToken cancellationToken = default)
     {
-        var bookings = await _repository.Query()
+        DateTime asOfDate;
+        if (reportDate.HasValue)
+        {
+            var toLocalExclusive = reportDate.Value.Date.AddDays(1);
+            var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local).ToUniversalTime();
+            var dateWithUTCTime = reportDate.Value.GetDateUtcTime();
+            asOfDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
+        }
+        else
+        {
+            asOfDate = DateTime.UtcNow;
+        }
+
+        var bookingsQuery = _repository.Query()
             .Include(b => b.Customer)
             .Include(b => b.BookingDetails)
-            .Where(b => !b.IsDeleted && !b.IsArchived)
-            .ToListAsync(cancellationToken);
+            .Where(b => !b.IsDeleted && !b.IsArchived && b.BookingDate <= asOfDate);
+
+        if (customerId.HasValue && customerId.Value > 0)
+        {
+            bookingsQuery = bookingsQuery.Where(b => b.CustomerId == customerId.Value);
+        }
+
+        var bookings = await bookingsQuery.ToListAsync(cancellationToken);
 
         if (!bookings.Any()) return [];
 
@@ -575,7 +559,7 @@ public class BookingService : IBookingService
 
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails)
-            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted)
+            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted && d.DeliveryDate <= asOfDate)
             .ToListAsync(cancellationToken);
 
         var customerIds = bookings.Select(b => b.CustomerId).Distinct().ToList();
@@ -583,6 +567,7 @@ public class BookingService : IBookingService
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
+                        && t.TransactionDate <= asOfDate
                         && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
                             || (t.CustomerId.HasValue && customerIds.Contains(t.CustomerId.Value)))
                         && t.TransactionHead != null
@@ -591,12 +576,35 @@ public class BookingService : IBookingService
                             || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE))
             .Select(t => new
             {
+                t.Id,
+                t.TransactionCode,
+                t.DeliveryId,
                 t.BookingId,
                 t.CustomerId,
                 t.Amount,
                 t.TransactionDate
             })
             .ToListAsync(cancellationToken);
+
+        static string GetPaymentEventKey(Guid? deliveryId, string? transactionCode, Guid id)
+        {
+            if (deliveryId.HasValue)
+            {
+                return $"DEL_{deliveryId.Value}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(transactionCode))
+            {
+                var code = transactionCode.Trim();
+                if (code.EndsWith("-L", StringComparison.OrdinalIgnoreCase))
+                {
+                    code = code[..^2];
+                }
+                return $"TX_{code}";
+            }
+
+            return $"ID_{id}";
+        }
 
         var paymentsByBooking = payments
             .Where(x => x.BookingId.HasValue)
@@ -614,7 +622,6 @@ public class BookingService : IBookingService
 
         var customerGroups = bookings.GroupBy(b => b.CustomerId);
         var summaries = new List<CustomerDueSummaryResponse>();
-        var now = DateTime.UtcNow;
 
         foreach (var group in customerGroups)
         {
@@ -635,7 +642,7 @@ public class BookingService : IBookingService
                     booking, 
                     activeDetails, 
                     bDeliveries, 
-                    now);
+                    asOfDate);
 
                 totalAccrued += bookingAccrued;
                 totalPendingRecurringCharge += pendingRecurringCharge;
@@ -654,22 +661,33 @@ public class BookingService : IBookingService
             var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
 
             var oldestBooking = customerBookings.OrderBy(b => b.BookingDate).First();
-            var daysSinceOldestBooking = (now - oldestBooking.BookingDate).Days;
+            var daysSinceOldestBooking = (asOfDate - oldestBooking.BookingDate).Days;
 
-            // Determine last payment date across all bookings or customer-level payments of this customer
+            // Determine last payment date and transaction-wise amount across all bookings or customer-level payments of this customer
             var customerBookingIds = customerBookings.Select(b => b.Id).ToHashSet();
-            var lastPaymentDate = payments
+            var customerPayments = payments
                 .Where(p => (p.BookingId.HasValue && customerBookingIds.Contains(p.BookingId.Value)) || (p.CustomerId.HasValue && p.CustomerId.Value == group.Key))
-                .Select(p => (DateTime?)p.TransactionDate)
-                .DefaultIfEmpty(null)
-                .Max();
+                .ToList();
+
+            var lastPaymentGroup = customerPayments
+                .GroupBy(p => GetPaymentEventKey(p.DeliveryId, p.TransactionCode, p.Id))
+                .Select(g => new
+                {
+                    TransactionDate = g.Max(x => x.TransactionDate),
+                    TotalAmount = g.Sum(x => x.Amount)
+                })
+                .OrderByDescending(x => x.TransactionDate)
+                .FirstOrDefault();
+
+            var lastPaymentDate = lastPaymentGroup?.TransactionDate;
+            var lastPaymentAmount = lastPaymentGroup?.TotalAmount;
             var daysSinceLastPayment = lastPaymentDate.HasValue
-                ? (now - lastPaymentDate.Value).Days
+                ? (asOfDate - lastPaymentDate.Value).Days
                 : daysSinceOldestBooking;
 
-            var status = "normal";
-            if (totalDue > 0 && daysSinceLastPayment >= 30) status = "danger";
-            else if (totalDue > 0 && daysSinceLastPayment >= 25) status = "warning";
+            var stat = "normal";
+            if (totalDue > 0 && daysSinceLastPayment >= 30) stat = "danger";
+            else if (totalDue > 0 && daysSinceLastPayment >= 25) stat = "warning";
 
             summaries.Add(new CustomerDueSummaryResponse
             {
@@ -686,9 +704,32 @@ public class BookingService : IBookingService
                 OldestBookingDate = oldestBooking.BookingDate,
                 DaysSinceOldestBooking = daysSinceOldestBooking,
                 LastPaymentDate = lastPaymentDate,
+                LastPaymentAmount = lastPaymentAmount,
                 DaysSinceLastPayment = daysSinceLastPayment,
-                Status = status
+                Status = stat
             });
+        }
+
+        // Server-side status filter
+        if (!string.IsNullOrWhiteSpace(status) && !status.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            summaries = summaries.Where(s => s.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        // Server-side due only filter
+        if (dueOnly == true)
+        {
+            summaries = summaries.Where(s => s.TotalDue > 0).ToList();
+        }
+
+        // Server-side search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            summaries = summaries.Where(s =>
+                (s.CustomerName != null && s.CustomerName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (s.CustomerMobile != null && s.CustomerMobile.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (s.CustomerAddress != null && s.CustomerAddress.Contains(term, StringComparison.OrdinalIgnoreCase))).ToList();
         }
 
         return summaries.OrderByDescending(c => c.TotalDue);

@@ -15,7 +15,13 @@ public interface IBookingService
     Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default);
     Task<string> GenerateBookingNumber(CancellationToken cancellationToken = default);
     Task<BookingInvoiceWithDeliveryResponse?> GetInvoiceWithDeliveryAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<CustomerDueSummaryResponse>> GetCustomerDueSummaryAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<CustomerDueSummaryResponse>> GetCustomerDueSummaryAsync(
+        DateTime? reportDate = null,
+        int? customerId = null,
+        string? status = null,
+        bool? dueOnly = null,
+        string? searchTerm = null,
+        CancellationToken cancellationToken = default);
     Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default);
     Task<CustomerOutstandingResponse> GetCustomerOutstandingAsync(int customerId, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);

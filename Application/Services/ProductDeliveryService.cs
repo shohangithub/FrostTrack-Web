@@ -98,6 +98,41 @@ public class DeliveryService : IDeliveryService
         var totalRentCharge = entity.DeliveryDetails?.Sum(d => d.ChargeAmount + d.AdjustmentValue) ?? 0m;
         var deliveryGrandTotal = totalRentCharge + totalLabourCharge;
 
+        var paymentAmount = request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0
+            ? request.TransactionAmount.Value
+            : 0m;
+
+        entity.CollectedAmount = paymentAmount;
+        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
+        {
+            if (entity.DeliveryDetails.Count == 1)
+            {
+                entity.DeliveryDetails.First().CollectedAmount = paymentAmount;
+            }
+            else
+            {
+                var remainingToAllocate = paymentAmount;
+                var detailsList = entity.DeliveryDetails.ToList();
+                for (int i = 0; i < detailsList.Count; i++)
+                {
+                    if (i == detailsList.Count - 1)
+                    {
+                        detailsList[i].CollectedAmount = remainingToAllocate;
+                    }
+                    else
+                    {
+                        var detailTotal = detailsList[i].ChargeAmount + detailsList[i].LabourCharge + detailsList[i].AdjustmentValue;
+                        var share = deliveryGrandTotal > 0
+                            ? Math.Round(paymentAmount * (detailTotal / deliveryGrandTotal), 2)
+                            : 0m;
+                        share = Math.Min(share, remainingToAllocate);
+                        detailsList[i].CollectedAmount = share;
+                        remainingToAllocate -= share;
+                    }
+                }
+            }
+        }
+
         // Set initial payment status
         entity.PaymentStatus = PaymentStatuses.UNPAID;
         entity.PaymentDate = null;
@@ -108,7 +143,6 @@ public class DeliveryService : IDeliveryService
         // Create transactions if collection amount is provided and > 0
         if (request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0)
         {
-            var paymentAmount = request.TransactionAmount.Value;
             if (paymentAmount > deliveryGrandTotal + 0.01m)
             {
                 throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
@@ -453,6 +487,7 @@ public class DeliveryService : IDeliveryService
             BranchName = x.Branch.Name,
             ChargeAmount = x.ChargeAmount,
             AdjustmentValue = x.AdjustmentValue,
+            CollectedAmount = x.CollectedAmount,
             IsDeleted = x.IsDeleted,
             DeletedAt = x.DeletedAt,
             IsArchived = x.IsArchived,
@@ -472,7 +507,8 @@ public class DeliveryService : IDeliveryService
                 BaseQuantity = d.BaseQuantity,
                 ChargeAmount = d.ChargeAmount,
                 LabourCharge = d.LabourCharge,
-                AdjustmentValue = d.AdjustmentValue
+                AdjustmentValue = d.AdjustmentValue,
+                CollectedAmount = d.CollectedAmount
             }).ToList()
         });
 
@@ -1013,36 +1049,11 @@ public class DeliveryService : IDeliveryService
             BillType = d.BookingDetail?.BillType ?? ""
         }).ToList();
 
-        // // Sum up all bill collection transactions for these deliveries
-        // var totalPaid = await _transactionRepository.Query().Include(t => t.TransactionHead)
-        //     .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BILL_COLLECTION
-        //              && t.BookingId == entity.BookingId
-        //              && t.TransactionDate <= entity.DeliveryDate.AddMinutes(1))
-        //     .SumAsync(t => t.Amount);
-
-        // Calculate Total Paid Amount (from all transactions for this booking)
-        response.TotalPaidAmount = entity.PaymentStatus == PaymentStatuses.PAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.LabourCharge) : 0;
-
-        // Sum up all extra charge transactions for this booking
-        // var totalExtraCharge = await _transactionRepository.Query().Include(t => t.TransactionHead)
-        //     .Where(t => t.TransactionHead!.UsageFor ==  UsageFor.BOOKING_EXTRA_CHARGE
-        //              && t.BookingId == entity.BookingId
-        //              && t.TransactionDate <= entity.DeliveryDate)
-        //     .SumAsync(t => t.Amount);
-
-
-
+        // Financial summary based on immutable delivery-time CollectedAmount
+        var totalDeliveryBill = response.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.LabourCharge) + entity.AdjustmentValue;
+        response.TotalPaidAmount = entity.CollectedAmount;
         response.ExtraCharge = 0;
-        //// Calculate Extra Charge (total charge amount from all deliveries for this booking)
-        //var allDeliveries = await _repository.Query()
-        //    .Where(d => d.BookingId == entity.BookingId)
-        //    .ToListAsync();
-
-        //var totalDeliveryCharges = allDeliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue);
-        //response.ExtraCharge = totalDeliveryCharges - response.TotalBookingAmount;
-
-        // Calculate Due Amount
-        response.DueAmount = entity.PaymentStatus == PaymentStatuses.UNPAID ? response.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.LabourCharge) : 0;
+        response.DueAmount = Math.Max(0, totalDeliveryBill - entity.CollectedAmount);
 
         return response;
     }

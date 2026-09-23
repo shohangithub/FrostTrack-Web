@@ -172,4 +172,24 @@ export class BookingInvoiceWithDeliveryPrintComponent implements OnInit {
       0,
     );
   }
+
+  getCollectedRent(delivery: any): number {
+    const collected = delivery?.collectedAmount ?? 0;
+    if (collected <= 0) return 0;
+    const labour = this.getTotalLabourCharge(delivery.deliveryDetails);
+    const labourPaid = Math.min(labour, collected);
+    return collected - labourPaid;
+  }
+
+  getCollectedLabour(delivery: any): number {
+    const collected = delivery?.collectedAmount ?? 0;
+    if (collected <= 0) return 0;
+    const labour = this.getTotalLabourCharge(delivery.deliveryDetails);
+    return Math.min(labour, collected);
+  }
+
+  getTotalCollected(delivery: any): number {
+    return delivery?.collectedAmount ?? 0;
+  }
 }
+

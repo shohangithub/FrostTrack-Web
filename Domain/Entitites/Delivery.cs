@@ -28,11 +28,8 @@ public class Delivery : AuditableEntity<Guid>
     public Guid? TransactionId { get; set; }
     public Transaction? Transaction { get; set; }
 
-    // [Column(TypeName = "decimal(10, 2)")]
-    // public required decimal DiscountAmount { get; set; } = 0;
-
-    // [Column(TypeName = "decimal(10, 2)")]
-    // public required decimal PaidAmount { get; set; } = 0;
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal CollectedAmount { get; set; } = 0;
 
     public ICollection<DeliveryDetail> DeliveryDetails { get; set; } = [];
 }

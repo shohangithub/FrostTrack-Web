@@ -321,25 +321,60 @@ export class DeliveryBillCollectionComponent implements OnInit {
     this.updateTotalAmount();
   }
 
+  getDeliveryDue(d: IDeliveryResponse): number {
+    if (d.dueAmount !== undefined && d.dueAmount !== null) {
+      return d.dueAmount;
+    }
+    const total =
+      (d.chargeAmount || 0) + (d.labourCharge || 0) + (d.adjustmentValue || 0);
+    const paid = d.paidAmount || 0;
+    return Math.max(0, total - paid);
+  }
+
+  getDeliveryTotal(d: IDeliveryResponse): number {
+    return (
+      (d.chargeAmount || 0) + (d.labourCharge || 0) + (d.adjustmentValue || 0)
+    );
+  }
+
   get selectedTotal(): number {
     return this.unpaidDeliveries
       .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce(
-        (sum, d) => sum + d.chargeAmount + d.labourCharge + d.adjustmentValue,
-        0,
-      );
+      .reduce((sum, d) => sum + this.getDeliveryDue(d), 0);
+  }
+
+  get selectedGrossTotal(): number {
+    return this.unpaidDeliveries
+      .filter((d) => this.selectedDeliveries.has(d.id))
+      .reduce((sum, d) => sum + this.getDeliveryTotal(d), 0);
+  }
+
+  get selectedPaid(): number {
+    return this.unpaidDeliveries
+      .filter((d) => this.selectedDeliveries.has(d.id))
+      .reduce((sum, d) => sum + (d.paidAmount || 0), 0);
   }
 
   get selectedCharges(): number {
     return this.unpaidDeliveries
       .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce((sum, d) => sum + d.chargeAmount + d.adjustmentValue, 0);
+      .reduce((sum, d) => {
+        const labour = d.labourCharge || 0;
+        const paid = d.paidAmount || 0;
+        const totalRent = (d.chargeAmount || 0) + (d.adjustmentValue || 0);
+        const rentPaid = Math.max(0, paid - labour);
+        return sum + Math.max(0, totalRent - rentPaid);
+      }, 0);
   }
 
   get selectedLabour(): number {
     return this.unpaidDeliveries
       .filter((d) => this.selectedDeliveries.has(d.id))
-      .reduce((sum, d) => sum + d.labourCharge, 0);
+      .reduce((sum, d) => {
+        const labour = d.labourCharge || 0;
+        const paid = d.paidAmount || 0;
+        return sum + Math.max(0, labour - paid);
+      }, 0);
   }
 
   get selectedCount(): number {
@@ -462,7 +497,7 @@ export class DeliveryBillCollectionComponent implements OnInit {
       }
       if (formValue.amount < this.selectedTotal - 0.01) {
         this.toastr.error(
-          `Amount (৳${formValue.amount}) cannot be less than total delivery bill (৳${this.selectedTotal})`,
+          `Amount (৳${formValue.amount}) cannot be less than total delivery due (৳${this.selectedTotal})`,
         );
         return;
       }
@@ -494,11 +529,11 @@ export class DeliveryBillCollectionComponent implements OnInit {
 
     this.billCollectionService.createDeliveryBillCollection(payload).subscribe({
       next: (response) => {
-        this.toastr.success(
-          advanceAmount > 0
-            ? 'Bill collection & advance recorded successfully!'
-            : 'Delivery bill collection created successfully!',
-        );
+        // this.toastr.success(
+        //   advanceAmount > 0
+        //     ? 'Bill collection & advance recorded successfully!'
+        //     : 'Delivery bill collection created successfully!',
+        // );
         if (printAfterSave) {
           this.router.navigate([
             '/transaction/receipt-print',

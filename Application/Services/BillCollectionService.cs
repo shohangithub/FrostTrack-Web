@@ -325,15 +325,60 @@ public class BillCollectionService : IBillCollectionService
             if (deliveries.Count != request.DeliveryIds!.Count)
                 throw new Exception("Some deliveries are not found or already paid");
 
-            // Calculate total charges including labour
-            var totalCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount + dd.AdjustmentValue));
-            var totalLabourCharges = deliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
-            var deliveryGrandTotal = totalCharges + totalLabourCharges;
+            // Query existing payments for these deliveries to account for prior payments (e.g. paid during delivery)
+            var deliveryIds = deliveries.Select(d => d.Id).ToList();
+            var deliveryTxIds = deliveries.Where(d => d.TransactionId.HasValue).Select(d => d.TransactionId!.Value).ToList();
 
-            if (request.Amount < deliveryGrandTotal - 0.01m)
-                throw new Exception($"Payment amount ({request.Amount:N2}) cannot be less than total delivery charges ({deliveryGrandTotal:N2})");
+            var existingPayments = await _transactionRepository.Query()
+                .Include(t => t.TransactionHead)
+                .Where(t => !t.IsDeleted
+                         && t.TransactionHead != null
+                         && (t.TransactionHead.UsageFor == UsageFor.BILL_COLLECTION || t.TransactionHead.UsageFor == UsageFor.LABOUR_CHARGE)
+                         && ((t.DeliveryId.HasValue && deliveryIds.Contains(t.DeliveryId.Value)) || deliveryTxIds.Contains(t.Id)))
+                .Select(t => new { t.Id, t.DeliveryId, t.Amount, UsageFor = t.TransactionHead!.UsageFor })
+                .ToListAsync(cancellationToken);
 
-            var excessAdvance = Math.Max(0m, request.Amount - deliveryGrandTotal);
+            decimal remainingStorageCharges = 0m;
+            decimal remainingLabourCharges = 0m;
+
+            foreach (var delivery in deliveries)
+            {
+                var delStorageCharge = delivery.DeliveryDetails.Sum(dd => dd.ChargeAmount) + delivery.AdjustmentValue;
+                var delLabourCharge = delivery.DeliveryDetails.Sum(dd => dd.LabourCharge);
+                var delTotalBill = delStorageCharge + delLabourCharge;
+
+                var delStoragePaid = existingPayments
+                    .Where(p => (p.DeliveryId.HasValue && p.DeliveryId.Value == delivery.Id) || (delivery.TransactionId.HasValue && p.Id == delivery.TransactionId.Value))
+                    .Where(p => p.UsageFor == UsageFor.BILL_COLLECTION)
+                    .Sum(p => p.Amount);
+
+                var delLabourPaid = existingPayments
+                    .Where(p => (p.DeliveryId.HasValue && p.DeliveryId.Value == delivery.Id) || (delivery.TransactionId.HasValue && p.Id == delivery.TransactionId.Value))
+                    .Where(p => p.UsageFor == UsageFor.LABOUR_CHARGE)
+                    .Sum(p => p.Amount);
+
+                var delTotalPaid = delStoragePaid + delLabourPaid;
+                var delDue = Math.Max(0m, delTotalBill - delTotalPaid);
+
+                var remLabour = Math.Max(0m, delLabourCharge - delLabourPaid);
+                var remStorage = Math.Max(0m, delStorageCharge - delStoragePaid);
+
+                if (remStorage + remLabour > delDue)
+                {
+                    remLabour = Math.Min(remLabour, delDue);
+                    remStorage = delDue - remLabour;
+                }
+
+                remainingStorageCharges += remStorage;
+                remainingLabourCharges += remLabour;
+            }
+
+            var deliveryGrandDue = remainingStorageCharges + remainingLabourCharges;
+
+            if (request.Amount < deliveryGrandDue - 0.01m)
+                throw new Exception($"Payment amount ({request.Amount:N2}) cannot be less than remaining delivery dues ({deliveryGrandDue:N2})");
+
+            var excessAdvance = Math.Max(0m, request.Amount - deliveryGrandDue);
 
             var deliveryCodes = string.Join(", ", deliveries.Select(d => d.DeliveryNumber));
             var firstDelivery = deliveries.FirstOrDefault();
@@ -345,7 +390,7 @@ public class BillCollectionService : IBillCollectionService
                 : null;
             var customerName = customer?.CustomerName ?? firstDelivery?.Booking?.Customer?.CustomerName ?? "Customer";
 
-            var mainAmount = totalCharges + excessAdvance;
+            var mainAmount = remainingStorageCharges + excessAdvance;
             var description = excessAdvance > 0
                 ? $"Bill Collection - Deliveries: {deliveryCodes} (Advance: {excessAdvance:N2}) - {customerName}"
                 : $"Bill Collection - Deliveries: {deliveryCodes} - {customerName}";
@@ -373,8 +418,8 @@ public class BillCollectionService : IBillCollectionService
             _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
             await _transactionRepository.AddAsync(entity, cancellationToken);
 
-            // Create separate transaction for labour charges if any
-            if (totalLabourCharges > 0)
+            // Create separate transaction for remaining unpaid labour charges if any
+            if (remainingLabourCharges > 0)
             {
                 var labourEntity = new Transaction
                 {
@@ -385,7 +430,7 @@ public class BillCollectionService : IBillCollectionService
                     BranchId = request.BranchId,
                     BookingId = bookingId,
                     CustomerId = customerId,
-                    Amount = totalLabourCharges,
+                    Amount = remainingLabourCharges,
                     PaymentMethod = request.PaymentMethod,
                     PaymentReference = request.PaymentReference,
                     BankId = request.BankId,
@@ -393,7 +438,7 @@ public class BillCollectionService : IBillCollectionService
                     Description = $"Labour Charge - Deliveries: {deliveryCodes} - {customerName}",
                     DiscountAmount = 0,
                     AdjustmentValue = 0,
-                    NetAmount = totalLabourCharges
+                    NetAmount = remainingLabourCharges
                 };
 
                 _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(labourEntity);

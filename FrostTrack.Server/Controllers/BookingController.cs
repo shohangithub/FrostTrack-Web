@@ -132,9 +132,16 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("customer-due-summary")]
-    public async Task<ActionResult<IEnumerable<CustomerDueSummaryResponse>>> GetCustomerDueSummary(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<CustomerDueSummaryResponse>>> GetCustomerDueSummary(
+        [FromQuery] DateTime? reportDate,
+        [FromQuery] int? customerId,
+        [FromQuery] string? status,
+        [FromQuery] bool? dueOnly,
+        [FromQuery] string? searchTerm,
+        CancellationToken cancellationToken)
     {
-        var dueSummary = await _bookingService.GetCustomerDueSummaryAsync(cancellationToken);
+        var dueSummary = await _bookingService.GetCustomerDueSummaryAsync(
+            reportDate, customerId, status, dueOnly, searchTerm, cancellationToken);
         return Ok(dueSummary);
     }
 

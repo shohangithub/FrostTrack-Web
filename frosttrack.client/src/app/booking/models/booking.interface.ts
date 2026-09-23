@@ -119,10 +119,8 @@ export interface IDeliveryInfoResponse {
   deliveryDate: string;
   chargeAmount: number;
   adjustmentValue: number;
+  collectedAmount?: number;
   paymentStatus?: string;
-  paidRentAmount?: number;
-  paidLabourAmount?: number;
-  totalPaidAmount?: number;
   deliveryDetails: IDeliveryDetailInfoResponse[];
 }
 
@@ -136,6 +134,7 @@ export interface IDeliveryDetailInfoResponse {
   baseQuantity: number;
   chargeAmount: number;
   labourCharge: number;
+  collectedAmount?: number;
 }
 
 // Customer Due Interfaces
@@ -153,6 +152,7 @@ export interface ICustomerDueSummaryResponse {
   oldestBookingDate: string;
   daysSinceOldestBooking: number;
   lastPaymentDate?: string;
+  lastPaymentAmount?: number;
   daysSinceLastPayment: number;
   status: 'normal' | 'warning' | 'danger';
 }

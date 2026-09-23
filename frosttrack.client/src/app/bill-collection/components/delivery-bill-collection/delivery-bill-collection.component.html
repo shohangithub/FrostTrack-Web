@@ -268,7 +268,7 @@
                   <div class="card bg-light border p-2 mt-3 mb-0">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                       <div>
-                        <span class="text-muted me-2">Selected Deliveries Total:</span>
+                        <span class="text-muted me-2">Selected Deliveries Due:</span>
                         <strong class="fs-6 text-dark">৳ {{ selectedTotal | number: '1.2-2' }}</strong>
                         <span class="text-muted ms-2 small">
                           (Storage Charge: ৳ {{ selectedCharges | number: '1.2-2' }} + Labour: ৳ {{ selectedLabour |
@@ -286,7 +286,7 @@
                         } @else if (formAmount < selectedTotal && formAmount> 0) {
                           <span class="badge bg-danger py-2 px-3 fs-6">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Amount is less than total bill (৳ {{ selectedTotal | number: '1.2-2' }})
+                            Amount is less than total due (৳ {{ selectedTotal | number: '1.2-2' }})
                           </span>
                           } @else {
                           <span class="badge bg-primary py-2 px-3 fs-6">
@@ -347,6 +347,8 @@
                           <th class="text-end">Labour Charge</th>
                           <th class="text-end">Adjustment</th>
                           <th class="text-end">Total Bill</th>
+                          <th class="text-end">Paid (জমা)</th>
+                          <th class="text-end text-danger">Due (বকেয়া)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -382,10 +384,14 @@
                             {{ delivery.adjustmentValue | number: "1.2-2" }}
                           </td>
                           <td class="text-end">
-                            <strong>{{
-                              delivery.chargeAmount +
-                              delivery.labourCharge +
-                              delivery.adjustmentValue | number: "1.2-2"
+                            {{ getDeliveryTotal(delivery) | number: "1.2-2" }}
+                          </td>
+                          <td class="text-end text-success">
+                            {{ (delivery.paidAmount || 0) | number: "1.2-2" }}
+                          </td>
+                          <td class="text-end">
+                            <strong class="text-danger">৳ {{
+                              getDeliveryDue(delivery) | number: "1.2-2"
                               }}</strong>
                           </td>
                         </tr>
@@ -394,10 +400,16 @@
                       <tfoot class="table-light">
                         <tr>
                           <td colspan="8" class="text-end">
-                            <strong>Total Selected Bill (মোট বিল):</strong>
+                            <strong>Total Selected (মোট):</strong>
                           </td>
                           <td class="text-end">
-                            <strong class="text-primary fs-6">{{
+                            <strong>{{ selectedGrossTotal | number: "1.2-2" }}</strong>
+                          </td>
+                          <td class="text-end text-success">
+                            <strong>{{ selectedPaid | number: "1.2-2" }}</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong class="text-danger fs-6">৳ {{
                               selectedTotal | number: "1.2-2"
                               }}</strong>
                           </td>

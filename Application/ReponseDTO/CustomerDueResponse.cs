@@ -15,6 +15,7 @@ public class CustomerDueSummaryResponse
     public DateTime OldestBookingDate { get; set; }
     public int DaysSinceOldestBooking { get; set; }
     public DateTime? LastPaymentDate { get; set; }
+    public decimal? LastPaymentAmount { get; set; }
     public int DaysSinceLastPayment { get; set; }
     public string Status { get; set; } = "normal"; // normal, warning, danger
 }

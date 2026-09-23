@@ -15,6 +15,7 @@ public class DeliveryResponse
     public decimal ChargeAmount { get; set; }
     public decimal LabourCharge { get; set; }
     public decimal AdjustmentValue { get; set; }
+    public decimal CollectedAmount { get; set; }
     public decimal PaidAmount { get; set; }
     public decimal DueAmount { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
@@ -60,6 +61,7 @@ public class DeliveryDetailResponse
     public decimal ChargeAmount { get; set; }
     public decimal LabourCharge { get; set; }
     public decimal AdjustmentValue { get; set; }
+    public decimal CollectedAmount { get; set; }
 
     // For tracking remaining quantity
     public float BookingQuantity { get; set; }

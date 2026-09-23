@@ -26,4 +26,7 @@ public class DeliveryDetail : AuditableEntity<Guid>
 
     [Column(TypeName = "decimal(5, 2)")]
     public required decimal AdjustmentValue { get; set; } = 0;
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal CollectedAmount { get; set; } = 0;
 }

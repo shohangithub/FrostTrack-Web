@@ -280,21 +280,21 @@
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{ (delivery.paidRentAmount ?? 0) | number: "1.2-2" }}
+                              {{ getCollectedRent(delivery) | number: "1.2-2" }}
                             </td>
                             <td
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{ (delivery.paidLabourAmount ?? 0) | number: "1.2-2" }}
+                              {{ getCollectedLabour(delivery) | number: "1.2-2" }}
                             </td>
                             <td
                               *ngIf="isFirst"
                               [attr.rowspan]="delivery.deliveryDetails.length"
                               class="text-center"
                             >
-                              {{ (delivery.totalPaidAmount ?? 0) | number: "1.2-2" }}
+                              {{ getTotalCollected(delivery) | number: "1.2-2" }}
                             </td>
                             <td class="text-center">
                               {{
