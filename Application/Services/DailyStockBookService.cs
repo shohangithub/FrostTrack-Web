@@ -108,7 +108,7 @@ public class DailyStockBookService : IDailyStockBookService
                            dd.Delivery!.DeliveryDate < startOfDay)
                 .Sum(dd => dd.DeliveryQuantity);
 
-            var previousStock = previousBookings - previousDeliveries;
+            var previousStock = Math.Max(0, previousBookings - previousDeliveries);
 
             // Calculate today's bookings
             var todayBookings = bookingDetails
@@ -125,7 +125,11 @@ public class DailyStockBookService : IDailyStockBookService
                 .Sum(dd => dd.DeliveryQuantity);
 
             // Current stock = previous stock + today's bookings - today's deliveries
-            var currentStock = previousStock + todayBookings - todayDeliveries;
+            var currentStock = Math.Max(0, previousStock + todayBookings - todayDeliveries);
+
+            // Skip records where current stock is zero or less
+            if (currentStock <= 0)
+                continue;
 
             // Get receipt numbers from bill collections for this customer's bookings on this date
             var receiptNumbers = billCollections
