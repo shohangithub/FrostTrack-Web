@@ -204,34 +204,36 @@
                             </tr>
                           </thead>
                           <tbody>
-                            @for (
-                              item of stockBookItems;
-                              track item.customerId + "_" + item.productId;
-                              let i = $index
-                            ) {
-                              <tr>
-                                <td>{{ i + 1 }}</td>
-                                <td>{{ item.customerName }}</td>
-                                <td>{{ item.productName }}</td>
-                                <td class="text-end">
-                                  {{ item.previousStock }}
-                                </td>
-                                <td class="text-end">
-                                  {{ item.totalBooking }}
-                                </td>
-                                <td class="text-end">
-                                  {{ item.totalDelivery }}
-                                </td>
-                                <td>
-                                  {{ formatReceiptNumbers(item.receiptNo) }}
-                                </td>
-                                <td class="text-end">
-                                  {{ item.currentStock }}
-                                </td>
-                                <td class="text-end">
-                                  {{ item.receivedRent | number: "1.2-2" }}
-                                </td>
-                              </tr>
+                            @for (group of customerGroups; track group.customerId) {
+                              @for (item of group.items; track item.rowNumber; let isFirst = $first) {
+                                <tr>
+                                  <td class="text-center">{{ item.rowNumber }}</td>
+                                  @if (isFirst) {
+                                    <td [attr.rowspan]="group.items.length" class="align-middle fw-medium">
+                                      {{ group.customerName }}
+                                    </td>
+                                  }
+                                  <td>{{ item.productName }}</td>
+                                  <td class="text-end">
+                                    {{ item.previousStock }}
+                                  </td>
+                                  <td class="text-end">
+                                    {{ item.totalBooking }}
+                                  </td>
+                                  <td class="text-end">
+                                    {{ item.totalDelivery }}
+                                  </td>
+                                  <td class="text-center" [title]="item.receiptNo">
+                                    {{ item.receiptNo }}
+                                  </td>
+                                  <td class="text-end">
+                                    {{ item.currentStock }}
+                                  </td>
+                                  <td class="text-end">
+                                    {{ item.receivedRent | number: "1.2-2" }}
+                                  </td>
+                                </tr>
+                              }
                             }
                           </tbody>
                           <tfoot>

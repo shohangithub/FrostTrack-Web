@@ -1,4 +1,6 @@
 export interface IDailyStockBookItem {
+  bookingId?: string;
+  bookingDate?: string;
   customerId: number;
   customerName: string;
   productId: number;

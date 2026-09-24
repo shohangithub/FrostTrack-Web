@@ -72,85 +72,73 @@ public class DailyStockBookService : IDailyStockBookService
                        t.BookingId != null)
             .ToListAsync(cancellationToken);
 
-        // Build daily stock book items
+        // Build daily stock book items per single booking
         var stockBookItems = new List<DailyStockBookItemResponse>();
 
-        // Group by customer and product
-        var customerProductGroups = allBookings
-            .SelectMany(b => b.BookingDetails.Select(bd => new
-            {
-                CustomerId = b.CustomerId,
-                CustomerName = b.Customer?.CustomerName ?? "",
-                ProductId = bd.ProductId,
-                ProductName = bd.Product?.ProductName ?? "",
-                BookingDetail = bd,
-                Booking = b
-            }))
-            .GroupBy(x => new { x.CustomerId, x.CustomerName, x.ProductId, x.ProductName });
-
-        foreach (var group in customerProductGroups)
+        foreach (var booking in allBookings)
         {
-            // Skip if product filter specified and doesn't match
-            if (productId.HasValue && group.Key.ProductId != productId.Value)
+            var details = productId.HasValue
+                ? booking.BookingDetails.Where(bd => bd.ProductId == productId.Value).ToList()
+                : booking.BookingDetails.ToList();
+
+            if (!details.Any())
                 continue;
 
-            var bookingDetails = group.Select(x => x.BookingDetail).ToList();
-            var _bookingIds = group.Select(x => x.Booking.Id).Distinct().ToList();
+            var detailIds = details.Select(d => d.Id).ToHashSet();
+            var productName = string.Join(", ", details.Select(d => d.Product?.ProductName).Where(n => !string.IsNullOrEmpty(n)).Distinct());
+            var totalBookedQuantity = details.Sum(d => d.BookingQuantity);
 
-            // Calculate previous stock (bookings before report date)
-            var previousBookings = bookingDetails
-                .Where(bd => bd.Booking!.BookingDate < startOfDay)
-                .Sum(bd => bd.BookingQuantity);
+            // Calculate previous stock (stock before report date)
+            var previousBookings = booking.BookingDate < startOfDay
+                ? totalBookedQuantity
+                : 0;
 
             var previousDeliveries = allDeliveries
+                .Where(d => d.BookingId == booking.Id && d.DeliveryDate < startOfDay)
                 .SelectMany(d => d.DeliveryDetails)
-                .Where(dd => bookingDetails.Select(bd => bd.Id).Contains(dd.BookingDetailId) &&
-                           dd.Delivery!.DeliveryDate < startOfDay)
+                .Where(dd => detailIds.Contains(dd.BookingDetailId))
                 .Sum(dd => dd.DeliveryQuantity);
 
             var previousStock = Math.Max(0, previousBookings - previousDeliveries);
 
             // Calculate today's bookings
-            var todayBookings = bookingDetails
-                .Where(bd => bd.Booking!.BookingDate >= startOfDay && 
-                           bd.Booking.BookingDate <= endOfDay)
-                .Sum(bd => bd.BookingQuantity);
+            var todayBookings = (booking.BookingDate >= startOfDay && booking.BookingDate <= endOfDay)
+                ? totalBookedQuantity
+                : 0;
 
             // Calculate today's deliveries
             var todayDeliveries = allDeliveries
+                .Where(d => d.BookingId == booking.Id && 
+                            d.DeliveryDate >= startOfDay && 
+                            d.DeliveryDate <= endOfDay)
                 .SelectMany(d => d.DeliveryDetails)
-                .Where(dd => bookingDetails.Select(bd => bd.Id).Contains(dd.BookingDetailId) &&
-                           dd.Delivery!.DeliveryDate >= startOfDay &&
-                           dd.Delivery.DeliveryDate <= endOfDay)
+                .Where(dd => detailIds.Contains(dd.BookingDetailId))
                 .Sum(dd => dd.DeliveryQuantity);
 
             // Current stock = previous stock + today's bookings - today's deliveries
             var currentStock = Math.Max(0, previousStock + todayBookings - todayDeliveries);
 
-            // Skip records where current stock is zero or less
-            if (currentStock <= 0)
+            // Skip records where current stock is zero or less and no activity occurred on the report date
+            if (currentStock <= 0 && todayBookings <= 0 && todayDeliveries <= 0)
                 continue;
 
-            // Get receipt numbers from bill collections for this customer's bookings on this date
-            var receiptNumbers = billCollections
-                .Where(t => _bookingIds.Contains(t.BookingId!.Value))
-                .Select(t => t.TransactionCode)
-                .Distinct()
-                .ToList();
+            var receiptNo = !string.IsNullOrWhiteSpace(booking.BookingNumber)
+                ? booking.BookingNumber.Trim()
+                : "-";
 
-            var receiptNo = receiptNumbers.Any() ? string.Join(", ", receiptNumbers) : "-";
-
-            // Calculate received rent (from bill collections)
+            // Calculate received rent for this booking on the report date
             var receivedRent = billCollections
-                .Where(t => _bookingIds.Contains(t.BookingId!.Value))
+                .Where(t => t.BookingId == booking.Id)
                 .Sum(t => Math.Abs(t.NetAmount));
 
             stockBookItems.Add(new DailyStockBookItemResponse
             {
-                CustomerId = group.Key.CustomerId,
-                CustomerName = group.Key.CustomerName,
-                ProductId = group.Key.ProductId,
-                ProductName = group.Key.ProductName,
+                BookingId = booking.Id,
+                BookingDate = booking.BookingDate,
+                CustomerId = booking.CustomerId,
+                CustomerName = booking.Customer?.CustomerName ?? "",
+                ProductId = details.First().ProductId,
+                ProductName = productName,
                 PreviousStock = previousStock,
                 TotalBooking = todayBookings,
                 TotalDelivery = todayDeliveries,
@@ -160,6 +148,9 @@ public class DailyStockBookService : IDailyStockBookService
             });
         }
 
-        return stockBookItems.OrderBy(x => x.CustomerName).ThenBy(x => x.ProductName);
+        return stockBookItems
+            .OrderBy(x => x.CustomerName)
+            .ThenBy(x => x.BookingDate)
+            .ThenBy(x => x.ReceiptNo);
     }
 }

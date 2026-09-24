@@ -2,6 +2,8 @@ namespace Application.ReponseDTO;
 
 public class DailyStockBookItemResponse
 {
+    public Guid BookingId { get; set; }
+    public DateTime? BookingDate { get; set; }
     public int CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public int ProductId { get; set; }

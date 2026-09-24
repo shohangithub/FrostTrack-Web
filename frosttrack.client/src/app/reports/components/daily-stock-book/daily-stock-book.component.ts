@@ -20,6 +20,12 @@ import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { todayInputFormat } from 'app/utils/date-utils';
 
+export interface ICustomerStockGroup {
+  customerId: number;
+  customerName: string;
+  items: (IDailyStockBookItem & { rowNumber: number })[];
+}
+
 @Component({
   selector: 'app-daily-stock-book',
   templateUrl: './daily-stock-book.component.html',
@@ -37,6 +43,7 @@ import { todayInputFormat } from 'app/utils/date-utils';
 export class DailyStockBookComponent implements OnInit {
   reportForm: UntypedFormGroup;
   stockBookItems: IDailyStockBookItem[] = [];
+  customerGroups: ICustomerStockGroup[] = [];
   isLoading = false;
   showReport = false;
   reportDate = new Date();
@@ -114,6 +121,7 @@ export class DailyStockBookComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.stockBookItems = data;
+          this.buildCustomerGroups();
           this.showReport = true;
           this.isLoading = false;
 
@@ -129,6 +137,29 @@ export class DailyStockBookComponent implements OnInit {
       });
   }
 
+  buildCustomerGroups(): void {
+    let rowNumber = 1;
+    const groups: ICustomerStockGroup[] = [];
+    let currentGroup: ICustomerStockGroup | null = null;
+
+    for (const item of this.stockBookItems) {
+      if (!currentGroup || currentGroup.customerId !== item.customerId) {
+        currentGroup = {
+          customerId: item.customerId,
+          customerName: item.customerName,
+          items: [],
+        };
+        groups.push(currentGroup);
+      }
+      currentGroup.items.push({
+        ...item,
+        rowNumber: rowNumber++,
+      });
+    }
+
+    this.customerGroups = groups;
+  }
+
   reset(): void {
     this.reportForm.reset({
       reportDate: todayInputFormat(),
@@ -137,6 +168,7 @@ export class DailyStockBookComponent implements OnInit {
     });
     this.showReport = false;
     this.stockBookItems = [];
+    this.customerGroups = [];
   }
 
   getTotalPreviousStock(): number {
