@@ -32,13 +32,13 @@ public class BankBookService : IBankBookService
             .SumAsync(b => b.OpeningBalance, cancellationToken);
 
         var openingBalance = bankInitialOpening + await _bankTransactionRepository.Query()
-            .Where(bt => bt.IsActive && bt.TransactionDate < fromUtc)
+            .Where(bt => bt.IsActive && !bt.IsDeleted && !bt.IsArchived && bt.TransactionDate < fromUtc)
             .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
 
         // Get bank transactions for the report date
         var bankTransactions = await _bankTransactionRepository.Query()
             .Include(bt => bt.Bank)
-            .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive)
+            .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsDeleted && !bt.IsArchived)
             .OrderBy(bt => bt.CreatedTime)
             .ToListAsync(cancellationToken);
 

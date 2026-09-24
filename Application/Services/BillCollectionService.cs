@@ -61,7 +61,7 @@ public class BillCollectionService : IBillCollectionService
 
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails)
-            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted)
+            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted && !d.IsArchived)
             .ToListAsync(cancellationToken);
 
         var deliveriesByBooking = deliveries
@@ -72,6 +72,7 @@ public class BillCollectionService : IBillCollectionService
             .Include(t => t.TransactionHead)
             .Include(t => t.Bank)
             .Where(t => !t.IsDeleted
+                        && !t.IsArchived
                         && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)) || (t.CustomerId == customerId))
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT

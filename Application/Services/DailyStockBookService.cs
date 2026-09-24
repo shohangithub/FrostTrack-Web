@@ -41,7 +41,7 @@ public class DailyStockBookService : IDailyStockBookService
                 .ThenInclude(bd => bd.Product)
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.BookingUnit)
-            .Where(b => b.TenantId == _tenantId && b.BookingDate <= endOfDay);
+            .Where(b => b.TenantId == _tenantId && !b.IsArchived && b.BookingDate <= endOfDay);
 
         // Apply filters
         if (customerId.HasValue)

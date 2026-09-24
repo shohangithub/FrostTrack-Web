@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IEmployeeReportService, EmployeeReportService>();
         services.AddScoped<Application.Services.Common.IBalanceCalculatorService, Application.Services.Common.BalanceCalculatorService>();
+        services.AddScoped<ISeasonArchiveService, SeasonArchiveService>();
 
         services.AddTransient<DefaultValueInjector>();
 

@@ -71,7 +71,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Transaction, Guid>, Repository<Transaction, Guid>>();
         services.AddScoped<IRepository<TransactionHead, Guid>, Repository<TransactionHead, Guid>>();
         services.AddScoped<IRepository<SalaryPayment, int>, Repository<SalaryPayment, int>>();
-
+        services.AddScoped<IRepository<SeasonArchiveLog, Guid>, Repository<SeasonArchiveLog, Guid>>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();

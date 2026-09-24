@@ -568,6 +568,7 @@ public class BookingService : IBookingService
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
+                        && !t.IsArchived
                         && t.TransactionDate <= asOfDate
                         && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
                             || (t.CustomerId.HasValue && customerIds.Contains(t.CustomerId.Value)))
@@ -752,7 +753,7 @@ public class BookingService : IBookingService
                     .ThenInclude(bd => bd.Product)
             .Include(d => d.DeliveryDetails)
                 .ThenInclude(dd => dd.DeliveryUnit)
-            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted)
+            .Where(d => bookingIds.Contains(d.BookingId) && !d.IsDeleted && !d.IsArchived)
             .ToListAsync(cancellationToken);
 
         var recurringChargeEntriesByBooking = await _recurringChargeEntryRepository.Query()
@@ -769,6 +770,7 @@ public class BookingService : IBookingService
         var payments = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
+                        && !t.IsArchived
                         && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
                             || (t.CustomerId == customerId))
                         && t.TransactionHead != null

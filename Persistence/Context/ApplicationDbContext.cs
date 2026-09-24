@@ -54,6 +54,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
     public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
     public DbSet<RecurringChargeEntry> RecurringChargeEntries { get; set; }
+    public DbSet<SeasonArchiveLog> SeasonArchiveLogs { get; set; }
 
     // legacy Users DbSet left for backward compatibility (maps to existing Users table)
     //public DbSet<User> AppUsers { get; set; }
@@ -228,6 +229,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         modelBuilder.Entity<RecurringChargeEntry>(entity =>
         {
             entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+        modelBuilder.Entity<SeasonArchiveLog>(entity =>
+        {
+            entity.ToTable("SeasonArchiveLogs", "operations");
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.ExecutedAt);
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });

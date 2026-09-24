@@ -885,6 +885,18 @@ export const ROUTES: RouteInfo[] = [
     badgeClass: '',
     submenu: [
       {
+        path: '/administration/season-archive',
+        title: 'Season Archive',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: 'Annual',
+        badgeClass: 'badge bg-cyan text-white',
+        submenu: [],
+        allowedRoles: ['SUPERADMIN', 'ADMIN'],
+      },
+      {
         path: '/administration/product',
         title: 'Product',
         iconType: '',

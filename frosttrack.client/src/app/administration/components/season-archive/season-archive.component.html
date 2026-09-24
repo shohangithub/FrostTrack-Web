@@ -1,0 +1,318 @@
+<section class="main-content">
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2">
+          <span class="card-label">Season Closing & Batch Archive</span>
+          <div class="p-10">
+
+            <!-- Informational Banner -->
+            <div class="alert alert-light border d-flex align-items-center justify-content-between p-3 my-3 rounded">
+              <div class="d-flex align-items-center gap-2">
+                <i class="material-icons text-primary" style="font-size: 26px">archive</i>
+                <div>
+                  <div class="fw-bold text-dark fs-6">Season Closing & "Rest Data" Reset</div>
+                  <div class="text-muted small">
+                    Closes operational records up to the cutoff date. Completed bookings, deliveries, and past
+                    transactions move to historical archive, while remaining inventory stock and customer/bank balances
+                    roll forward as opening balances into the new season.
+                  </div>
+                </div>
+              </div>
+              <div class="d-none d-lg-block">
+                <span class="badge bg-info-subtle text-primary border border-info-subtle px-3 py-2 fw-semibold">
+                  <i class="material-icons align-middle" style="font-size: 16px">verified_user</i> 100% Master Data
+                  Preserved
+                </span>
+              </div>
+            </div>
+
+            <!-- Toolbar / Operation Controls -->
+            <div class="row align-items-end mb-3 g-2">
+              <div class="col-lg-2 col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold mb-1">Cutoff Date (Season End)</label>
+                <input type="date" class="form-control" [(ngModel)]="cutoffDate" (change)="loadPreview()"
+                  style="height: 40px" />
+              </div>
+
+              <div class="col-lg-4 col-md-4 col-sm-6">
+                <label class="form-label small fw-semibold mb-1">Season / Archive Title</label>
+                <input type="text" class="form-control" [(ngModel)]="seasonTitle"
+                  placeholder="e.g. Potato Season 2025 Closing" style="height: 40px" />
+              </div>
+
+              <div class="col-lg-3 col-md-5 col-sm-6">
+                <label class="form-label small fw-semibold mb-1">
+                  Operator Notes <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="notes" placeholder="e.g. Annual audit passed"
+                  style="height: 40px" />
+              </div>
+
+              <div class="col-lg-3 col-md-12 d-flex gap-2 justify-content-end align-items-end mt-2 mt-lg-0">
+                <button class="btn btn-outline-primary" style="height: 40px" (click)="loadPreview()"
+                  [disabled]="isLoadingPreview || isExecuting" title="Refresh live preview counts">
+                  <span *ngIf="isLoadingPreview" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="!isLoadingPreview" class="material-icons align-middle" style="font-size: 18px">refresh</i>
+                  <span class="align-middle"> Preview</span>
+                </button>
+
+                <button class="btn btn-danger" style="height: 40px" (click)="confirmAndExecute()"
+                  [disabled]="isLoadingPreview || isExecuting || !preview" title="Execute season archive">
+                  <span *ngIf="isExecuting" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="!isExecuting" class="material-icons align-middle" style="font-size: 18px">bolt</i>
+                  <span class="align-middle"> Archive</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div *ngIf="isLoadingPreview" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="text-muted mt-2 small">Analyzing active bookings, cold room stocks, customer balances, and
+                ledger... Please wait.</p>
+            </div>
+
+            <!-- Live Preview KPI Summary Cards -->
+            <div *ngIf="preview && !isLoadingPreview" class="row mb-3 g-2">
+              <!-- 1. Completed Bookings to Archive -->
+              <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center"
+                      style="width: 44px; height: 44px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 22px">inventory_2</i>
+                    </div>
+                    <div>
+                      <div class="small text-muted">Completed Bookings</div>
+                      <div class="fw-bold fs-5 text-dark">{{ preview.completedBookingsCount }}</div>
+                      <div class="small text-muted" style="font-size: 11px">
+                        0 bags remaining &rarr; <span class="text-warning fw-semibold">Archived</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Carry-Over Rest Stock -->
+              <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center"
+                      style="width: 44px; height: 44px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 22px">all_inbox</i>
+                    </div>
+                    <div>
+                      <div class="small text-muted">Carry-Over Rest Stock</div>
+                      <div class="fw-bold fs-5 text-dark">
+                        {{ preview.totalRemainingStockBags | number }} <span
+                          class="fs-6 fw-normal text-muted">Bags</span>
+                      </div>
+                      <div class="small text-muted" style="font-size: 11px">
+                        {{ preview.openBookingsToCarryForwardCount }} Open Booking(s) &rarr; <span
+                          class="text-info fw-semibold">Stays Active</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Customer Due Rollover -->
+              <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                      style="width: 44px; height: 44px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 22px">account_balance_wallet</i>
+                    </div>
+                    <div>
+                      <div class="small text-muted">Customer Due Rollover</div>
+                      <div class="fw-bold fs-5 text-success">
+                        ৳{{ preview.totalCustomerNetDue | number: '1.2-2' }}
+                      </div>
+                      <div class="small text-muted" style="font-size: 11px">
+                        {{ preview.totalCustomersCount }} Customers &rarr; <span
+                          class="text-success fw-semibold">Opening Due</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Cash in Hand Rollover -->
+              <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body py-2 px-3 d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                      style="width: 44px; height: 44px; flex-shrink: 0">
+                      <i class="material-icons" style="font-size: 22px">payments</i>
+                    </div>
+                    <div>
+                      <div class="small text-muted">Cash in Hand Rollover</div>
+                      <div class="fw-bold fs-5 text-primary">
+                        ৳{{ preview.currentCashInHand | number: '1.2-2' }}
+                      </div>
+                      <div class="small text-muted" style="font-size: 11px">
+                        Closing Cash &rarr; <span class="text-primary fw-semibold">Opening Balance</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detailed Breakdown (Operational Records & Bank Accounts) -->
+            <div *ngIf="preview && !isLoadingPreview" class="row mb-3 g-2">
+              <!-- Operational Records to be Archived -->
+              <div class="col-lg-5 col-md-12">
+                <div class="card border shadow-sm h-100 mb-0">
+                  <div class="card-header py-2 px-3 bg-light border-bottom d-flex align-items-center">
+                    <i class="material-icons text-danger me-2" style="font-size: 18px">fact_check</i>
+                    <h6 class="mb-0 fw-bold small text-dark">Operational Records To Be Archived</h6>
+                  </div>
+                  <div class="card-body p-0">
+                    <ul class="list-group list-group-flush small">
+                      <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                        <span class="d-flex align-items-center gap-2">
+                          <i class="material-icons text-muted" style="font-size: 18px">local_shipping</i>
+                          Historical Deliveries
+                        </span>
+                        <span class="badge bg-light text-dark fw-bold border">{{ preview.deliveriesToArchiveCount }}
+                          Records</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                        <span class="d-flex align-items-center gap-2">
+                          <i class="material-icons text-muted" style="font-size: 18px">receipt_long</i>
+                          Delivery Challans
+                        </span>
+                        <span class="badge bg-light text-dark fw-bold border">{{ preview.challansToArchiveCount }}
+                          Records</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                        <span class="d-flex align-items-center gap-2">
+                          <i class="material-icons text-muted" style="font-size: 18px">request_quote</i>
+                          Vouchers & Ledger Transactions
+                        </span>
+                        <span class="badge bg-light text-dark fw-bold border">{{ preview.transactionsToArchiveCount }}
+                          Records</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3 bg-light">
+                        <span class="d-flex align-items-center gap-2 text-success fw-semibold">
+                          <i class="material-icons text-success" style="font-size: 18px">check_circle</i>
+                          Master Catalogs (Customers, Products, Banks)
+                        </span>
+                        <span class="badge bg-success text-white">Preserved</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bank Accounts Balance Rollover -->
+              <div class="col-lg-7 col-md-12">
+                <div class="card border shadow-sm h-100 mb-0">
+                  <div
+                    class="card-header py-2 px-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                      <i class="material-icons text-primary me-2" style="font-size: 18px">account_balance</i>
+                      <h6 class="mb-0 fw-bold small text-dark">Bank Accounts Balance Rollover</h6>
+                    </div>
+                    <span class="badge bg-secondary text-white">{{ preview.bankBalances.length }} Banks</span>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Bank Name</th>
+                            <th>Account No</th>
+                            <th class="text-end">Closing Balance (Carried Forward)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let bank of preview.bankBalances">
+                            <td class="fw-semibold">{{ bank.bankName }}</td>
+                            <td class="text-muted">{{ bank.accountNumber || '-' }}</td>
+                            <td class="text-end fw-bold text-dark">৳{{ bank.closingBalance | number: '1.2-2' }}</td>
+                          </tr>
+                          <tr *ngIf="preview.bankBalances.length === 0">
+                            <td colspan="3" class="text-center py-3 text-muted">No active bank accounts found.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Archive History Section -->
+            <div class="card border shadow-sm mb-2">
+              <div
+                class="card-header py-2 px-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <i class="material-icons text-secondary me-2" style="font-size: 18px">history</i>
+                  <h6 class="mb-0 fw-bold small text-dark">Season Archive Audit History</h6>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" (click)="loadHistory()">
+                  <i class="material-icons align-middle" style="font-size: 16px">refresh</i>
+                  <span class="align-middle"> Refresh</span>
+                </button>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Batch Code</th>
+                        <th>Season Title</th>
+                        <th>Cutoff Date</th>
+                        <th class="text-center">Archived Bookings</th>
+                        <th class="text-center">Carried Stock</th>
+                        <th class="text-end">Carried Customer Due</th>
+                        <th class="text-end">Carried Cash & Bank</th>
+                        <th>Executed By</th>
+                        <th>Executed At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let item of history">
+                        <td><span class="badge bg-secondary font-monospace">{{ item.batchCode }}</span></td>
+                        <td class="fw-semibold">{{ item.seasonTitle }}</td>
+                        <td>{{ item.cutoffDate | date: 'dd-MMM-yyyy' }}</td>
+                        <td class="text-center">
+                          <span class="badge bg-warning text-dark">{{ item.totalArchivedBookings }}</span>
+                        </td>
+                        <td class="text-center">
+                          <strong class="text-info">{{ item.totalCarriedForwardStock | number }} Bags</strong>
+                          <span class="text-muted d-block" style="font-size: 11px">({{ item.totalCarriedForwardBookings
+                            }} Open)</span>
+                        </td>
+                        <td class="text-end fw-bold text-success">
+                          ৳{{ item.totalCarriedForwardCustomerDue | number: '1.2-2' }}
+                        </td>
+                        <td class="text-end">
+                          <div>Cash: ৳{{ item.totalCarriedForwardCashBalance | number: '1.2-2' }}</div>
+                          <div class="text-muted" style="font-size: 11px">Bank: ৳{{ item.totalCarriedForwardBankBalance
+                            | number: '1.2-2' }}</div>
+                        </td>
+                        <td>{{ item.executedByName }}</td>
+                        <td class="text-muted small">{{ item.executedAt | date: 'dd-MMM-yyyy hh:mm a' }}</td>
+                      </tr>
+                      <tr *ngIf="history.length === 0 && !isLoadingHistory">
+                        <td colspan="9" class="text-center py-4 text-muted">
+                          No seasons archived yet. All operational records are currently in the active working set.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
