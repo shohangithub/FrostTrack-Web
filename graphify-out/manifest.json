@@ -260,9 +260,9 @@
     "semantic_hash": "580843670ac529ecac774d1b73438e87"
   },
   "Application/DependencyInjection.cs": {
-    "mtime": 1787382870.8147428,
-    "ast_hash": "060df6bd07b16227fbf3fe6d216a5bb7",
-    "semantic_hash": "060df6bd07b16227fbf3fe6d216a5bb7"
+    "mtime": 1790199598.5737066,
+    "ast_hash": "301f26a813f02c25e6cf137e9859c5e8",
+    "semantic_hash": "301f26a813f02c25e6cf137e9859c5e8"
   },
   "Application/Framework/DateToUtcTime.cs": {
     "mtime": 1766935062.0122063,
@@ -400,9 +400,9 @@
     "semantic_hash": "a81f43d3207e006131a0cb506e7533bb"
   },
   "Application/ReponseDTO/CompanyResponse.cs": {
-    "mtime": 1786374345.5598843,
-    "ast_hash": "f21be396ea115675bf74bfa028e748c2",
-    "semantic_hash": "f21be396ea115675bf74bfa028e748c2"
+    "mtime": 1790239778.7889335,
+    "ast_hash": "35c2cbea99e1de74c2f1b86d6cc7955e",
+    "semantic_hash": "35c2cbea99e1de74c2f1b86d6cc7955e"
   },
   "Application/ReponseDTO/CustomerBalanceSummaryResponse.cs": {
     "mtime": 1790191009.8942802,
@@ -425,9 +425,9 @@
     "semantic_hash": "fac2f32946deec176951074f06e2da0f"
   },
   "Application/ReponseDTO/DailyStockBookResponse.cs": {
-    "mtime": 1766258130.079079,
-    "ast_hash": "e9fab599ddebf99c04cc60e1b7b00d1c",
-    "semantic_hash": "e9fab599ddebf99c04cc60e1b7b00d1c"
+    "mtime": 1790234593.1086886,
+    "ast_hash": "40149c3847be259611e7ce119438555a",
+    "semantic_hash": "40149c3847be259611e7ce119438555a"
   },
   "Application/ReponseDTO/DashboardResponse.cs": {
     "mtime": 1764953140.7322319,
@@ -620,9 +620,9 @@
     "semantic_hash": "d769f973899b40a6f2c6e3a79321f30c"
   },
   "Application/RequestDTO/CompanyRequest.cs": {
-    "mtime": 1786373301.9733284,
-    "ast_hash": "92f148fa36dba35e1ce8b773a9d61852",
-    "semantic_hash": "92f148fa36dba35e1ce8b773a9d61852"
+    "mtime": 1790239763.2437258,
+    "ast_hash": "17c80008d4578af2dfc9905e95c8f541",
+    "semantic_hash": "17c80008d4578af2dfc9905e95c8f541"
   },
   "Application/RequestDTO/CustomerPaymentRequest.cs": {
     "mtime": 1790191018.1828797,
@@ -735,9 +735,9 @@
     "semantic_hash": "08a1f348245a7d4980fe10b2b4a8944b"
   },
   "Application/Services/BankBookService.cs": {
-    "mtime": 1790185520.0041504,
-    "ast_hash": "96d807362ce8c253635ee4e4c65cfc0c",
-    "semantic_hash": "96d807362ce8c253635ee4e4c65cfc0c"
+    "mtime": 1790199929.450624,
+    "ast_hash": "72967c879587ac51c1f7ef4bc45c0e95",
+    "semantic_hash": "72967c879587ac51c1f7ef4bc45c0e95"
   },
   "Application/Services/BankService.cs": {
     "mtime": 1787383012.5366094,
@@ -755,14 +755,14 @@
     "semantic_hash": "e84376c72051dd61205e8e98d2e408a1"
   },
   "Application/Services/BillCollectionService.cs": {
-    "mtime": 1790195691.5577,
-    "ast_hash": "6811ec64fc0bd9a4722ad74065da5cd8",
-    "semantic_hash": "6811ec64fc0bd9a4722ad74065da5cd8"
+    "mtime": 1790199978.3146925,
+    "ast_hash": "498e4b0406172e9a662e623286ce32d9",
+    "semantic_hash": "498e4b0406172e9a662e623286ce32d9"
   },
   "Application/Services/BookingService.cs": {
-    "mtime": 1790192439.2140257,
-    "ast_hash": "c8c86693995f681d611e59e1bb341be5",
-    "semantic_hash": "c8c86693995f681d611e59e1bb341be5"
+    "mtime": 1790199963.984236,
+    "ast_hash": "36e4f9b825acb49867df8b5c6995b93c",
+    "semantic_hash": "36e4f9b825acb49867df8b5c6995b93c"
   },
   "Application/Services/BranchService.cs": {
     "mtime": 1786373377.1408834,
@@ -805,9 +805,9 @@
     "semantic_hash": "fe742de317f4f23a98b08f2736ff968e"
   },
   "Application/Services/CompanyService.cs": {
-    "mtime": 1786374384.8259962,
-    "ast_hash": "0c581e586838902cf7dd2ef9aa4a4a5b",
-    "semantic_hash": "0c581e586838902cf7dd2ef9aa4a4a5b"
+    "mtime": 1790239796.2826934,
+    "ast_hash": "b71dfacdf74d6c4c5c6d77c30a9949b7",
+    "semantic_hash": "b71dfacdf74d6c4c5c6d77c30a9949b7"
   },
   "Application/Services/CustomerService.cs": {
     "mtime": 1787422896.533169,
@@ -815,9 +815,9 @@
     "semantic_hash": "7a04139cf6865c4ace3e00fa05d2383b"
   },
   "Application/Services/DailyStockBookService.cs": {
-    "mtime": 1790198295.7512946,
-    "ast_hash": "04017397ff009674028717bf8a2fbd92",
-    "semantic_hash": "04017397ff009674028717bf8a2fbd92"
+    "mtime": 1790234609.3427744,
+    "ast_hash": "214b3564891abe021b3fa872c286b891",
+    "semantic_hash": "214b3564891abe021b3fa872c286b891"
   },
   "Application/Services/DashboardService.cs": {
     "mtime": 1790192459.5571675,
@@ -1100,9 +1100,9 @@
     "semantic_hash": "0da177ce6db8131b50abd4b5c675172e"
   },
   "Domain/Entitites/General/Company.cs": {
-    "mtime": 1786373202.8428288,
-    "ast_hash": "ad8372f4e75a63beaacdd91bc4b99da9",
-    "semantic_hash": "ad8372f4e75a63beaacdd91bc4b99da9"
+    "mtime": 1790239755.8964283,
+    "ast_hash": "3f49d2183af8fe2bc11302ba4d78bedb",
+    "semantic_hash": "3f49d2183af8fe2bc11302ba4d78bedb"
   },
   "Domain/Entitites/General/Customer.cs": {
     "mtime": 1779015613.8249698,
@@ -1515,14 +1515,14 @@
     "semantic_hash": "85cfb910662082c9335ea32134e3c946"
   },
   "Infrastructure/BackgroundServices/BillingRecurringChargeJob.cs": {
-    "mtime": 1779010590.1592467,
-    "ast_hash": "b35ff317497c1a3d6ad35e5c72711100",
-    "semantic_hash": "b35ff317497c1a3d6ad35e5c72711100"
+    "mtime": 1790239829.643146,
+    "ast_hash": "d2d7b6a80efeb72a14584d79241e65e1",
+    "semantic_hash": "d2d7b6a80efeb72a14584d79241e65e1"
   },
   "Infrastructure/BackgroundServices/EmailBackgroundService.cs": {
-    "mtime": 1759945872.2703505,
-    "ast_hash": "61aae6193e322267ae453cbabcf0ad05",
-    "semantic_hash": "61aae6193e322267ae453cbabcf0ad05"
+    "mtime": 1790239843.6020207,
+    "ast_hash": "cc2afd0b5d0069eba72e300dc246bf0c",
+    "semantic_hash": "cc2afd0b5d0069eba72e300dc246bf0c"
   },
   "Infrastructure/BackgroundServices/EmailSettings.cs": {
     "mtime": 1759807718.3892698,
@@ -1580,9 +1580,9 @@
     "semantic_hash": "bee61dba20e552aa978a321a55e58fff"
   },
   "Persistence/Context/ApplicationDbContext.cs": {
-    "mtime": 1787423258.8383012,
-    "ast_hash": "0267d72fe5940eb0999d3a40ea1f683e",
-    "semantic_hash": "0267d72fe5940eb0999d3a40ea1f683e"
+    "mtime": 1790199473.4853363,
+    "ast_hash": "8c9f32853fe57ef60ab73727bd0fff3f",
+    "semantic_hash": "8c9f32853fe57ef60ab73727bd0fff3f"
   },
   "Persistence/Converters/UtcEFCoreValueConverter.cs": {
     "mtime": 1765390882.1023445,
@@ -1590,9 +1590,9 @@
     "semantic_hash": "f50014743c727c4169daa9cd6f48a5e5"
   },
   "Persistence/DependencyInjection.cs": {
-    "mtime": 1787423260.865956,
-    "ast_hash": "76e2fb92c21385c780e77362b691cde9",
-    "semantic_hash": "76e2fb92c21385c780e77362b691cde9"
+    "mtime": 1790219459.742654,
+    "ast_hash": "cc49fe21ec5c03ad05c5b65ed3d40774",
+    "semantic_hash": "cc49fe21ec5c03ad05c5b65ed3d40774"
   },
   "Persistence/Global.cs": {
     "mtime": 1760033277.3349907,
@@ -1780,9 +1780,9 @@
     "semantic_hash": "dee6b09c24e21a8b73839c6e8e42d74f"
   },
   "Persistence/Migrations/ApplicationDbContextModelSnapshot.cs": {
-    "mtime": 1790152807.7163,
-    "ast_hash": "10001ed57263d9e70b37ccb8ed92577f",
-    "semantic_hash": "10001ed57263d9e70b37ccb8ed92577f"
+    "mtime": 1790240000.18343,
+    "ast_hash": "3a6c9177109c40ad8ebec0037372058a",
+    "semantic_hash": "3a6c9177109c40ad8ebec0037372058a"
   },
   "Persistence/Migrations/DataMigration_20260503_PopulateTypedFKs.sql": {
     "mtime": 1777788890.5885255,
@@ -1855,9 +1855,9 @@
     "semantic_hash": "508048d8ea4316e271e6e9c8634ee4f1"
   },
   "frosttrack.client/src/app/administration/administration.routes.ts": {
-    "mtime": 1759807718.4352257,
-    "ast_hash": "5715cb648521fa608e513485ebbb13a2",
-    "semantic_hash": "5715cb648521fa608e513485ebbb13a2"
+    "mtime": 1790199865.3168483,
+    "ast_hash": "4d187497e22dfd7483fff8c91e9208ad",
+    "semantic_hash": "4d187497e22dfd7483fff8c91e9208ad"
   },
   "frosttrack.client/src/app/administration/components/product/add-product/add-product.component.ts": {
     "mtime": 1765561967.6228137,
@@ -2630,9 +2630,9 @@
     "semantic_hash": "195e548c55aca072d9b46b98a8efa243"
   },
   "frosttrack.client/src/app/layout/sidebar/sidebar-items.ts": {
-    "mtime": 1790196071.35084,
-    "ast_hash": "87cc8650264999f39b75aa16b90cf9a6",
-    "semantic_hash": "87cc8650264999f39b75aa16b90cf9a6"
+    "mtime": 1790199875.1634262,
+    "ast_hash": "2e4201cfa72b155b20717d1e23e3a927",
+    "semantic_hash": "2e4201cfa72b155b20717d1e23e3a927"
   },
   "frosttrack.client/src/app/layout/sidebar/sidebar.component.spec.ts": {
     "mtime": 1759807718.4835336,
@@ -2810,9 +2810,9 @@
     "semantic_hash": "25715d1eb14798699605897008397e4b"
   },
   "frosttrack.client/src/app/reports/components/daily-stock-book/daily-stock-book.component.ts": {
-    "mtime": 1770226286.7909365,
-    "ast_hash": "1b95e68abe59a86084af0fac8b34e630",
-    "semantic_hash": "1b95e68abe59a86084af0fac8b34e630"
+    "mtime": 1790234657.0486763,
+    "ast_hash": "de9946bea03a545b0b51d89e0f082f1e",
+    "semantic_hash": "de9946bea03a545b0b51d89e0f082f1e"
   },
   "frosttrack.client/src/app/reports/components/datewise-booking-report/datewise-booking-report.component.ts": {
     "mtime": 1770195134.79243,
@@ -2865,9 +2865,9 @@
     "semantic_hash": "fd4844e9b74a7c75151e4a11011088a1"
   },
   "frosttrack.client/src/app/reports/models/daily-stock-book.interface.ts": {
-    "mtime": 1766258130.2482805,
-    "ast_hash": "503910c675a535327fb57bcc83a196eb",
-    "semantic_hash": "503910c675a535327fb57bcc83a196eb"
+    "mtime": 1790234615.67881,
+    "ast_hash": "d69ce31d53699c231134e66249093e53",
+    "semantic_hash": "d69ce31d53699c231134e66249093e53"
   },
   "frosttrack.client/src/app/reports/models/datewise-booking-report.interface.ts": {
     "mtime": 1770195134.79243,
@@ -3175,9 +3175,9 @@
     "semantic_hash": "58fee1a30d9bfe0bf774fa1b41cc3f6f"
   },
   "frosttrack.client/src/app/system/components/company-config/company-config.component.ts": {
-    "mtime": 1786373508.5774903,
-    "ast_hash": "13a2a1afbd93c7e6fb109daa7d3258c0",
-    "semantic_hash": "13a2a1afbd93c7e6fb109daa7d3258c0"
+    "mtime": 1790240397.3669572,
+    "ast_hash": "45ffe6899561650ce992015eee8d6dcc",
+    "semantic_hash": "45ffe6899561650ce992015eee8d6dcc"
   },
   "frosttrack.client/src/app/system/components/company-list/company-list.component.ts": {
     "mtime": 1768137328.5832984,
@@ -3185,9 +3185,9 @@
     "semantic_hash": "43268d338deec1649c761ade2a984db4"
   },
   "frosttrack.client/src/app/system/models/company.interface.ts": {
-    "mtime": 1786374301.4626954,
-    "ast_hash": "c2d7b50aad5164b68b6adf24d6d830cd",
-    "semantic_hash": "c2d7b50aad5164b68b6adf24d6d830cd"
+    "mtime": 1790240058.7103603,
+    "ast_hash": "5d96cb7abfc451eda194da8cf4b822a7",
+    "semantic_hash": "5d96cb7abfc451eda194da8cf4b822a7"
   },
   "frosttrack.client/src/app/system/services/company.service.ts": {
     "mtime": 1768078618.2039895,
@@ -3363,5 +3363,65 @@
     "mtime": 1763278909.3964026,
     "ast_hash": "f4fb1328e1d1e378a070d4b2895cfd0d",
     "semantic_hash": "f4fb1328e1d1e378a070d4b2895cfd0d"
+  },
+  "Application/Contractors/ISeasonArchiveService.cs": {
+    "mtime": 1790199512.453653,
+    "ast_hash": "e23efe0d66af70e5b4ac0801f60f31a1",
+    "semantic_hash": "e23efe0d66af70e5b4ac0801f60f31a1"
+  },
+  "Application/ReponseDTO/SeasonArchiveResponse.cs": {
+    "mtime": 1790199506.5004778,
+    "ast_hash": "f2ae2de911e047dedd9d811a1b5bc07c",
+    "semantic_hash": "f2ae2de911e047dedd9d811a1b5bc07c"
+  },
+  "Application/Services/SeasonArchiveService.cs": {
+    "mtime": 1790199697.1515408,
+    "ast_hash": "55e6916859185aeff834ee380e69d3ba",
+    "semantic_hash": "55e6916859185aeff834ee380e69d3ba"
+  },
+  "Domain/Entitites/SeasonArchiveLog.cs": {
+    "mtime": 1790199427.324524,
+    "ast_hash": "f6af13b5f2ca663f957d2f02292dbaaf",
+    "semantic_hash": "f6af13b5f2ca663f957d2f02292dbaaf"
+  },
+  "FrostTrack.Server/Controllers/SeasonArchiveController.cs": {
+    "mtime": 1790199610.690089,
+    "ast_hash": "9a863502acbe8ac4ef632c8992edc15b",
+    "semantic_hash": "9a863502acbe8ac4ef632c8992edc15b"
+  },
+  "Persistence/Migrations/20260923213832_AddSeasonArchiveLog.Designer.cs": {
+    "mtime": 1790199512.939181,
+    "ast_hash": "e49ba17062b8f567f96937dae2396bdc",
+    "semantic_hash": "e49ba17062b8f567f96937dae2396bdc"
+  },
+  "Persistence/Migrations/20260923213832_AddSeasonArchiveLog.cs": {
+    "mtime": 1790199512.938179,
+    "ast_hash": "7b1405db46c3bc8d2d2ca7069b80c6c9",
+    "semantic_hash": "7b1405db46c3bc8d2d2ca7069b80c6c9"
+  },
+  "Persistence/Migrations/20260924085320_AddJobConfigurationsToCompany.Designer.cs": {
+    "mtime": 1790240000.1762009,
+    "ast_hash": "5ca4d735fb450a5a78e0be68d95a7272",
+    "semantic_hash": "5ca4d735fb450a5a78e0be68d95a7272"
+  },
+  "Persistence/Migrations/20260924085320_AddJobConfigurationsToCompany.cs": {
+    "mtime": 1790240000.1762009,
+    "ast_hash": "7c7ef335568591427550db90c871e2b4",
+    "semantic_hash": "7c7ef335568591427550db90c871e2b4"
+  },
+  "frosttrack.client/src/app/administration/components/season-archive/season-archive.component.ts": {
+    "mtime": 1790199832.8839307,
+    "ast_hash": "3c3a6578dbe2e0b713c800c786a7e81e",
+    "semantic_hash": "3c3a6578dbe2e0b713c800c786a7e81e"
+  },
+  "frosttrack.client/src/app/administration/models/season-archive.model.ts": {
+    "mtime": 1790199799.854381,
+    "ast_hash": "5b7f7cb2bdb7d39b1af544a94bdee73f",
+    "semantic_hash": "5b7f7cb2bdb7d39b1af544a94bdee73f"
+  },
+  "frosttrack.client/src/app/administration/services/season-archive.service.ts": {
+    "mtime": 1790199813.3591583,
+    "ast_hash": "5f881d9ba2562cd0cbeecd2b15316322",
+    "semantic_hash": "5f881d9ba2562cd0cbeecd2b15316322"
   }
 }

@@ -1,1417 +1,1413 @@
 # Graph Report - .  (2026-09-24)
 
 ## Corpus Check
-- Large corpus: 921 files · ~567,499 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
+- 33 files · ~0 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6613 nodes · 14738 edges · 370 communities (256 shown, 114 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 891 edges (avg confidence: 0.8)
+- 6752 nodes · 14843 edges · 381 communities (252 shown, 129 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 845 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- Report Balance Datewise
-- Book Report Delivery
-- Pagination With Error
-- Customer Auth Report
-- Delivery Iproductdeliveryservice Productdeliverycontroller
-- Deliverychallanservice Deliverychallancontroller Ideliverychallanservice
-- Bookingcontroller Booking Ibookingservice
-- Paymentmethodcontroller Ipaymentmethodservice Payment
-- Itransactionservice Transactioncontroller Transaction
-- Asset Assetcontroller Iassetservice
-- Employeecontroller Employee Iemployeeservice
-- Bank Bankcontroller Ibankservice
-- Bank Transaction Banktransactioncontroller
-- Productcontroller Product Iproductservice
-- User Current Token
-- Customercontroller Customer Icustomerservice
-- User Userscontroller Iuserservice
-- Error Settings Data
-- Booking Management Recurring
-- Baseunitcontroller Unit Ibaseunitservice
-- Product Productcategorycontroller Category
-- Unitconversioncontroller Unit Conversion
-- Validator Transaction Unit
-- Transaction Head Transactionheadcontroller
-- Policy Authorization Permission
-- Transaction Bill Collection
-- Productdeliveryservice Delivery Booking
-- Branch Ibranchservice Branchcontroller
-- Product Unit Conversion
-- Transaction Bill Collection
-- Converter Date Time
-- Customer Payment Bill
-- Bank Transaction Report
-- Stock Report Stockreportresponse
-- Recurring Charge Recurringchargemanagementservice
-- Transactionservice Transaction Lookup
-- Net Domain Microsoft
-- Company Icompanyservice Companycontroller
-- Employeeservice Employee Pagination
-- Spec First Init
-- Assetservice Asset Pagination
-- Paymentmethodservice Payment Method
-- Bankservice Bank Pagination
-- Customerservice Customer Pagination
-- Productservice Product Pagination
-- Update User Pagination
-- Exception Attribute Authorization
-- Banktransactionservice Bank Transaction
-- Balance Sheet Employee
-- Branchservice Branch Pagination
-- Productcategoryservice Product Category
-- Userservice User Password
-- Spec Signup Forgot
-- Baseunitservice Unit Pagination
-- Unitconversionservice Unit Conversion
-- Transaction Print Receipt
-- Loading Loader Interceptor
-- Dashboard Dashboardresponse Stats
-- Delivery Transaction Context
-- Delivery Product Calculate
-- Launchsettings Launch Url
-- Salarypaymentservice Payment Salary
-- Balance Sheet Ibalancecalculatorservice
-- Billingrecurringchargejob Emailbackgroundservice Email
-- Booking Product Fetch
-- Transactionheadservice Transaction Head
-- Securitycontroller User Role
-- Detail Product Unit
-- Guid Delivery Challan
-- Config Layout Direction
-- Unit Conversion Record
-- User Record Success
-- Delivery Customerdueresponse Bookinginvoicewithdeliveryresponse
-- Transaction Head Data
-- Print Payment Helper
-- Delivery Booking Detail
-- Datewise Booking Report
-- Datewise Delivery Report
-- Dependencyinjection Unit Work
-- Advance Table Row
-- Unit Data Init
-- Payment Method Settings
-- Sidebar Menu Items
-- Challan Delivery Item
-- Delivery Product Row
-- Company Config New
-- Ledger Book Date
-- Bookingservice Booking Customer
-- Booking Row Remove
-- Print Configuration Settings
-- Salarypaymentcontroller Payment Salary
-- Bank Book Date
-- Cash Book Cancellation
-- Daily Stock Book
-- General Ledger Date
-- Printservice Booking Printreceiptrequest
-- Payment Salary View
-- Template Print Templates
-- Companyservice Company Pagination
-- Product Category Pagination
-- Product Row Remove
-- Due Customer Total
-- Bank Pagination Archive
-- Supplier Pagination Archive
-- Sidebar Right Rightsidebar
-- Salary Payment Routes
-- User Password Role
-- Token User Jwt
-- Bank Transaction Customer
-- Bank Row Remove
-- Unit Row Remove
-- Customer Row Remove
-- Delivery Product Deliveries
-- Print Module Footer
-- Isalarypaymentservice Payment Salary
-- Irepository Update Patch
-- Asset Archive Batch
-- Employee Row Set
-- Payment Method Row
-- Print Payment Receipt
-- Product Category Row
-- Error Interceptor Handle
-- Print Settings Template
-- Claim Assign Iassignclaimservice
-- Print Iprintservice Settings
-- Codegenerationservice Code Generation
-- Booking Delivery Bookingduecalculator
-- Readme Application Api
-- Booking Print Invoice
-- Employee Distinct Archive
-- Date Range Picker
-- Booking Bookingrepository Bookingrequest
-- Asset Row Archive
-- Ledger Book Auth
-- Delivery Challan Status
-- Customer Due Report
-- Print Interfaces Preview
-- Package Angular Ngx
-- Trial Balance Itrialbalanceservice
-- Angular Min Options
-- Booking Invoice Delivery
-- Branch Settings Data
-- Employee Departments Designations
-- Transaction Head Row
-- Damage Archive Batch
-- Header Language Set
-- Stock Report Chart
-- Delivery Invoice Total
-- Delivery Bill Collection
-- Branch Row Remove
-- Bank Transaction Archive
-- Dashboard Main Chart
-- Delivery Product Challan
-- Role Row Create
-- Iprintsettingsrepository Print Settings
-- Branch Batch Generate
-- Stock Daily Book
-- Report Stock Load
-- Salary Payment Form
-- Preview Print Form
-- Format Pipe Print
-- Recurring Charge Recurringchargemanagementcontroller
-- Readme Frost Track
-- Ibookingrepository Booking Manage
-- Angular Svg Ckeditor
-- Due Customer Print
-- Report Employee Selected
-- Receipt Print Salary
-- Token User Iusertokenservice
-- Claim Assignclaimservice User
-- Branch Printsettingsrepository Print
-- Product Unit Fetch
-- Asset Data Types
-- Paginated Load Data
-- Report Monthly Salary
-- Claim Assign Load
-- Applicationdbcontextinitializer Application Context
-- Recurring Charge Irecurringchargemanagementservice
-- Linqextensions Enums Linq
-- Enums Types Recurring
-- Routes Page404 Administration
-- Dashboard2 Chart Dashboard
-- Main Chart Period
-- Challan Delivery Load
-- Package Angular Eslint
-- Ipaymentmethodrepository Payment Method
-- Paymentmethodrepository Payment Method
-- Angular Builder Build
-- Package Build Json
-- Customer Report Payment
-- Branch Data Init
-- Payment Method Data
-- Stock Chart Total
-- Report Datewise Booking
-- Role Post Put
-- Pipe Utc Date
-- Employee Report Employeereportservice
-- Transaction Transactionvalidator Validator
-- Transaction Head Transactionhead
-- Single Barcode Generate
-- Due Customer Booking
-- Bank Data Init
-- Customer Data Init
-- Report Datewise Delivery
-- Subscriptiontype Token Ijwttokengenerator
-- Payment Salarypaymentvalidator Salary
-- Bookingservice Customer Due
-- Balance Balancecalculatorservice Opening
-- Defaultvalueinjector Inject Default
-- Migration 20251228134528 Init
-- Angular Json Cli
-- Angular Build Development
-- Angular Css Node
-- Product Category Data
-- Password Change Init
-- Delivery Invoice Print
-- Barcode Generate Random
-- Directive Number Decimal
-- Dependencyinjection Services Manage
-- 20260117164530 Labour Charge
-- Tenant Provider Itenantprovider
-- Configurejwtoptions Configure Options
-- Angular Serve Production
-- Angular Root Schematics
-- Blank Extra Pages
-- Balance Sheet Formatted
-- Trial Balance Formatted
-- Assign Role Load
-- Print Directive Generate
-- Company Config Data
-- Global Clone Array
-- 20260110093126 Addreferencenumberandlabourcharge Designer
-- Challan 20260118174345 Designer
-- 20260410051859 Addsalarypaymenttable Designer
-- 20260503060651 Structuralfixes Bookingdetailfk
-- 20260503063508 Entity Removeentitynameentityidcolumns
-- 20260503070912 Softdeleteconsolidation Designer
-- 20260503122022 Addbookingdetaillastaccrualdate Designer
-- 20260503165549 Pendingmodelchanges Designer
-- 20260504001314 Addaccrualruntable Designer
-- 20260504163050 Addbookingledgertables Designer
-- 20260517094201 Renameaccrualtorecurringcharge Designer
-- 20260517103910 Removeposentities Designer
-- 20260810144748 Addautogeneratebookingno Designer
-- 20260822183522 Removebookingledgersandupdatestoragecharge Designer
-- 20260921180146 Bank Transaction
-- 20260923084007 Delivery Addcollectedamounttodeliveryanddeliverydetail
-- Expression Parameter Expressionparameterreplacer
-- Recurring Charge Recurringchargerunresponse
-- Code Codegenerator Bookingservice
-- Claim Assign All
-- Barcode Counter Changes
-- Agents Multi Role
-- Recurring Irecurringchargeservice Charge
-- Delivery Productdeliveryrequest Product
-- Booking Bookingservice Lookup
-- Angular Lint Builder
-- Booking Record Load
-- Footer Spec Init
-- Booking Bookingresponse Detail
-- Trial Balance Trialbalanceresponse
-- View Customerstockviewmodel Customer
-- Aspnetcore Https Path
-- Eslintrc Json Ignore
-- Report Header Init
-- Snapshot Applicationdbcontextmodelsnapshot Application
-- Current User Applicationdbcontext
-- Transaction Begin Iunitofwork
-- Date Time Utc
-- Transaction Head Transactionheadresponse
-- Transactionresponse Transaction Cash
-- Date Time Provider
-- Salary Payment Salarypayment
-- Bank Transaction Banktransactionresponse
-- Unit Baseunitresponse
-- Branch Branchresponse
-- Company Companyresponse
-- Customer Customerresponse
-- Product Category Productcategoryresponse
-- Bank Transaction Banktransactionrequest
-- Password Changepasswordrequest Change
-- Recurring Charge Run
-- User Userrequest
-- Role Application Applicationrole
-- Angular Common Package
-- Angular Compiler Package
-- Angular Compiler Cli
-- Angular Devkit Build
-- Angular Eslint Builder
-- Eslint Angular Plugin
-- Angular Eslint Template
-- Angular Feather Package
-- Angular Forms Package
-- Angular Gauge Package
-- Angular Google Maps
-- Angular Jwt Updated
-- Angular Localize Package
-- Angular Platform Browser
-- Angular Platform Browser
-- Angular Router Package
-- Apexcharts Package
-- Branch Branchrequest
-- Bootstrap Package
-- Browser Sync Package
-- Chart Package
-- Ckeditor Angular Package
-- Ckeditor Build Classic
-- Copilot Instructions Frost
-- Core Package
-- Danielmoncada Angular Datetime
-- Echarts Package
-- Eslint Package
-- Fullcalendar Angular Package
-- Fullcalendar Core Package
-- Fullcalendar Interaction Package
-- Fullcalendar Package
-- Fullcalendar Timegrid Package
-- Jsbarcode Package
-- Jspdf Package
-- Jspdf Autotable Package
-- Moment Package
-- Charts Package
-- Apexcharts Package
-- Bootstrap Package
-- Image Fullscreen View
-- Pick Datetime Package
-- Select Package
-- Ngx Color Picker
-- Ngx Dropzone Wrapper
-- Ngx Echarts Package
-- Ngx Gauge Package
-- Ngx Loading Bar
-- Ngx Loading Bar
-- Ngx Mask Package
-- Ngx Print Package
-- Ngx Scrollbar Package
-- Ngx Translate Core
-- Ngx Translate Http
-- Popperjs Core Package
-- Rxjs Package
-- Scremer Shimmer Package
-- Subsink Package
-- Sweetalert Package
-- Swimlane Ngx Charts
-- Swimlane Ngx Datatable
-- Tslib Package
-- Types Shape Package
-- Zone Package
-- Jasmine Core Package
-- Karma Package
-- Karma Chrome Launcher
-- Karma Coverage Package
-- Karma Jasmine Package
-- Ckeditor Types Build
-- Ckeditor Types Watchdog
-- Types Echarts Package
-- Types Jasmine Package
-- Types Jspdf Package
-- Typescript Package
-- Eslint Typescript Plugin
-- Typescript Eslint Parser
-- Recurring Charge Sum
+- LayoutService
+- Application.ReponseDTO
+- Domain.Entitites
+- PaginationQuery
+- DeliveryController
+- DeliveryChallanService
+- BookingController
+- booking.interface.ts
+- SetupPaginationQuery
+- formatErrorMessage
+- TransactionController
+- AssetController
+- EmployeeController
+- BankController
+- BankTransactionController
+- UserContextService
+- ProductController
+- CustomerController
+- UsersController
+- AbstractValidator
+- BaseUnitController
+- ProductCategoryController
+- UnitConversionController
+- Application.Contractors.Authentication
+- PrintService
+- DeliveryComponent
+- TransactionHeadController
+- .Query
+- dependencies
+- BranchController
+- TransactionService
+- CustomerDueListComponent
+- DeliveryListComponent
+- Application.Services
+- ISalaryPaymentService
+- BookingService
+- BankService
+- BankTransactionComponent
+- .GetStockReportAsync
+- TransactionService
+- DeliveryService
+- CompanyController
+- print.module.ts
+- SalaryPaymentService
+- EmployeeService
+- multilevel.routes.ts
+- .UpdateAsync
+- AssetService
+- PaymentMethodService
+- ApplicationDbContext
+- BankService
+- CustomerService
+- Repository
+- BaseService
+- AuthService
+- .GetByIdAsync
+- .UnfilteredQuery
+- BankTransactionService
+- UserService
+- Domain
+- BaseUnitService
+- ProductCategoryService
+- app.routes.ts
+- TransactionReceiptPrintComponent
+- frosttrack.client/README.md
+- Application.Common
+- .GetCustomerPaymentReport
+- accrual-management.component.ts
+- header.component.ts
+- UserComponent
+- http
+- DashboardService
+- CodeGenerationService
+- TransactionHeadService
+- BookingComponent
+- UnitConversionComponent
+- SalaryPaymentFormComponent
+- SecurityController
+- development
+- EmployeeService
+- DeliveryChallanService
+- RoleComponent
+- .GetDailyStockBookAsync
+- options
+- .GetDatewiseBookingReportAsync
+- .GetDatewiseDeliveryReportAsync
+- PrintReportType
+- AdvanceTableComponent
+- TransactionHeadService
+- PrintHelperService
+- SidebarComponent
+- CompanyService
+- CompanyService
+- RecurringChargeManagementService
+- PaymentMethodService
+- PrintTemplateService
+- ProductComponent
+- SalaryPaymentListComponent
+- AssignClaimComponent
+- UserTokenService
+- season-archive.component.ts
+- BookingListComponent
+- BankComponent
+- BaseUnitComponent
+- BaseUnitService
+- CustomerComponent
+- ProductCategoryService
+- AssetService
+- EmployeeComponent
+- PaymentMethodComponent
+- PrintService
+- ProductCategoryComponent
+- UserService
+- PrintService
+- devDependencies
+- .GetAllUserClaimsAsync
+- .GetCashBook
+- .DeleteAsync
+- app.config.ts
+- BookingInvoicePrintComponent
+- AssetComponent
+- DateRangePickerComponent
+- TransactionListComponent
+- allowedCommonJsDependencies
+- SeasonArchiveService
+- BookingRepository
+- BillCollectionService
+- SupplierService
+- LedgerBookComponent
+- DeliveryChallanListComponent
+- CustomerDueReportComponent
+- .GetBankBook
+- .GetTrialBalance
+- DeliveryBillCollectionComponent
+- BookingInvoiceWithDeliveryPrintComponent
+- AddEmployeeComponent
+- TransactionHeadComponent
+- StockReportService
+- DailyStockBookComponent
+- BillCollectionListComponent
+- BranchService
+- BranchComponent
+- ErrorInterceptor
+- TrialBalanceComponent
+- IBalanceCalculatorService
+- BranchService
+- main.component.ts
+- RightSidebarComponent
+- StockReportComponent
+- PrintPreviewComponent
+- PrintFormatPipe
+- .Apply
+- .GetBalanceSheet
+- BookingInvoiceWithDeliveryResponse
+- Company
+- FrostTrack.Server.Middlewares
+- AddProductComponent
+- app.component.ts
+- AddAssetComponent
+- EmployeeReportComponent
+- .GetEmployeeReportAsync
+- .Post
+- CustomerDueResponse.cs
+- AssignClaimService
+- .ManageUpdate
+- HeaderComponent
+- MonthlySalaryReportComponent
+- DateTime
+- .ApplyManualRecurringChargeAsync
+- LinqExtensions
+- Program.cs
+- AddBranchComponent
+- BaseComponent
+- Dashboard2Component
+- MainComponent
+- TransactionReportComponent
+- .Execute
+- IPaymentMethodRepository
+- BillingRecurringChargeJob
+- ValueConverter
+- PaymentMethod
+- PrintSettings
+- scripts
+- CustomerPaymentReportComponent
+- AddPaymentMethodComponent
+- StockChartComponent
+- DatewiseBookingReportComponent
+- utc-date.pipe.ts
+- angular.json
+- .GetGeneralLedger
+- .GetGeneralLedger
+- .GetGeneralLedgerAsync
+- .GetEmployeeReportAsync
+- GenerateSingleBarcodeComponent
+- AddCustomerComponent
+- DatewiseDeliveryReportComponent
+- EmailBackgroundService
+- ApplicationDbContextInitializer
+- SubscriptionType
+- .GetGeneralLedgerAsync
+- BankBookService.cs
+- BalanceCalculatorService
+- DefaultValueInjector
+- .GetTrialBalanceAsync
+- Persistence.Migrations
+- .CompletedCycles
+- AddProductCategoryComponent
+- ChangePasswordComponent
+- BarcodeComponent
+- DecimaNumberDirective
+- DependencyInjection
+- Migration
+- ISeasonArchiveService
+- SeasonArchivePreviewResponse
+- .ProcessRecurringChargesAsync
+- Infrastructure.BackgroundServices
+- .BeginTransactionAsync
+- ConfigureJwtOptions
+- oreva
+- SignupComponent
+- BlankComponent
+- BalanceSheetComponent
+- AssignRoleComponent
+- PrintDirective
+- CompanyConfigComponent
+- Array
+- AddReferenceNumberAndLabourCharge
+- addlabourchargeondelivery
+- challan
+- StructuralFixes_BookingDetailFK_TransactionTypedFKs_BranchCompanyFK_AuditUtc
+- RemoveEntityNameEntityIdColumns
+- SoftDeleteConsolidation
+- AddBookingDetailLastAccrualDate
+- PendingModelChanges
+- AddAccrualRunTable
+- AddBookingLedgerTables
+- RenameAccrualToRecurringCharge
+- RemovePosEntities
+- AddAutoGenerateBookingNo
+- RemoveBookingLedgersAndUpdateStorageCharge
+- AddBankToTransactionAndSourceTypeToBankTransaction
+- AddCollectedAmountToDeliveryAndDeliveryDetail
+- AddSeasonArchiveLog
+- AddJobConfigurationsToCompany
+- ExpressionParameterReplacer
+- RecurringChargeRunResponse.cs
+- DeliveryChallanPrintComponent
+- BarcodeComponent
+- AGENTS.md
+- .ProcessRecurringChargesAsync
+- Application/DependencyInjection.cs
+- DeliveryRequest
+- lint
+- ResetComponent
+- BookingRecordComponent
+- LanguageService
+- FooterComponent
+- BalanceSheetSummaryResponse
+- TrialBalanceSummaryResponse
+- Domain.ViewModels
+- aspnetcore-https.js
+- .eslintrc.json
+- ReportHeaderComponent
+- DependencyInjection
+- ApplicationDbContextModelSnapshot.cs
+- .SaveChangesAsync
+- DateToUtcTime.cs
+- TransactionHeadResponse.cs
+- IDateTimeProvider.cs
+- BankTransactionResponse.cs
+- BaseUnitResponse.cs
+- BranchResponse.cs
+- CompanyResponse.cs
+- CustomerResponse.cs
+- ProductCategoryResponse.cs
+- BankTransactionRequest.cs
+- ChangePasswordRequest.cs
+- RecurringChargeRunRequest.cs
+- UserRequest.cs
+- ApplicationRole.cs
+- @angular/animations
+- angular-archwizard
+- @angular/cli
+- @angular/compiler
+- @angular/core
+- @angular-eslint/eslint-plugin-template
+- @angular-eslint/template-parser
+- angular-feather
+- @angular/forms
+- angular-gauge
+- @angular/platform-browser
+- @angular/platform-browser-dynamic
+- @angular/router
+- bootstrap
+- browser-sync
+- copilot-instructions.md
+- eslint
+- @fullcalendar/angular
+- @fullcalendar/core
+- @fullcalendar/daygrid
+- jspdf-autotable
+- moment
+- ng2-charts
+- ng-apexcharts
+- @ng-bootstrap/ng-bootstrap
+- ng-image-fullscreen-view
+- @ng-select/ng-select
+- ngx-dropzone-wrapper
+- ngx-echarts
+- @ngx-loading-bar/core
+- ngx-print
+- ngx-scrollbar
+- @ngx-translate/core
+- scremer-shimmer
+- @swimlane/ngx-charts
+- tslib
+- @types/d3-shape
+- xlsx
+- jasmine-core
+- karma
+- karma-coverage
+- karma-jasmine
+- karma-jasmine-html-reporter
+- @types/jasmine
+- @types/jspdf
+- typescript
+- @typescript-eslint/eslint-plugin
+- @typescript-eslint/parser
+- BookingInvoiceWithDeliveryResponse
+- BookingListResponse
+- BookingRequest
+- BookingResponse
+- CustomerDueDetailResponse
+- CustomerDueSummaryResponse
+- CustomerOutstandingResponse
+- Expression
+- Func
+- IBookingRepository
+- Lookup
+- CompanyListResponse
+- CompanyRequest
+- CompanyResponse
+- IMemoryCache
+- int
+- PaginationQuery
+- string
+- ECodeGeneration
+- ICollection
+- Input
+- ILogger
+- Asset
+- Bank
+- BankTransaction
+- BaseUnit
+- BookingDetail
+- Company
+- Customer
+- DbSet
+- Delivery
+- DeliveryChallan
+- DeliveryChallanItem
+- DeliveryDetail
+- Employee
+- PaymentMethod
+- PrintSettings
+- Product
+- ProductCategory
+- RecurringChargeRun
+- SalaryPayment
+- Transaction
+- TransactionHead
+- UnitConversion
+- IConfiguration
 
 ## God Nodes (most connected - your core abstractions)
 1. `LayoutService` - 109 edges
-2. `Application.ReponseDTO` - 94 edges
+2. `Application.ReponseDTO` - 98 edges
 3. `PaginationQuery` - 94 edges
-4. `Application.Contractors` - 81 edges
+4. `Application.Contractors` - 85 edges
 5. `PaginationResult` - 76 edges
-6. `formatErrorMessage()` - 72 edges
-7. `ILookup` - 62 edges
-8. `BaseService` - 62 edges
-9. `Domain.Entitites` - 61 edges
+6. `formatErrorMessage()` - 70 edges
+7. `Domain.Entitites` - 65 edges
+8. `ILookup` - 62 edges
+9. `BaseService` - 62 edges
 10. `ErrorHandlerService` - 59 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `ApplicationDbContext` --references--> `ITenantProvider`  [EXTRACTED]
-  Persistence/Context/ApplicationDbContext.cs → Application/Contractors/Common/Authentication/ITenantProvider.cs
-- `ApplicationDbContext` --references--> `IUserContextService`  [EXTRACTED]
-  Persistence/Context/ApplicationDbContext.cs → Application/Contractors/Common/Authentication/IUserContextService.cs
+- `BookingInvoiceWithDeliveryResponse` --references--> `Customer`  [EXTRACTED]
+  Application/ReponseDTO/BookingInvoiceWithDeliveryResponse.cs → Domain/Entitites/General/Customer.cs
+- `PaymentMethodRepository` --references--> `IRepository`  [EXTRACTED]
+  Persistence/Repositories/PaymentMethodRepository.cs → Application/Repositories/IRepository.cs
+- `BookingRepository` --references--> `DefaultValueInjector`  [EXTRACTED]
+  Persistence/Repositories/BookingRepository.cs → Application/Services/Common/DefaultValueInjector.cs
 - `PrintSettingsRepository` --implements--> `IPrintSettingsRepository`  [EXTRACTED]
   Persistence/Repositories/PrintSettingsRepository.cs → Application/Contractors/IPrintSettingsRepository.cs
-- `SalaryPaymentController` --references--> `ISalaryPaymentService`  [EXTRACTED]
-  FrostTrack.Server/Controllers/SalaryPaymentController.cs → Application/Contractors/ISalaryPaymentService.cs
 - `BookingInvoiceWithDeliveryResponse` --references--> `Branch`  [EXTRACTED]
   Application/ReponseDTO/BookingInvoiceWithDeliveryResponse.cs → Domain/Entitites/General/Branch.cs
 
 ## Import Cycles
 - None detected.
 
-## Communities (370 total, 114 thin omitted)
+## Communities (381 total, 129 thin omitted)
 
-### Community 0 - "Report Balance Datewise"
+### Community 0 - "LayoutService"
+Cohesion: 0.02
+Nodes (61): billCollectionRoutes, BillCollectionService, Injectable, IBookingInvoiceWithDeliveryResponse, ICustomerDueSummaryResponse, BookingService, Injectable, TRANSACTION_TYPE (+53 more)
+
+### Community 1 - "Application.ReponseDTO"
+Cohesion: 0.04
+Nodes (25): AssignClaimResponse, TokenUser, EmployeeReportResponse, TokenResponse, BaseUnitRequest, BranchRequest, CompanyRequest, CustomerRequest (+17 more)
+
+### Community 2 - "Domain.Entitites"
 Cohesion: 0.03
-Nodes (58): billCollectionRoutes, BOOKING_ROUTE, IBookingInvoiceWithDeliveryResponse, ICustomerDueSummaryResponse, TRANSACTION_TYPE, ICustomerListResponse, IBalanceSheetItem, IBalanceSheetSummary (+50 more)
+Nodes (76): BookingDueCalculator, DateTime, IEnumerable, Persistence.Configurations, Domain.Entitites, DateTime, AuditableEntity, Guid (+68 more)
 
-### Community 1 - "Book Report Delivery"
-Cohesion: 0.04
-Nodes (26): AssignClaimResponse, TokenUser, EmployeeReportResponse, TokenResponse, BaseUnitRequest, CompanyRequest, CustomerRequest, ProductCategoryRequest (+18 more)
-
-### Community 2 - "Pagination With Error"
+### Community 3 - "PaginationQuery"
 Cohesion: 0.09
-Nodes (28): IBranchListResponse, IBookingListResponse, IBookingPaginationQuery, ICustomerOutstandingResponse, IAssetListResponse, IAssetPaginationQuery, IBankTransactionPaginationQuery, IBaseUnitListResponse (+20 more)
+Nodes (32): IBranchListResponse, ICustomerPaymentReportFilter, ICustomerPaymentRequest, IDeliveryBillCollectionRequest, IRecentCustomerPayment, ICustomerOutstandingResponse, IAssetPaginationQuery, IBankListResponse (+24 more)
 
-### Community 3 - "Customer Auth Report"
-Cohesion: 0.04
-Nodes (11): ICustomerPaginationQuery, CustomerService, Injectable, JwtInterceptor, Injectable, LoginRequest, TokenResponse, AuthService (+3 more)
-
-### Community 4 - "Delivery Iproductdeliveryservice Productdeliverycontroller"
+### Community 4 - "DeliveryController"
 Cohesion: 0.06
 Nodes (47): IDeliveryService, CancellationToken, Guid, IEnumerable, List, Task, Lookup, BookingInvoiceInfo (+39 more)
 
-### Community 5 - "Deliverychallanservice Deliverychallancontroller Ideliverychallanservice"
-Cohesion: 0.07
-Nodes (43): IDeliveryChallanService, CancellationToken, Guid, IEnumerable, List, Task, BookingPaginationQuery, DeliveryChallanPaginationQuery (+35 more)
+### Community 5 - "DeliveryChallanService"
+Cohesion: 0.06
+Nodes (44): IDeliveryChallanService, CancellationToken, Guid, IEnumerable, List, Task, BookingPaginationQuery, DeliveryChallanPaginationQuery (+36 more)
 
-### Community 6 - "Bookingcontroller Booking Ibookingservice"
+### Community 6 - "BookingController"
 Cohesion: 0.07
 Nodes (44): IBookingService, Booking, BookingInvoiceWithDeliveryResponse, BookingListResponse, BookingRequest, BookingResponse, CancellationToken, CustomerDueDetailResponse (+36 more)
 
-### Community 7 - "Paymentmethodcontroller Ipaymentmethodservice Payment"
+### Community 7 - "booking.interface.ts"
+Cohesion: 0.04
+Nodes (32): IProductListResponse, IProductListWithStockResponse, IProductPaginationQuery, IProductRequest, IProductResponse, ProductService, Injectable, BOOKING_ROUTE (+24 more)
+
+### Community 8 - "SetupPaginationQuery"
 Cohesion: 0.07
 Nodes (35): IPaymentMethodService, CancellationToken, Expression, Func, IEnumerable, List, Task, PaginationQuery (+27 more)
 
-### Community 8 - "Itransactionservice Transactioncontroller Transaction"
+### Community 9 - "formatErrorMessage"
+Cohesion: 0.12
+Nodes (29): COMMON_ROUTE, AddBaseUnitComponent, Component, Input, BANK_TRANSACTION_TYPE, COMMON_STATUS_LIST, DISPLAY_TYPE_LIST, ROLE_HIERARCHY (+21 more)
+
+### Community 10 - "TransactionController"
 Cohesion: 0.08
 Nodes (34): ITransactionService, CancellationToken, CashFlowResponse, DateTime, Expression, Func, Guid, IEnumerable (+26 more)
 
-### Community 9 - "Asset Assetcontroller Iassetservice"
+### Community 11 - "AssetController"
 Cohesion: 0.08
 Nodes (32): IAssetService, Asset, CancellationToken, Expression, Func, IEnumerable, List, Task (+24 more)
 
-### Community 10 - "Employeecontroller Employee Iemployeeservice"
+### Community 12 - "EmployeeController"
 Cohesion: 0.08
 Nodes (32): IEmployeeService, CancellationToken, Employee, Expression, Func, IEnumerable, List, Task (+24 more)
 
-### Community 11 - "Bank Bankcontroller Ibankservice"
+### Community 13 - "BankController"
 Cohesion: 0.08
 Nodes (32): IBankService, Bank, CancellationToken, Expression, Func, IEnumerable, List, Task (+24 more)
 
-### Community 12 - "Bank Transaction Banktransactioncontroller"
+### Community 14 - "BankTransactionController"
 Cohesion: 0.08
 Nodes (35): IBankTransactionService, BankTransaction, BankTransactionListResponse, BankTransactionRequest, BankTransactionResponse, CancellationToken, Expression, Func (+27 more)
 
-### Community 13 - "Productcontroller Product Iproductservice"
-Cohesion: 0.08
-Nodes (33): IProductService, CancellationToken, Expression, Func, IEnumerable, List, Lookup, Product (+25 more)
-
-### Community 14 - "User Current Token"
+### Community 15 - "UserContextService"
 Cohesion: 0.06
 Nodes (27): AllowAnonymous, ICurrentUserProvider, CurrentUser, IUserContextService, CurrentUser, Guid, List, Authorize (+19 more)
 
-### Community 15 - "Customercontroller Customer Icustomerservice"
+### Community 16 - "ProductController"
+Cohesion: 0.08
+Nodes (33): IProductService, CancellationToken, Expression, Func, IEnumerable, List, Lookup, Product (+25 more)
+
+### Community 17 - "CustomerController"
 Cohesion: 0.08
 Nodes (33): ICustomerService, CancellationToken, Customer, CustomerListResponse, CustomerRequest, CustomerResponse, Expression, Func (+25 more)
 
-### Community 16 - "User Userscontroller Iuserservice"
+### Community 18 - "UsersController"
 Cohesion: 0.07
 Nodes (39): IUserService, ApplicationUser, CancellationToken, ChangePasswordRequest, Expression, Func, IEnumerable, List (+31 more)
 
-### Community 17 - "Error Settings Data"
-Cohesion: 0.17
-Nodes (26): COMMON_ROUTE, BANK_TRANSACTION_TYPE, BILL_TYPE, BILL_TYPES, COMMON_STATUS_LIST, ROLE_HIERARCHY, ROLES, SALES_TYPES (+18 more)
-
-### Community 18 - "Booking Management Recurring"
+### Community 19 - "AbstractValidator"
 Cohesion: 0.05
-Nodes (22): RecurringChargeManagementComponent, Component, RecurringChargeManagementComponent, Component, IBookingDetailListResponse, IBookingDetailRequest, IBookingOutstandingItem, IBookingRequest (+14 more)
+Nodes (42): AbstractValidator, AssetValidator, AssetRequest, BankTransactionValidator, BankTransactionRequest, CancellationToken, IRepository, Task (+34 more)
 
-### Community 19 - "Baseunitcontroller Unit Ibaseunitservice"
+### Community 20 - "BaseUnitController"
 Cohesion: 0.09
 Nodes (32): IBaseUnitService, BaseUnit, BaseUnitListResponse, BaseUnitRequest, BaseUnitResponse, CancellationToken, Expression, Func (+24 more)
 
-### Community 20 - "Product Productcategorycontroller Category"
+### Community 21 - "ProductCategoryController"
 Cohesion: 0.09
 Nodes (32): IProductCategoryService, CancellationToken, Expression, Func, IEnumerable, List, Lookup, ProductCategory (+24 more)
 
-### Community 21 - "Unitconversioncontroller Unit Conversion"
+### Community 22 - "UnitConversionController"
 Cohesion: 0.09
 Nodes (32): IUnitConversionService, CancellationToken, Expression, Func, IEnumerable, List, Lookup, Task (+24 more)
 
-### Community 22 - "Validator Transaction Unit"
-Cohesion: 0.05
-Nodes (39): AbstractValidator, AssetValidator, AssetRequest, BankTransactionValidator, BankTransactionRequest, CancellationToken, IRepository, Task (+31 more)
+### Community 23 - "Application.Contractors.Authentication"
+Cohesion: 0.04
+Nodes (34): Policy, string, RoleListResponse, RoleResponse, UserListResponse, UserResponse, UserResponseForToken, AuthorizationHandler (+26 more)
 
-### Community 23 - "Transaction Head Transactionheadcontroller"
+### Community 24 - "PrintService"
+Cohesion: 0.08
+Nodes (27): IPrintService, CancellationToken, Guid, Task, IPrintSettingsRepository, CancellationToken, Guid, Task (+19 more)
+
+### Community 25 - "DeliveryComponent"
+Cohesion: 0.06
+Nodes (16): IBookingBasicInfo, IBookingDetailForDeliveryResponse, IBookingForDeliveryResponse, IBookingInvoiceInfo, ICustomerBasicInfo, IDeliveryDetailRequest, IDeliveryDetailResponse, IDeliveryInvoiceDetailResponse (+8 more)
+
+### Community 26 - "TransactionHeadController"
 Cohesion: 0.09
 Nodes (35): ITransactionHeadService, CancellationToken, Expression, Func, Guid, IEnumerable, List, Lookup (+27 more)
 
-### Community 24 - "Policy Authorization Permission"
+### Community 27 - ".Query"
+Cohesion: 0.09
+Nodes (25): DeliveryService, BookingForDeliveryResponse, CancellationToken, CreateDeliveryRequest, CurrentUser, DefaultValueInjector, Delivery, DeliveryInvoiceResponse (+17 more)
+
+### Community 28 - "dependencies"
 Cohesion: 0.04
-Nodes (30): Policy, string, RoleListResponse, RoleResponse, UserListResponse, UserResponse, UserResponseForToken, AuthorizationHandler (+22 more)
+Nodes (52): @angular/cdk, @angular/common, @angular/google-maps, angular-jwt-updated, @angular/localize, @ckeditor/ckeditor5-angular, core-js, @danielmoncada/angular-datetime-picker (+44 more)
 
-### Community 25 - "Transaction Bill Collection"
-Cohesion: 0.05
-Nodes (15): BillCollectionService, ICustomerBalanceSummary, ICustomerPaymentReportFilter, ICustomerPaymentRequest, IDeliveryBillCollectionRequest, IRecentCustomerPayment, Injectable, BaseService (+7 more)
-
-### Community 26 - "Productdeliveryservice Delivery Booking"
-Cohesion: 0.10
-Nodes (24): DeliveryService, BookingForDeliveryResponse, CancellationToken, CreateDeliveryRequest, CurrentUser, DefaultValueInjector, Delivery, DeliveryInvoiceResponse (+16 more)
-
-### Community 27 - "Branch Ibranchservice Branchcontroller"
+### Community 29 - "BranchController"
 Cohesion: 0.08
 Nodes (32): IBranchService, Branch, BranchListResponse, BranchRequest, BranchResponse, CancellationToken, Expression, Func (+24 more)
 
-### Community 28 - "Product Unit Conversion"
-Cohesion: 0.06
-Nodes (17): IProductListResponse, IProductListWithStockResponse, IProductPaginationQuery, IProductRequest, IProductResponse, ProductService, Injectable, IBookingDetailResponse (+9 more)
+### Community 30 - "TransactionService"
+Cohesion: 0.05
+Nodes (14): IEmployeeForSalary, IMonthlyPaymentSummary, ISalaryPaymentList, ISalaryPaymentRequest, ISalaryPaymentResponse, salaryPaymentRoutes, SalaryPaymentService, Injectable (+6 more)
 
-### Community 29 - "Transaction Bill Collection"
-Cohesion: 0.07
-Nodes (9): BillCollectionListComponent, Component, ViewChild, TransactionListComponent, Component, ViewChild, TransactionReportComponent, Component (+1 more)
+### Community 31 - "CustomerDueListComponent"
+Cohesion: 0.05
+Nodes (5): CustomerDueListComponent, Component, CustomerDuePrintComponent, Component, ICustomerDueDetailResponse
 
-### Community 30 - "Converter Date Time"
-Cohesion: 0.07
-Nodes (30): FrostTrack.Server.Middlewares, Persistence.Converters, Infrastructure.Converters, FrostTrack.Server, IServiceCollection, DependencyInjection, HttpContext, RequestDelegate (+22 more)
+### Community 32 - "DeliveryListComponent"
+Cohesion: 0.05
+Nodes (11): DeliveryInvoiceComponent, Component, Input, ViewChild, DeliveryInvoicePrintComponent, Component, ViewChild, DeliveryListComponent (+3 more)
 
-### Community 31 - "Customer Payment Bill"
-Cohesion: 0.10
-Nodes (26): IBillCollectionService, CancellationToken, DateTime, List, Task, CustomerBalanceSummaryResponse, RecentCustomerPaymentDto, CustomerPaymentReportItemResponse (+18 more)
+### Community 33 - "Application.Services"
+Cohesion: 0.04
+Nodes (34): ICashBookService, IDashboardService, IGeneralLedgerService, ILedgerBookService, BookingDetailListResponse, BookingDetailResponse, BookingListResponse, BookingResponse (+26 more)
 
-### Community 32 - "Bank Transaction Report"
+### Community 34 - "ISalaryPaymentService"
+Cohesion: 0.11
+Nodes (28): ISalaryPaymentService, CancellationToken, DateTime, Guid, IEnumerable, PaginationQuery, PaginationResult, SalaryPaymentRequest (+20 more)
+
+### Community 35 - "BookingService"
+Cohesion: 0.09
+Nodes (26): BookingService, Booking, CancellationToken, CurrentUser, DateTime, DefaultValueInjector, Guid, IEnumerable (+18 more)
+
+### Community 36 - "BankService"
+Cohesion: 0.05
+Nodes (11): AddBankComponent, Component, Input, IBankRequest, IBankResponse, IBankTransactionRequest, IBankTransactionResponse, BankService (+3 more)
+
+### Community 37 - "BankTransactionComponent"
 Cohesion: 0.08
 Nodes (6): BankTransactionComponent, Component, ViewChild, BankTransactionReportComponent, Component, IBankTransactionListResponse
 
-### Community 33 - "Stock Report Stockreportresponse"
+### Community 38 - ".GetStockReportAsync"
 Cohesion: 0.12
 Nodes (28): IStockReportService, CancellationToken, DateTime, IEnumerable, Task, CustomerStockReportResponse, CustomerStockSummary, ProductStockReportResponse (+20 more)
 
-### Community 34 - "Recurring Charge Recurringchargemanagementservice"
-Cohesion: 0.08
-Nodes (24): RecurringChargeManagementService, Booking, CancellationToken, DateTime, Guid, List, RecurringChargePreviewResponse, RecurringChargeRun (+16 more)
-
-### Community 35 - "Transactionservice Transaction Lookup"
+### Community 39 - "TransactionService"
 Cohesion: 0.12
 Nodes (22): TransactionService, CancellationToken, CashFlowResponse, CurrentUser, DateTime, DefaultValueInjector, Expression, Func (+14 more)
 
-### Community 36 - "Net Domain Microsoft"
-Cohesion: 0.06
-Nodes (33): net9.0, Microsoft.NET.Sdk, Domain, net9.0, Microsoft.NET.Sdk, frosttrack.client, FrostTrack.Server, net9.0 (+25 more)
+### Community 40 - "DeliveryService"
+Cohesion: 0.07
+Nodes (9): DeliveryChallanComponent, Component, DeliveryRecordComponent, Component, ICustomerStockResponse, IDeliveryRequest, IDeliveryResponse, DeliveryService (+1 more)
 
-### Community 37 - "Company Icompanyservice Companycontroller"
+### Community 41 - "CompanyController"
 Cohesion: 0.10
 Nodes (25): ICompanyService, CancellationToken, CompanyListResponse, CompanyRequest, CompanyResponse, IEnumerable, PaginationQuery, PaginationResult (+17 more)
 
-### Community 38 - "Employeeservice Employee Pagination"
+### Community 42 - "print.module.ts"
+Cohesion: 0.11
+Nodes (24): PrintFooterComponent, Component, Input, PrintHeaderComponent, Component, Input, PrintSettingsComponent, Component (+16 more)
+
+### Community 43 - "SalaryPaymentService"
+Cohesion: 0.11
+Nodes (20): ITenantProvider, Guid, IUnitOfWork, CancellationToken, IDbContextTransaction, Task, SalaryPaymentRequest, SalaryPaymentService (+12 more)
+
+### Community 44 - "EmployeeService"
 Cohesion: 0.11
 Nodes (20): EmployeeService, CancellationToken, CurrentUser, DefaultValueInjector, Employee, EmployeeListResponse, EmployeeRequest, EmployeeResponse (+12 more)
 
-### Community 39 - "Spec First Init"
+### Community 45 - "multilevel.routes.ts"
 Cohesion: 0.07
 Nodes (13): First1Component, Component, First2Component, Component, First3Component, Component, MULTILEVEL_ROUTE, Second1Component (+5 more)
 
-### Community 40 - "Assetservice Asset Pagination"
-Cohesion: 0.11
-Nodes (20): AssetService, Asset, AssetListResponse, AssetRequest, AssetResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
-
-### Community 41 - "Paymentmethodservice Payment Method"
-Cohesion: 0.12
-Nodes (20): PaymentMethodService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, Guid, IEnumerable (+12 more)
-
-### Community 42 - "Bankservice Bank Pagination"
-Cohesion: 0.11
-Nodes (20): BankService, Bank, BankListResponse, BankRequest, BankResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
-
-### Community 43 - "Customerservice Customer Pagination"
-Cohesion: 0.11
-Nodes (20): CustomerService, CancellationToken, CurrentUser, Customer, CustomerListResponse, CustomerRequest, CustomerResponse, DefaultValueInjector (+12 more)
-
-### Community 44 - "Productservice Product Pagination"
+### Community 46 - ".UpdateAsync"
 Cohesion: 0.12
 Nodes (20): ProductService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, Guid, IEnumerable (+12 more)
 
-### Community 45 - "Update User Pagination"
+### Community 47 - "AssetService"
+Cohesion: 0.11
+Nodes (20): AssetService, Asset, AssetListResponse, AssetRequest, AssetResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
+
+### Community 48 - "PaymentMethodService"
+Cohesion: 0.12
+Nodes (20): PaymentMethodService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, Guid, IEnumerable (+12 more)
+
+### Community 49 - "ApplicationDbContext"
+Cohesion: 0.05
+Nodes (35): ApplicationRole, ApplicationUser, Asset, Bank, BankTransaction, BaseUnit, BookingDetail, Company (+27 more)
+
+### Community 50 - "BankService"
+Cohesion: 0.11
+Nodes (20): BankService, Bank, BankListResponse, BankRequest, BankResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
+
+### Community 51 - "CustomerService"
+Cohesion: 0.11
+Nodes (20): CustomerService, CancellationToken, CurrentUser, Customer, CustomerListResponse, CustomerRequest, CustomerResponse, DefaultValueInjector (+12 more)
+
+### Community 52 - "Repository"
 Cohesion: 0.10
 Nodes (18): Dictionary, Guid, ApplicationUser, dynamic, IdentityUser, IRepository, CancellationToken, DbSet (+10 more)
 
-### Community 46 - "Exception Attribute Authorization"
-Cohesion: 0.06
-Nodes (24): AuthorizeAttribute, BusinessRuleException, NotFoundException, IAuthorizeableRequest, IAuthorizationService, List, IDateTimeProvider, DateTime (+16 more)
+### Community 53 - "BaseService"
+Cohesion: 0.08
+Nodes (6): IDamageRequest, IDamageResponse, DamageService, Injectable, BaseService, Injectable
 
-### Community 47 - "Banktransactionservice Bank Transaction"
-Cohesion: 0.11
-Nodes (20): BankTransactionService, BankTransaction, BankTransactionListResponse, BankTransactionRequest, BankTransactionResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
+### Community 54 - "AuthService"
+Cohesion: 0.08
+Nodes (8): SigninComponent, Component, JwtInterceptor, Injectable, LoginRequest, TokenResponse, AuthService, Injectable
 
-### Community 48 - "Balance Sheet Employee"
-Cohesion: 0.06
-Nodes (26): IBalanceSheetService, BalanceSheetSummaryResponse, CancellationToken, DateTime, Task, IEmployeeReportService, CancellationToken, EmployeeReportResponse (+18 more)
-
-### Community 49 - "Branchservice Branch Pagination"
+### Community 55 - ".GetByIdAsync"
 Cohesion: 0.11
 Nodes (21): BranchService, Branch, BranchListResponse, BranchRequest, BranchResponse, CancellationToken, CurrentUser, DefaultValueInjector (+13 more)
 
-### Community 50 - "Productcategoryservice Product Category"
-Cohesion: 0.12
-Nodes (18): ProductCategoryService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, IEnumerable, IRepository (+10 more)
-
-### Community 51 - "Userservice User Password"
-Cohesion: 0.11
-Nodes (21): UserService, ApplicationUser, CancellationToken, ChangePasswordRequest, CurrentUser, Expression, Func, IEnumerable (+13 more)
-
-### Community 52 - "Spec Signup Forgot"
-Cohesion: 0.07
-Nodes (11): AUTH_ROUTE, ForgotComponent, Component, Page500Component, Component, ResetComponent, Component, SigninComponent (+3 more)
-
-### Community 53 - "Baseunitservice Unit Pagination"
-Cohesion: 0.12
-Nodes (18): BaseUnitService, BaseUnit, BaseUnitListResponse, BaseUnitRequest, BaseUnitResponse, CancellationToken, CurrentUser, DefaultValueInjector (+10 more)
-
-### Community 54 - "Unitconversionservice Unit Conversion"
+### Community 56 - ".UnfilteredQuery"
 Cohesion: 0.12
 Nodes (18): UnitConversionService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, IEnumerable, IRepository (+10 more)
 
-### Community 55 - "Transaction Print Receipt"
+### Community 57 - "BankTransactionService"
+Cohesion: 0.11
+Nodes (20): BankTransactionService, BankTransaction, BankTransactionListResponse, BankTransactionRequest, BankTransactionResponse, CancellationToken, CurrentUser, DefaultValueInjector (+12 more)
+
+### Community 58 - "UserService"
+Cohesion: 0.11
+Nodes (21): UserService, ApplicationUser, CancellationToken, ChangePasswordRequest, CurrentUser, Expression, Func, IEnumerable (+13 more)
+
+### Community 59 - "Domain"
+Cohesion: 0.09
+Nodes (26): Domain, net9.0, Microsoft.NET.Sdk, frosttrack.client, FrostTrack.Server, Ardalis.SmartEnum (8.2.0), ErrorOr (2.0.1), FluentEmail.Core (3.0.2) (+18 more)
+
+### Community 60 - "BaseUnitService"
+Cohesion: 0.12
+Nodes (18): BaseUnitService, BaseUnit, BaseUnitListResponse, BaseUnitRequest, BaseUnitResponse, CancellationToken, CurrentUser, DefaultValueInjector (+10 more)
+
+### Community 61 - "ProductCategoryService"
+Cohesion: 0.12
+Nodes (18): ProductCategoryService, CancellationToken, CurrentUser, DefaultValueInjector, Expression, Func, IEnumerable, IRepository (+10 more)
+
+### Community 62 - "app.routes.ts"
+Cohesion: 0.09
+Nodes (13): ADMINISTRATION_ROUTE, AUTH_ROUTE, ForgotComponent, Component, Page404Component, Component, Page500Component, Component (+5 more)
+
+### Community 63 - "TransactionReceiptPrintComponent"
 Cohesion: 0.09
 Nodes (11): BillCollectionReceiptPrintComponent, Component, Input, ViewChild, TransactionReceiptPrintComponent, Component, Input, ViewChild (+3 more)
 
-### Community 56 - "Loading Loader Interceptor"
-Cohesion: 0.09
-Nodes (14): AppComponent, Component, appConfig, APP_ROUTE, loadingInterceptor(), convertDatesToUtc(), utcDateInterceptor(), LoadingService (+6 more)
-
-### Community 57 - "Dashboard Dashboardresponse Stats"
-Cohesion: 0.10
-Nodes (23): IDashboardService, CancellationToken, DateTime, Task, DailyTrendData, DashboardCardData, DashboardStatsResponse, DashboardTrendsResponse (+15 more)
-
-### Community 58 - "Delivery Transaction Context"
+### Community 64 - "frosttrack.client/README.md"
 Cohesion: 0.06
-Nodes (30): IdentityDbContext, Organization, Asset, Bank, BankTransaction, BaseUnit, Booking, BookingDetail (+22 more)
+Nodes (30): API Integration, Application Routes, Application Structure, Authentication, Build, Code scaffolding, Development server, Environment Configuration (+22 more)
 
-### Community 59 - "Delivery Product Calculate"
+### Community 65 - "Application.Common"
+Cohesion: 0.07
+Nodes (21): AuthorizeAttribute, BusinessRuleException, NotFoundException, IAuthorizeableRequest, IAuthorizationService, List, Attribute, AuthorizationFilterContext (+13 more)
+
+### Community 66 - ".GetCustomerPaymentReport"
+Cohesion: 0.12
+Nodes (19): IBillCollectionService, CancellationToken, DateTime, List, Task, CustomerBalanceSummaryResponse, RecentCustomerPaymentDto, CustomerPaymentReportItemResponse (+11 more)
+
+### Community 67 - "accrual-management.component.ts"
+Cohesion: 0.10
+Nodes (11): RecurringChargeManagementComponent, Component, RecurringChargeManagementComponent, Component, IRecurringChargePreview, IRecurringChargeRunRequest, IRecurringChargeRunResponse, RecurringChargeManagementService (+3 more)
+
+### Community 68 - "header.component.ts"
 Cohesion: 0.14
-Nodes (4): IBookingForDeliveryResponse, DeliveryComponent, Component, ViewChild
+Nodes (13): ConfigService, Injectable, InConfiguration, User, DirectionService, Injectable, RightSidebarService, Injectable (+5 more)
 
-### Community 60 - "Launchsettings Launch Url"
+### Community 69 - "UserComponent"
+Cohesion: 0.11
+Nodes (4): IUserListResponse, Component, ViewChild, UserComponent
+
+### Community 70 - "http"
 Cohesion: 0.08
 Nodes (29): ASPNETCORE_ENVIRONMENT, ASPNETCORE_HOSTINGSTARTUPASSEMBLIES, applicationUrl, commandName, dotnetRunMessages, environmentVariables, launchBrowser, launchUrl (+21 more)
 
-### Community 61 - "Salarypaymentservice Payment Salary"
-Cohesion: 0.16
-Nodes (15): Guid, CurrentUser, EmployeeForSalaryResponse, MonthlyPaymentSummaryResponse, SalaryPaymentListResponse, List, SalaryPaymentService, CancellationToken (+7 more)
-
-### Community 62 - "Balance Sheet Ibalancecalculatorservice"
+### Community 71 - "DashboardService"
 Cohesion: 0.10
-Nodes (22): BalanceSheetItemResponse, BalanceSheetSummaryResponse, DateTime, List, BalanceSheetService, CancellationToken, DateTime, Guid (+14 more)
+Nodes (21): CancellationToken, DateTime, Task, DailyTrendData, DashboardCardData, DashboardStatsResponse, DashboardTrendsResponse, DashboardService (+13 more)
 
-### Community 63 - "Billingrecurringchargejob Emailbackgroundservice Email"
-Cohesion: 0.09
-Nodes (18): BackgroundService, Infrastructure.BackgroundServices, IDisposable, IHostedService, CancellationToken, ILogger, Task, BillingRecurringChargeJob (+10 more)
+### Community 72 - "CodeGenerationService"
+Cohesion: 0.12
+Nodes (22): CodeGenerationService, CancellationToken, Expression, Func, IMemoryCache, int, IQueryable, IRepository (+14 more)
 
-### Community 64 - "Booking Product Fetch"
+### Community 73 - "TransactionHeadService"
+Cohesion: 0.14
+Nodes (19): ICodeGenerationService, TransactionHeadService, CancellationToken, DefaultValueInjector, Expression, Func, Guid, IEnumerable (+11 more)
+
+### Community 74 - "BookingComponent"
 Cohesion: 0.11
 Nodes (3): BookingComponent, Component, ViewChild
 
-### Community 65 - "Transactionheadservice Transaction Head"
-Cohesion: 0.15
-Nodes (18): TransactionHeadService, CancellationToken, DefaultValueInjector, Expression, Func, Guid, IEnumerable, IRepository (+10 more)
+### Community 75 - "UnitConversionComponent"
+Cohesion: 0.11
+Nodes (4): Component, ViewChild, UnitConversionComponent, IUnitConversionListResponse
 
-### Community 66 - "Securitycontroller User Role"
+### Community 76 - "SalaryPaymentFormComponent"
+Cohesion: 0.10
+Nodes (7): SalaryPaymentFormComponent, Component, ViewChild, SalaryReceiptPrintComponent, Component, Input, ViewChild
+
+### Community 77 - "SecurityController"
 Cohesion: 0.16
 Nodes (15): CreateUserDto, ActionResult, HttpDelete, HttpGet, HttpPost, HttpPut, IActionResult, RoleManager (+7 more)
 
-### Community 67 - "Detail Product Unit"
-Cohesion: 0.09
-Nodes (18): DateTime, AuditableEntity, ICollection, BaseUnit, DateTime, Guid, ICollection, BookingDetail (+10 more)
-
-### Community 68 - "Guid Delivery Challan"
+### Community 78 - "development"
 Cohesion: 0.08
-Nodes (21): Guid, BaseEntity, DateTime, Guid, ICollection, DeliveryChallan, Guid, DeliveryChallanItem (+13 more)
+Nodes (28): build, extract-i18n, serve, test, builder, configurations, defaultConfiguration, development (+20 more)
 
-### Community 69 - "Config Layout Direction"
-Cohesion: 0.14
-Nodes (12): ConfigService, Injectable, InConfiguration, User, DirectionService, Injectable, AuthLayoutComponent, Component (+4 more)
+### Community 79 - "EmployeeService"
+Cohesion: 0.08
+Nodes (7): IEmployeeRequest, IEmployeeResponse, EmployeeService, Injectable, IEmployeeReportItem, EmployeeReportService, Injectable
 
-### Community 70 - "Unit Conversion Record"
-Cohesion: 0.11
-Nodes (3): Component, ViewChild, UnitConversionComponent
+### Community 80 - "DeliveryChallanService"
+Cohesion: 0.10
+Nodes (9): IDeliveryChallanItemDetailResponse, IDeliveryChallanItemResponse, IDeliveryChallanListResponse, IDeliveryChallanPaginationQuery, IDeliveryChallanRequest, IDeliveryChallanResponse, PRODUCT_DELIVERY_ROUTE, DeliveryChallanService (+1 more)
 
-### Community 71 - "User Record Success"
+### Community 81 - "RoleComponent"
 Cohesion: 0.12
-Nodes (3): Component, ViewChild, UserComponent
+Nodes (7): IRoleRequest, IRoleResponse, RoleComponent, Component, ViewChild, RoleService, Injectable
 
-### Community 72 - "Delivery Customerdueresponse Bookinginvoicewithdeliveryresponse"
-Cohesion: 0.13
-Nodes (22): BookingDetailWithDeliveryResponse, BookingInvoiceWithDeliveryResponse, DeliveryDetailInfoResponse, DeliveryInfoResponse, DateTime, Guid, List, BookingOutstandingItem (+14 more)
+### Community 82 - ".GetDailyStockBookAsync"
+Cohesion: 0.08
+Nodes (22): IDailyStockBookService, CancellationToken, DateTime, IEnumerable, Task, DailyStockBookItemResponse, DateTime, Guid (+14 more)
 
-### Community 73 - "Transaction Head Data"
-Cohesion: 0.12
-Nodes (10): AddTransactionHeadComponent, Component, Input, DISPLAY_TYPE_LIST, TRANSACTION_TYPE_LIST, ITransactionHeadLookup, ITransactionHeadRequest, ITransactionHeadResponse (+2 more)
-
-### Community 74 - "Print Payment Helper"
-Cohesion: 0.12
-Nodes (4): SupplierPaymentComponent, IPrintResult, PrintHelperService, Injectable
-
-### Community 75 - "Delivery Booking Detail"
+### Community 83 - "options"
 Cohesion: 0.09
-Nodes (13): IBookingBasicInfo, IBookingDetailForDeliveryResponse, IBookingInvoiceInfo, ICustomerBasicInfo, IDeliveryDetailRequest, IDeliveryDetailResponse, IDeliveryInvoiceDetailResponse, IDeliveryInvoiceResponse (+5 more)
+Nodes (27): options, assets, index, inlineStyleLanguage, main, outputPath, polyfills, scripts (+19 more)
 
-### Community 76 - "Datewise Booking Report"
-Cohesion: 0.09
+### Community 84 - ".GetDatewiseBookingReportAsync"
+Cohesion: 0.08
 Nodes (21): IDatewiseBookingReportService, CancellationToken, DateTime, IEnumerable, Task, DatewiseBookingReportResponse, DateTime, Guid (+13 more)
 
-### Community 77 - "Datewise Delivery Report"
-Cohesion: 0.09
+### Community 85 - ".GetDatewiseDeliveryReportAsync"
+Cohesion: 0.08
 Nodes (21): IDatewiseDeliveryReportService, CancellationToken, DateTime, IEnumerable, Task, DatewiseDeliveryReportResponse, DateTime, Guid (+13 more)
 
-### Community 78 - "Dependencyinjection Unit Work"
-Cohesion: 0.09
-Nodes (14): IUnitOfWork, DependencyInjection, IServiceCollection, Persistence, Persistence.SeedData, Infrastructure, Application, IConfiguration (+6 more)
+### Community 86 - "PrintReportType"
+Cohesion: 0.12
+Nodes (3): PrintReportType, PrintConfigurationService, Injectable
 
-### Community 79 - "Advance Table Row"
+### Community 87 - "AdvanceTableComponent"
 Cohesion: 0.12
 Nodes (5): AdvanceTableComponent, selectRowInterface, Component, ViewChild, ADVANCE_TABLE_ROUTE
 
-### Community 80 - "Unit Data Init"
+### Community 88 - "TransactionHeadService"
 Cohesion: 0.10
-Nodes (7): AddBaseUnitComponent, Component, Input, IBaseUnitRequest, IBaseUnitResponse, BaseUnitService, Injectable
+Nodes (8): AddTransactionHeadComponent, Component, Input, ITransactionHeadLookup, ITransactionHeadRequest, ITransactionHeadResponse, TransactionHeadService, Injectable
 
-### Community 81 - "Payment Method Settings"
-Cohesion: 0.11
-Nodes (8): DEFAULT_PAYMENT_METHOD_TYPE, PAYMENT_METHOD_ICONS, IPaymentMethodListResponse, IPaymentMethodPaginationQuery, IPaymentMethodRequest, IPaymentMethodResponse, PaymentMethodService, Injectable
+### Community 89 - "PrintHelperService"
+Cohesion: 0.13
+Nodes (4): SupplierPaymentComponent, IPrintResult, PrintHelperService, Injectable
 
-### Community 82 - "Sidebar Menu Items"
+### Community 90 - "SidebarComponent"
 Cohesion: 0.13
 Nodes (6): SidebarComponent, Component, HostListener, Inject, ROUTES, RouteInfo
 
-### Community 83 - "Challan Delivery Item"
-Cohesion: 0.12
-Nodes (8): IDeliveryChallanItemDetailResponse, IDeliveryChallanItemResponse, IDeliveryChallanListResponse, IDeliveryChallanPaginationQuery, IDeliveryChallanRequest, IDeliveryChallanResponse, DeliveryChallanService, Injectable
-
-### Community 84 - "Delivery Product Row"
-Cohesion: 0.13
-Nodes (4): DeliveryListComponent, Component, ViewChild, IDeliveryListResponse
-
-### Community 85 - "Company Config New"
+### Community 91 - "CompanyService"
 Cohesion: 0.13
 Nodes (9): CompanyListComponent, Component, ViewChild, ECodeGeneration, ICompanyListResponse, ICompanyRequest, ICompanyResponse, CompanyService (+1 more)
 
-### Community 86 - "Ledger Book Date"
-Cohesion: 0.10
-Nodes (20): ILedgerBookService, CancellationToken, DateTime, Task, LedgerBookItemResponse, LedgerBookResponse, DateTime, Guid (+12 more)
+### Community 92 - "CompanyService"
+Cohesion: 0.14
+Nodes (16): CompanyService, CancellationToken, DefaultValueInjector, IEnumerable, IRepository, ITenantProvider, PaginationResult, Task (+8 more)
 
-### Community 87 - "Bookingservice Booking Customer"
-Cohesion: 0.19
-Nodes (13): BookingService, BookingInvoiceWithDeliveryResponse, CancellationToken, CurrentUser, CustomerOutstandingResponse, DefaultValueInjector, Guid, IBookingRepository (+5 more)
-
-### Community 88 - "Booking Row Remove"
-Cohesion: 0.12
-Nodes (3): BookingListComponent, Component, ViewChild
-
-### Community 89 - "Print Configuration Settings"
-Cohesion: 0.13
-Nodes (3): PrintReportType, PrintConfigurationService, Injectable
-
-### Community 90 - "Salarypaymentcontroller Payment Salary"
-Cohesion: 0.21
-Nodes (14): ActionResult, CancellationToken, DateTime, Guid, HttpDelete, HttpGet, HttpPost, HttpPut (+6 more)
-
-### Community 91 - "Bank Book Date"
-Cohesion: 0.10
-Nodes (19): IBankBookService, CancellationToken, DateTime, Task, BankBookItemResponse, BankBookResponse, DateTime, List (+11 more)
-
-### Community 92 - "Cash Book Cancellation"
-Cohesion: 0.10
-Nodes (19): ICashBookService, CancellationToken, DateTime, Task, CashBookItemResponse, CashBookResponse, Guid, List (+11 more)
-
-### Community 93 - "Daily Stock Book"
-Cohesion: 0.09
-Nodes (19): IDailyStockBookService, CancellationToken, DateTime, IEnumerable, Task, DailyStockBookItemResponse, DailyStockBookService, CancellationToken (+11 more)
-
-### Community 94 - "General Ledger Date"
-Cohesion: 0.10
-Nodes (19): IGeneralLedgerService, CancellationToken, DateTime, Task, GeneralLedgerItemResponse, GeneralLedgerResponse, DateTime, List (+11 more)
-
-### Community 95 - "Printservice Booking Printreceiptrequest"
+### Community 93 - "RecurringChargeManagementService"
 Cohesion: 0.16
-Nodes (9): BookingInvoiceData, BookingInvoiceDetail, BranchInfo, CustomerInfo, PrintReceiptRequest, DateTime, Guid, List (+1 more)
+Nodes (14): RecurringChargeManagementService, Booking, CancellationToken, DateTime, Guid, List, RecurringChargePreviewResponse, RecurringChargeRun (+6 more)
 
-### Community 96 - "Payment Salary View"
-Cohesion: 0.13
-Nodes (4): SalaryPaymentListComponent, Component, ViewChild, ISalaryPaymentList
+### Community 94 - "PaymentMethodService"
+Cohesion: 0.11
+Nodes (6): DEFAULT_PAYMENT_METHOD_TYPE, PAYMENT_METHOD_ICONS, IPaymentMethodRequest, IPaymentMethodResponse, PaymentMethodService, Injectable
 
-### Community 97 - "Template Print Templates"
+### Community 95 - "PrintTemplateService"
 Cohesion: 0.15
 Nodes (3): IPrintTemplate, PrintTemplateService, Injectable
 
-### Community 98 - "Companyservice Company Pagination"
-Cohesion: 0.15
-Nodes (16): CompanyService, CancellationToken, CompanyListResponse, CompanyRequest, CompanyResponse, DefaultValueInjector, IEnumerable, IMemoryCache (+8 more)
-
-### Community 99 - "Product Category Pagination"
-Cohesion: 0.13
-Nodes (6): IProductCategoryListResponse, IProductCategoryPaginationQuery, IProductCategoryRequest, IProductCategoryResponse, ProductCategoryService, Injectable
-
-### Community 100 - "Product Row Remove"
+### Community 96 - "ProductComponent"
 Cohesion: 0.15
 Nodes (3): ProductComponent, Component, ViewChild
 
-### Community 102 - "Bank Pagination Archive"
-Cohesion: 0.12
-Nodes (6): IBankListResponse, IBankPaginationQuery, IBankRequest, IBankResponse, BankService, Injectable
-
-### Community 103 - "Supplier Pagination Archive"
-Cohesion: 0.12
-Nodes (6): ISupplierListResponse, ISupplierPaginationQuery, ISupplierRequest, ISupplierResponse, SupplierService, Injectable
-
-### Community 104 - "Sidebar Right Rightsidebar"
-Cohesion: 0.10
-Nodes (6): RightSidebarService, Injectable, RightSidebarComponent, Component, HostListener, Inject
-
-### Community 105 - "Salary Payment Routes"
-Cohesion: 0.17
-Nodes (7): IEmployeeForSalary, IMonthlyPaymentSummary, ISalaryPaymentRequest, ISalaryPaymentResponse, salaryPaymentRoutes, SalaryPaymentService, Injectable
-
-### Community 106 - "User Password Role"
+### Community 97 - "SalaryPaymentListComponent"
 Cohesion: 0.13
-Nodes (7): IChangePasswordRequest, ISetPasswordRequest, IUserListResponse, IUserRequest, IUserResponse, Injectable, UserService
+Nodes (3): SalaryPaymentListComponent, Component, ViewChild
 
-### Community 107 - "Token User Jwt"
+### Community 98 - "AssignClaimComponent"
+Cohesion: 0.13
+Nodes (5): AssignClaimComponent, Component, ViewChild, AssignClaimService, Injectable
+
+### Community 99 - "UserTokenService"
 Cohesion: 0.11
 Nodes (13): IJwtProvider, TokenUser, UserTokenService, CancellationToken, IJwtProvider, Task, TokenResponse, UserManager (+5 more)
 
-### Community 108 - "Bank Transaction Customer"
-Cohesion: 0.10
-Nodes (16): ICollection, Bank, DateTime, Guid, string, BankSourceTypes, BankTransaction, Customer (+8 more)
+### Community 100 - "season-archive.component.ts"
+Cohesion: 0.20
+Nodes (9): SeasonArchiveComponent, Component, BankBalanceSummaryItem, ExecuteSeasonArchiveRequest, SeasonArchiveHistoryResponse, SeasonArchivePreviewResponse, SeasonArchiveResultResponse, SeasonArchiveService (+1 more)
 
-### Community 109 - "Bank Row Remove"
+### Community 101 - "BookingListComponent"
+Cohesion: 0.13
+Nodes (3): BookingListComponent, Component, ViewChild
+
+### Community 102 - "BankComponent"
 Cohesion: 0.16
 Nodes (3): BankComponent, Component, ViewChild
 
-### Community 110 - "Unit Row Remove"
+### Community 103 - "BaseUnitComponent"
 Cohesion: 0.16
 Nodes (3): BaseUnitComponent, Component, ViewChild
 
-### Community 111 - "Customer Row Remove"
+### Community 104 - "BaseUnitService"
+Cohesion: 0.12
+Nodes (6): IBaseUnitListResponse, IBaseUnitPaginationQuery, IBaseUnitRequest, IBaseUnitResponse, BaseUnitService, Injectable
+
+### Community 105 - "CustomerComponent"
 Cohesion: 0.16
 Nodes (3): CustomerComponent, Component, ViewChild
 
-### Community 112 - "Delivery Product Deliveries"
-Cohesion: 0.13
-Nodes (4): IDeliveryRequest, IDeliveryResponse, DeliveryService, Injectable
+### Community 106 - "ProductCategoryService"
+Cohesion: 0.12
+Nodes (6): IProductCategoryListResponse, IProductCategoryPaginationQuery, IProductCategoryRequest, IProductCategoryResponse, ProductCategoryService, Injectable
 
-### Community 113 - "Print Module Footer"
-Cohesion: 0.11
-Nodes (15): PrintFooterComponent, Component, Input, PrintHeaderComponent, Component, Input, PrintSettingsComponent, Component (+7 more)
-
-### Community 114 - "Isalarypaymentservice Payment Salary"
-Cohesion: 0.24
-Nodes (10): ISalaryPaymentService, CancellationToken, DateTime, Guid, IEnumerable, PaginationQuery, PaginationResult, SalaryPaymentRequest (+2 more)
-
-### Community 115 - "Irepository Update Patch"
-Cohesion: 0.19
-Nodes (10): IRepository, ApplicationUser, CancellationToken, Expression, Func, IEnumerable, IQueryable, JsonPatchDocument (+2 more)
-
-### Community 116 - "Asset Archive Batch"
+### Community 107 - "AssetService"
 Cohesion: 0.12
 Nodes (4): IAssetRequest, IAssetResponse, AssetService, Injectable
 
-### Community 117 - "Employee Row Set"
+### Community 108 - "EmployeeComponent"
 Cohesion: 0.17
 Nodes (3): EmployeeComponent, Component, ViewChild
 
-### Community 118 - "Payment Method Row"
+### Community 109 - "PaymentMethodComponent"
 Cohesion: 0.17
 Nodes (3): PaymentMethodComponent, Component, ViewChild
 
-### Community 119 - "Print Payment Receipt"
+### Community 110 - "PrintService"
 Cohesion: 0.15
 Nodes (9): IPaymentReceiptData, PaymentReceiptComponent, Component, Input, IPrintFooter, IPrintHeader, IPrintOptions, PrintService (+1 more)
 
-### Community 120 - "Product Category Row"
+### Community 111 - "ProductCategoryComponent"
 Cohesion: 0.17
 Nodes (3): ProductCategoryComponent, Component, ViewChild
 
-### Community 121 - "Error Interceptor Handle"
+### Community 112 - "UserService"
 Cohesion: 0.15
-Nodes (4): AuthGuard, Injectable, ErrorInterceptor, Injectable
+Nodes (6): IChangePasswordRequest, ISetPasswordRequest, IUserRequest, IUserResponse, Injectable, UserService
 
-### Community 122 - "Print Settings Template"
+### Community 113 - "PrintService"
 Cohesion: 0.21
 Nodes (3): IPrintSettings, PrintService, Injectable
 
-### Community 123 - "Claim Assign Iassignclaimservice"
+### Community 114 - "devDependencies"
+Cohesion: 0.11
+Nodes (19): @angular/compiler-cli, @angular-devkit/build-angular, @angular-eslint/builder, @angular-eslint/eslint-plugin, devDependencies, @angular/compiler-cli, @angular-devkit/build-angular, @angular-eslint/builder (+11 more)
+
+### Community 115 - ".GetAllUserClaimsAsync"
 Cohesion: 0.18
 Nodes (12): IAssignClaimService, CancellationToken, IEnumerable, Task, UserClaimsResponse, AssignClaimRequest, HttpDelete, HttpGet (+4 more)
 
-### Community 124 - "Print Iprintservice Settings"
-Cohesion: 0.25
-Nodes (11): IPrintService, CancellationToken, Guid, Task, PrintSettingsResponse, ActionResult, Guid, HttpGet (+3 more)
+### Community 116 - ".GetCashBook"
+Cohesion: 0.12
+Nodes (15): CancellationToken, DateTime, Task, CashBookItemResponse, CashBookResponse, Guid, List, CancellationToken (+7 more)
 
-### Community 125 - "Codegenerationservice Code Generation"
+### Community 117 - ".DeleteAsync"
 Cohesion: 0.20
-Nodes (12): CodeGenerationService, ICodeGenerationService, CancellationToken, Expression, Func, IMemoryCache, int, IQueryable (+4 more)
+Nodes (10): IRepository, ApplicationUser, CancellationToken, Expression, Func, IEnumerable, IQueryable, JsonPatchDocument (+2 more)
 
-### Community 126 - "Booking Delivery Bookingduecalculator"
+### Community 118 - "app.config.ts"
 Cohesion: 0.15
-Nodes (15): BookingDueCalculator, DateTime, IEnumerable, DateTime, Guid, ICollection, Booking, DateTime (+7 more)
+Nodes (9): APP_ROUTE, loadingInterceptor(), convertDatesToUtc(), utcDateInterceptor(), LoadingService, Injectable, LoadingComponent, Component (+1 more)
 
-### Community 127 - "Readme Application Api"
-Cohesion: 0.11
-Nodes (18): API Integration, Application Routes, Application Structure, Authentication, Build, Code scaffolding, Development server, Environment Configuration (+10 more)
-
-### Community 128 - "Booking Print Invoice"
+### Community 119 - "BookingInvoicePrintComponent"
 Cohesion: 0.15
 Nodes (4): BookingInvoicePrintComponent, Component, Input, ViewChild
 
-### Community 129 - "Employee Distinct Archive"
-Cohesion: 0.12
-Nodes (4): IEmployeeRequest, IEmployeeResponse, EmployeeService, Injectable
+### Community 120 - "AssetComponent"
+Cohesion: 0.19
+Nodes (4): AssetComponent, Component, ViewChild, IAssetListResponse
 
-### Community 130 - "Date Range Picker"
+### Community 121 - "DateRangePickerComponent"
 Cohesion: 0.14
 Nodes (4): DateRangeModel, DateRangePickerComponent, Component, Input
 
-### Community 131 - "Booking Bookingrepository Bookingrequest"
+### Community 122 - "TransactionListComponent"
+Cohesion: 0.20
+Nodes (4): TransactionListComponent, Component, ViewChild, ITransactionListResponse
+
+### Community 123 - "allowedCommonJsDependencies"
+Cohesion: 0.11
+Nodes (18): apexcharts, chart.js, @ckeditor/ckeditor5-build-classic, echarts, allowedCommonJsDependencies, apexcharts, chart.js, @ckeditor/ckeditor5-build-classic (+10 more)
+
+### Community 124 - "SeasonArchiveService"
+Cohesion: 0.14
+Nodes (14): ExecuteSeasonArchiveRequest, SeasonArchiveService, CancellationToken, DateTime, Guid, IEnumerable, IRepository, ITenantProvider (+6 more)
+
+### Community 125 - "BookingRepository"
 Cohesion: 0.16
 Nodes (12): BookingDetailRequest, BookingRequest, IBookingRepository, ApplicationDbContext, Booking, BookingResponse, CancellationToken, DateTime (+4 more)
 
-### Community 132 - "Asset Row Archive"
-Cohesion: 0.19
-Nodes (3): AssetComponent, Component, ViewChild
+### Community 126 - "BillCollectionService"
+Cohesion: 0.16
+Nodes (14): BillCollectionService, CancellationToken, DateTime, DefaultValueInjector, Guid, IRepository, List, Task (+6 more)
 
-### Community 133 - "Ledger Book Auth"
+### Community 127 - "SupplierService"
+Cohesion: 0.13
+Nodes (4): ISupplierRequest, ISupplierResponse, SupplierService, Injectable
+
+### Community 128 - "LedgerBookComponent"
 Cohesion: 0.14
 Nodes (9): authInterceptor(), LedgerBookComponent, Component, IEntityOption, ILedgerBookItem, ILedgerBookResponse, LedgerBookService, Injectable (+1 more)
 
-### Community 134 - "Delivery Challan Status"
+### Community 129 - "DeliveryChallanListComponent"
 Cohesion: 0.16
 Nodes (3): DeliveryChallanListComponent, Component, ViewChild
 
-### Community 136 - "Print Interfaces Preview"
-Cohesion: 0.31
-Nodes (9): FontSize, IPrintable, IPrintJob, IPrintPreviewData, IReportTypeConfig, ITemplateVariable, PaperSize, PrintFormat (+1 more)
+### Community 131 - ".GetBankBook"
+Cohesion: 0.14
+Nodes (14): IBankBookService, CancellationToken, DateTime, Task, BankBookItemResponse, BankBookResponse, DateTime, List (+6 more)
 
-### Community 137 - "Package Angular Ngx"
-Cohesion: 0.12
-Nodes (17): @angular/animations, angular-archwizard, @angular/cdk, @angular/core, dependencies, @angular/animations, angular-archwizard, @angular/cdk (+9 more)
-
-### Community 138 - "Trial Balance Itrialbalanceservice"
+### Community 132 - ".GetTrialBalance"
 Cohesion: 0.12
 Nodes (13): ITrialBalanceService, CancellationToken, DateTime, Task, TrialBalanceSummaryResponse, ActionResult, CancellationToken, DateTime (+5 more)
 
-### Community 139 - "Angular Min Options"
-Cohesion: 0.15
-Nodes (17): options, assets, index, inlineStyleLanguage, main, outputPath, polyfills, scripts (+9 more)
+### Community 133 - "DeliveryBillCollectionComponent"
+Cohesion: 0.19
+Nodes (3): DeliveryBillCollectionComponent, Component, ICustomerBalanceSummary
 
-### Community 140 - "Booking Invoice Delivery"
+### Community 134 - "BookingInvoiceWithDeliveryPrintComponent"
 Cohesion: 0.15
 Nodes (3): BookingInvoiceWithDeliveryPrintComponent, Component, ViewChild
 
-### Community 141 - "Branch Settings Data"
-Cohesion: 0.18
-Nodes (6): DEFAULT_CURRENCY_LIST, IBranchListResponse, IBranchRequest, IBranchResponse, BranchService, Injectable
-
-### Community 142 - "Employee Departments Designations"
+### Community 135 - "AddEmployeeComponent"
 Cohesion: 0.17
 Nodes (3): AddEmployeeComponent, Component, Input
 
-### Community 143 - "Transaction Head Row"
+### Community 136 - "TransactionHeadComponent"
 Cohesion: 0.20
 Nodes (4): TransactionHeadComponent, Component, ViewChild, ITransactionHeadListResponse
 
-### Community 144 - "Damage Archive Batch"
-Cohesion: 0.14
-Nodes (4): IDamageRequest, IDamageResponse, DamageService, Injectable
-
-### Community 145 - "Header Language Set"
-Cohesion: 0.13
-Nodes (4): LanguageService, Injectable, HeaderComponent, Component
-
-### Community 146 - "Stock Report Chart"
+### Community 137 - "StockReportService"
 Cohesion: 0.21
 Nodes (7): StockChartOptions, ICustomerStockReport, IProductStockReport, IStockReportItem, IStockSummary, StockReportService, Injectable
 
-### Community 147 - "Delivery Invoice Total"
-Cohesion: 0.15
-Nodes (4): DeliveryInvoiceComponent, Component, Input, ViewChild
+### Community 139 - "BillCollectionListComponent"
+Cohesion: 0.17
+Nodes (3): BillCollectionListComponent, Component, ViewChild
 
-### Community 149 - "Branch Row Remove"
+### Community 140 - "BranchService"
+Cohesion: 0.18
+Nodes (5): DEFAULT_CURRENCY_LIST, IBranchRequest, IBranchResponse, BranchService, Injectable
+
+### Community 141 - "BranchComponent"
 Cohesion: 0.20
 Nodes (3): BranchComponent, Component, ViewChild
 
-### Community 150 - "Bank Transaction Archive"
+### Community 143 - "TrialBalanceComponent"
 Cohesion: 0.15
-Nodes (4): IBankTransactionRequest, IBankTransactionResponse, BankTransactionService, Injectable
+Nodes (6): TrialBalanceComponent, Component, ITrialBalanceItem, ITrialBalanceSummary, TrialBalanceService, Injectable
 
-### Community 151 - "Dashboard Main Chart"
-Cohesion: 0.19
-Nodes (8): ChartOptions, ChartOptions2, IDailyTrendData, IDashboardCardData, IDashboardStatsResponse, IDashboardTrendsResponse, DashboardService, Injectable
+### Community 144 - "IBalanceCalculatorService"
+Cohesion: 0.21
+Nodes (10): BalanceSheetService, CancellationToken, DateTime, Guid, IRepository, Task, IBalanceCalculatorService, CancellationToken (+2 more)
 
-### Community 152 - "Delivery Product Challan"
-Cohesion: 0.16
-Nodes (5): DeliveryChallanPrintComponent, Component, DeliveryRecordComponent, Component, PRODUCT_DELIVERY_ROUTE
-
-### Community 153 - "Role Row Create"
-Cohesion: 0.17
-Nodes (3): RoleComponent, Component, ViewChild
-
-### Community 154 - "Iprintsettingsrepository Print Settings"
-Cohesion: 0.28
-Nodes (7): IPrintSettingsRepository, CancellationToken, Guid, Task, CancellationToken, Guid, Task
-
-### Community 155 - "Branch Batch Generate"
+### Community 145 - "BranchService"
 Cohesion: 0.17
 Nodes (5): IBranchRequest, IBranchResponse, BranchService, Injectable, Inject
 
-### Community 158 - "Salary Payment Form"
-Cohesion: 0.22
-Nodes (3): SalaryPaymentFormComponent, Component, ViewChild
+### Community 146 - "main.component.ts"
+Cohesion: 0.17
+Nodes (8): ChartOptions, ChartOptions2, IDailyTrendData, IDashboardCardData, IDashboardStatsResponse, IDashboardTrendsResponse, DashboardService, Injectable
 
-### Community 159 - "Preview Print Form"
+### Community 147 - "RightSidebarComponent"
+Cohesion: 0.15
+Nodes (4): RightSidebarComponent, Component, HostListener, Inject
+
+### Community 149 - "PrintPreviewComponent"
 Cohesion: 0.17
 Nodes (4): PrintPreviewComponent, Component, Input, Output
 
-### Community 161 - "Recurring Charge Recurringchargemanagementcontroller"
+### Community 151 - ".Apply"
 Cohesion: 0.21
 Nodes (11): ActionResult, CancellationToken, DateTime, HttpGet, HttpPost, List, RecurringChargePreviewResponse, RecurringChargeRunRequest (+3 more)
 
-### Community 162 - "Readme Frost Track"
-Cohesion: 0.13
-Nodes (14): FrostTrack - Point of Sale Web Application, 🌐 API Endpoints, 👥 Authors, 📁 Project Structure, 📄 License, 📋 Prerequisites, 📱 Screenshots, 🔑 Key Modules (+6 more)
-
-### Community 163 - "Ibookingrepository Booking Manage"
-Cohesion: 0.22
-Nodes (8): IBookingRepository, Booking, BookingRequest, BookingResponse, CancellationToken, Guid, IQueryable, Task
-
-### Community 164 - "Angular Svg Ckeditor"
+### Community 152 - ".GetBalanceSheet"
 Cohesion: 0.14
-Nodes (14): allowedCommonJsDependencies, apexcharts, bezier-easing, chart.js, @ckeditor/ckeditor5-build-classic, contra/emitter, crossvent, dragula (+6 more)
+Nodes (11): IBalanceSheetService, BalanceSheetSummaryResponse, CancellationToken, DateTime, Task, ActionResult, BalanceSheetSummaryResponse, CancellationToken (+3 more)
 
-### Community 167 - "Receipt Print Salary"
+### Community 153 - "BookingInvoiceWithDeliveryResponse"
+Cohesion: 0.24
+Nodes (11): BookingDetailWithDeliveryResponse, BookingInvoiceWithDeliveryResponse, DeliveryDetailInfoResponse, DeliveryInfoResponse, DateTime, Guid, List, ProductListResponse (+3 more)
+
+### Community 154 - "Company"
+Cohesion: 0.14
+Nodes (11): BaseEntity, Branch, Company, DateTime, Guid, ICollection, Organization, DateTime (+3 more)
+
+### Community 155 - "FrostTrack.Server.Middlewares"
+Cohesion: 0.15
+Nodes (10): FrostTrack.Server.Middlewares, HttpContext, RequestDelegate, Task, AuthenticationDebugMiddleware, HttpContext, RequestDelegate, Task (+2 more)
+
+### Community 156 - "AddProductComponent"
+Cohesion: 0.20
+Nodes (3): AddProductComponent, Component, Input
+
+### Community 157 - "app.component.ts"
 Cohesion: 0.19
-Nodes (4): SalaryReceiptPrintComponent, Component, Input, ViewChild
+Nodes (5): AppComponent, Component, appConfig, PageLoaderComponent, Component
 
-### Community 168 - "Token User Iusertokenservice"
+### Community 158 - "AddAssetComponent"
+Cohesion: 0.20
+Nodes (3): AddAssetComponent, Component, Input
+
+### Community 160 - ".GetEmployeeReportAsync"
+Cohesion: 0.17
+Nodes (10): IEmployeeReportService, CancellationToken, EmployeeReportResponse, IEnumerable, Task, CancellationToken, HttpGet, IActionResult (+2 more)
+
+### Community 161 - ".Post"
 Cohesion: 0.18
 Nodes (9): IUserTokenService, CancellationToken, Task, TokenResponse, UserResponseForToken, CancellationToken, HttpPost, Task (+1 more)
 
-### Community 169 - "Claim Assignclaimservice User"
+### Community 162 - "CustomerDueResponse.cs"
+Cohesion: 0.27
+Nodes (11): BookingOutstandingItem, CustomerDueDeliveryResponse, CustomerDueDetailResponse, CustomerDueSummaryResponse, CustomerOutstandingResponse, DateTime, Guid, List (+3 more)
+
+### Community 163 - "AssignClaimService"
 Cohesion: 0.21
 Nodes (8): ClaimResponse, UserClaimsResponse, AssignClaimService, CancellationToken, IEnumerable, Task, UserManager, IAssignClaimService
 
-### Community 170 - "Branch Printsettingsrepository Print"
-Cohesion: 0.29
-Nodes (6): Branch, PrintSettings, CancellationToken, Guid, Task, PrintSettingsRepository
-
-### Community 171 - "Product Unit Fetch"
-Cohesion: 0.22
-Nodes (3): AddProductComponent, Component, Input
-
-### Community 172 - "Asset Data Types"
-Cohesion: 0.22
-Nodes (3): AddAssetComponent, Component, Input
-
-### Community 175 - "Claim Assign Load"
+### Community 164 - ".ManageUpdate"
 Cohesion: 0.24
-Nodes (3): AssignClaimComponent, Component, ViewChild
+Nodes (8): IBookingRepository, Booking, BookingRequest, BookingResponse, CancellationToken, Guid, IQueryable, Task
 
-### Community 176 - "Applicationdbcontextinitializer Application Context"
-Cohesion: 0.19
-Nodes (9): ApplicationDbContext, Guid, IConfiguration, ILogger, ITenantProvider, Task, ApplicationDbContextInitializer, InitialiserExtensions (+1 more)
+### Community 167 - "DateTime"
+Cohesion: 0.31
+Nodes (8): DateTime, UtcDateTimeConverter, UtcNullableDateTimeConverter, JsonConverter, JsonSerializerOptions, Type, Utf8JsonReader, Utf8JsonWriter
 
-### Community 177 - "Recurring Charge Irecurringchargemanagementservice"
+### Community 168 - ".ApplyManualRecurringChargeAsync"
 Cohesion: 0.24
 Nodes (8): IRecurringChargeManagementService, CancellationToken, DateTime, List, RecurringChargePreviewResponse, RecurringChargeRunRequest, RecurringChargeRunResponse, Task
 
-### Community 178 - "Linqextensions Enums Linq"
+### Community 169 - "LinqExtensions"
 Cohesion: 0.29
 Nodes (5): ESearchOperator, LinqExtensions, Expression, Func, IQueryable
 
-### Community 179 - "Enums Types Recurring"
-Cohesion: 0.26
-Nodes (11): string, BankTransactionTypes, BillTypes, ECodeGeneration, ECustomerType, ERoles, PaymentStatuses, RecurringChargeRunStatuses (+3 more)
+### Community 170 - "Program.cs"
+Cohesion: 0.17
+Nodes (7): Persistence.SeedData, Infrastructure, FrostTrack.Server, IServiceCollection, DependencyInjection, InitialiserExtensions, WebApplication
 
-### Community 180 - "Routes Page404 Administration"
-Cohesion: 0.23
-Nodes (5): ADMINISTRATION_ROUTE, Page404Component, Component, DASHBOARD_ROUTE, SECURITY_ROUTE
+### Community 171 - "AddBranchComponent"
+Cohesion: 0.21
+Nodes (3): AddBranchComponent, Component, Input
 
-### Community 181 - "Dashboard2 Chart Dashboard"
+### Community 173 - "Dashboard2Component"
 Cohesion: 0.24
 Nodes (4): ChartOptions, Dashboard2Component, smallBarChart, Component
 
-### Community 182 - "Main Chart Period"
+### Community 174 - "MainComponent"
 Cohesion: 0.30
 Nodes (3): MainComponent, Component, DashboardPeriod
 
-### Community 184 - "Package Angular Eslint"
-Cohesion: 0.18
-Nodes (11): @angular/cli, @angular-eslint/eslint-plugin-template, @angular-eslint/schematics, devDependencies, @angular/cli, @angular-eslint/eslint-plugin-template, @angular-eslint/schematics, karma-jasmine-html-reporter (+3 more)
+### Community 176 - ".Execute"
+Cohesion: 0.31
+Nodes (8): ActionResult, CancellationToken, DateTime, IEnumerable, Task, SeasonArchiveController, HttpGet, HttpPost
 
-### Community 185 - "Ipaymentmethodrepository Payment Method"
+### Community 177 - "IPaymentMethodRepository"
 Cohesion: 0.29
 Nodes (6): IPaymentMethodRepository, CancellationToken, IQueryable, PaymentMethodRequest, PaymentMethodResponse, Task
 
-### Community 186 - "Paymentmethodrepository Payment Method"
+### Community 178 - "BillingRecurringChargeJob"
+Cohesion: 0.25
+Nodes (8): BackgroundService, ILogger, CancellationToken, Task, BillingRecurringChargeJob, IServiceScopeFactory, TimeOnly, TimeSpan
+
+### Community 179 - "ValueConverter"
+Cohesion: 0.25
+Nodes (9): Persistence.Converters, Infrastructure.Converters, DateTime, UtcDateTimeValueConverter, UtcNullableDateTimeValueConverter, DateTime, UtcDateTimeValueConverter, UtcNullableDateTimeValueConverter (+1 more)
+
+### Community 180 - "PaymentMethod"
 Cohesion: 0.35
 Nodes (5): PaymentMethod, CancellationToken, IQueryable, Task, PaymentMethodRepository
 
-### Community 187 - "Angular Builder Build"
-Cohesion: 0.18
-Nodes (11): build, extract-i18n, test, builder, configurations, defaultConfiguration, builder, options (+3 more)
+### Community 181 - "PrintSettings"
+Cohesion: 0.36
+Nodes (5): PrintSettings, CancellationToken, Guid, Task, PrintSettingsRepository
 
-### Community 188 - "Package Build Json"
+### Community 182 - "scripts"
 Cohesion: 0.18
 Nodes (10): name, private, scripts, build, build:production, lint, ng, start (+2 more)
 
-### Community 189 - "Customer Report Payment"
+### Community 183 - "CustomerPaymentReportComponent"
 Cohesion: 0.24
 Nodes (3): CustomerPaymentReportComponent, Component, ICustomerPaymentReportItem
 
-### Community 190 - "Branch Data Init"
-Cohesion: 0.24
-Nodes (3): AddBranchComponent, Component, Input
-
-### Community 191 - "Payment Method Data"
+### Community 184 - "AddPaymentMethodComponent"
 Cohesion: 0.24
 Nodes (3): AddPaymentMethodComponent, Component, Input
 
-### Community 192 - "Stock Chart Total"
+### Community 185 - "StockChartComponent"
 Cohesion: 0.27
 Nodes (3): StockChartComponent, Component, Input
 
-### Community 194 - "Role Post Put"
-Cohesion: 0.31
-Nodes (4): IRoleRequest, IRoleResponse, RoleService, Injectable
-
-### Community 195 - "Pipe Utc Date"
+### Community 187 - "utc-date.pipe.ts"
 Cohesion: 0.25
 Nodes (6): RelativeTimePipe, Pipe, UtcDateInputPipe, UtcDatePipe, UtcTimePipe, formatUtcDate()
 
-### Community 196 - "Employee Report Employeereportservice"
+### Community 188 - "angular.json"
+Cohesion: 0.20
+Nodes (9): @angular-eslint/schematics, cli, analytics, schematicCollections, newProjectRoot, projects, $schema, version (+1 more)
+
+### Community 189 - ".GetGeneralLedger"
+Cohesion: 0.20
+Nodes (8): CancellationToken, DateTime, Task, CancellationToken, DateTime, HttpGet, IActionResult, Task
+
+### Community 190 - ".GetGeneralLedger"
+Cohesion: 0.20
+Nodes (8): CancellationToken, DateTime, Task, CancellationToken, DateTime, HttpGet, IActionResult, Task
+
+### Community 191 - ".GetGeneralLedgerAsync"
+Cohesion: 0.24
+Nodes (8): LedgerBookItemResponse, LedgerBookResponse, DateTime, Guid, List, CancellationToken, DateTime, Task
+
+### Community 192 - ".GetEmployeeReportAsync"
 Cohesion: 0.20
 Nodes (8): EmployeeReportService, CancellationToken, EmployeeReportResponse, Guid, IEnumerable, IRepository, Task, IEmployeeReportService
 
-### Community 197 - "Transaction Transactionvalidator Validator"
-Cohesion: 0.27
-Nodes (6): TransactionValidator, CancellationToken, Guid, IRepository, Task, TransactionRequest
-
-### Community 198 - "Transaction Head Transactionhead"
-Cohesion: 0.24
-Nodes (8): Guid, string, TransactionHead, TransactionHeadTypes, UsageFor, IEntityTypeConfiguration, EntityTypeBuilder, TransactionHeadConfiguration
-
-### Community 199 - "Single Barcode Generate"
+### Community 193 - "GenerateSingleBarcodeComponent"
 Cohesion: 0.22
 Nodes (5): GenerateSingleBarcodeComponent, Component, Input, ViewChild, ISingleBarcode
 
-### Community 201 - "Bank Data Init"
-Cohesion: 0.27
-Nodes (3): AddBankComponent, Component, Input
-
-### Community 202 - "Customer Data Init"
+### Community 194 - "AddCustomerComponent"
 Cohesion: 0.27
 Nodes (3): AddCustomerComponent, Component, Input
 
-### Community 204 - "Subscriptiontype Token Ijwttokengenerator"
+### Community 196 - "EmailBackgroundService"
+Cohesion: 0.24
+Nodes (6): IDisposable, IHostedService, CancellationToken, Task, EmailBackgroundService, Timer
+
+### Community 197 - "ApplicationDbContextInitializer"
+Cohesion: 0.27
+Nodes (7): ApplicationDbContext, Guid, IConfiguration, ILogger, ITenantProvider, Task, ApplicationDbContextInitializer
+
+### Community 198 - "SubscriptionType"
 Cohesion: 0.25
 Nodes (5): IJwtTokenGenerator, List, Domain.SubscriptionType, SubscriptionType, SmartEnum
 
-### Community 205 - "Payment Salarypaymentvalidator Salary"
-Cohesion: 0.31
-Nodes (5): SalaryPaymentRequest, SalaryPaymentValidator, CancellationToken, IRepository, Task
+### Community 199 - ".GetGeneralLedgerAsync"
+Cohesion: 0.28
+Nodes (7): GeneralLedgerItemResponse, GeneralLedgerResponse, DateTime, List, CancellationToken, DateTime, Task
 
-### Community 206 - "Bookingservice Customer Due"
+### Community 200 - "BankBookService.cs"
 Cohesion: 0.22
-Nodes (5): BookingListResponse, CustomerDueDetailResponse, CustomerDueSummaryResponse, DateTime, IEnumerable
+Nodes (7): BankBookService, CancellationToken, DateTime, IRepository, Task, BankBookResponse, IBankBookService
 
-### Community 207 - "Balance Balancecalculatorservice Opening"
+### Community 201 - "BalanceCalculatorService"
 Cohesion: 0.44
 Nodes (6): BalanceCalculatorService, CancellationToken, DateTime, Guid, IRepository, Task
 
-### Community 208 - "Defaultvalueinjector Inject Default"
+### Community 202 - "DefaultValueInjector"
 Cohesion: 0.28
 Nodes (5): DefaultValueInjector, CurrentUser, Guid, ITenantProvider, List
 
-### Community 209 - "Migration 20251228134528 Init"
+### Community 203 - ".GetTrialBalanceAsync"
+Cohesion: 0.22
+Nodes (8): TrialBalanceService, CancellationToken, DateTime, Guid, IRepository, Task, TrialBalanceSummaryResponse, ITrialBalanceService
+
+### Community 204 - "Persistence.Migrations"
 Cohesion: 0.28
 Nodes (4): Persistence.Migrations, MigrationBuilder, ModelBuilder, initmigrationforfrosttrack
 
-### Community 210 - "Angular Json Cli"
-Cohesion: 0.22
-Nodes (8): cli, analytics, schematicCollections, newProjectRoot, projects, $schema, version, @angular-eslint/schematics
+### Community 205 - ".CompletedCycles"
+Cohesion: 0.39
+Nodes (4): BookingDetail, DateTime, IEnumerable, RecurringChargeCalculator
 
-### Community 211 - "Angular Build Development"
-Cohesion: 0.22
-Nodes (9): development, buildOptimizer, buildTarget, extractLicenses, fileReplacements, namedChunks, optimization, sourceMap (+1 more)
-
-### Community 212 - "Angular Css Node"
-Cohesion: 0.22
-Nodes (9): styles, ./node_modules/bootstrap/dist/css/bootstrap.min.css, ./node_modules/@ng-select/ng-select/themes/default.theme.css, ./node_modules/ngx-toastr/toastr.css, ./node_modules/@swimlane/ngx-datatable/assets/icons.css, ./node_modules/@swimlane/ngx-datatable/index.css, ./node_modules/@swimlane/ngx-datatable/themes/material.css, src/assets/scss/style.scss (+1 more)
-
-### Community 213 - "Product Category Data"
+### Community 206 - "AddProductCategoryComponent"
 Cohesion: 0.28
 Nodes (3): AddProductCategoryComponent, Component, Input
 
-### Community 215 - "Delivery Invoice Print"
-Cohesion: 0.25
-Nodes (3): DeliveryInvoicePrintComponent, Component, ViewChild
-
-### Community 216 - "Barcode Generate Random"
+### Community 208 - "BarcodeComponent"
 Cohesion: 0.33
 Nodes (3): BarcodeComponent, Component, Input
 
-### Community 217 - "Directive Number Decimal"
+### Community 209 - "DecimaNumberDirective"
 Cohesion: 0.22
 Nodes (4): DecimaNumberDirective, Directive, HostListener, Input
 
-### Community 218 - "Dependencyinjection Services Manage"
+### Community 210 - "DependencyInjection"
 Cohesion: 0.56
 Nodes (3): IConfiguration, IServiceCollection, DependencyInjection
 
-### Community 219 - "20260117164530 Labour Charge"
+### Community 211 - "Migration"
 Cohesion: 0.25
-Nodes (4): Migration, MigrationBuilder, ModelBuilder, addlabourchargeondelivery
+Nodes (4): Migration, MigrationBuilder, ModelBuilder, AddSalaryPaymentTable
 
-### Community 220 - "Tenant Provider Itenantprovider"
+### Community 212 - "ISeasonArchiveService"
+Cohesion: 0.39
+Nodes (5): ISeasonArchiveService, CancellationToken, DateTime, IEnumerable, Task
+
+### Community 213 - "SeasonArchivePreviewResponse"
+Cohesion: 0.39
+Nodes (7): BankBalanceSummaryItem, SeasonArchiveHistoryResponse, SeasonArchivePreviewResponse, SeasonArchiveResultResponse, DateTime, Guid, List
+
+### Community 214 - ".ProcessRecurringChargesAsync"
+Cohesion: 0.32
+Nodes (5): RecurringChargeService, CancellationToken, DateTime, Task, IRecurringChargeService
+
+### Community 215 - "Infrastructure.BackgroundServices"
+Cohesion: 0.29
+Nodes (4): Infrastructure.BackgroundServices, string, EmailSettings, SmtpSettings
+
+### Community 216 - ".BeginTransactionAsync"
 Cohesion: 0.25
-Nodes (6): ITenantProvider, Guid, IConfiguration, IHttpContextAccessor, string, TenantProvider
+Nodes (5): Persistence, CancellationToken, IDbContextTransaction, Task, UnitOfWork
 
-### Community 221 - "Configurejwtoptions Configure Options"
+### Community 217 - "ConfigureJwtOptions"
 Cohesion: 0.29
 Nodes (6): Infrastructure.Authentication.OptionSetup, IConfigureOptions, IConfiguration, JwtOptions, string, ConfigureJwtOptions
 
-### Community 222 - "Angular Serve Production"
-Cohesion: 0.25
-Nodes (8): serve, production, budgets, buildTarget, outputHashing, builder, configurations, defaultConfiguration
-
-### Community 223 - "Angular Root Schematics"
+### Community 218 - "oreva"
 Cohesion: 0.25
 Nodes (8): prefix, projectType, root, schematics, sourceRoot, oreva, style, @schematics/angular:component
 
-### Community 224 - "Blank Extra Pages"
+### Community 220 - "BlankComponent"
 Cohesion: 0.32
 Nodes (3): BlankComponent, Component, EXTRA_PAGES_ROUTE
 
-### Community 228 - "Print Directive Generate"
+### Community 223 - "PrintDirective"
 Cohesion: 0.29
 Nodes (5): PrintDirective, Directive, HostListener, Input, Output
 
-### Community 229 - "Company Config Data"
+### Community 224 - "CompanyConfigComponent"
 Cohesion: 0.32
 Nodes (3): CompanyConfigComponent, Component, Input
 
-### Community 231 - "20260110093126 Addreferencenumberandlabourcharge Designer"
+### Community 226 - "AddReferenceNumberAndLabourCharge"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddReferenceNumberAndLabourCharge
 
-### Community 232 - "Challan 20260118174345 Designer"
+### Community 227 - "addlabourchargeondelivery"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, addlabourchargeondelivery
+
+### Community 228 - "challan"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, challan
 
-### Community 233 - "20260410051859 Addsalarypaymenttable Designer"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddSalaryPaymentTable
-
-### Community 234 - "20260503060651 Structuralfixes Bookingdetailfk"
+### Community 229 - "StructuralFixes_BookingDetailFK_TransactionTypedFKs_BranchCompanyFK_AuditUtc"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, StructuralFixes_BookingDetailFK_TransactionTypedFKs_BranchCompanyFK_AuditUtc
 
-### Community 235 - "20260503063508 Entity Removeentitynameentityidcolumns"
+### Community 230 - "RemoveEntityNameEntityIdColumns"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, RemoveEntityNameEntityIdColumns
 
-### Community 236 - "20260503070912 Softdeleteconsolidation Designer"
+### Community 231 - "SoftDeleteConsolidation"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, SoftDeleteConsolidation
 
-### Community 237 - "20260503122022 Addbookingdetaillastaccrualdate Designer"
+### Community 232 - "AddBookingDetailLastAccrualDate"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddBookingDetailLastAccrualDate
 
-### Community 238 - "20260503165549 Pendingmodelchanges Designer"
+### Community 233 - "PendingModelChanges"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, PendingModelChanges
 
-### Community 239 - "20260504001314 Addaccrualruntable Designer"
+### Community 234 - "AddAccrualRunTable"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddAccrualRunTable
 
-### Community 240 - "20260504163050 Addbookingledgertables Designer"
+### Community 235 - "AddBookingLedgerTables"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddBookingLedgerTables
 
-### Community 241 - "20260517094201 Renameaccrualtorecurringcharge Designer"
+### Community 236 - "RenameAccrualToRecurringCharge"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, RenameAccrualToRecurringCharge
 
-### Community 242 - "20260517103910 Removeposentities Designer"
+### Community 237 - "RemovePosEntities"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, RemovePosEntities
 
-### Community 243 - "20260810144748 Addautogeneratebookingno Designer"
+### Community 238 - "AddAutoGenerateBookingNo"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddAutoGenerateBookingNo
 
-### Community 244 - "20260822183522 Removebookingledgersandupdatestoragecharge Designer"
+### Community 239 - "RemoveBookingLedgersAndUpdateStorageCharge"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, RemoveBookingLedgersAndUpdateStorageCharge
 
-### Community 245 - "20260921180146 Bank Transaction"
+### Community 240 - "AddBankToTransactionAndSourceTypeToBankTransaction"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddBankToTransactionAndSourceTypeToBankTransaction
 
-### Community 246 - "20260923084007 Delivery Addcollectedamounttodeliveryanddeliverydetail"
+### Community 241 - "AddCollectedAmountToDeliveryAndDeliveryDetail"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddCollectedAmountToDeliveryAndDeliveryDetail
 
-### Community 247 - "Expression Parameter Expressionparameterreplacer"
+### Community 242 - "AddSeasonArchiveLog"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddSeasonArchiveLog
+
+### Community 243 - "AddJobConfigurationsToCompany"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddJobConfigurationsToCompany
+
+### Community 244 - "ExpressionParameterReplacer"
 Cohesion: 0.33
 Nodes (5): ExpressionParameterReplacer, Expression, ExpressionVisitor, IDictionary, ParameterExpression
 
-### Community 248 - "Recurring Charge Recurringchargerunresponse"
+### Community 245 - "RecurringChargeRunResponse.cs"
 Cohesion: 0.48
 Nodes (6): RecurringChargePreviewBookingResponse, RecurringChargePreviewResponse, RecurringChargeRunResponse, DateTime, Guid, List
 
-### Community 249 - "Code Codegenerator Bookingservice"
-Cohesion: 0.33
-Nodes (3): BookingRequest, BookingResponse, CodeGenerator
-
-### Community 251 - "Barcode Counter Changes"
+### Community 247 - "BarcodeComponent"
 Cohesion: 0.33
 Nodes (3): BarcodeComponent, Component, Input
 
-### Community 252 - "Agents Multi Role"
+### Community 248 - "AGENTS.md"
 Cohesion: 0.33
 Nodes (5): AGENTS.md — Cold Storage Limited Multi-Role Workspace Guidelines, Architectural & Coding Governance Guidelines, Overview & Multi-Persona Framework, Solution Analysis Checklist (Multi-Role Audit Rules), Workspace Domain Boundaries & Legacy Cleanup Rules
 
-### Community 253 - "Recurring Irecurringchargeservice Charge"
+### Community 249 - ".ProcessRecurringChargesAsync"
 Cohesion: 0.33
 Nodes (4): IRecurringChargeService, CancellationToken, DateTime, Task
 
-### Community 254 - "Delivery Productdeliveryrequest Product"
+### Community 250 - "Application/DependencyInjection.cs"
+Cohesion: 0.40
+Nodes (3): DependencyInjection, IServiceCollection, Application
+
+### Community 251 - "DeliveryRequest"
 Cohesion: 0.47
 Nodes (5): DeliveryDetailRequest, DeliveryRequest, DateTime, Guid, List
 
-### Community 255 - "Booking Bookingservice Lookup"
-Cohesion: 0.33
-Nodes (4): Booking, Expression, Func, Lookup
-
-### Community 256 - "Angular Lint Builder"
+### Community 252 - "lint"
 Cohesion: 0.33
 Nodes (6): lint, builder, options, lintFilePatterns, src/**/*.html, src/**/*.ts
 
-### Community 259 - "Booking Bookingresponse Detail"
-Cohesion: 0.40
-Nodes (4): BookingDetailListResponse, BookingDetailResponse, BookingListResponse, BookingResponse
+### Community 258 - "BalanceSheetSummaryResponse"
+Cohesion: 0.50
+Nodes (4): BalanceSheetItemResponse, BalanceSheetSummaryResponse, DateTime, List
 
-### Community 260 - "Trial Balance Trialbalanceresponse"
+### Community 259 - "TrialBalanceSummaryResponse"
 Cohesion: 0.50
 Nodes (4): TrialBalanceItemResponse, TrialBalanceSummaryResponse, DateTime, List
 
-### Community 261 - "View Customerstockviewmodel Customer"
+### Community 260 - "Domain.ViewModels"
 Cohesion: 0.40
 Nodes (3): Domain.ViewModels, CustomerStockViewModel, ProductUnitViewModel
 
-### Community 262 - "Aspnetcore Https Path"
+### Community 261 - "aspnetcore-https.js"
 Cohesion: 0.40
 Nodes (4): certFilePath, fs, keyFilePath, path
 
-### Community 263 - "Eslintrc Json Ignore"
+### Community 262 - ".eslintrc.json"
 Cohesion: 0.40
 Nodes (4): ignorePatterns, overrides, root, projects/**/*
 
-### Community 265 - "Snapshot Applicationdbcontextmodelsnapshot Application"
+### Community 264 - "DependencyInjection"
+Cohesion: 0.60
+Nodes (3): IConfiguration, IServiceCollection, DependencyInjection
+
+### Community 265 - "ApplicationDbContextModelSnapshot.cs"
 Cohesion: 0.40
 Nodes (3): ModelSnapshot, ModelBuilder, ApplicationDbContextModelSnapshot
 
-### Community 266 - "Current User Applicationdbcontext"
+### Community 266 - ".SaveChangesAsync"
 Cohesion: 0.40
 Nodes (3): CancellationToken, CurrentUser, Task
 
-### Community 267 - "Transaction Begin Iunitofwork"
-Cohesion: 0.50
-Nodes (3): CancellationToken, IDbContextTransaction, Task
-
-### Community 269 - "Transaction Head Transactionheadresponse"
+### Community 268 - "TransactionHeadResponse.cs"
 Cohesion: 0.50
 Nodes (3): TransactionHeadListResponse, TransactionHeadLookup, TransactionHeadResponse
 
-### Community 270 - "Transactionresponse Transaction Cash"
-Cohesion: 0.50
-Nodes (3): CashFlowResponse, TransactionListResponse, TransactionSummaryResponse
-
-### Community 271 - "Date Time Provider"
-Cohesion: 0.50
-Nodes (3): SystemDateTimeProvider, DateTime, IDateTimeProvider
-
 ## Knowledge Gaps
-- **385 isolated node(s):** `net9.0`, `FluentValidation (11.9.0)`, `Mapster (7.4.0)`, `Microsoft.NET.Sdk`, `RequestResponse` (+380 more)
+- **361 isolated node(s):** `IBalanceSheetItem`, `IStatusOption`, `IBankBookItem`, `ICashBookItem`, `IGeneralLedgerItem` (+356 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **114 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **129 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Application.Contractors` connect `Book Report Delivery` to `Company Icompanyservice Companycontroller`, `Itransactionservice Transactioncontroller Transaction`, `Token User Iusertokenservice`, `Trial Balance Itrialbalanceservice`, `Bank Transaction Banktransactioncontroller`, `Dependencyinjection Unit Work`, `Balance Sheet Employee`, `Recurring Charge Irecurringchargemanagementservice`, `Recurring Irecurringchargeservice Charge`, `Billingrecurringchargejob Emailbackgroundservice Email`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `Application.ReponseDTO` connect `Book Report Delivery` to `Booking Bookingresponse Detail`, `Delivery Iproductdeliveryservice Productdeliverycontroller`, `Deliverychallanservice Deliverychallancontroller Ideliverychallanservice`, `Trial Balance Trialbalanceresponse`, `Paymentmethodcontroller Ipaymentmethodservice Payment`, `Asset Assetcontroller Iassetservice`, `Employeecontroller Employee Iemployeeservice`, `Bank Bankcontroller Ibankservice`, `Transaction Head Transactionheadresponse`, `Transactionresponse Transaction Cash`, `Bank Transaction Banktransactionresponse`, `Unit Baseunitresponse`, `Branch Branchresponse`, `Company Companyresponse`, `Customer Customerresponse`, `Product Category Productcategoryresponse`, `Policy Authorization Permission`, `Customer Payment Bill`, `Stock Report Stockreportresponse`, `Claim Assignclaimservice User`, `Dashboard Dashboardresponse Stats`, `Salarypaymentservice Payment Salary`, `Balance Sheet Ibalancecalculatorservice`, `Delivery Customerdueresponse Bookinginvoicewithdeliveryresponse`, `Datewise Booking Report`, `Datewise Delivery Report`, `Ledger Book Date`, `Bank Book Date`, `Cash Book Cancellation`, `Daily Stock Book`, `General Ledger Date`, `Recurring Charge Recurringchargerunresponse`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `Application.Services` connect `Book Report Delivery` to `Validator Transaction Unit`, `Policy Authorization Permission`, `Productdeliveryservice Delivery Booking`, `Recurring Charge Recurringchargemanagementservice`, `Transactionservice Transaction Lookup`, `Employeeservice Employee Pagination`, `Assetservice Asset Pagination`, `Claim Assignclaimservice User`, `Bankservice Bank Pagination`, `Customerservice Customer Pagination`, `Productservice Product Pagination`, `Banktransactionservice Bank Transaction`, `Branchservice Branch Pagination`, `Productcategoryservice Product Category`, `Userservice User Password`, `Baseunitservice Unit Pagination`, `Unitconversionservice Unit Conversion`, `Employee Report Employeereportservice`, `Dependencyinjection Unit Work`, `Token User Jwt`, `Codegenerationservice Code Generation`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
-- **What connects `net9.0`, `FluentValidation (11.9.0)`, `Mapster (7.4.0)` to the rest of the system?**
-  _385 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Report Balance Datewise` be split into smaller, more focused modules?**
-  _Cohesion score 0.030303030303030304 - nodes in this community are weakly interconnected._
-- **Should `Book Report Delivery` be split into smaller, more focused modules?**
-  _Cohesion score 0.04131652661064426 - nodes in this community are weakly interconnected._
-- **Should `Pagination With Error` be split into smaller, more focused modules?**
-  _Cohesion score 0.09410007468259896 - nodes in this community are weakly interconnected._
+- **Why does `Application.Contractors` connect `Application.ReponseDTO` to `.GetEmployeeReportAsync`, `.Post`, `Domain.Entitites`, `Application.Services`, `.GetTrialBalance`, `.ApplyManualRecurringChargeAsync`, `CompanyController`, `TransactionController`, `SalaryPaymentService`, `BankBookService.cs`, `BankTransactionController`, `.GetDailyStockBookAsync`, `.GetDatewiseBookingReportAsync`, `.GetDatewiseDeliveryReportAsync`, `Infrastructure.BackgroundServices`, `.GetBalanceSheet`, `.ProcessRecurringChargesAsync`, `.BeginTransactionAsync`?**
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+- **Why does `Application.Services` connect `Application.Services` to `Application.ReponseDTO`, `Application.Contractors.Authentication`, `.Query`, `AssignClaimService`, `BookingService`, `TransactionService`, `EmployeeService`, `.UpdateAsync`, `AssetService`, `BankService`, `CustomerService`, `.GetByIdAsync`, `.UnfilteredQuery`, `UserService`, `BaseUnitService`, `ProductCategoryService`, `.GetEmployeeReportAsync`, `BankBookService.cs`, `.GetDailyStockBookAsync`, `.GetDatewiseBookingReportAsync`, `.GetDatewiseDeliveryReportAsync`, `.ProcessRecurringChargesAsync`, `CompanyService`, `RecurringChargeManagementService`, `UserTokenService`, `Application/DependencyInjection.cs`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `Domain.Entitites` connect `Domain.Entitites` to `Application.ReponseDTO`, `Application.Services`, `Infrastructure.BackgroundServices`, `BankBookService.cs`, `.GetDailyStockBookAsync`, `.GetDatewiseBookingReportAsync`, `.GetDatewiseDeliveryReportAsync`, `PaymentMethod`, `PrintSettings`, `BookingInvoiceWithDeliveryResponse`, `Company`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **What connects `IBalanceSheetItem`, `IStatusOption`, `IBankBookItem` to the rest of the system?**
+  _361 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `LayoutService` be split into smaller, more focused modules?**
+  _Cohesion score 0.024389065971216074 - nodes in this community are weakly interconnected._
+- **Should `Application.ReponseDTO` be split into smaller, more focused modules?**
+  _Cohesion score 0.03876773970231914 - nodes in this community are weakly interconnected._
+- **Should `Domain.Entitites` be split into smaller, more focused modules?**
+  _Cohesion score 0.030287296642436828 - nodes in this community are weakly interconnected._
