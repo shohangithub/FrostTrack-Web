@@ -10,6 +10,8 @@ public class Company : BaseEntity<int>
     public string Description { get; set; } = string.Empty;
     public bool AutoInvoicePrint { get; set; } = true;
     public bool AutoGenerateBookingNo { get; set; } = false;
+    public bool EnableRecurringChargeJob { get; set; } = false;
+    public bool EnableEmailNotifications { get; set; } = false;
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsSingleBranch { get; set; }

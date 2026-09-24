@@ -1,4 +1,7 @@
-﻿using FluentEmail.Core;
+using Application.Contractors;
+using Domain.Entitites;
+using FluentEmail.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -34,6 +37,27 @@ namespace Infrastructure.BackgroundServices
         /// </summary>
         private async void SendEmailNotifications(object? state)
         {
+            try
+            {
+                using var scope = serviceScopeFactory.CreateScope();
+                var companyRepo = scope.ServiceProvider.GetService<IRepository<Company, int>>();
+                if (companyRepo != null)
+                {
+                    var isEmailEnabled = await companyRepo.Query()
+                        .Where(c => c.IsActive && c.EnableEmailNotifications)
+                        .AnyAsync();
+
+                    if (!isEmailEnabled)
+                    {
+                        return;
+                    }
+                }
+            }
+            catch
+            {
+                return;
+            }
+
             var now = _dateTimeProvider.UtcNow;
             var oneMinuteFromNow = now.AddMinutes(1);
 

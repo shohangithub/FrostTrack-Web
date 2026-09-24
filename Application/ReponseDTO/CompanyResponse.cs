@@ -9,6 +9,8 @@ public record CompanyResponse(
     string Description,
     bool AutoInvoicePrint,
     bool AutoGenerateBookingNo,
+    bool EnableRecurringChargeJob,
+    bool EnableEmailNotifications,
     string InvoiceHeader,
     string InvoiceFooter,
     bool IsSingleBranch,
@@ -25,6 +27,8 @@ public record CompanyListResponse(
     int CodeGeneration,
     string CodeGenerationName,
     bool AutoGenerateBookingNo,
+    bool EnableRecurringChargeJob,
+    bool EnableEmailNotifications,
     bool IsActive,
     string Status
 );

@@ -6,6 +6,8 @@ export interface ICompanyListResponse {
   codeGeneration: number;
   codeGenerationName: string;
   autoGenerateBookingNo: boolean;
+  enableRecurringChargeJob?: boolean;
+  enableEmailNotifications?: boolean;
   isActive: boolean;
   status: string;
 }
@@ -19,6 +21,8 @@ export interface ICompanyResponse {
   description: string;
   autoInvoicePrint: boolean;
   autoGenerateBookingNo: boolean;
+  enableRecurringChargeJob?: boolean;
+  enableEmailNotifications?: boolean;
   invoiceHeader: string;
   invoiceFooter: string;
   isSingleBranch: boolean;
@@ -35,6 +39,8 @@ export interface ICompanyRequest {
   description?: string;
   autoInvoicePrint: boolean;
   autoGenerateBookingNo: boolean;
+  enableRecurringChargeJob?: boolean;
+  enableEmailNotifications?: boolean;
   invoiceHeader?: string;
   invoiceFooter?: string;
   isSingleBranch: boolean;

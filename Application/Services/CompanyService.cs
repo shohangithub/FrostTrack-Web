@@ -39,6 +39,8 @@ public class CompanyService : ICompanyService
             (int)x.CodeGeneration,
             x.CodeGeneration.ToString(),
             x.AutoGenerateBookingNo,
+            x.EnableRecurringChargeJob,
+            x.EnableEmailNotifications,
             x.IsActive,
             x.Status
         ));
@@ -58,6 +60,8 @@ public class CompanyService : ICompanyService
             result.Description,
             result.AutoInvoicePrint,
             result.AutoGenerateBookingNo,
+            result.EnableRecurringChargeJob,
+            result.EnableEmailNotifications,
             result.InvoiceHeader,
             result.InvoiceFooter,
             result.IsSingleBranch,
@@ -78,6 +82,8 @@ public class CompanyService : ICompanyService
             Description = request.Description ?? string.Empty,
             AutoInvoicePrint = request.AutoInvoicePrint,
             AutoGenerateBookingNo = request.AutoGenerateBookingNo,
+            EnableRecurringChargeJob = request.EnableRecurringChargeJob,
+            EnableEmailNotifications = request.EnableEmailNotifications,
             InvoiceHeader = request.InvoiceHeader ?? string.Empty,
             InvoiceFooter = request.InvoiceFooter ?? string.Empty,
             IsSingleBranch = request.IsSingleBranch,
@@ -100,6 +106,8 @@ public class CompanyService : ICompanyService
             entity.Description,
             entity.AutoInvoicePrint,
             entity.AutoGenerateBookingNo,
+            entity.EnableRecurringChargeJob,
+            entity.EnableEmailNotifications,
             entity.InvoiceHeader,
             entity.InvoiceFooter,
             entity.IsSingleBranch,
@@ -122,6 +130,8 @@ public class CompanyService : ICompanyService
         existingData.Description = request.Description ?? string.Empty;
         existingData.AutoInvoicePrint = request.AutoInvoicePrint;
         existingData.AutoGenerateBookingNo = request.AutoGenerateBookingNo;
+        existingData.EnableRecurringChargeJob = request.EnableRecurringChargeJob;
+        existingData.EnableEmailNotifications = request.EnableEmailNotifications;
         existingData.InvoiceHeader = request.InvoiceHeader ?? string.Empty;
         existingData.InvoiceFooter = request.InvoiceFooter ?? string.Empty;
         existingData.IsSingleBranch = request.IsSingleBranch;
@@ -142,6 +152,8 @@ public class CompanyService : ICompanyService
             result.Description,
             result.AutoInvoicePrint,
             result.AutoGenerateBookingNo,
+            result.EnableRecurringChargeJob,
+            result.EnableEmailNotifications,
             result.InvoiceHeader,
             result.InvoiceFooter,
             result.IsSingleBranch,
@@ -191,6 +203,8 @@ public class CompanyService : ICompanyService
             (int)x.CodeGeneration,
             x.CodeGeneration.ToString(),
             x.AutoGenerateBookingNo,
+            x.EnableRecurringChargeJob,
+            x.EnableEmailNotifications,
             x.IsActive,
             x.Status
         ));
@@ -206,6 +220,8 @@ public class CompanyService : ICompanyService
                 (int)x.CodeGeneration,
                 x.CodeGeneration.ToString(),
                 x.AutoGenerateBookingNo,
+                x.EnableRecurringChargeJob,
+                x.EnableEmailNotifications,
                 x.IsActive,
                 x.Status
             ))

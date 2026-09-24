@@ -8,6 +8,8 @@ public record CompanyRequest(
     string? Description,
     bool AutoInvoicePrint,
     bool AutoGenerateBookingNo,
+    bool EnableRecurringChargeJob,
+    bool EnableEmailNotifications,
     string? InvoiceHeader,
     string? InvoiceFooter,
     bool IsSingleBranch,

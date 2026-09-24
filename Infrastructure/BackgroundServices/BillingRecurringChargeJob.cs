@@ -1,4 +1,6 @@
 using Application.Contractors;
+using Domain.Entitites;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -54,11 +56,23 @@ public sealed class BillingRecurringChargeJob : BackgroundService
     private async Task RunRecurringChargeCycleAsync(CancellationToken stoppingToken)
     {
         var asOf = DateTime.UtcNow;
-        _logger.LogInformation("BillingRecurringChargeJob: processing recurring charges as of {AsOf:O}", asOf);
+        _logger.LogInformation("BillingRecurringChargeJob: checking recurring charges configuration as of {AsOf:O}", asOf);
 
         try
         {
             await using var scope = _scopeFactory.CreateAsyncScope();
+            var companyRepo = scope.ServiceProvider.GetRequiredService<IRepository<Company, int>>();
+
+            var isJobEnabled = await companyRepo.Query()
+                .Where(c => c.IsActive && c.EnableRecurringChargeJob)
+                .AnyAsync(stoppingToken);
+
+            if (!isJobEnabled)
+            {
+                _logger.LogInformation("BillingRecurringChargeJob: Recurring charge job is disabled in Company Setup. Skipping execution.");
+                return;
+            }
+
             var svc = scope.ServiceProvider.GetRequiredService<IRecurringChargeService>();
             var count = await svc.ProcessRecurringChargesAsync(asOf, stoppingToken);
             _logger.LogInformation("BillingRecurringChargeJob: advanced LastRecurringChargeDate for {Count} booking detail(s).", count);
