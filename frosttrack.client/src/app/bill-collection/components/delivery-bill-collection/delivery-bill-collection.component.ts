@@ -280,7 +280,6 @@ export class DeliveryBillCollectionComponent implements OnInit {
 
     this.billCollectionService.createCustomerPayment(payload).subscribe({
       next: (response) => {
-        this.toastr.success('Customer payment recorded successfully!');
         if (printAfterSave) {
           this.router.navigate([
             '/transaction/receipt-print',

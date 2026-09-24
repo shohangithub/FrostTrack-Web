@@ -53,6 +53,7 @@ public static class UsageFor
     public const string OPENING_BALANCE = "OPENING_BALANCE";
     public const string CLOSING_BALANCE = "CLOSING_BALANCE";
     public const string CUSTOMER_PAYMENT = "CUSTOMER_PAYMENT"; // Independent customer payment (money IN)
+    public const string BILL_DISCOUNT = "BILL_DISCOUNT"; // Customer bill discount / waiver / adjustment
     [Obsolete("Use CUSTOMER_PAYMENT instead.")]
     public const string BILL_COLLECTION = "BILL_COLLECTION";
     [Obsolete("Use CUSTOMER_PAYMENT instead.")]

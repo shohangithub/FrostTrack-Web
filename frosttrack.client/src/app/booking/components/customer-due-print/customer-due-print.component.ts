@@ -150,6 +150,12 @@ export class CustomerDuePrintComponent implements OnInit {
     }, 0);
   }
 
+  getGrandTotalDiscount(): number {
+    return this.customerDueDetails.reduce((sum, booking) => {
+      return sum + (booking.totalDiscount ?? 0);
+    }, 0);
+  }
+
   getGrandTotalDue(): number {
     return this.customerDueDetails.reduce((sum, booking) => {
       return sum + booking.totalDue;

@@ -39,7 +39,10 @@ public static class DependencyInjection
         #region register db context provider
         //services.AddScoped<DbContext>();
         services.AddDbContext<ApplicationDbContext>(options =>
-         options.UseSqlServer(configuration.GetConnectionString("ApplicationDbContext")));
+        {
+            options.UseSqlServer(configuration.GetConnectionString("ApplicationDbContext"));
+            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        });
 
         services.AddTransient<ApplicationDbContextInitializer>();
         #endregion

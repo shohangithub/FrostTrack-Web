@@ -90,23 +90,34 @@ public class BillCollectionService : IBillCollectionService
             var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
             var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
 
-            var (_, _, _, pendingRecurringCharge) =
+            var (bTotalRent, bTotalLabour, bTotalAccrued, pendingRecurringCharge) =
                 BookingDueCalculator.CalculateBookingAccruedDetails(booking, activeDetails, bDeliveries, now);
-
-            totalBookingCharges += activeDetails.Sum(d => d.LabourCharge);
 
             var bDeliveryRent = bDeliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
             var bDeliveryLabour = bDeliveries.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
             var bDeliveryAdj = bDeliveries.Sum(d => d.AdjustmentValue);
-            totalDeliveryCharges += (bDeliveryRent + bDeliveryLabour + bDeliveryAdj);
+            var bDeliveryCharges = bDeliveryRent + bDeliveryLabour + bDeliveryAdj;
 
+            totalDeliveryCharges += bDeliveryCharges;
             totalRecurringCharges += pendingRecurringCharge;
+            totalBookingCharges += Math.Max(0m, bTotalAccrued - bDeliveryCharges - pendingRecurringCharge);
         }
+
+        var discountTrxs = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted
+                        && !t.IsArchived
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)) || (t.CustomerId == customerId))
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .OrderByDescending(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
 
         var openingBalance = customer.OpeningBalance;
         var totalAccrued = openingBalance + totalBookingCharges + totalDeliveryCharges + totalRecurringCharges;
         var totalPaid = payments.Sum(p => p.Amount);
-        var netDue = Math.Max(0m, totalAccrued - totalPaid);
+        var totalDiscounts = discountTrxs.Sum(d => d.Amount > 0 ? d.Amount : d.DiscountAmount);
+        var netDue = Math.Max(0m, totalAccrued - totalPaid - totalDiscounts);
 
         var recentPayments = payments.Take(10).Select(p => new RecentCustomerPaymentDto(
             p.Id,
@@ -129,6 +140,7 @@ public class BillCollectionService : IBillCollectionService
             totalRecurringCharges,
             totalAccrued,
             totalPaid,
+            totalDiscounts,
             netDue,
             bookings.Count,
             recentPayments
@@ -321,6 +333,187 @@ public class BillCollectionService : IBillCollectionService
                 t.Bank != null ? t.Bank.BankName : null,
                 t.PaymentReference,
                 t.Note,
+                t.CreatedTime
+            ))
+            .ToListAsync(cancellationToken);
+
+        return results;
+    }
+
+    public async Task<TransactionResponse> CreateCustomerDiscountAsync(
+        CustomerDiscountRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.CustomerId <= 0)
+            throw new Exception("Please select a valid customer");
+
+        if (request.DiscountAmount <= 0)
+            throw new Exception("Discount / adjustment amount must be greater than zero");
+
+        if (string.IsNullOrWhiteSpace(request.DiscountReason))
+            throw new Exception("A valid reason or approval justification is required for discount/adjustment");
+
+        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
+        if (customer == null)
+            throw new Exception("Customer not found");
+
+        var summary = await GetCustomerBalanceSummaryAsync(request.CustomerId, cancellationToken);
+        if (summary.NetDue > 0 && request.DiscountAmount > summary.NetDue)
+            throw new Exception($"Discount amount cannot be greater than Total Due (৳{summary.NetDue:N2})");
+
+        var discountHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(x => x.UsageFor == UsageFor.BILL_DISCOUNT && x.IsActive, cancellationToken);
+
+        if (discountHead == null)
+        {
+            discountHead = new TransactionHead
+            {
+                Id = Guid.NewGuid(),
+                Code = "BILL_DISCOUNT",
+                Name = "Bill Discount / Adjustment",
+                Type = TransactionHeadTypes.CREDIT,
+                DisplayType = "Credit",
+                Description = "Discounts and approved write-offs reducing customer bills",
+                UsageFor = UsageFor.BILL_DISCOUNT,
+                IsSystem = true,
+                IsActive = true,
+                SortOrder = 2,
+                ColorCode = "#F59E0B",
+                IconClass = "fa-tag",
+                TenantId = _tenantId
+            };
+            _defaultValueInjector.InjectCreatingAudit<TransactionHead, Guid>(discountHead);
+            await _transactionHeadRepository.AddAsync(discountHead, cancellationToken);
+        }
+
+        var totalDue = request.TotalDue ?? summary.NetDue;
+        var currentDue = request.CurrentDue ?? Math.Max(0m, totalDue - request.DiscountAmount);
+        var reasonPart = request.DiscountReason.Trim();
+        var entity = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            TransactionCode = request.TransactionCode,
+            TransactionDate = request.TransactionDate,
+            TransactionHeadId = discountHead.Id,
+            BranchId = request.BranchId,
+            CustomerId = request.CustomerId,
+            BookingId = request.BookingId,
+            Amount = request.DiscountAmount,
+            PaymentMethod = PaymentMethods.DISCOUNT,
+            PaymentReference = null,
+            BankId = null,
+            Note = request.Note,
+            DiscountReason = reasonPart,
+            Description = $"Discount/Adjustment - {customer.CustomerName} [Total Due: ৳{totalDue:N2}, Discount: ৳{request.DiscountAmount:N2}, Current Due: ৳{currentDue:N2}] ({reasonPart})",
+            DiscountAmount = request.DiscountAmount,
+            AdjustmentValue = 0,
+            TotalDue = totalDue,
+            CurrentDue = currentDue,
+            NetAmount = 0 // Zero physical cash impact
+        };
+
+        _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(entity);
+        await _transactionRepository.AddAsync(entity, cancellationToken);
+
+        return entity.Adapt<TransactionResponse>();
+    }
+
+    public async Task<List<CustomerDiscountItemResponse>> GetCustomerDiscountHistoryAsync(
+        int customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var discounts = await _transactionRepository.Query()
+            .Include(t => t.Customer)
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId
+                     && !t.IsDeleted
+                     && !t.IsArchived
+                     && t.CustomerId == customerId
+                     && t.TransactionHead != null
+                     && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.CreatedTime)
+            .Select(t => new CustomerDiscountItemResponse(
+                t.Id,
+                t.TransactionCode,
+                t.TransactionDate,
+                t.CustomerId ?? 0,
+                t.Customer != null ? t.Customer.CustomerName : "Unknown",
+                t.Customer != null ? t.Customer.CustomerMobile : null,
+                t.Customer != null ? t.Customer.Address : null,
+                t.TotalDue ?? (t.Amount > 0 ? t.Amount : t.DiscountAmount),
+                t.Amount > 0 ? t.Amount : t.DiscountAmount,
+                t.CurrentDue ?? 0m,
+                t.DiscountReason ?? string.Empty,
+                t.Note,
+                t.BookingId,
+                t.CreatedTime
+            ))
+            .ToListAsync(cancellationToken);
+
+        return discounts;
+    }
+
+    public async Task<List<CustomerDiscountItemResponse>> GetCustomerDiscountReportAsync(
+        DateTime? startDate,
+        DateTime? endDate,
+        int? customerId,
+        string? searchTerm,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _transactionRepository.Query()
+            .Include(t => t.Customer)
+            .Include(t => t.TransactionHead)
+            .Where(t => t.TenantId == _tenantId
+                     && !t.IsDeleted
+                     && !t.IsArchived
+                     && t.TransactionHead != null
+                     && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT);
+
+        if (startDate.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Local).ToUniversalTime();
+            query = query.Where(t => t.TransactionDate >= fromUtc);
+        }
+
+        if (endDate.HasValue)
+        {
+            var toUtc = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+            query = query.Where(t => t.TransactionDate < toUtc);
+        }
+
+        if (customerId.HasValue && customerId.Value > 0)
+        {
+            query = query.Where(t => t.CustomerId == customerId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(t => t.TransactionCode.ToLower().Contains(term)
+                                  || (t.Customer != null && t.Customer.CustomerName.ToLower().Contains(term))
+                                  || (t.Customer != null && t.Customer.CustomerMobile != null && t.Customer.CustomerMobile.Contains(term))
+                                  || (t.DiscountReason != null && t.DiscountReason.ToLower().Contains(term))
+                                  || (t.Note != null && t.Note.ToLower().Contains(term)));
+        }
+
+        var results = await query
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.CreatedTime)
+            .Select(t => new CustomerDiscountItemResponse(
+                t.Id,
+                t.TransactionCode,
+                t.TransactionDate,
+                t.CustomerId ?? 0,
+                t.Customer != null ? t.Customer.CustomerName : "Unknown",
+                t.Customer != null ? t.Customer.CustomerMobile : null,
+                t.Customer != null ? t.Customer.Address : null,
+                t.TotalDue ?? (t.Amount > 0 ? t.Amount : t.DiscountAmount),
+                t.Amount > 0 ? t.Amount : t.DiscountAmount,
+                t.CurrentDue ?? 0m,
+                t.DiscountReason ?? string.Empty,
+                t.Note,
+                t.BookingId,
                 t.CreatedTime
             ))
             .ToListAsync(cancellationToken);

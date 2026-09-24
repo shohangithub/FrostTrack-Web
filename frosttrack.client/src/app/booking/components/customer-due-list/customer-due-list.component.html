@@ -233,6 +233,11 @@
                           >
                             ৳{{ row.totalDue | number: "1.2-2" }}
                           </span>
+                          @if (row.totalDiscount > 0) {
+                            <div class="small text-muted" style="font-size: 0.72rem;">
+                              (ছাড়: ৳{{ row.totalDiscount | number: "1.2-2" }})
+                            </div>
+                          }
                         </td>
 
                         <!-- Last payment / age -->
@@ -300,16 +305,38 @@
                                       <span>Paid:</span>
                                       <strong>৳{{ row.totalPaid | number: "1.2-2" }}</strong>
                                     </div>
+                                    @if (row.totalDiscount > 0) {
+                                      <div class="stat-pill" style="background-color: #fffbeb; border-color: #fde68a;">
+                                        <span class="text-warning">Discount:</span>
+                                        <strong class="text-warning">৳{{ row.totalDiscount | number: "1.2-2" }}</strong>
+                                      </div>
+                                    }
                                     <div class="stat-pill due">
                                       <span>Net Due:</span>
                                       <strong>৳{{ row.totalDue | number: "1.2-2" }}</strong>
                                     </div>
                                     <button
-                                      class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 ms-2"
+                                      class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 ms-2"
+                                      (click)="receivePayment(row.customerId)"
+                                      title="Receive Cash / Bank Payment"
+                                    >
+                                      <i class="material-icons" style="font-size: 15px;">payments</i>
+                                      Pay Due
+                                    </button>
+                                    <button
+                                      class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1"
+                                      (click)="giveDiscount(row.customerId)"
+                                      title="Enter Discount or Adjustment"
+                                    >
+                                      <i class="material-icons" style="font-size: 15px;">local_offer</i>
+                                      Discount / Adjustment
+                                    </button>
+                                    <button
+                                      class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
                                       (click)="printCustomerDue(row.customerId)"
                                     >
                                       <i class="material-icons" style="font-size: 15px;">print</i>
-                                      Print Statement
+                                      Print
                                     </button>
                                   </div>
                                 </div>
@@ -398,6 +425,14 @@
                                           ৳{{ booking.totalPaid | number: "1.2-2" }}
                                         </div>
                                       </div>
+                                      @if (booking.totalDiscount > 0) {
+                                        <div class="finance-box">
+                                          <div class="box-title">Discount (ছাড়)</div>
+                                          <div class="box-amount text-warning">
+                                            ৳{{ booking.totalDiscount | number: "1.2-2" }}
+                                          </div>
+                                        </div>
+                                      }
                                       <div class="finance-box">
                                         <div class="box-title">Net Due (অবশিষ্ট বকেয়া)</div>
                                         <div class="box-amount" [class.highlight-red]="booking.totalDue > 0">

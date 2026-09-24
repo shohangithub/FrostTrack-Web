@@ -50,6 +50,13 @@ export const reportRoutes: Route[] = [
         './components/customer-due-report/customer-due-report.component'
       ).then((m) => m.CustomerDueReportComponent),
   },
+  {
+    path: 'customer-discount-report',
+    loadComponent: () =>
+      import(
+        './components/customer-discount-report/customer-discount-report.component'
+      ).then((m) => m.CustomerDiscountReportComponent),
+  },
   // {
   //   path: 'ledger-book',
   //   loadComponent: () =>

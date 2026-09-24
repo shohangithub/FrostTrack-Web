@@ -258,6 +258,19 @@
                           </td>
                           <td></td>
                         </tr>
+                        @if (getGrandTotalDiscount() > 0) {
+                          <tr>
+                            <td class="text-end">
+                              <strong>সর্বমোট ছাড় / সমন্বয়:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                getGrandTotalDiscount() | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                            <td></td>
+                          </tr>
+                        }
                         <tr class="grand-total-row">
                           <td class="text-end">
                             <strong>সর্বমোট বকেয়া:</strong>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormsModule,
@@ -12,18 +12,18 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPrintModule } from 'ngx-print';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
-import { CustomerDueReportService } from '../../services/customer-due-report.service';
+import { CustomerDiscountReportService } from '../../services/customer-discount-report.service';
 import { CustomerService } from 'app/common/services/customer.service';
 import { ICustomerListResponse } from 'app/common/models/customer.interface';
-import { ICustomerDueSummaryResponse } from 'app/booking/models/booking.interface';
+import { ICustomerDiscountItem } from 'app/bill-collection/services/bill-collection.service';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
 import { todayInputFormat } from 'app/utils/date-utils';
 
 @Component({
-  selector: 'app-customer-due-report',
-  templateUrl: './customer-due-report.component.html',
-  styleUrls: ['./customer-due-report.component.scss'],
+  selector: 'app-customer-discount-report',
+  templateUrl: './customer-discount-report.component.html',
+  styleUrls: ['./customer-discount-report.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -38,46 +38,49 @@ import { todayInputFormat } from 'app/utils/date-utils';
     ReportFooterComponent,
   ],
 })
-export class CustomerDueReportComponent implements OnInit {
+export class CustomerDiscountReportComponent implements OnInit {
   reportForm: UntypedFormGroup;
-  reportItems: ICustomerDueSummaryResponse[] = [];
+  reportItems: ICustomerDiscountItem[] = [];
   customers: ICustomerListResponse[] = [];
   isLoading = false;
   showReport = false;
   today = new Date();
 
-  statusList = [
-    { id: 'all', label: 'All Status' },
-    { id: 'normal', label: 'Current' },
-    { id: 'warning', label: 'Due Soon (25+ days)' },
-    { id: 'danger', label: 'Overdue (30+ days)' },
-  ];
-
-  dueFilterList = [
-    { value: true, label: 'Outstanding Due Only' },
-    { value: false, label: 'All Customers' },
-  ];
-
   constructor(
     private fb: UntypedFormBuilder,
-    private customerDueReportService: CustomerDueReportService,
+    private discountReportService: CustomerDiscountReportService,
     private customerService: CustomerService,
     private toastr: ToastrService,
     private layoutService: LayoutService,
+    private route: ActivatedRoute,
   ) {
     this.layoutService.loadCurrentRoute();
 
+    // Default From Date: 30 days ago, To Date: today
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const fromStr = thirtyDaysAgo.toISOString().substring(0, 10);
+
     this.reportForm = this.fb.group({
-      reportDate: [todayInputFormat(), Validators.required],
+      fromDate: [fromStr, Validators.required],
+      toDate: [todayInputFormat(), Validators.required],
       customerId: [null],
-      status: ['all'],
-      dueOnly: [true],
       searchText: [''],
     });
   }
 
   ngOnInit(): void {
     this.loadCustomers();
+
+    // Handle query param customerId if navigated from discount page
+    const qCustomerId = this.route.snapshot.queryParamMap.get('customerId');
+    if (qCustomerId) {
+      const cId = Number(qCustomerId);
+      if (!isNaN(cId) && cId > 0) {
+        this.reportForm.patchValue({ customerId: cId });
+      }
+    }
+
     this.generateReport();
   }
 
@@ -94,50 +97,51 @@ export class CustomerDueReportComponent implements OnInit {
 
   getSelectedCustomerName(): string {
     const customerId = this.reportForm.get('customerId')?.value;
-    if (!customerId) return 'All Customers';
+    if (!customerId) return 'All Customers (সকল গ্রাহক)';
     const customer = this.customers.find((c) => c.id === customerId);
-    return customer ? customer.customerName : 'All Customers';
+    return customer ? customer.customerName : 'All Customers (সকল গ্রাহক)';
   }
 
   generateReport(): void {
     if (this.reportForm.invalid) {
       this.reportForm.markAllAsTouched();
-      this.toastr.error('Please fill in all required fields', 'Error');
+      this.toastr.error('Please fill in required date fields', 'Validation Error');
       return;
     }
 
     this.isLoading = true;
     const formValue = this.reportForm.value;
-    const reportDate = new Date(formValue.reportDate);
 
-    this.customerDueReportService
-      .getCustomerDueSummary(
-        reportDate,
+    this.discountReportService
+      .getCustomerDiscountReport(
+        formValue.fromDate,
+        formValue.toDate,
         formValue.customerId,
-        formValue.status,
-        formValue.dueOnly,
         formValue.searchText,
       )
       .subscribe({
-        next: (data: ICustomerDueSummaryResponse[]) => {
+        next: (data: ICustomerDiscountItem[]) => {
           this.reportItems = data || [];
           this.showReport = true;
           this.isLoading = false;
         },
         error: (error: any) => {
-          this.toastr.error('Failed to load customer due report', 'Error');
-          console.error('Error loading customer due report:', error);
+          this.toastr.error('Failed to load customer discount report', 'Error');
+          console.error('Error loading discount report:', error);
           this.isLoading = false;
         },
       });
   }
 
   reset(): void {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const fromStr = thirtyDaysAgo.toISOString().substring(0, 10);
+
     this.reportForm.patchValue({
-      reportDate: todayInputFormat(),
+      fromDate: fromStr,
+      toDate: todayInputFormat(),
       customerId: null,
-      status: 'all',
-      dueOnly: true,
       searchText: '',
     });
 
@@ -146,66 +150,20 @@ export class CustomerDueReportComponent implements OnInit {
 
   // ── Calculation helpers ───────────────────────────────────────────────────
 
-  getTotalCustomers(): number {
+  getTotalVouchers(): number {
     return this.reportItems.length;
   }
 
-  getTotalOverdue(): number {
-    return this.reportItems.filter((x) => x.status === 'danger').length;
-  }
-
-  getTotalBilled(): number {
-    return this.reportItems.reduce((sum, item) => sum + item.totalAmount, 0);
-  }
-
-  getTotalPaid(): number {
-    return this.reportItems.reduce((sum, item) => sum + item.totalPaid, 0);
+  getTotalDueBefore(): number {
+    return this.reportItems.reduce((sum, item) => sum + (item.totalDue || 0), 0);
   }
 
   getTotalDiscount(): number {
-    return this.reportItems.reduce((sum, item) => sum + (item.totalDiscount ?? 0), 0);
+    return this.reportItems.reduce((sum, item) => sum + (item.discountAmount || 0), 0);
   }
 
-  getTotalDue(): number {
-    return this.reportItems.reduce((sum, item) => sum + item.totalDue, 0);
-  }
-
-  getTotalPendingRecurring(): number {
-    return this.reportItems.reduce(
-      (sum, item) => sum + (item.pendingRecurringChargeAmount ?? 0),
-      0,
-    );
-  }
-
-  getTotalLastPayment(): number {
-    return this.reportItems.reduce(
-      (sum, item) => sum + (item.lastPaymentAmount ?? 0),
-      0,
-    );
-  }
-
-  // ── Status presentation helpers ──────────────────────────────────────────
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'danger':
-        return 'badge bg-danger';
-      case 'warning':
-        return 'badge bg-warning text-dark';
-      default:
-        return 'badge bg-success';
-    }
-  }
-
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'danger':
-        return 'Overdue';
-      case 'warning':
-        return 'Due Soon';
-      default:
-        return 'Current';
-    }
+  getTotalCurrentDueAfter(): number {
+    return this.reportItems.reduce((sum, item) => sum + (item.currentDue || 0), 0);
   }
 
   // ── Export CSV ────────────────────────────────────────────────────────────
@@ -218,28 +176,28 @@ export class CustomerDueReportComponent implements OnInit {
 
     const headers = [
       'SL',
+      'Transaction Code',
+      'Date',
       'Customer Name',
       'Mobile',
-      'Total Billed',
-      'Total Paid',
-      'Total Discount',
-      'Total Due',
-      'Last Payment',
-      'Last Payment Date',
+      'Total Due Before',
+      'Discount Amount',
+      'Current Due After',
+      'Discount Reason',
+      'Notes',
     ];
 
     const rows = this.reportItems.map((r, i) => [
       i + 1,
+      r.transactionCode,
+      r.transactionDate ? r.transactionDate.substring(0, 10) : '',
       r.customerName,
-      r.customerMobile,
-      r.totalAmount.toFixed(2),
-      r.totalPaid.toFixed(2),
-      (r.totalDiscount || 0).toFixed(2),
+      r.customerMobile || '',
       r.totalDue.toFixed(2),
-      r.lastPaymentAmount !== null && r.lastPaymentAmount !== undefined
-        ? r.lastPaymentAmount.toFixed(2)
-        : '',
-      r.lastPaymentDate ? r.lastPaymentDate.substring(0, 10) : 'No Payments',
+      r.discountAmount.toFixed(2),
+      r.currentDue.toFixed(2),
+      r.discountReason,
+      r.note || '',
     ]);
 
     const csvContent = [headers, ...rows]
@@ -254,7 +212,7 @@ export class CustomerDueReportComponent implements OnInit {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `customer-due-report-${new Date().toISOString().substring(0, 10)}.csv`;
+    a.download = `customer-discount-report-${new Date().toISOString().substring(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

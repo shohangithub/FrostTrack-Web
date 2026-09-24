@@ -28,6 +28,7 @@ export interface ICustomerBalanceSummary {
   totalRecurringCharges: number;
   totalAccrued: number;
   totalPaid: number;
+  totalDiscounts: number;
   netDue: number;
   activeBookingsCount: number;
   recentPayments: IRecentCustomerPayment[];
@@ -77,6 +78,36 @@ export interface ICustomerPaymentReportItem {
   createdTime: string;
 }
 
+export interface ICustomerDiscountRequest {
+  transactionCode: string;
+  transactionDate: Date | string;
+  branchId: number;
+  customerId: number;
+  totalDue?: number;
+  discountAmount: number;
+  currentDue?: number;
+  discountReason: string;
+  note?: string;
+  bookingId?: string | null;
+}
+
+export interface ICustomerDiscountItem {
+  id: string;
+  transactionCode: string;
+  transactionDate: string;
+  customerId: number;
+  customerName: string;
+  customerMobile?: string;
+  customerAddress?: string;
+  totalDue: number;
+  discountAmount: number;
+  currentDue: number;
+  discountReason: string;
+  note?: string;
+  bookingId?: string | null;
+  createdTime?: string;
+}
+
 export interface ICustomerPaymentReportFilter {
   startDate?: string;
   endDate?: string;
@@ -115,6 +146,28 @@ export class BillCollectionService extends BaseService {
     );
   }
 
+  // Create customer discount / adjustment voucher
+  createCustomerDiscount(
+    payload: ICustomerDiscountRequest
+  ): Observable<ITransactionDetailResponse> {
+    return this.postWithSuccess<ITransactionDetailResponse>(
+      `${this.path}/discount`,
+      payload,
+      'Customer Discount / Adjustment',
+      MessageHub.ADD
+    );
+  }
+
+  // Get customer discount history
+  getCustomerDiscountHistory(
+    customerId: number
+  ): Observable<ICustomerDiscountItem[]> {
+    return this.get<ICustomerDiscountItem[]>(
+      `${this.path}/customer/${customerId}/discount-history`,
+      'Get Customer Discount History'
+    );
+  }
+
   // Legacy delivery-based bill collection fallback
   createDeliveryBillCollection(
     payload: IDeliveryBillCollectionRequest
@@ -142,4 +195,24 @@ export class BillCollectionService extends BaseService {
       'Get Customer Payment Report'
     );
   }
+
+  // Customer Discount Report
+  getCustomerDiscountReport(
+    startDate?: string,
+    endDate?: string,
+    customerId?: number | null,
+    searchTerm?: string | null
+  ): Observable<ICustomerDiscountItem[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    if (customerId) params.set('customerId', customerId.toString());
+    if (searchTerm && searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
+
+    return this.get<ICustomerDiscountItem[]>(
+      `${this.path}/discount-report?${params.toString()}`,
+      'Get Customer Discount Report'
+    );
+  }
 }
+

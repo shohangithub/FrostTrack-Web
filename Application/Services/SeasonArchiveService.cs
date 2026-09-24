@@ -121,6 +121,14 @@ public class SeasonArchiveService : ISeasonArchiveService
                         && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
             .ToListAsync(cancellationToken);
 
+        var allDiscounts = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted && !t.IsArchived
+                        && t.TransactionDate <= cutoffUtc
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .ToListAsync(cancellationToken);
+
         decimal totalCustomerNetDue = 0m;
         foreach (var customer in customers)
         {
@@ -136,20 +144,23 @@ public class SeasonArchiveService : ISeasonArchiveService
                 var activeDetails = b.BookingDetails.Where(d => !d.IsDeleted).ToList();
                 var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
-                var (_, _, _, pendingRecurring) =
+                var (_, _, bTotalAccrued, pendingRecurring) =
                     BookingDueCalculator.CalculateBookingAccruedDetails(b, activeDetails, bDels, cutoffUtc);
 
-                totalBookingCharges += activeDetails.Sum(d => d.LabourCharge);
                 var bDeliveryRent = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
                 var bDeliveryLabour = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
                 var bDeliveryAdj = bDels.Sum(d => d.AdjustmentValue);
-                totalDeliveryCharges += (bDeliveryRent + bDeliveryLabour + bDeliveryAdj);
+                var bDeliveryCharges = bDeliveryRent + bDeliveryLabour + bDeliveryAdj;
+
+                totalDeliveryCharges += bDeliveryCharges;
                 totalRecurringCharges += pendingRecurring;
+                totalBookingCharges += Math.Max(0m, bTotalAccrued - bDeliveryCharges - pendingRecurring);
             }
 
             var custPayments = allPayments.Where(p => p.CustomerId == customer.Id || (p.BookingId.HasValue && custBookingIds.Contains(p.BookingId.Value))).Sum(p => p.Amount);
+            var custDiscounts = allDiscounts.Where(d => d.CustomerId == customer.Id || (d.BookingId.HasValue && custBookingIds.Contains(d.BookingId.Value))).Sum(d => d.Amount > 0 ? d.Amount : d.DiscountAmount);
             var accrued = customer.OpeningBalance + totalBookingCharges + totalDeliveryCharges + totalRecurringCharges;
-            var netDue = accrued - custPayments;
+            var netDue = Math.Max(0m, accrued - custPayments - custDiscounts);
             totalCustomerNetDue += netDue;
         }
 
@@ -321,6 +332,14 @@ public class SeasonArchiveService : ISeasonArchiveService
                             && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
                 .ToListAsync(cancellationToken);
 
+            var allDiscounts = await _transactionRepository.Query()
+                .Include(t => t.TransactionHead)
+                .Where(t => !t.IsDeleted && !t.IsArchived
+                            && t.TransactionDate <= cutoffUtc
+                            && t.TransactionHead != null
+                            && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+                .ToListAsync(cancellationToken);
+
             decimal totalCarriedCustomerDue = 0m;
             foreach (var customer in customers)
             {
@@ -336,20 +355,23 @@ public class SeasonArchiveService : ISeasonArchiveService
                     var activeDetails = b.BookingDetails.Where(d => !d.IsDeleted).ToList();
                     var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
-                    var (_, _, _, pendingRecurring) =
+                    var (_, _, bTotalAccrued, pendingRecurring) =
                         BookingDueCalculator.CalculateBookingAccruedDetails(b, activeDetails, bDels, cutoffUtc);
 
-                    totalBookingCharges += activeDetails.Sum(d => d.LabourCharge);
                     var bDeliveryRent = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
                     var bDeliveryLabour = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
                     var bDeliveryAdj = bDels.Sum(d => d.AdjustmentValue);
-                    totalDeliveryCharges += (bDeliveryRent + bDeliveryLabour + bDeliveryAdj);
+                    var bDeliveryCharges = bDeliveryRent + bDeliveryLabour + bDeliveryAdj;
+
+                    totalDeliveryCharges += bDeliveryCharges;
                     totalRecurringCharges += pendingRecurring;
+                    totalBookingCharges += Math.Max(0m, bTotalAccrued - bDeliveryCharges - pendingRecurring);
                 }
 
                 var custPayments = allPayments.Where(p => p.CustomerId == customer.Id || (p.BookingId.HasValue && custBookingIds.Contains(p.BookingId.Value))).Sum(p => p.Amount);
+                var custDiscounts = allDiscounts.Where(d => d.CustomerId == customer.Id || (d.BookingId.HasValue && custBookingIds.Contains(d.BookingId.Value))).Sum(d => d.Amount > 0 ? d.Amount : d.DiscountAmount);
                 var accrued = customer.OpeningBalance + totalBookingCharges + totalDeliveryCharges + totalRecurringCharges;
-                var netDue = accrued - custPayments;
+                var netDue = Math.Max(0m, accrued - custPayments - custDiscounts);
 
                 // Carry forward net balance as the customer's OpeningBalance for the new season
                 customer.OpeningBalance = netDue;

@@ -587,6 +587,24 @@ public class BookingService : IBookingService
             })
             .ToListAsync(cancellationToken);
 
+        var discountTrxs = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted
+                        && !t.IsArchived
+                        && t.TransactionDate <= asOfDate
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId.HasValue && customerIds.Contains(t.CustomerId.Value)))
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .Select(t => new
+            {
+                t.Id,
+                t.BookingId,
+                t.CustomerId,
+                Amount = t.Amount > 0 ? t.Amount : t.DiscountAmount
+            })
+            .ToListAsync(cancellationToken);
+
         static string GetPaymentEventKey(Guid? deliveryId, string? transactionCode, Guid id)
         {
             if (deliveryId.HasValue)
@@ -617,6 +635,16 @@ public class BookingService : IBookingService
             .GroupBy(x => x.CustomerId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
+        var discountsByBooking = discountTrxs
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+        var unassignedDiscountsByCustomer = discountTrxs
+            .Where(x => !x.BookingId.HasValue && x.CustomerId.HasValue)
+            .GroupBy(x => x.CustomerId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
         var deliveriesByBooking = deliveries
             .GroupBy(d => d.BookingId)
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -632,6 +660,7 @@ public class BookingService : IBookingService
 
             decimal totalAccrued = openingBalance;
             decimal totalPaid = 0m;
+            decimal totalDiscounts = 0m;
             decimal totalPendingRecurringCharge = 0m;
 
             foreach (var booking in customerBookings)
@@ -652,6 +681,11 @@ public class BookingService : IBookingService
                 {
                     totalPaid += paid;
                 }
+
+                if (discountsByBooking.TryGetValue(booking.Id, out var disc))
+                {
+                    totalDiscounts += disc;
+                }
             }
 
             if (unassignedPaymentsByCustomer.TryGetValue(group.Key, out var unassignedPaid))
@@ -659,7 +693,12 @@ public class BookingService : IBookingService
                 totalPaid += unassignedPaid;
             }
 
-            var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
+            if (unassignedDiscountsByCustomer.TryGetValue(group.Key, out var unassignedDisc))
+            {
+                totalDiscounts += unassignedDisc;
+            }
+
+            var totalDue = Math.Max(totalAccrued - totalPaid - totalDiscounts, 0m);
 
             var oldestBooking = customerBookings.OrderBy(b => b.BookingDate).First();
             var daysSinceOldestBooking = (asOfDate - oldestBooking.BookingDate).Days;
@@ -701,6 +740,7 @@ public class BookingService : IBookingService
                 TotalAmount = totalAccrued,
                 PendingRecurringChargeAmount = totalPendingRecurringCharge,
                 TotalPaid = totalPaid,
+                TotalDiscount = totalDiscounts,
                 TotalDue = totalDue,
                 OldestBookingDate = oldestBooking.BookingDate,
                 DaysSinceOldestBooking = daysSinceOldestBooking,
@@ -785,7 +825,28 @@ public class BookingService : IBookingService
             })
             .ToListAsync(cancellationToken);
 
+        var discountTrxs = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted
+                        && !t.IsArchived
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId == customerId))
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .Select(t => new
+            {
+                t.Id,
+                t.BookingId,
+                Amount = t.Amount > 0 ? t.Amount : t.DiscountAmount
+            })
+            .ToListAsync(cancellationToken);
+
         var paymentsByBooking = payments
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+        var discountsByBooking = discountTrxs
             .Where(x => x.BookingId.HasValue)
             .GroupBy(x => x.BookingId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
@@ -880,7 +941,8 @@ public class BookingService : IBookingService
                 activeDetails,
                 bookingDeliveries,
                 now);
-            var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
+            var bDiscount = discountsByBooking.TryGetValue(booking.Id, out var bdVal) ? bdVal : 0m;
+            var totalDue = Math.Max(totalAccrued - totalPaid - bDiscount, 0m);
             var daysSinceBooking = (now - booking.BookingDate).Days;
 
             var status = "normal";
@@ -904,6 +966,7 @@ public class BookingService : IBookingService
                 LastDeliveryDate = lastDeliveryDate,
                 TotalAmount = totalAccrued,  // backward-compat alias
                 TotalPaid = totalPaid,
+                TotalDiscount = bDiscount,
                 TotalDue = totalDue,
                 DaysSinceBooking = daysSinceBooking,
                 Status = status,
@@ -976,7 +1039,22 @@ public class BookingService : IBookingService
             .Select(t => new { t.BookingId, t.Amount })
             .ToListAsync(cancellationToken);
 
+        var discountTrxs = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted
+                        && ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                            || (t.CustomerId == customerId))
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .Select(t => new { t.BookingId, Amount = t.Amount > 0 ? t.Amount : t.DiscountAmount })
+            .ToListAsync(cancellationToken);
+
         var paymentsByBooking = payments
+            .Where(x => x.BookingId.HasValue)
+            .GroupBy(x => x.BookingId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+        var discountsByBooking = discountTrxs
             .Where(x => x.BookingId.HasValue)
             .GroupBy(x => x.BookingId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
@@ -999,6 +1077,7 @@ public class BookingService : IBookingService
                 now);
 
             var paid = paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m;
+            var disc = discountsByBooking.TryGetValue(booking.Id, out var bookingDisc) ? bookingDisc : 0m;
 
             bookingItems.Add(new BookingOutstandingItem
             {
@@ -1007,14 +1086,15 @@ public class BookingService : IBookingService
                 BookingDate = booking.BookingDate,
                 AccruedAmount = accrued,
                 PaidAmount = paid,
-                DueAmount = Math.Max(accrued - paid, 0m)
+                DueAmount = Math.Max(accrued - paid - disc, 0m)
             });
         }
 
         var openingBalance = customer?.OpeningBalance ?? 0m;
         var totalAccrued = openingBalance + bookingItems.Sum(x => x.AccruedAmount);
         var totalPaid = payments.Sum(x => x.Amount);
-        var totalDue = Math.Max(totalAccrued - totalPaid, 0m);
+        var totalDiscount = discountTrxs.Sum(x => x.Amount);
+        var totalDue = Math.Max(totalAccrued - totalPaid - totalDiscount, 0m);
 
         return new CustomerOutstandingResponse
         {

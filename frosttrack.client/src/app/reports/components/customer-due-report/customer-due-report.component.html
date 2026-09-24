@@ -235,8 +235,12 @@
                           </td>
                         </tr>
                         <tr>
+                          <td class="info-label">Total Discount:</td>
+                          <td class="info-value">
+                            ৳{{ getTotalDiscount() | number: "1.2-2" }}
+                          </td>
                           <td class="info-label">Total Due:</td>
-                          <td class="info-value" colspan="3">
+                          <td class="info-value">
                             <strong>৳{{ getTotalDue() | number: "1.2-2" }}</strong>
                           </td>
                         </tr>
@@ -252,14 +256,12 @@
                               <th>ক্রমিক</th>
                               <th>গ্রাহকের নাম</th>
                               <th>মোবাইল</th>
-                              <th>ঠিকানা</th>
-                              <th>বুকিং</th>
                               <th>মোট বিল</th>
                               <th>মোট জমা</th>
+                              <th>মোট ছাড়</th>
                               <th>মোট বকেয়া</th>
                               <th>সর্বশেষ জমা</th>
                               <th>জমার তারিখ</th>
-                              <th>অবস্থা</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -284,13 +286,14 @@
                                   </a>
                                 </td>
                                 <td>{{ item.customerMobile || '-' }}</td>
-                                <td>{{ item.customerAddress || '-' }}</td>
-                                <td class="text-center">{{ item.totalBookings }}</td>
                                 <td class="text-end">
                                   {{ item.totalAmount | number: "1.2-2" }}
                                 </td>
                                 <td class="text-end">
                                   {{ item.totalPaid | number: "1.2-2" }}
+                                </td>
+                                <td class="text-end">
+                                  {{ (item.totalDiscount || 0) | number: "1.2-2" }}
                                 </td>
                                 <td class="text-end">
                                   <strong>{{
@@ -315,15 +318,12 @@
                                     -
                                   }
                                 </td>
-                                <td class="text-center">
-                                  {{ getStatusText(item.status) }}
-                                </td>
                               </tr>
                             }
                           </tbody>
                           <tfoot>
                             <tr class="total-row">
-                              <td colspan="5" class="text-end">
+                              <td colspan="3" class="text-end">
                                 <strong>মোট / Total:</strong>
                               </td>
                               <td class="text-end">
@@ -338,6 +338,11 @@
                               </td>
                               <td class="text-end">
                                 <strong>{{
+                                  getTotalDiscount() | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
                                   getTotalDue() | number: "1.2-2"
                                 }}</strong>
                               </td>
@@ -346,7 +351,7 @@
                                   getTotalLastPayment() | number: "1.2-2"
                                 }}</strong>
                               </td>
-                              <td colspan="2" class="text-center">-</td>
+                              <td class="text-center">-</td>
                             </tr>
                           </tfoot>
                         </table>

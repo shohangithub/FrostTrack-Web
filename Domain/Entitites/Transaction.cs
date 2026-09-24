@@ -41,6 +41,12 @@ public class Transaction : AuditableEntity<Guid>
     public decimal AdjustmentValue { get; set; } = 0;
 
     [Column(TypeName = "decimal(10, 2)")]
+    public decimal? TotalDue { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? CurrentDue { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
     public required decimal NetAmount { get; set; } // Amount - Discount + Adjustment
 
     // Salary-specific back-reference (set when transaction is a salary payment)
@@ -53,6 +59,8 @@ public class Transaction : AuditableEntity<Guid>
     public Bank? Bank { get; set; }
 
     // Description and notes
+    [MaxLength(500)]
+    public string? DiscountReason { get; set; }
     public required string Description { get; set; }
     public string? Note { get; set; }
 }
@@ -65,5 +73,6 @@ public static class PaymentMethods
     public const string CARD = "CARD";
     public const string MOBILE_BANKING = "MOBILE_BANKING";
     public const string CREDIT = "CREDIT"; // Pay later
+    public const string DISCOUNT = "DISCOUNT"; // Customer bill discount / waiver
 }
 

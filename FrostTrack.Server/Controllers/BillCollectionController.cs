@@ -54,4 +54,34 @@ public class BillCollectionController : ControllerBase
         var response = await _billCollectionService.GetCustomerPaymentReportAsync(startDate, endDate, customerId, paymentMethod, cancellationToken);
         return Ok(response);
     }
+
+    [HttpPost("discount")]
+    public async Task<ActionResult<TransactionResponse>> CreateCustomerDiscount(
+        CustomerDiscountRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.CreateCustomerDiscountAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpGet("customer/{customerId}/discount-history")]
+    public async Task<ActionResult<List<CustomerDiscountItemResponse>>> GetCustomerDiscountHistory(
+        int customerId,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.GetCustomerDiscountHistoryAsync(customerId, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpGet("discount-report")]
+    public async Task<ActionResult<List<CustomerDiscountItemResponse>>> GetCustomerDiscountReport(
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] int? customerId,
+        [FromQuery] string? searchTerm,
+        CancellationToken cancellationToken)
+    {
+        var response = await _billCollectionService.GetCustomerDiscountReportAsync(startDate, endDate, customerId, searchTerm, cancellationToken);
+        return Ok(response);
+    }
 }

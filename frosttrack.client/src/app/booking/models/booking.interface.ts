@@ -148,6 +148,7 @@ export interface ICustomerDueSummaryResponse {
   totalAmount: number;
   pendingRecurringChargeAmount: number;
   totalPaid: number;
+  totalDiscount: number;
   totalDue: number;
   oldestBookingDate: string;
   daysSinceOldestBooking: number;
@@ -171,6 +172,7 @@ export interface ICustomerDueDetailResponse {
   lastDeliveryDate?: string;
   totalAmount: number; // alias for totalAccruedAmount (backward-compat)
   totalPaid: number;
+  totalDiscount: number;
   totalDue: number;
   daysSinceBooking: number;
   status: 'normal' | 'warning' | 'danger';

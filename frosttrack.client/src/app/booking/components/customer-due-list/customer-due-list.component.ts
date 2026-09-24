@@ -185,6 +185,18 @@ export class CustomerDueListComponent implements OnInit {
     this.router.navigate(['/booking/customer-due-print', customerId]);
   }
 
+  giveDiscount(customerId: number) {
+    this.router.navigate(['/bill-collection/discount'], {
+      queryParams: { customerId },
+    });
+  }
+
+  receivePayment(customerId: number) {
+    this.router.navigate(['/bill-collection/delivery-based'], {
+      queryParams: { customerId },
+    });
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   getInitials(name: string): string {
     if (!name) return 'CU';

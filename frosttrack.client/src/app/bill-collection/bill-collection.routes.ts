@@ -63,6 +63,13 @@ export const billCollectionRoutes: Route[] = [
       ).then((m) => m.BillCollectionReceiptPrintComponent),
   },
   {
+    path: 'discount',
+    loadComponent: () =>
+      import(
+        './components/customer-discount/customer-discount.component'
+      ).then((m) => m.CustomerDiscountComponent),
+  },
+  {
     path: 'report',
     loadComponent: () =>
       import(

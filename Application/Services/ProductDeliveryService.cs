@@ -921,36 +921,24 @@ public class DeliveryService : IDeliveryService
 
     public async Task<decimal> GetBookingDueAmountAsync(Guid bookingId)
     {
-        // Calculate due from all non-deleted deliveries
+        var booking = await _bookingRepository.Query()
+            .Include(b => b.BookingDetails)
+            .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+        if (booking == null) return 0;
+
+        var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
+
         var deliveries = await _repository.Query()
             .Include(d => d.DeliveryDetails)
             .Where(d => d.BookingId == bookingId && !d.IsDeleted)
             .ToListAsync();
 
-        // Show immediate due after booking even before first delivery.
-        if (!deliveries.Any())
-        {
-            var booking = await _bookingRepository.Query()
-                .Include(b => b.BookingDetails)
-                .FirstOrDefaultAsync(b => b.Id == bookingId);
-
-            if (booking == null) return 0;
-
-            var initialAccrued = booking.BookingDetails.Sum(bd => ((decimal)bd.BookingQuantity * bd.BookingRate) + bd.LabourCharge);
-
-            var initialPaid = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t => !t.IsDeleted
-                            && t.BookingId == bookingId
-                            && t.TransactionHead != null
-                            && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
-                            && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
-                .SumAsync(t => t.Amount);
-
-            return Math.Max(initialAccrued - initialPaid, 0m);
-        }
-
-        var totalCharges = deliveries.Sum(d => d.ChargeAmount + d.AdjustmentValue + (d.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m));
+        var (_, _, totalAccrued, _) = BookingDueCalculator.CalculateBookingAccruedDetails(
+            booking,
+            activeDetails,
+            deliveries,
+            DateTime.UtcNow);
 
         var deliveryIds = deliveries.Select(d => d.Id).ToList();
         var deliveryTxIds = deliveries.Where(d => d.TransactionId.HasValue).Select(d => d.TransactionId!.Value).ToList();
@@ -958,6 +946,7 @@ public class DeliveryService : IDeliveryService
         var totalPaid = await _transactionRepository.Query()
             .Include(t => t.TransactionHead)
             .Where(t => !t.IsDeleted
+                        && !t.IsArchived
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
                         && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT
@@ -966,7 +955,16 @@ public class DeliveryService : IDeliveryService
                             || (t.BookingId.HasValue && t.BookingId.Value == bookingId)))
             .SumAsync(t => t.Amount);
 
-        return Math.Max(totalCharges - totalPaid, 0m);
+        var totalDiscount = await _transactionRepository.Query()
+            .Include(t => t.TransactionHead)
+            .Where(t => !t.IsDeleted
+                        && !t.IsArchived
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT
+                        && t.BookingId.HasValue && t.BookingId.Value == bookingId)
+            .SumAsync(t => t.Amount > 0 ? t.Amount : t.DiscountAmount);
+
+        return Math.Max(totalAccrued - totalPaid - totalDiscount, 0m);
     }
 
     public async Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync()

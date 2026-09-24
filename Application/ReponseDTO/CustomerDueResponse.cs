@@ -11,6 +11,7 @@ public class CustomerDueSummaryResponse
     public decimal TotalAmount { get; set; }       // total accrued (opening + all billing cycles delivered + pending)
     public decimal PendingRecurringChargeAmount { get; set; } // cycles accrued but not yet covered by a delivery record
     public decimal TotalPaid { get; set; }
+    public decimal TotalDiscount { get; set; }
     public decimal TotalDue { get; set; }
     public DateTime OldestBookingDate { get; set; }
     public int DaysSinceOldestBooking { get; set; }
@@ -35,6 +36,7 @@ public class CustomerDueDetailResponse
     public DateTime? LastDeliveryDate { get; set; }
     public decimal TotalAmount { get; set; }          // kept for backward-compat (== TotalAccruedAmount)
     public decimal TotalPaid { get; set; }
+    public decimal TotalDiscount { get; set; }
     public decimal TotalDue { get; set; }
     public int DaysSinceBooking { get; set; }
     public string Status { get; set; } = "normal"; // normal, warning, danger

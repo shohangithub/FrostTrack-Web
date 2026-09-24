@@ -10,6 +10,7 @@ public record CustomerBalanceSummaryResponse(
     decimal TotalRecurringCharges,
     decimal TotalAccrued,
     decimal TotalPaid,
+    decimal TotalDiscounts,
     decimal NetDue,
     int ActiveBookingsCount,
     List<RecentCustomerPaymentDto> RecentPayments
