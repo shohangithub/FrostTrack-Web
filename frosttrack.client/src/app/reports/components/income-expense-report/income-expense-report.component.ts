@@ -11,9 +11,12 @@ import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
-import { dateInputFormat, todayInputFormat } from 'app/utils/date-utils';
+import { todayInputFormat } from 'app/utils/date-utils';
 import { TransactionService } from 'app/transaction/services/transaction.service';
+import { CashBookService } from '../../services/cashbook.service';
 import { ITransactionListResponse } from 'app/transaction/models/transaction.interface';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface IHeadSummary {
   headName: string;
@@ -40,6 +43,8 @@ export class IncomeExpenseReportComponent implements OnInit {
   showReport = false;
   today = new Date();
 
+  openingBalance = 0;
+  closingBalance = 0;
   incomeHeads: IHeadSummary[] = [];
   expenseHeads: IHeadSummary[] = [];
 
@@ -53,6 +58,7 @@ export class IncomeExpenseReportComponent implements OnInit {
   constructor(
     private fb: UntypedFormBuilder,
     private transactionService: TransactionService,
+    private cashBookService: CashBookService,
     private toastr: ToastrService,
     private layoutService: LayoutService
   ) {
@@ -63,7 +69,7 @@ export class IncomeExpenseReportComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   generateReport(): void {
     if (this.reportForm.invalid) {
@@ -73,21 +79,39 @@ export class IncomeExpenseReportComponent implements OnInit {
 
     this.isLoading = true;
     const { reportDate } = this.reportForm.value;
+    const reportDateObj = new Date(reportDate);
 
-    this.transactionService
-      .getTransactionReport(reportDate, reportDate)
-      .subscribe({
-        next: (data: ITransactionListResponse[]) => {
-          this.allTransactions = data || [];
-          this.buildSummary(this.allTransactions);
-          this.showReport = true;
-          this.isLoading = false;
-        },
-        error: () => {
-          this.toastr.error('Failed to load report data', 'Error');
-          this.isLoading = false;
-        },
-      });
+    forkJoin({
+      transactions: this.transactionService.getTransactionReport(
+        reportDate,
+        reportDate
+      ),
+      cashBook: this.cashBookService.getCashBook(reportDateObj).pipe(
+        catchError(() =>
+          of({
+            openingBalance: 0,
+            closingBalance: 0,
+            totalDebit: 0,
+            totalCredit: 0,
+            items: [],
+          } as any)
+        )
+      ),
+    }).subscribe({
+      next: ({ transactions, cashBook }) => {
+        this.openingBalance = cashBook?.openingBalance || 0;
+        this.allTransactions = transactions || [];
+        this.buildSummary(this.allTransactions);
+        this.closingBalance =
+          this.openingBalance + this.totalIncome - this.totalExpense;
+        this.showReport = true;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to load report data', 'Error');
+        this.isLoading = false;
+      },
+    });
   }
 
   buildSummary(transactions: ITransactionListResponse[]): void {
@@ -104,13 +128,23 @@ export class IncomeExpenseReportComponent implements OnInit {
       const paymentMethod = (t.paymentMethod || '').toUpperCase();
 
       // Discount / adjustment → skip (accounting entries, not cash)
-      if (
+      const isDiscountOrAdjustment =
         paymentMethod === 'DISCOUNT' ||
         headName.toUpperCase().includes('DISCOUNT') ||
         headName.toUpperCase().includes('ADJUSTMENT') ||
         displayType.includes('DISCOUNT') ||
-        displayType.includes('ADJUSTMENT')
-      ) {
+        displayType.includes('ADJUSTMENT');
+
+      // Opening balance / closing balance → skip from day line items (managed separately like CashBook)
+      const isOpeningOrClosing =
+        headName.toUpperCase().includes('OPENING') ||
+        headName.toUpperCase().includes('CLOSING') ||
+        headName.includes('ওপেনিং') ||
+        headName.includes('সমাপনী') ||
+        displayType.includes('OPENING') ||
+        displayType.includes('CLOSING');
+
+      if (isDiscountOrAdjustment || isOpeningOrClosing) {
         continue;
       }
 
@@ -136,16 +170,28 @@ export class IncomeExpenseReportComponent implements OnInit {
       }
     }
 
-    this.incomeHeads = [...incomeMap.values()].sort(
+    const regularIncomeHeads = [...incomeMap.values()].sort(
       (a, b) => b.total - a.total
     );
     this.expenseHeads = [...expenseMap.values()].sort(
       (a, b) => b.total - a.total
     );
 
-    this.totalIncome = this.incomeHeads.reduce((s, h) => s + h.total, 0);
+    this.totalIncome = regularIncomeHeads.reduce((s, h) => s + h.total, 0);
     this.totalExpense = this.expenseHeads.reduce((s, h) => s + h.total, 0);
     this.netBalance = this.totalIncome - this.totalExpense;
+    this.closingBalance =
+      this.openingBalance + this.totalIncome - this.totalExpense;
+
+    // Opening balance shown as an income head (আয়ের উৎস / Head)
+    this.incomeHeads = [
+      {
+        headName: 'ওপেনিং ব্যালেন্স',
+        count: 0,
+        total: this.openingBalance,
+      },
+      ...regularIncomeHeads,
+    ];
   }
 
   private classifyAsExpense(
@@ -202,6 +248,8 @@ export class IncomeExpenseReportComponent implements OnInit {
 
   reset(): void {
     this.showReport = false;
+    this.openingBalance = 0;
+    this.closingBalance = 0;
     this.incomeHeads = [];
     this.expenseHeads = [];
     this.totalIncome = 0;

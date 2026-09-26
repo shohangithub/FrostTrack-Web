@@ -162,12 +162,52 @@ $expense-color: #b71c1c;
       font-style: italic;
     }
 
+    tbody .opening-balance-row {
+      background-color: #f8fafc !important;
+      font-weight: 500;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td {
+        border-bottom: 1px solid #cbd5e1 !important;
+      }
+    }
+
     tfoot .total-row {
       background-color: #f5f5f5 !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
 
       td { font-weight: bold; }
+    }
+
+    tfoot .opening-closing-row {
+      background-color: #fafafa !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td { padding: 5px 8px; }
+    }
+
+    tfoot .grand-total-row {
+      background-color: #f8f9fa !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td { font-weight: bold; padding: 5px 8px; }
+    }
+
+    tfoot .grand-balance-row {
+      background-color: #f0f7f4 !important;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td {
+        font-weight: bold;
+        padding: 6px 8px;
+        border-top: 1px dashed #666 !important;
+      }
     }
 
     tfoot .net-row {

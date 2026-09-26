@@ -15,7 +15,8 @@
                       Report Date <span class="text-danger">*</span>
                     </label>
                     <div class="col-sm-12">
-                      <input type="date" id="reportDate" class="form-control form-control-sm" formControlName="reportDate"
+                      <input type="date" id="reportDate" class="form-control form-control-sm"
+                        formControlName="reportDate"
                         [class.is-invalid]="reportForm.get('reportDate')?.invalid && reportForm.get('reportDate')?.touched" />
                       @if (reportForm.get('reportDate')?.invalid && reportForm.get('reportDate')?.touched) {
                       <small class="form-text text-danger">Report date is required</small>
@@ -73,8 +74,7 @@
                 <div class="invoice-container">
 
                   <!-- Report Header -->
-                  <app-report-invoice-header [Title]="'আয়-ব্যয় বিস্তারিত বিবরণী / Income & Expense Detail Report'"
-                    [InvoiceNumber]="''">
+                  <app-report-invoice-header [Title]="'আয়-ব্যয় বিস্তারিত বিবরণী'" [InvoiceNumber]="''">
                   </app-report-invoice-header>
 
                   <!-- Report Meta Info -->
@@ -89,22 +89,25 @@
                         <td class="info-value">{{ today | date: 'dd-MMM-yyyy hh:mm a' }}</td>
                       </tr>
                       <tr>
-                        <td class="info-label">মোট আয় / Total Income:</td>
+                        <td class="info-label">Opening Balance:</td>
+                        <td class="info-value fw-bold">৳ {{ openingBalance | number: '1.2-2' }}</td>
+                        <td class="info-label">Closing Balance:</td>
+                        <td class="info-value fw-bold">৳ {{ closingBalance | number: '1.2-2' }}</td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">মোট আয়:</td>
                         <td class="info-value income-value">৳ {{ totalIncome | number: '1.2-2' }}</td>
-                        <td class="info-label">মোট ব্যয় / Total Expense:</td>
+                        <td class="info-label">মোট ব্যয়:</td>
                         <td class="info-value expense-value">৳ {{ totalExpense | number: '1.2-2' }}</td>
                       </tr>
                       <tr>
                         <td class="info-label" colspan="2">
-                          @if (netBalance >= 0) { নিট উদ্বৃত্ত }
+                          @if (netBalance >= 0) { নিট ব্যালেন্স }
                           @else { নিট ঘাটতি }
                         </td>
                         <td class="info-value fw-bold" colspan="2" [class.surplus-value]="netBalance >= 0"
                           [class.deficit-value]="netBalance < 0">
-                          ৳ {{ (netBalance < 0 ? -netBalance : netBalance) | number: '1.2-2' }} @if (netBalance>= 0) {
-                            (উদ্বৃত্ত) }
-                            @else { (ঘাটতি) }
-                        </td>
+                          ৳ {{ (netBalance < 0 ? -netBalance : netBalance) | number: '1.2-2' }} </td>
                       </tr>
                     </table>
                   </div>
@@ -133,10 +136,14 @@
                         <tr>
                           @if (incomeHeads[i]) {
                           <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ incomeHeads[i].headName }}
+                          <td [class.fw-bold]="incomeHeads[i].count === 0">
+                            {{ incomeHeads[i].headName }}
+                            @if (incomeHeads[i].count > 0) {
                             <span class="count-badge">({{ incomeHeads[i].count }}টি)</span>
+                            }
                           </td>
-                          <td class="text-end income-amount">{{ incomeHeads[i].total | number: '1.2-2' }}</td>
+                          <td class="text-end income-amount" [class.fw-bold]="incomeHeads[i].count === 0">{{
+                            incomeHeads[i].total | number: '1.2-2' }}</td>
                           } @else {
                           <td></td>
                           <td></td>
@@ -145,7 +152,9 @@
                           @if (expenseHeads[i]) {
                           <td class="text-center">{{ i + 1 }}</td>
                           <td>{{ expenseHeads[i].headName }}
+                            @if (expenseHeads[i].count > 0) {
                             <span class="count-badge">({{ expenseHeads[i].count }}টি)</span>
+                            }
                           </td>
                           <td class="text-end expense-amount">{{ expenseHeads[i].total | number: '1.2-2' }}</td>
                           } @else {
@@ -163,28 +172,18 @@
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="2" class="text-end fw-bold">মোট আয় / Total Income:</td>
-                          <td class="text-end fw-bold income-amount">{{ totalIncome | number: '1.2-2' }}</td>
-                          <td colspan="2" class="text-end fw-bold">মোট ব্যয় / Total Expense:</td>
+                          <td colspan="2" class="text-end fw-bold">মোট আয়:</td>
+                          <td class="text-end fw-bold income-amount">{{ (openingBalance + totalIncome) | number: '1.2-2'
+                            }}</td>
+                          <td colspan="2" class="text-end fw-bold">মোট ব্যয়:</td>
                           <td class="text-end fw-bold expense-amount">{{ totalExpense | number: '1.2-2' }}</td>
-                        </tr>
-                        <tr class="net-row">
-                          <td colspan="6" class="text-end fw-bold">
-                            @if (netBalance >= 0) {
-                            নিট উদ্বৃত্ত (আয় − ব্যয়):
-                            <span class="surplus-value ms-2">৳ {{ netBalance | number: '1.2-2' }}</span>
-                            } @else {
-                            নিট ঘাটতি (ব্যয় − আয়):
-                            <span class="deficit-value ms-2">৳ {{ -netBalance | number: '1.2-2' }}</span>
-                            }
-                          </td>
                         </tr>
                       </tfoot>
                     </table>
                   </div>
 
                   <!-- ── INCOME TRANSACTIONS ── -->
-                  @if (incomeTransactions.length > 0) {
+                  @if (incomeTransactions.length > 0 || openingBalance !== 0) {
                   <div class="section-title income-section-title">আয়ের বিস্তারিত</div>
                   <div class="stored-products-section">
                     <table class="products-table">
@@ -198,6 +197,17 @@
                         </tr>
                       </thead>
                       <tbody>
+                        @if (openingBalance !== 0) {
+                        <tr class="opening-balance-row">
+                          <td class="text-center">-</td>
+                          <td class="fw-semibold">OPENING</td>
+                          <td>ওপেনিং ব্যালেন্স</td>
+                          <td>
+                            <div><strong>ওপেনিং ব্যালেন্স</strong></div>
+                          </td>
+                          <td class="text-end fw-bold">{{ openingBalance | number: '1.2-2' }}</td>
+                        </tr>
+                        }
                         @for (t of incomeTransactions; track t.id; let i = $index) {
                         <tr>
                           <td class="text-center">{{ i + 1 }}</td>
@@ -223,6 +233,12 @@
                           <td colspan="4" class="text-end fw-bold">মোট আয় / Total Income:</td>
                           <td class="text-end fw-bold income-amount">{{ totalIncome | number: '1.2-2' }}</td>
                         </tr>
+                        @if (openingBalance !== 0) {
+                        <tr class="grand-total-row">
+                          <td colspan="4" class="text-end fw-bold">ওপেনিং ব্যালেন্সসহ মোট / Total with Opening:</td>
+                          <td class="text-end fw-bold">৳ {{ (openingBalance + totalIncome) | number: '1.2-2' }}</td>
+                        </tr>
+                        }
                       </tfoot>
                     </table>
                   </div>
@@ -265,8 +281,12 @@
                       </tbody>
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="4" class="text-end fw-bold">মোট ব্যয় / Total Expense:</td>
+                          <td colspan="4" class="text-end fw-bold">মোট ব্যয়:</td>
                           <td class="text-end fw-bold expense-amount">{{ totalExpense | number: '1.2-2' }}</td>
+                        </tr>
+                        <tr class="grand-total-row">
+                          <td colspan="4" class="text-end fw-bold">ক্লোজিং ব্যালেন্স:</td>
+                          <td class="text-end fw-bold">৳ {{ closingBalance | number: '1.2-2' }}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -274,7 +294,7 @@
                   }
 
                   <!-- Empty state -->
-                  @if (incomeTransactions.length === 0 && expenseTransactions.length === 0) {
+                  @if (incomeTransactions.length === 0 && expenseTransactions.length === 0 && openingBalance === 0) {
                   <div class="no-data-message">No transactions found for the selected period.</div>
                   }
 
@@ -303,17 +323,7 @@
     </div>
     }
 
-    <!-- Loading -->
-    @if (isLoading) {
-    <div class="row">
-      <div class="col-12 text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Generating detail report...</p>
-      </div>
-    </div>
-    }
+
 
   </div>
 </section>
