@@ -52,9 +52,9 @@
               <ngx-datatable-column name="Type" prop="type" [width]="150">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @if (row.type === 'DEBIT') {
-                  <div class="badge-outline col-green">{{ row.type }}</div>
+                  <div class="badge-outline col-green">আয়</div>
                   } @if (row.type === 'CREDIT') {
-                  <div class="badge-outline col-red">{{ row.type }}</div>
+                  <div class="badge-outline col-red">ব্যয়</div>
                   }
                 </ng-template>
               </ngx-datatable-column>
@@ -62,16 +62,16 @@
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   @switch (row.displayType) {
                   @case ('OUT') {
-                  <div class="badge-outline col-orange">OUT</div>
+                  <div class="badge-outline col-orange">ব্যয়</div>
                   }
                   @case ('IN') {
-                  <div class="badge-outline col-cyan">IN</div>
+                  <div class="badge-outline col-cyan">আয়</div>
                   }
                   @case ('INCOME') {
-                  <div class="badge-outline col-green">INCOME</div>
+                  <div class="badge-outline col-green">আয়</div>
                   }
                   @case ('EXPENSE') {
-                  <div class="badge-outline col-red">EXPENSE</div>
+                  <div class="badge-outline col-red">ব্যয়</div>
                   }
                   }
                 </ng-template>
