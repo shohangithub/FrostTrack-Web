@@ -82,6 +82,7 @@ public class TransactionHeadService : ITransactionHeadService
             .Select(x => new TransactionHeadLookup(
                 x.Id,
                 x.Name,
+                x.Type,
                 !string.IsNullOrEmpty(x.DisplayType) ? x.DisplayType : x.Type
             )).ToListAsync(cancellationToken);
     }

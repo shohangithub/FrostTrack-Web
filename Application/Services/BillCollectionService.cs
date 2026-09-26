@@ -404,7 +404,7 @@ public class BillCollectionService : IBillCollectionService
             BankId = null,
             Note = request.Note,
             DiscountReason = reasonPart,
-            Description = $"Discount/Adjustment - {customer.CustomerName} [Total Due: ৳{totalDue:N2}, Discount: ৳{request.DiscountAmount:N2}, Current Due: ৳{currentDue:N2}] ({reasonPart})",
+            Description = $"{customer.CustomerName} [Total Due: ৳{totalDue:N2}, Discount: ৳{request.DiscountAmount:N2}, Current Due: ৳{currentDue:N2}] ({reasonPart})",
             DiscountAmount = request.DiscountAmount,
             AdjustmentValue = 0,
             TotalDue = totalDue,

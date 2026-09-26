@@ -213,6 +213,7 @@ public class TransactionService : ITransactionService
                 (
                     x.TransactionHead!.Id,
                     x.TransactionHead!.Name,
+                    x.TransactionHead!.Type,
                     !string.IsNullOrWhiteSpace(x.TransactionHead!.DisplayType) ? x.TransactionHead!.DisplayType : x.TransactionHead!.Type
                 ),
                 x.BranchId,
@@ -228,7 +229,8 @@ public class TransactionService : ITransactionService
                 x.IsArchived,
                 x.DeletedAt,
                 x.ArchivedAt,
-                null
+                null,
+                x.Note
             ))
             .ToListAsync(cancellationToken);
         return response;
@@ -304,6 +306,7 @@ public class TransactionService : ITransactionService
                 (
                     x.TransactionHead!.Id,
                     x.TransactionHead!.Name,
+                    x.TransactionHead!.Type,
                     !string.IsNullOrWhiteSpace(x.TransactionHead!.DisplayType) ? x.TransactionHead!.DisplayType : x.TransactionHead!.Type
                 ),
             x.BranchId,
@@ -319,7 +322,8 @@ public class TransactionService : ITransactionService
             x.IsArchived,
             x.DeletedAt,
             x.ArchivedAt,
-            null
+            null,
+            x.Note
         );
 
         // For the "deleted" view, bypass the global IsDeleted query filter

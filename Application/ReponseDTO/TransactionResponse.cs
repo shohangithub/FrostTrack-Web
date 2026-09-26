@@ -52,7 +52,8 @@ public record TransactionListResponse(
     bool IsArchived = false,
     DateTime? DeletedAt = null,
     DateTime? ArchivedAt = null,
-    decimal? RelatedLabourCharge = null
+    decimal? RelatedLabourCharge = null,
+    string? Note = null
 );
 
 public record TransactionSummaryResponse(

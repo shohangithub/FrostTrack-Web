@@ -28,5 +28,6 @@ public record TransactionHeadListResponse(
 public record TransactionHeadLookup(
     Guid Id,
     string Name,
-    string Type
+    string Type,
+    string? DisplayType = null
 );

@@ -26,6 +26,7 @@ export interface ITransactionListResponse {
   paymentMethod: string;
   category?: string | null;
   description: string;
+  note?: string | null;
   vendorName?: string | null;
   relatedLabourCharge?: number | null;
   isDeleted: boolean;
