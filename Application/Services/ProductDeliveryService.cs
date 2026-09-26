@@ -162,9 +162,9 @@ public class DeliveryService : IDeliveryService
             var labourPayment = Math.Min(totalLabourCharge, paymentAmount);
             var rentPayment = paymentAmount - labourPayment;
 
-            // Generate sequential transaction code
-            var currentDate = DateTime.UtcNow;
-            var datePart = currentDate.ToString("yyMMdd");
+            // Generate sequential transaction code based on delivery date
+            var txDate = entity.DeliveryDate;
+            var datePart = txDate.ToString("yyMMdd");
             var prefix = "DEL";
 
             var existingCodes = await _transactionRepository.Query()
@@ -184,7 +184,7 @@ public class DeliveryService : IDeliveryService
             }
 
             int nextSequence = maxSequence + 1;
-            var baseTransactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence);
+            var baseTransactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence, txDate);
             Guid? mainTxId = null;
 
             // Single unified CUSTOMER_PAYMENT transaction (if any payment made at delivery)
@@ -200,7 +200,7 @@ public class DeliveryService : IDeliveryService
                 var chargeTransactionRequest = new TransactionRequest(
                     Id: Guid.NewGuid(),
                     TransactionCode: baseTransactionCode,
-                    TransactionDate: DateTime.UtcNow,
+                    TransactionDate: entity.DeliveryDate,
                     TransactionHeadId: transactionHead.Id,
                     BranchId: entity.BranchId,
                     CustomerId: booking?.CustomerId,
@@ -236,7 +236,7 @@ public class DeliveryService : IDeliveryService
                     var bankTx = new BankTransaction
                     {
                         TransactionNumber = baseTransactionCode,
-                        TransactionDate = DateTime.UtcNow,
+                        TransactionDate = entity.DeliveryDate,
                         BankId = request.BankId.Value,
                         TransactionType = BankTransactionTypes.Deposit,
                         Amount = paymentAmount,
@@ -258,7 +258,7 @@ public class DeliveryService : IDeliveryService
             if (paymentAmount >= deliveryGrandTotal - 0.01m)
             {
                 entity.PaymentStatus = PaymentStatuses.PAID;
-                entity.PaymentDate = DateTime.UtcNow;
+                entity.PaymentDate = entity.DeliveryDate;
             }
             else
             {
@@ -340,6 +340,36 @@ public class DeliveryService : IDeliveryService
         }
 
         await _repository.UpdateAsync(existing, CancellationToken.None);
+
+        // Keep linked transaction dates in sync with delivery date
+        var linkedTxns = await _transactionRepository.UpdatableQuery(
+            t => (t.DeliveryId == existing.Id || (existing.TransactionId.HasValue && t.Id == existing.TransactionId.Value)) && !t.IsDeleted)
+            .ToListAsync(cancellationToken);
+
+        foreach (var txn in linkedTxns)
+        {
+            txn.TransactionDate = existing.DeliveryDate;
+            await _transactionRepository.UpdateAsync(txn, cancellationToken);
+        }
+
+        if (existing.TransactionId.HasValue)
+        {
+            var linkedBankTxns = await _bankTransactionRepository.UpdatableQuery(
+                bt => bt.TransactionId == existing.TransactionId.Value && !bt.IsDeleted)
+                .ToListAsync(cancellationToken);
+
+            foreach (var btx in linkedBankTxns)
+            {
+                btx.TransactionDate = existing.DeliveryDate;
+                await _bankTransactionRepository.UpdateAsync(btx, cancellationToken);
+            }
+        }
+
+        if (existing.PaymentDate.HasValue)
+        {
+            existing.PaymentDate = existing.DeliveryDate;
+            await _repository.UpdateAsync(existing, cancellationToken);
+        }
 
         // Query fresh data after update since Query() uses AsNoTracking()
         return await GetByIdAsync(id);

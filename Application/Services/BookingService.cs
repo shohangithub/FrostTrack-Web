@@ -146,7 +146,7 @@ public class BookingService : IBookingService
 
                 if (totalChargeAmount > 0)
                 {
-                    var currentDate = DateTime.UtcNow;
+                    var currentDate = entity.BookingDate;
                     var datePart = currentDate.ToString("yyMMdd");
                     var prefix = "BKC";
 
@@ -167,7 +167,7 @@ public class BookingService : IBookingService
                     }
 
                     int nextSequence = maxSequence + 1;
-                    var transactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence);
+                    var transactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence, entity.BookingDate);
                     var chargeTransaction = new Transaction
                     {
                         Id = Guid.NewGuid(),

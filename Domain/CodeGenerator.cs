@@ -2,9 +2,9 @@
 public static class CodeGenerator
 {
 
-    public static string GenerateTransactionCode(string prefix = "TR", int? sequenceNumber = null)
+    public static string GenerateTransactionCode(string prefix = "TR", int? sequenceNumber = null, DateTime? date = null)
     {
-        string datePart = DateTime.UtcNow.ToString("yyMMdd"); // 250129
+        string datePart = (date ?? DateTime.UtcNow).ToString("yyMMdd"); // 250129
         
         if (sequenceNumber.HasValue)
         {
