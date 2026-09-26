@@ -1,0 +1,256 @@
+/*
+=====================================================================
+Income & Expense Statement Component Styles
+=====================================================================
+*/
+
+$font-size: 11px;
+$income-color: #1a7a3d;
+$income-bg: #e8f5ee;
+$expense-color: #b71c1c;
+$expense-bg: #fdecea;
+
+.no-print {
+  margin: auto;
+  max-width: 210mm;
+}
+
+.print-section-container {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 0;
+  margin: auto;
+  margin-bottom: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.invoice-container {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 10mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: white;
+  page-break-after: always;
+  font-size: $font-size;
+  color: #000;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  line-height: 1.4;
+}
+
+.invoice-card {
+  width: 210mm;
+  min-height: 297mm;
+  border: none;
+  box-shadow: none;
+}
+
+// Report Info Box Section
+.booking-info-box {
+  margin-bottom: 15px;
+  border: 2px solid #000 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+
+  .info-table {
+    width: 100%;
+    border-collapse: collapse !important;
+
+    tr {
+      td {
+        border: 1px solid #000 !important;
+        padding: 6px 8px;
+        font-size: $font-size;
+        vertical-align: middle;
+        color: #000;
+      }
+
+      .info-label {
+        font-weight: bold;
+        width: 22%;
+        background-color: #f5f5f5;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .info-value {
+        width: 28%;
+      }
+
+      .income-value {
+        color: $income-color;
+        font-weight: bold;
+      }
+
+      .expense-value {
+        color: $expense-color;
+        font-weight: bold;
+      }
+
+      .surplus-value {
+        color: $income-color;
+        font-weight: bold;
+      }
+
+      .deficit-value {
+        color: $expense-color;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+// Section Titles
+.section-title {
+  font-weight: bold;
+  font-size: 12px;
+  margin: 15px 0 8px 0;
+  text-align: center;
+  text-decoration: underline;
+  color: #000;
+}
+
+// Summary Table
+.stored-products-section {
+  margin-bottom: 15px;
+
+  .products-table {
+    width: 100%;
+    border-collapse: collapse !important;
+
+    th {
+      border: 1px solid #000 !important;
+      padding: 6px 8px;
+      font-size: $font-size;
+      font-weight: bold;
+      text-align: center;
+      color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    td {
+      border: 1px solid #000 !important;
+      padding: 5px 8px;
+      font-size: $font-size;
+      text-align: left;
+      vertical-align: middle;
+      color: #000;
+    }
+
+    .text-center { text-align: center; }
+    .text-end { text-align: right; }
+
+    .income-header {
+      background-color: #c8e6c9 !important;
+      color: $income-color;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .expense-header {
+      background-color: #ffcdd2 !important;
+      color: $expense-color;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .income-amount {
+      color: $income-color;
+      font-weight: 600;
+    }
+
+    .expense-amount {
+      color: $expense-color;
+      font-weight: 600;
+    }
+
+    .count-badge {
+      font-size: 9px;
+      color: #555;
+      margin-left: 4px;
+    }
+
+    tfoot .total-row {
+      background-color: #f5f5f5 !important;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td { font-weight: bold; }
+    }
+
+    tfoot .net-row {
+      background-color: #e3f2fd !important;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+
+      td {
+        font-weight: bold;
+        font-size: 12px;
+        padding: 8px;
+      }
+    }
+
+    .surplus-value { color: $income-color; }
+    .deficit-value { color: $expense-color; }
+  }
+}
+
+// Signature Section
+.signature-section {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+
+  .signature-box {
+    text-align: center;
+    width: 45%;
+
+    .signature-line {
+      border-top: 1px solid #000;
+      margin-bottom: 6px;
+    }
+
+    .signature-label {
+      font-weight: bold;
+      font-size: $font-size;
+    }
+
+    .signature-sublabel {
+      font-size: 10px;
+      color: #555;
+    }
+  }
+}
+
+// Print Styles
+@media print {
+  .print-section-container {
+    box-shadow: none;
+    margin: 0;
+  }
+
+  .invoice-container {
+    page-break-inside: avoid;
+  }
+
+  .products-table {
+    page-break-inside: auto;
+
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

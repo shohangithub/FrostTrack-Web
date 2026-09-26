@@ -17,21 +17,34 @@ public class TransactionController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
+        [FromQuery] DateTime? reportDate,
         [FromQuery] string? transactionType,
         [FromQuery] string? transactionFlow,
         CancellationToken cancellationToken)
     {
+        if (reportDate.HasValue)
+        {
+            startDate ??= reportDate;
+            endDate ??= reportDate;
+        }
+
         var result = await _service.ListAsync(cancellationToken);
 
         // Apply filters if provided
+        // Use exact local-to-UTC conversion matching CashBookService to ensure Bangladesh local dates (UTC+6)
+        // properly align with UTC timestamps stored in database (e.g., 2026-09-26 local -> 2026-09-25 18:00:00 UTC)
         if (startDate.HasValue)
         {
-            result = result.Where(t => t.TransactionDate >= startDate.Value);
+            var fromLocal = startDate.Value.Date;
+            var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local).ToUniversalTime();
+            result = result.Where(t => t.TransactionDate >= fromUtc);
         }
 
         if (endDate.HasValue)
         {
-            result = result.Where(t => t.TransactionDate <= endDate.Value);
+            var toLocalExclusive = endDate.Value.Date.AddDays(1);
+            var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local).ToUniversalTime();
+            result = result.Where(t => t.TransactionDate < toUtc);
         }
 
         if (!string.IsNullOrEmpty(transactionType))
@@ -41,7 +54,7 @@ public class TransactionController : ControllerBase
 
         if (!string.IsNullOrEmpty(transactionFlow))
         {
-            result = result.Where(t => t.TransactionHead.Type == transactionFlow );
+            result = result.Where(t => t.TransactionHead.Type == transactionFlow);
         }
 
         return Ok(result);

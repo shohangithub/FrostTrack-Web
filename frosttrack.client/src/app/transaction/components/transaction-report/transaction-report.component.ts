@@ -131,10 +131,7 @@ export class TransactionReportComponent implements OnInit {
     this.isLoading = true;
     const formValue = this.reportForm.value;
 
-    const startDate = new Date(formValue.startDate);
-    const endDate = new Date(formValue.endDate);
-
-    this.transactionService.getTransactionReport(startDate, endDate).subscribe({
+    this.transactionService.getTransactionReport(formValue.startDate, formValue.endDate).subscribe({
       next: (response: ITransactionListResponse[]) => {
         const eligible = (response || []).filter(
           (t) => !this.isExcludedTransaction(t)

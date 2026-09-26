@@ -203,6 +203,7 @@ public class TransactionService : ITransactionService
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Employee)
+            .Include(x => x.Booking)
             .Include(x => x.TransactionHead)
             .Select(x => new TransactionListResponse(
                 x.Id,
@@ -230,7 +231,9 @@ public class TransactionService : ITransactionService
                 x.DeletedAt,
                 x.ArchivedAt,
                 null,
-                x.Note
+                x.Note,
+                x.BookingId,
+                x.Booking != null ? x.Booking.BookingNumber : null
             ))
             .ToListAsync(cancellationToken);
         return response;
@@ -323,7 +326,9 @@ public class TransactionService : ITransactionService
             x.DeletedAt,
             x.ArchivedAt,
             null,
-            x.Note
+            x.Note,
+            x.BookingId,
+            x.Booking != null ? x.Booking.BookingNumber : null
         );
 
         // For the "deleted" view, bypass the global IsDeleted query filter
@@ -335,6 +340,7 @@ public class TransactionService : ITransactionService
             .Include(x => x.Branch)
             .Include(x => x.Customer)
             .Include(x => x.Employee)
+            .Include(x => x.Booking)
             .Include(x => x.TransactionHead)
             .AsQueryable();
 
@@ -358,8 +364,10 @@ public class TransactionService : ITransactionService
 
     public async Task<TransactionSummaryResponse> GetSummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
+        var fromUtc = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Local).ToUniversalTime();
+        var toUtc = DateTime.SpecifyKind(endDate.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
         var query = _repository.Query().Include(x => x.TransactionHead)
-            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
+            .Where(x => x.TransactionDate >= fromUtc && x.TransactionDate < toUtc && !x.IsDeleted && !x.IsArchived &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                         x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 
@@ -394,8 +402,10 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<CashFlowResponse>> GetCashFlowAsync(DateTime startDate, DateTime endDate, int? branchId = null, CancellationToken cancellationToken = default)
     {
+        var fromUtc = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Local).ToUniversalTime();
+        var toUtc = DateTime.SpecifyKind(endDate.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
         var query = _repository.Query().Include(x => x.TransactionHead)
-            .Where(x => x.TransactionDate >= startDate && x.TransactionDate <= endDate && !x.IsDeleted && !x.IsArchived &&
+            .Where(x => x.TransactionDate >= fromUtc && x.TransactionDate < toUtc && !x.IsDeleted && !x.IsArchived &&
                         x.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
                         x.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE);
 

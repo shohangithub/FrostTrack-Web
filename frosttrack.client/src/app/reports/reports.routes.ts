@@ -99,4 +99,18 @@ export const reportRoutes: Route[] = [
         (m) => m.EmployeeReportComponent,
       ),
   },
+  {
+    path: 'income-expense-report',
+    loadComponent: () =>
+      import('./components/income-expense-report/income-expense-report.component').then(
+        (m) => m.IncomeExpenseReportComponent,
+      ),
+  },
+  {
+    path: 'income-expense-detail-report',
+    loadComponent: () =>
+      import('./components/income-expense-detail-report/income-expense-detail-report.component').then(
+        (m) => m.IncomeExpenseDetailReportComponent,
+      ),
+  },
 ];

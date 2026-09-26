@@ -33,6 +33,8 @@ export interface ITransactionListResponse {
   isArchived: boolean;
   deletedAt?: Date | string | null;
   archivedAt?: Date | string | null;
+  bookingId?: string | null;
+  bookingNumber?: string | null;
 }
 
 export interface ITransactionRequest {

@@ -143,12 +143,29 @@ export class TransactionService extends BaseService {
   }
 
   getTransactionReport(
-    startDate: Date,
-    endDate: Date,
+    startDate: Date | string,
+    endDate?: Date | string,
+    reportDate?: Date | string,
   ): Observable<ITransactionListResponse[]> {
+    const toDate = endDate || startDate;
+    const formatParam = (d: Date | string): string => {
+      if (typeof d === 'string') {
+        const trimmed = d.trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+          return trimmed.substring(0, 10);
+        }
+        return trimmed;
+      }
+      const year = d.getFullYear();
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const params = new URLSearchParams({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+      startDate: formatParam(startDate),
+      endDate: formatParam(toDate),
+      reportDate: formatParam(reportDate || startDate),
     });
     return this.get<ITransactionListResponse[]>(
       `${this.path}?${params.toString()}`,

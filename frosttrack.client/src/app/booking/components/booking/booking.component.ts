@@ -37,7 +37,7 @@ import { LayoutService } from '@core/service/layout.service';
 import { ModalOption } from '../../../config/modal-option';
 import { AddProductComponent } from 'app/administration/components/product/add-product/add-product.component';
 import { AddCustomerComponent } from 'app/common/components/customer/add-customer/add-customer.component';
-import { AddBaseUnitComponent } from 'app/common/components/base-unit/add-base-unit/add-base-unit.component';
+import { AddUnitConversionComponent } from 'app/common/components/unit-conversion/add-unit-conversion/add-unit-conversion.component';
 import { UnitConversionService } from 'app/common/services/unit-conversion.service';
 import { BILL_TYPE, BILL_TYPES } from 'app/common/data/settings-data';
 import { BookingInvoicePrintComponent } from '../booking-invoice-print/booking-invoice-print.component';
@@ -631,7 +631,7 @@ export class BookingComponent implements OnInit {
 
   addUnit() {
     const modalRef = this.modalService.open(
-      AddBaseUnitComponent,
+      AddUnitConversionComponent,
       ModalOption.lg,
     );
     modalRef.result.then((response) => {
@@ -641,6 +641,7 @@ export class BookingComponent implements OnInit {
           text: response.data.unitName,
         };
         this.productUnits = this.productUnits.insertThenClone(obj);
+        this.productForm.get('bookingUnit')?.setValue(obj);
       }
     });
   }

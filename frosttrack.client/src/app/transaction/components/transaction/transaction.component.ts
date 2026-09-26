@@ -91,7 +91,7 @@ export class TransactionComponent implements OnInit {
       if (selectedHead) {
         this.transactionForm.patchValue({
           transactionHead: selectedHead,
-          transactionFlow: selectedHead.type,
+          transactionFlow: selectedHead.type === 'CREDIT' ? 'ব্যয়' : 'আয়',
         });
       }
     });
@@ -116,7 +116,7 @@ export class TransactionComponent implements OnInit {
         if (value && value.type) {
           this.transactionForm.patchValue(
             {
-              transactionFlow: value.type,
+              transactionFlow: value.type === 'CREDIT' ? 'ব্যয়' : 'আয়',
             },
             { emitEvent: false },
           );
@@ -155,7 +155,7 @@ export class TransactionComponent implements OnInit {
           }, 300);
         }
       },
-      () => {},
+      () => { },
     );
   }
 
@@ -190,9 +190,9 @@ export class TransactionComponent implements OnInit {
           transactionCode: transaction.transactionCode,
           transactionDate: new Date(transaction.transactionDate).systemFormat(),
           transactionHead: transactionHead || null,
-          transactionFlow: transactionHead?.type || '',
+          transactionFlow: transactionHead?.type === 'CREDIT' ? 'ব্যয়' : 'আয়',
           branchId: transaction.branchId,
-          amount: Math.abs(transaction.amount), // Show as positive in form
+          amount: Math.abs(transaction.amount), // Show as   po sitive in form
           note: transaction.note || '',
         });
         this.isLoading = false;

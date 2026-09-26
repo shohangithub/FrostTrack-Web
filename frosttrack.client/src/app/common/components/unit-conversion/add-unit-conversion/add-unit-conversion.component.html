@@ -1,0 +1,261 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold font-17" id="modal-basic-title">
+    {{ isEditing ? "Update" : "Add" }} Product Unit
+  </h4>
+  <button
+    type="button"
+    class="close"
+    aria-label="Close"
+    (click)="modal.dismiss(false)"
+  >
+    <span aria-hidden="true"><i class="material-icons">close</i></span>
+  </button>
+</div>
+
+<div class="modal-body">
+  @if (isLoading) {
+    <app-form-shimmer [height]="200"></app-form-shimmer>
+  } @else {
+    @if (!isEditing) {
+      <!-- Add Record Modal Window -->
+      <form
+        class="register-form"
+        [formGroup]="register"
+        (ngSubmit)="add(register)"
+      >
+        <div class="row">
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Unit Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="e.g. Bag (50 Kg), Crate"
+              formControlName="unitName"
+              required
+            />
+            @if (
+              !register.get("unitName")?.valid &&
+              register.get("unitName")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Unit Name is required
+              </small>
+            }
+          </div>
+
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Base Unit <span class="text-danger">*</span></label>
+            <select
+              class="form-select form-control-sm"
+              formControlName="baseUnitId"
+              required
+            >
+              <option [ngValue]="null" selected disabled>
+                Please select base unit
+              </option>
+              @for (unit of baseUnits; track unit.value) {
+                <option [value]="unit.value">
+                  {{ unit.text }}
+                </option>
+              }
+            </select>
+            @if (
+              !register.get("baseUnitId")?.valid &&
+              register.get("baseUnitId")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Base Unit is required
+              </small>
+            }
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Conversion Value <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              class="form-control form-control-sm"
+              placeholder="e.g. 50"
+              formControlName="conversionValue"
+              required
+            />
+            @if (
+              !register.get("conversionValue")?.valid &&
+              register.get("conversionValue")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Conversion value is required (must be > 0)
+              </small>
+            }
+          </div>
+
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Status <span class="text-danger">*</span></label>
+            <select
+              class="form-select form-control-sm"
+              formControlName="isActive"
+              required
+            >
+              <option value="" selected disabled>Please select</option>
+              @for (status of statusList; track status.id) {
+                <option [value]="status.id">
+                  {{ status.value }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label>Description</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Description (optional)"
+              formControlName="description"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!register.valid || isSubmitted"
+          >
+            Submit
+          </button>
+          <button
+            type="button"
+            class="btn btn-light"
+            (click)="modal.close(false)"
+          >
+            Close
+          </button>
+        </div>
+      </form>
+    } @else {
+      <!-- Edit Record Modal Window -->
+      <form [formGroup]="editForm" (ngSubmit)="edit(editForm)">
+        <div class="input-field col s12 d-none">
+          <input formControlName="id" class="form-control" type="hidden" />
+        </div>
+
+        <div class="row">
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Unit Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Unit Name"
+              formControlName="unitName"
+              required
+            />
+            @if (
+              !editForm.get("unitName")?.valid &&
+              editForm.get("unitName")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Unit Name is required
+              </small>
+            }
+          </div>
+
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Base Unit <span class="text-danger">*</span></label>
+            <select
+              class="form-select form-control-sm"
+              formControlName="baseUnitId"
+              required
+            >
+              <option [ngValue]="null" selected disabled>
+                Please select base unit
+              </option>
+              @for (unit of baseUnits; track unit.value) {
+                <option [value]="unit.value">
+                  {{ unit.text }}
+                </option>
+              }
+            </select>
+            @if (
+              !editForm.get("baseUnitId")?.valid &&
+              editForm.get("baseUnitId")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Base Unit is required
+              </small>
+            }
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Conversion Value <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              class="form-control form-control-sm"
+              placeholder="Conversion value"
+              formControlName="conversionValue"
+              required
+            />
+            @if (
+              !editForm.get("conversionValue")?.valid &&
+              editForm.get("conversionValue")?.touched
+            ) {
+              <small class="form-text text-danger">
+                Conversion value is required (must be > 0)
+              </small>
+            }
+          </div>
+
+          <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Status <span class="text-danger">*</span></label>
+            <select
+              class="form-select form-control-sm"
+              formControlName="isActive"
+              required
+            >
+              <option value="" selected disabled>Please select</option>
+              @for (status of statusList; track status.id) {
+                <option [value]="status.id">
+                  {{ status.value }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label>Description</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Description"
+              formControlName="description"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!editForm.valid || isSubmitted"
+          >
+            Update
+          </button>
+          <button
+            type="button"
+            class="btn btn-light"
+            (click)="modal.close(false)"
+          >
+            Close
+          </button>
+        </div>
+      </form>
+    }
+  }
+</div>

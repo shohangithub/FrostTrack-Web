@@ -395,7 +395,7 @@ export class DeliveryComponent implements OnInit {
     this.deliveryForm.patchValue(
       {
         chargeAmount: grandTotal,
-        transactionAmount: grandTotal
+        //transactionAmount: grandTotal
       },
       { emitEvent: false },
     );

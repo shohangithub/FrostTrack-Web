@@ -60,8 +60,8 @@ export const DEFAULT_CURRENCY_LIST = [
 
 export const TRANSACTION_TYPE = { DEBIT: 'DEBIT', CREDIT: 'CREDIT' };
 export const TRANSACTION_TYPE_LIST = [
-  { id: 'DEBIT', value: 'DEBIT' },
-  { id: 'CREDIT', value: 'CREDIT' },
+  { id: 'DEBIT', value: 'আয়' },
+  { id: 'CREDIT', value: 'ব্যয়' },
 ];
 
 export const USAGE_FOR = {
@@ -81,10 +81,10 @@ export const BANK_TRANSACTION_TYPE = {
 };
 
 export const DISPLAY_TYPE_LIST = [
-  { id: 'OUT', value: 'OUT', type: 'DEBIT' },
-  { id: 'EXPENSE', value: 'EXPENSE', type: 'DEBIT' },
-  { id: 'IN', value: 'IN', type: 'CREDIT' },
-  { id: 'INCOME', value: 'INCOME', type: 'CREDIT' },
+  //{ id: 'OUT', value: 'OUT', type: 'DEBIT' },
+  { id: 'EXPENSE', value: 'ব্যয়', type: 'DEBIT' },
+  // { id: 'IN', value: 'IN', type: 'CREDIT' },
+  { id: 'INCOME', value: 'আয়', type: 'CREDIT' },
 ];
 
 export const DEFAULT_PAYMENT_METHOD_TYPE = [

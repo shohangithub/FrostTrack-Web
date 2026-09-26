@@ -53,7 +53,9 @@ public record TransactionListResponse(
     DateTime? DeletedAt = null,
     DateTime? ArchivedAt = null,
     decimal? RelatedLabourCharge = null,
-    string? Note = null
+    string? Note = null,
+    Guid? BookingId = null,
+    string? BookingNumber = null
 );
 
 public record TransactionSummaryResponse(
