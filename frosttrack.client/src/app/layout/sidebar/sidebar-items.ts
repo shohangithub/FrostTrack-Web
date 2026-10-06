@@ -695,6 +695,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/reports/income-expense-range-report',
+        title: 'Income & Expense (Date Range)',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/reports/customer-due-report',
         title: 'Customer Due Report',
         iconType: '',

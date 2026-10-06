@@ -1,0 +1,17 @@
+// Extra styles for the date-range report; base styles come from income-expense-report.component.scss
+
+.stored-products-section .products-table {
+  .daily-table-head {
+    background-color: #eeeeee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .balance-amount {
+    font-weight: 600;
+  }
+
+  .negative {
+    color: #b71c1c;
+  }
+}

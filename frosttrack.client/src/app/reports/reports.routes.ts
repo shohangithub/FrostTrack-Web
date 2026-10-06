@@ -113,4 +113,11 @@ export const reportRoutes: Route[] = [
         (m) => m.IncomeExpenseDetailReportComponent,
       ),
   },
+  {
+    path: 'income-expense-range-report',
+    loadComponent: () =>
+      import('./components/income-expense-range-report/income-expense-range-report.component').then(
+        (m) => m.IncomeExpenseRangeReportComponent,
+      ),
+  },
 ];
