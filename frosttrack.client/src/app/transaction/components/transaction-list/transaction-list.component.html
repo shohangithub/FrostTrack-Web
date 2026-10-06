@@ -137,7 +137,7 @@
                     <button class="btn btn-tbl-restore h-auto" (click)="restoreRow(row)" title="Restore transaction">
                       <i class="material-icons" style="font-size: 16px">restore</i>
                     </button>
-                    @if (canDelete) {
+                    @if (canDelete && isEditable(row)) {
                     <button class="btn btn-tbl-delete h-auto" (click)="delete(row)" title="Permanently delete">
                       <i class="material-icons" style="font-size: 16px">delete_forever</i>
                     </button>
@@ -154,9 +154,11 @@
                     }
                     } @else {
                     <!-- ACTIVE view: edit, print, archive, soft-delete -->
+                    @if (isEditable(row)) {
                     <button class="btn btn-tbl-edit h-auto" (click)="editRow(row)" title="Edit">
                       <i class="fas fa-pen"></i>
                     </button>
+                    }
                     <button class="btn btn-tbl-info h-auto" (click)="printReceipt(row)" title="Print Receipt">
                       <i class="fas fa-print"></i>
                     </button>
@@ -166,7 +168,7 @@
                       <i class="material-icons" style="font-size: 16px">archive</i>
                     </button>
                     }
-                    @if (canDelete) {
+                    @if (canDelete && isEditable(row)) {
                     <button class="btn btn-tbl-delete h-auto" (click)="softDeleteRow(row)"
                       title="Soft delete — recoverable">
                       <i class="far fa-trash-alt"></i>

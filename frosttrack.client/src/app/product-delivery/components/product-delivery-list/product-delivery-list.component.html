@@ -263,7 +263,7 @@
                     >
                       <i class="fas fa-print"></i>
                     </button>
-                    @if (canEdit) {
+                    @if (canEdit && isEditable(row)) {
                       <button
                         class="btn btn-tbl-edit h-auto"
                         (click)="editRow(row)"
@@ -280,7 +280,7 @@
                           >restore</i
                         >
                       </button>
-                      @if (canDelete) {
+                      @if (canDelete && isEditable(row)) {
                         <button
                           class="btn btn-tbl-delete h-auto"
                           (click)="delete(row)"
@@ -299,7 +299,7 @@
                           >unarchive</i
                         >
                       </button>
-                      @if (canDelete) {
+                      @if (canDelete && isEditable(row)) {
                         <button
                           class="btn btn-tbl-delete h-auto"
                           (click)="delete(row)"
@@ -316,7 +316,7 @@
                           >archive</i
                         >
                       </button>
-                      @if (canDelete) {
+                      @if (canDelete && isEditable(row)) {
                         <button
                           class="btn btn-tbl-delete h-auto"
                           (click)="delete(row)"

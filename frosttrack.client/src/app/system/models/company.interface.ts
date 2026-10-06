@@ -29,6 +29,8 @@ export interface ICompanyResponse {
   codeGeneration: number;
   isActive: boolean;
   status: string;
+  restrictEditDelete?: boolean;
+  editDeleteAllowedDays?: number;
 }
 
 export interface ICompanyRequest {
@@ -46,6 +48,8 @@ export interface ICompanyRequest {
   isSingleBranch: boolean;
   codeGeneration: number;
   isActive: boolean;
+  restrictEditDelete?: boolean;
+  editDeleteAllowedDays?: number;
 }
 
 export enum ECodeGeneration {

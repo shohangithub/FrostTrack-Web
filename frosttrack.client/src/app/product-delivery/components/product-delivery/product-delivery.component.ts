@@ -77,7 +77,6 @@ export class DeliveryComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    this.generateDeliveryNumber();
     this.loadBookingLookup();
     this.loadBanks();
 
@@ -85,6 +84,8 @@ export class DeliveryComponent implements OnInit {
     if (id) {
       this.isEditMode = true;
       this.loadExistingDelivery(id);
+    } else {
+      this.generateDeliveryNumber();
     }
   }
 
@@ -198,7 +199,10 @@ export class DeliveryComponent implements OnInit {
     // No longer used: delivery form focuses strictly on this delivery's charges
   }
 
-  populateDeliveryDetails(booking: IBookingForDeliveryResponse) {
+  populateDeliveryDetails(
+    booking: IBookingForDeliveryResponse,
+    onReady?: () => void,
+  ) {
     if (this.deliveryDetails.length > 0) this.deliveryDetails.clear();
 
     setTimeout(() => {
@@ -254,6 +258,7 @@ export class DeliveryComponent implements OnInit {
           this.deliveryDetails.push(detailForm);
         }
       });
+      onReady?.();
     }, 50);
 
     // Calculate initial totals after all details are loaded
@@ -756,6 +761,7 @@ export class DeliveryComponent implements OnInit {
     this.isSubmitting = true;
     const txAmount = Number(formData.transactionAmount) || 0;
     const hasPayment = txAmount > 0;
+    const id = this.route.snapshot.paramMap.get('id');
 
     // Prepare payload (filter out zero quantity items)
     const payload: IDeliveryRequest = {
@@ -778,14 +784,14 @@ export class DeliveryComponent implements OnInit {
           adjustmentValue: 0,
         })),
       createTransaction: hasPayment,
-      transactionAmount: hasPayment ? txAmount : undefined,
+      // On edit always send the amount: 0 removes the delivery-time payment
+      transactionAmount: hasPayment || id ? txAmount : undefined,
       paymentMethod: hasPayment ? formData.paymentMethod || 'CASH' : undefined,
       bankId: hasPayment && formData.paymentMethod !== 'CASH' ? formData.bankId : undefined,
       paymentReference: hasPayment && formData.paymentMethod !== 'CASH' ? formData.paymentReference : undefined,
       transactionNotes: formData.transactionNotes || undefined,
     };
 
-    const id = this.route.snapshot.paramMap.get('id');
     const action = id
       ? this.deliveryService.update(id, payload)
       : this.deliveryService.create(payload);
@@ -824,99 +830,91 @@ export class DeliveryComponent implements OnInit {
   }
 
   loadExistingDelivery(id: string) {
-    // Implementation for loading existing delivery for edit
     this.isLoading = true;
     this.deliveryService.getById(id).subscribe({
       next: (delivery) => {
-        // First load booking to get full details with remaining quantities
-        if (delivery.bookingId) {
-          const selectedBooking = this.bookings.find(
-            (b) => b.value === delivery.bookingId,
-          );
-          if (selectedBooking) {
-            this.deliveryService
-              .getBookingForDelivery(selectedBooking.value)
-              .subscribe({
-                next: (booking) => {
-                  this.bookingData = booking;
-
-                  // Populate delivery details from booking
-                  this.populateDeliveryDetails(booking);
-
-                  // Now patch the form with delivery values
-                  this.deliveryForm.patchValue(
-                    {
-                      deliveryNumber: delivery.deliveryNumber,
-                      deliveryDate: new Date(delivery.deliveryDate)
-                        .toISOString()
-                        .split('T')[0],
-                      bookingId: delivery.bookingId,
-                      notes: delivery.notes || '',
-                      chargeAmount: delivery.chargeAmount,
-                    },
-                    { emitEvent: false },
-                  );
-
-                  // Populate delivery quantities from existing delivery
-                  delivery.deliveryDetails.forEach((detail) => {
-                    const index = this.deliveryDetails.controls.findIndex(
-                      (ctrl) =>
-                        ctrl.get('bookingDetailId')?.value ===
-                        detail.bookingDetailId,
-                    );
-
-                    if (index !== -1) {
-                      const detailForm = this.deliveryDetails.at(
-                        index,
-                      ) as FormGroup;
-
-                      // Use the billing cycles and rates from the saved delivery
-                      detailForm.patchValue(
-                        {
-                          deliveryUnitId: detail.deliveryUnitId,
-                          deliveryQuantity: detail.deliveryQuantity,
-                          billingCycles: detail.billingCycles || 0,
-                          totalCharge: detail.chargeAmount,
-                          baseQuantity: detail.baseQuantity,
-                          bookingRate:
-                            detail.bookingRate ||
-                            detailForm.get('bookingRate')?.value,
-                          billType:
-                            detail.billType ||
-                            detailForm.get('billType')?.value,
-                        },
-                        { emitEvent: false },
-                      );
-
-                      // Recalculate converted remaining quantity for selected unit
-                      this.calculateConvertedRemainingQty(detailForm);
-                      this.calculateBaseQuantity(detailForm);
-                    }
-                  });
-
-                  // Recalculate total charge to ensure sum is correct
-                  this.calculateTotalCharge();
-
-                  // Load customer-wide outstanding (including prior booking dues).
-                  if (this.bookingData?.customerId) {
-                    this.loadCustomerOutstanding(this.bookingData.customerId);
-                  }
-
-                  this.isLoading = false;
-                },
-                error: () => {
-                  this.toastr.error('Failed to load booking details');
-                  this.isLoading = false;
-                },
-              });
-          } else {
-            this.toastr.error('Booking not found in lookup');
-            this.isLoading = false;
-          }
-        } else {
+        if (!delivery.bookingId) {
           this.toastr.error('Delivery has no associated booking');
           this.isLoading = false;
+          return;
         }
+
+        this.deliveryService.getBookingForDelivery(delivery.bookingId).subscribe({
+          next: (booking) => {
+            // Remaining quantities from the server already subtract this delivery,
+            // so add its own quantities back before building the editable rows.
+            booking.bookingDetails.forEach((bd) => {
+              const ownBaseQty = delivery.deliveryDetails
+                .filter((dd) => dd.bookingDetailId === bd.id)
+                .reduce((sum, dd) => sum + (dd.baseQuantity || 0), 0);
+              if (ownBaseQty > 0 && bd.bookingQuantity > 0) {
+                const bookingUnitFactor = bd.baseQuantity / bd.bookingQuantity || 1;
+                const ownQty = ownBaseQty / bookingUnitFactor;
+                bd.remainingQuantity += ownQty;
+                bd.totalDeliveredQuantity -= ownQty;
+              }
+            });
+
+            this.bookingData = booking;
+
+            this.deliveryForm.patchValue(
+              {
+                deliveryNumber: delivery.deliveryNumber,
+                deliveryDate: new Date(delivery.deliveryDate)
+                  .toISOString()
+                  .split('T')[0],
+                bookingId: delivery.bookingId,
+                notes: delivery.notes || '',
+                chargeAmount: delivery.chargeAmount,
+                transactionAmount: delivery.collectedAmount || null,
+                paymentMethod: delivery.paymentMethod || 'CASH',
+                bankId: delivery.bankId ?? null,
+                paymentReference: delivery.paymentReference || '',
+                transactionNotes: delivery.transactionNotes || '',
+              },
+              { emitEvent: false },
+            );
+            this.deliveryNumber = delivery.deliveryNumber;
+
+            // Rows are built asynchronously; patch the saved quantities once they exist
+            this.populateDeliveryDetails(booking, () => {
+              delivery.deliveryDetails.forEach((detail) => {
+                const index = this.deliveryDetails.controls.findIndex(
+                  (ctrl) =>
+                    ctrl.get('bookingDetailId')?.value ===
+                    detail.bookingDetailId,
+                );
+                if (index === -1) return;
+
+                const detailForm = this.deliveryDetails.at(index) as FormGroup;
+                detailForm.patchValue(
+                  {
+                    deliveryUnitId: detail.deliveryUnitId,
+                    deliveryQuantity: detail.deliveryQuantity,
+                    billingCycles: detail.billingCycles || 0,
+                    totalCharge: detail.chargeAmount,
+                    labourCharge: detail.labourCharge ?? null,
+                    baseQuantity: detail.baseQuantity,
+                    bookingRate:
+                      detail.bookingRate || detailForm.get('bookingRate')?.value,
+                    billType: detail.billType || detailForm.get('billType')?.value,
+                  },
+                  { emitEvent: false },
+                );
+
+                this.calculateConvertedRemainingQty(detailForm);
+                this.calculateBaseQuantity(detailForm);
+              });
+
+              this.calculateTotalCharge();
+              this.isLoading = false;
+            });
+          },
+          error: () => {
+            this.toastr.error('Failed to load booking details');
+            this.isLoading = false;
+          },
+        });
       },
       error: () => {
         this.toastr.error('Failed to load delivery');

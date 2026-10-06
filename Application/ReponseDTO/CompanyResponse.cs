@@ -16,8 +16,12 @@ public record CompanyResponse(
     bool IsSingleBranch,
     int CodeGeneration,
     bool IsActive,
-    string Status
+    string Status,
+    bool RestrictEditDelete,
+    int EditDeleteAllowedDays
 );
+
+public record EditWindowPolicyResponse(bool RestrictEditDelete, int EditDeleteAllowedDays);
 
 public record CompanyListResponse(
     int Id,

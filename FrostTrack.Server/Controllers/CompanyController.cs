@@ -7,10 +7,19 @@ namespace FrostTrack.Server.Controllers;
 public class CompanyController : ControllerBase
 {
     private readonly ICompanyService _companyService;
+    private readonly IEditWindowGuard _editWindowGuard;
 
-    public CompanyController(ICompanyService companyService)
+    public CompanyController(ICompanyService companyService, IEditWindowGuard editWindowGuard)
     {
         _companyService = companyService;
+        _editWindowGuard = editWindowGuard;
+    }
+
+    [Authorize]
+    [HttpGet("edit-window-policy")]
+    public async Task<EditWindowPolicyResponse> GetEditWindowPolicy(CancellationToken cancellationToken)
+    {
+        return await _editWindowGuard.GetPolicyAsync(cancellationToken);
     }
 
     [HttpGet]

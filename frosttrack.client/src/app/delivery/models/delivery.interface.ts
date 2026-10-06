@@ -84,6 +84,10 @@ export interface IDeliveryResponse {
   paymentStatus: string;
   paymentDate?: Date;
   transactionId?: string;
+  paymentMethod?: string;
+  bankId?: number;
+  paymentReference?: string;
+  transactionNotes?: string;
   customer?: ICustomerBasicInfo;
   booking?: IBookingBasicInfo;
   deliveryDetails: IDeliveryDetailResponse[];
@@ -114,6 +118,7 @@ export interface IDeliveryDetailResponse {
   deliveryQuantity: number;
   baseQuantity: number;
   chargeAmount: number;
+  labourCharge?: number;
   adjustmentValue: number;
   collectedAmount?: number;
   bookingQuantity: number;

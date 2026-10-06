@@ -164,6 +164,7 @@ public class BookingRepository : IBookingRepository
             eDetails.BookingQuantity = item.BookingQuantity;
             eDetails.BookingRate = item.BookingRate;
             eDetails.BookingUnitId = item.BookingUnitId;
+            eDetails.LabourCharge = item.LabourCharge;
 
             var unitConv = await _context.UnitConversions
                 .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);

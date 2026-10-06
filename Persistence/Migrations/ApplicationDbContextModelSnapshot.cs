@@ -748,6 +748,9 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("EditDeleteAllowedDays")
+                        .HasColumnType("int");
+
                     b.Property<bool>("EnableEmailNotifications")
                         .HasColumnType("bit");
 
@@ -778,6 +781,9 @@ namespace Persistence.Migrations
 
                     b.Property<int?>("OrganizationId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("RestrictEditDelete")
+                        .HasColumnType("bit");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");

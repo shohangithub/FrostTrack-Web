@@ -14,5 +14,7 @@ public record CompanyRequest(
     string? InvoiceFooter,
     bool IsSingleBranch,
     int CodeGeneration,
-    bool IsActive
+    bool IsActive,
+    bool RestrictEditDelete = true,
+    int EditDeleteAllowedDays = 90
 );

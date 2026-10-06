@@ -21,6 +21,11 @@ public class DeliveryResponse
     public string PaymentStatus { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
     public Guid? TransactionId { get; set; }
+    // Delivery-time payment details (used by the edit form)
+    public string? PaymentMethod { get; set; }
+    public int? BankId { get; set; }
+    public string? PaymentReference { get; set; }
+    public string? TransactionNotes { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public bool IsArchived { get; set; }

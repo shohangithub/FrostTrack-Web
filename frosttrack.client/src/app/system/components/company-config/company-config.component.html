@@ -173,6 +173,37 @@
 
     <div class="row">
       <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
+        <div class="form-check mb-2">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="restrictEditDelete"
+            formControlName="restrictEditDelete"
+          />
+          <label class="form-check-label" for="restrictEditDelete">
+            Restrict edit / delete of bookings, deliveries and transactions
+          </label>
+        </div>
+        @if (register.get('restrictEditDelete')?.value) {
+          <label class="form-label" for="editDeleteAllowedDays"
+            >Allowed days (counted from the record date)</label
+          >
+          <input
+            type="number"
+            min="1"
+            class="form-control"
+            id="editDeleteAllowedDays"
+            formControlName="editDeleteAllowedDays"
+          />
+          @if (register.get('editDeleteAllowedDays')?.invalid) {
+            <small class="text-danger">Enter at least 1 day.</small>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
         <label>Invoice Header</label>
         <textarea
           class="form-control form-control-sm"

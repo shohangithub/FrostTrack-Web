@@ -32,6 +32,10 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DeliveryInvoiceComponent } from '../delivery-invoice/delivery-invoice.component';
 
+import {
+  EditWindowService,
+  IEditWindowPolicy,
+} from '../../../common/services/edit-window.service';
 @Component({
   selector: 'app-product-delivery-list',
   templateUrl: './product-delivery-list.component.html',
@@ -73,6 +77,7 @@ export class DeliveryListComponent implements OnInit {
   currentUser: any;
   canEdit: boolean = false;
   canDelete: boolean = false;
+  editPolicy: IEditWindowPolicy | null = null;
 
   // For printing
   invoiceId: string = '';
@@ -85,12 +90,23 @@ export class DeliveryListComponent implements OnInit {
     private deliveryService: DeliveryService,
     private router: Router,
     private layoutService: LayoutService,
+    private editWindowService: EditWindowService,
   ) {
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
     };
     this.layoutService.loadCurrentRoute();
     this.setPermissions();
+    this.editWindowService.getPolicy(true).subscribe((policy) => {
+      this.editPolicy = policy;
+      // Table cells are OnPush: hand the grid a new array so action buttons re-evaluate
+      this.data = [...this.data];
+    });
+  }
+
+  /** Edit/delete is only offered inside the company's edit window (server enforces it too). */
+  isEditable(row: any): boolean {
+    return EditWindowService.isWithinWindow(this.editPolicy, row?.deliveryDate);
   }
 
   private setPermissions() {

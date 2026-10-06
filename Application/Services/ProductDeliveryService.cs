@@ -11,6 +11,9 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<Bank, int> _bankRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IRepository<DeliveryChallanItem, Guid> _challanItemRepository;
+    private readonly IRepository<DeliveryChallan, Guid> _challanRepository;
+    private readonly IEditWindowGuard _editWindowGuard;
 
     private readonly ITransactionService _transactionService;
     private readonly ICodeGenerationService _codeGenerationService;
@@ -30,6 +33,9 @@ public class DeliveryService : IDeliveryService
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         IRepository<Bank, int> bankRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
+        IRepository<DeliveryChallanItem, Guid> challanItemRepository,
+        IRepository<DeliveryChallan, Guid> challanRepository,
+        IEditWindowGuard editWindowGuard,
 
         ITransactionService transactionService,
         ICodeGenerationService codeGenerationService,
@@ -47,6 +53,9 @@ public class DeliveryService : IDeliveryService
         _transactionHeadRepository = transactionHeadRepository;
         _bankRepository = bankRepository;
         _bankTransactionRepository = bankTransactionRepository;
+        _challanItemRepository = challanItemRepository;
+        _challanRepository = challanRepository;
+        _editWindowGuard = editWindowGuard;
 
         _transactionService = transactionService;
         _codeGenerationService = codeGenerationService;
@@ -67,222 +76,47 @@ public class DeliveryService : IDeliveryService
         try
         {
             var entity = request.Adapt<Delivery>();
-        entity.BranchId = _currentUser.BranchId;
-        // entity.DeliveryDate = DateTime.UtcNow;
-        _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
+            entity.BranchId = _currentUser.BranchId;
+            _defaultValueInjector.InjectCreatingAudit<Delivery, Guid>(entity);
 
-
-        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
-        {
-
-            // var bookingDetails = await _bookingDetailRepository.Query()
-            //     .Where(bd => entity.DeliveryDetails.Select(dd => dd.BookingDetailId).Contains(bd.Id))
-            //     .ToListAsync(cancellationToken);
-
-            foreach (var detail in entity.DeliveryDetails)
+            if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
             {
-                // Calculate BaseQuantity and BaseRate from unit conversion
-                var unitConversion = await _unitConversionRepository.Query()
-                    .FirstOrDefaultAsync(x => x.Id == detail.DeliveryUnitId, cancellationToken);
-
-                if (unitConversion != null)
-                {
-                    detail.BaseQuantity = (decimal)(detail.DeliveryQuantity * unitConversion.ConversionValue);
-                }
-                else
-                {
-                    detail.BaseQuantity = (decimal)detail.DeliveryQuantity;
-                }
-
-
-                _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(entity.DeliveryDetails.ToList());
-            }
-        }
-
-        // Calculate total labour and rent charges from delivery details
-        var totalLabourCharge = entity.DeliveryDetails?.Sum(d => d.LabourCharge) ?? 0m;
-        var totalRentCharge = entity.DeliveryDetails?.Sum(d => d.ChargeAmount + d.AdjustmentValue) ?? 0m;
-        var deliveryGrandTotal = totalRentCharge + totalLabourCharge;
-
-        var paymentAmount = request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0
-            ? request.TransactionAmount.Value
-            : 0m;
-
-        entity.CollectedAmount = paymentAmount;
-        if (entity.DeliveryDetails != null && entity.DeliveryDetails.Any())
-        {
-            if (entity.DeliveryDetails.Count == 1)
-            {
-                entity.DeliveryDetails.First().CollectedAmount = paymentAmount;
-            }
-            else
-            {
-                var remainingToAllocate = paymentAmount;
-                var detailsList = entity.DeliveryDetails.ToList();
-                for (int i = 0; i < detailsList.Count; i++)
-                {
-                    if (i == detailsList.Count - 1)
-                    {
-                        detailsList[i].CollectedAmount = remainingToAllocate;
-                    }
-                    else
-                    {
-                        var detailTotal = detailsList[i].ChargeAmount + detailsList[i].LabourCharge + detailsList[i].AdjustmentValue;
-                        var share = deliveryGrandTotal > 0
-                            ? Math.Round(paymentAmount * (detailTotal / deliveryGrandTotal), 2)
-                            : 0m;
-                        share = Math.Min(share, remainingToAllocate);
-                        detailsList[i].CollectedAmount = share;
-                        remainingToAllocate -= share;
-                    }
-                }
-            }
-        }
-
-        // Set initial payment status
-        entity.PaymentStatus = PaymentStatuses.UNPAID;
-        entity.PaymentDate = null;
-        entity.TransactionId = null;
-
-        await _repository.AddAsync(entity, CancellationToken.None);
-
-        // Create transactions if collection amount is provided and > 0
-        if (request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0)
-        {
-            if (paymentAmount > deliveryGrandTotal + 0.01m)
-            {
-                throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
-            }
-
-            var booking = await _bookingRepository.Query()
-                .Include(b => b.Customer)
-                .FirstOrDefaultAsync(b => b.Id == request.BookingId);
-
-            // Allocate between labour and rent: labour first
-            var labourPayment = Math.Min(totalLabourCharge, paymentAmount);
-            var rentPayment = paymentAmount - labourPayment;
-
-            // Generate sequential transaction code based on delivery date
-            var txDate = entity.DeliveryDate;
-            var datePart = txDate.ToString("yyMMdd");
-            var prefix = "DEL";
-
-            var existingCodes = await _transactionRepository.Query()
-                .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
-                .Select(x => x.TransactionCode)
-                .ToListAsync(cancellationToken);
-
-            int maxSequence = 0;
-            var seqPattern = new System.Text.RegularExpressions.Regex($@"^{System.Text.RegularExpressions.Regex.Escape(prefix)}-{datePart}-(\d+)");
-            foreach (var code in existingCodes)
-            {
-                var match = seqPattern.Match(code);
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int seq))
-                {
-                    if (seq > maxSequence) maxSequence = seq;
-                }
-            }
-
-            int nextSequence = maxSequence + 1;
-            var baseTransactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence, txDate);
-            Guid? mainTxId = null;
-
-            // Single unified CUSTOMER_PAYMENT transaction (if any payment made at delivery)
-            decimal totalDeliveryPayment = rentPayment + labourPayment;
-            if (totalDeliveryPayment > 0)
-            {
-                var transactionHead = await _transactionHeadRepository.Query()
-                    .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.DEBIT && th.UsageFor == UsageFor.CUSTOMER_PAYMENT && th.IsActive);
-
-                if (transactionHead == null)
-                    throw new Exception("CUSTOMER_PAYMENT transaction head not found");
-
-                var chargeTransactionRequest = new TransactionRequest(
-                    Id: Guid.NewGuid(),
-                    TransactionCode: baseTransactionCode,
-                    TransactionDate: entity.DeliveryDate,
-                    TransactionHeadId: transactionHead.Id,
-                    BranchId: entity.BranchId,
-                    CustomerId: booking?.CustomerId,
-                    BookingId: request.BookingId,
-                    DeliveryId: entity.Id,
-                    Amount: totalDeliveryPayment,
-                    DiscountAmount: 0,
-                    AdjustmentValue: 0,
-                    NetAmount: totalDeliveryPayment,
-                    PaymentMethod: request.PaymentMethod ?? PaymentMethods.CASH,
-                    PaymentReference: request.PaymentReference,
-                    BankId: request.BankId,
-                    Category: null,
-                    SubCategory: null,
-                    Description: $"Payment for Delivery {entity.DeliveryNumber}",
-                    Note: request.TransactionNotes
-                );
-
-                var chargeTransaction = await _transactionService.AddAsync(chargeTransactionRequest, CancellationToken.None);
-                mainTxId = chargeTransaction.Id;
-            }
-
-            // If paid by bank or cheque, automatically record deposit in BankTransaction
-            if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
-            {
-                var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
-                if (bank != null)
-                {
-                    var currentBalance = bank.OpeningBalance + await _bankTransactionRepository.Query()
-                        .Where(bt => bt.BankId == request.BankId.Value && bt.IsActive && !bt.IsDeleted)
-                        .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
-
-                    var bankTx = new BankTransaction
-                    {
-                        TransactionNumber = baseTransactionCode,
-                        TransactionDate = entity.DeliveryDate,
-                        BankId = request.BankId.Value,
-                        TransactionType = BankTransactionTypes.Deposit,
-                        Amount = paymentAmount,
-                        Reference = request.PaymentReference,
-                        Description = $"Delivery Payment - {entity.DeliveryNumber} ({request.PaymentMethod})",
-                        BalanceAfter = currentBalance + paymentAmount,
-                        SourceType = BankSourceTypes.DELIVERY,
-                        TransactionId = mainTxId,
-                        BranchId = entity.BranchId,
-                        IsActive = true
-                    };
-                    _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
-                    await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
-                }
-            }
-
-            entity.TransactionId = mainTxId;
-            entity.CollectedAmount = paymentAmount;
-            if (paymentAmount >= deliveryGrandTotal - 0.01m)
-            {
-                entity.PaymentStatus = PaymentStatuses.PAID;
-                entity.PaymentDate = entity.DeliveryDate;
-            }
-            else
-            {
-                entity.PaymentStatus = PaymentStatuses.UNPAID;
-                entity.PaymentDate = null;
-            }
-
-            if (entity.DeliveryDetails.Any())
-            {
-                decimal remainingToDistribute = paymentAmount;
                 foreach (var detail in entity.DeliveryDetails)
                 {
-                    var detailDue = detail.ChargeAmount + detail.LabourCharge;
-                    var allocated = Math.Min(remainingToDistribute, detailDue);
-                    detail.CollectedAmount = allocated;
-                    remainingToDistribute -= allocated;
+                    detail.BaseQuantity = await CalculateBaseQuantityAsync(detail.DeliveryUnitId, detail.DeliveryQuantity, cancellationToken);
                 }
+                _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(entity.DeliveryDetails.ToList());
             }
 
-            await _repository.UpdateAsync(entity, CancellationToken.None);
-        }
+            var details = entity.DeliveryDetails?.ToList() ?? [];
+            var deliveryGrandTotal = CalculateGrandTotal(details);
+            var paymentAmount = request.TransactionAmount.HasValue && request.TransactionAmount.Value > 0
+                ? request.TransactionAmount.Value
+                : 0m;
 
-        await dbTransaction.CommitAsync(cancellationToken);
-        return await GetByIdAsync(entity.Id);
+            if (paymentAmount > deliveryGrandTotal + 0.01m)
+                throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
+
+            ApplyCollection(entity, details, paymentAmount, deliveryGrandTotal);
+            entity.TransactionId = null;
+
+            await _repository.AddAsync(entity, CancellationToken.None);
+
+            if (paymentAmount > 0)
+            {
+                var customerId = await _bookingRepository.Query()
+                    .Where(b => b.Id == request.BookingId)
+                    .Select(b => (int?)b.CustomerId)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                await SyncPaymentTransactionAsync(entity, customerId, paymentAmount,
+                    request.PaymentMethod, request.BankId, request.PaymentReference, request.TransactionNotes, cancellationToken);
+
+                await _repository.UpdateAsync(entity, CancellationToken.None);
+            }
+
+            await dbTransaction.CommitAsync(cancellationToken);
+            return await GetByIdAsync(entity.Id);
         }
         catch
         {
@@ -293,100 +127,169 @@ public class DeliveryService : IDeliveryService
 
     public async Task<DeliveryResponse> UpdateAsync(Guid id, UpdateDeliveryRequest request, CancellationToken cancellationToken = default)
     {
-        // Use tracked query for update operations
-        var existing = await _repository.UpdatableQuery(x => x.Id == id)
-            .Include(x => x.DeliveryDetails)
-            .FirstOrDefaultAsync();
+        var existing = await _repository.Query()
+            .Include(x => x.Booking)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (existing == null)
             throw new Exception("Product delivery not found");
 
-        // Validate stock availability (considering current delivery)
+        await _editWindowGuard.EnsureEditableAsync(existing.DeliveryDate, "delivery", cancellationToken);
+        await _editWindowGuard.EnsureEditableAsync(request.DeliveryDate, "delivery", cancellationToken);
+        await EnsureNoExternalPaymentsAsync(existing, "modified", cancellationToken);
+
+        // Validate stock availability (excluding this delivery's current quantities)
         await ValidateStockAvailability(request, id);
 
-        // Update main entity properties manually (avoid Adapt to prevent collection issues)
-        existing.DeliveryNumber = request.DeliveryNumber;
-        existing.DeliveryDate = request.DeliveryDate;
-        existing.Notes = request.Notes;
-        existing.ChargeAmount = request.ChargeAmount;
-        existing.AdjustmentValue = request.AdjustmentValue;
-        _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(existing);
-
-        // Update child collection: Clear and add new ones (cascade delete handles removal)
-        existing.DeliveryDetails.Clear();
-
-
-
-        // Add new details
-        if (request.DeliveryDetails != null && request.DeliveryDetails.Any())
+        // Build the new detail rows (base quantity is always recalculated server-side)
+        var newDetails = new List<DeliveryDetail>();
+        foreach (var d in request.DeliveryDetails ?? [])
         {
-            foreach (var d in request.DeliveryDetails)
+            var newDetail = new DeliveryDetail
             {
-                var newDetail = new DeliveryDetail
-                {
-                    DeliveryId = existing.Id,
-                    BookingDetailId = d.BookingDetailId,
-                    DeliveryUnitId = d.DeliveryUnitId,
-                    DeliveryQuantity = d.DeliveryQuantity,
-                    BaseQuantity = d.BaseQuantity,
-                    ChargeAmount = d.ChargeAmount,
-                    LabourCharge = d.LabourCharge,
-                    AdjustmentValue = d.AdjustmentValue,
-                    BillingCycles = d.BillingCycles
-                };
-                _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(new List<DeliveryDetail> { newDetail });
-                existing.DeliveryDetails.Add(newDetail);
-            }
+                DeliveryId = id,
+                BookingDetailId = d.BookingDetailId,
+                DeliveryUnitId = d.DeliveryUnitId,
+                DeliveryQuantity = d.DeliveryQuantity,
+                BaseQuantity = await CalculateBaseQuantityAsync(d.DeliveryUnitId, d.DeliveryQuantity, cancellationToken),
+                ChargeAmount = d.ChargeAmount,
+                LabourCharge = d.LabourCharge,
+                AdjustmentValue = d.AdjustmentValue,
+                BillingCycles = d.BillingCycles
+            };
+            newDetails.Add(newDetail);
         }
+        _defaultValueInjector.InjectCreatingAudit<DeliveryDetail, Guid>(newDetails);
 
-        await _repository.UpdateAsync(existing, CancellationToken.None);
+        // Resolve payment: null amount keeps what was collected at delivery time
+        var existingTx = await FindDeliveryPaymentTransactionAsync(existing, cancellationToken);
+        var deliveryGrandTotal = CalculateGrandTotal(newDetails);
+        var paymentAmount = request.TransactionAmount.HasValue
+            ? Math.Max(request.TransactionAmount.Value, 0m)
+            : existing.CollectedAmount;
 
-        // Keep linked transaction dates in sync with delivery date
-        var linkedTxns = await _transactionRepository.UpdatableQuery(
-            t => (t.DeliveryId == existing.Id || (existing.TransactionId.HasValue && t.Id == existing.TransactionId.Value)) && !t.IsDeleted)
-            .ToListAsync(cancellationToken);
+        if (paymentAmount > deliveryGrandTotal + 0.01m)
+            throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
 
-        foreach (var txn in linkedTxns)
+        var paymentMethod = request.PaymentMethod ?? existingTx?.PaymentMethod;
+        var bankId = request.PaymentMethod != null ? request.BankId : existingTx?.BankId;
+        var paymentReference = request.PaymentMethod != null ? request.PaymentReference : existingTx?.PaymentReference;
+        var paymentNotes = request.TransactionNotes ?? existingTx?.Note;
+
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
         {
-            txn.TransactionDate = existing.DeliveryDate;
-            await _transactionRepository.UpdateAsync(txn, cancellationToken);
-        }
+            var entity = await _repository.UpdatableQuery(x => x.Id == id).FirstAsync(cancellationToken);
+            entity.DeliveryNumber = request.DeliveryNumber;
+            entity.DeliveryDate = request.DeliveryDate;
+            entity.Notes = request.Notes;
+            entity.ChargeAmount = request.ChargeAmount;
+            entity.AdjustmentValue = request.AdjustmentValue;
+            _defaultValueInjector.InjectUpdatingAudit<Delivery, Guid>(entity);
 
-        if (existing.TransactionId.HasValue)
-        {
-            var linkedBankTxns = await _bankTransactionRepository.UpdatableQuery(
-                bt => bt.TransactionId == existing.TransactionId.Value && !bt.IsDeleted)
-                .ToListAsync(cancellationToken);
+            ApplyCollection(entity, newDetails, paymentAmount, deliveryGrandTotal);
 
-            foreach (var btx in linkedBankTxns)
+            // Replace detail rows
+            await _detailRepository.DeletableQuery(dd => dd.DeliveryId == id).ExecuteDeleteAsync(cancellationToken);
+            foreach (var detail in newDetails)
             {
-                btx.TransactionDate = existing.DeliveryDate;
-                await _bankTransactionRepository.UpdateAsync(btx, cancellationToken);
+                await _detailRepository.AddAsync(detail, cancellationToken);
             }
-        }
 
-        if (existing.PaymentDate.HasValue)
+            await SyncPaymentTransactionAsync(entity, existing.Booking?.CustomerId, paymentAmount,
+                paymentMethod, bankId, paymentReference, paymentNotes, cancellationToken);
+
+            await _repository.UpdateAsync(entity, cancellationToken);
+
+            await dbTransaction.CommitAsync(cancellationToken);
+        }
+        catch
         {
-            existing.PaymentDate = existing.DeliveryDate;
-            await _repository.UpdateAsync(existing, cancellationToken);
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
         }
 
-        // Query fresh data after update since Query() uses AsNoTracking()
         return await GetByIdAsync(id);
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var result = await _repository.DeletableQuery(x => x.Id == id).ExecuteDeleteAsync();
-        var result1 = await _transactionRepository.DeletableQuery(x => x.DeliveryId == id)
-            .ExecuteDeleteAsync();
-        return result > 0;
+        // Permanent delete is usually invoked from the "deleted" tab, so look past the soft-delete filter
+        var delivery = await _repository.UnfilteredQuery()
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId);
+
+        if (delivery == null)
+            throw new Exception("Product delivery not found");
+
+        await _editWindowGuard.EnsureEditableAsync(delivery.DeliveryDate, "delivery");
+        await EnsureNoExternalPaymentsAsync(delivery, "deleted");
+
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync();
+
+        try
+        {
+            var txIds = await GetLinkedTransactionIdsAsync(delivery);
+
+            // Remove the delivery from any challan it was printed on
+            var challanIds = await _challanItemRepository.Query()
+                .Where(ci => ci.DeliveryId == id)
+                .Select(ci => ci.DeliveryChallanId)
+                .Distinct()
+                .ToListAsync();
+
+            await _challanItemRepository.DeletableQuery(ci => ci.DeliveryId == id).ExecuteDeleteAsync();
+
+            // A challan left with no deliveries is moved to the Deleted tab (header kept for the record)
+            if (challanIds.Count > 0)
+            {
+                DateTime? now = DateTime.UtcNow;
+                int? userId = _currentUser.Id;
+                await _challanRepository.UnfilteredQuery()
+                    .Where(c => challanIds.Contains(c.Id) && !c.IsDeleted && !c.ChallanItems.Any())
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.IsDeleted, true)
+                        .SetProperty(x => x.DeletedAt, now)
+                        .SetProperty(x => x.DeletedById, userId));
+            }
+
+            // Detach the payment transaction before removing it (Delivery.TransactionId is a restrict FK)
+            await _repository.UnfilteredQuery()
+                .Where(x => x.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.TransactionId, (Guid?)null));
+
+            if (txIds.Count > 0)
+            {
+                await _bankTransactionRepository.UnfilteredQuery()
+                    .Where(bt => bt.TransactionId.HasValue && txIds.Contains(bt.TransactionId.Value))
+                    .ExecuteDeleteAsync();
+
+                await _transactionRepository.UnfilteredQuery()
+                    .Where(t => txIds.Contains(t.Id))
+                    .ExecuteDeleteAsync();
+            }
+
+            await _detailRepository.UnfilteredQuery().Where(dd => dd.DeliveryId == id).ExecuteDeleteAsync();
+            var result = await _repository.UnfilteredQuery().Where(x => x.Id == id).ExecuteDeleteAsync();
+
+            await dbTransaction.CommitAsync();
+            return result > 0;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<bool> BatchDeleteAsync(Guid[] ids)
     {
-        var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync();
-        return result > 0;
+        var deleted = 0;
+        foreach (var id in ids.Distinct())
+        {
+            if (await DeleteAsync(id)) deleted++;
+        }
+        return deleted > 0;
     }
 
     public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -394,41 +297,394 @@ public class DeliveryService : IDeliveryService
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Product delivery not found");
 
-        entity.IsDeleted = true;
-        entity.DeletedAt = DateTime.UtcNow;
-        entity.DeletedById = _currentUser.Id;
+        await _editWindowGuard.EnsureEditableAsync(entity.DeliveryDate, "delivery", cancellationToken);
+        await EnsureNoExternalPaymentsAsync(entity, "deleted", cancellationToken);
 
-        await _repository.UpdateAsync(entity, cancellationToken);
+        DateTime? now = DateTime.UtcNow;
+        int? userId = _currentUser.Id;
 
-        // Soft-delete linked transactions to prevent ghost revenue
-        if (entity.TransactionId.HasValue)
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
         {
-            var linkedTransactions = await _transactionRepository.UpdatableQuery(
-                t => t.DeliveryId == id && !t.IsDeleted).ToListAsync(cancellationToken);
-            foreach (var txn in linkedTransactions)
-            {
-                txn.IsDeleted = true;
-                txn.DeletedAt = DateTime.UtcNow;
-                txn.DeletedById = _currentUser.Id;
-                await _transactionRepository.UpdateAsync(txn, cancellationToken);
-            }
-        }
+            var txIds = await GetLinkedTransactionIdsAsync(entity, cancellationToken);
 
-        return true;
+            await _repository.UnfilteredQuery()
+                .Where(x => x.Id == id)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.IsDeleted, true)
+                    .SetProperty(x => x.DeletedAt, now)
+                    .SetProperty(x => x.DeletedById, userId), cancellationToken);
+
+            // Details must be flagged too, otherwise they keep consuming booking stock
+            await _detailRepository.UnfilteredQuery()
+                .Where(dd => dd.DeliveryId == id && !dd.IsDeleted)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.IsDeleted, true)
+                    .SetProperty(x => x.DeletedAt, now)
+                    .SetProperty(x => x.DeletedById, userId), cancellationToken);
+
+            if (txIds.Count > 0)
+            {
+                await _transactionRepository.UnfilteredQuery()
+                    .Where(t => txIds.Contains(t.Id) && !t.IsDeleted)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.IsDeleted, true)
+                        .SetProperty(x => x.DeletedAt, now)
+                        .SetProperty(x => x.DeletedById, userId), cancellationToken);
+
+                await _bankTransactionRepository.UnfilteredQuery()
+                    .Where(bt => bt.TransactionId.HasValue && txIds.Contains(bt.TransactionId.Value) && !bt.IsDeleted)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.IsDeleted, true)
+                        .SetProperty(x => x.DeletedAt, now)
+                        .SetProperty(x => x.DeletedById, userId), cancellationToken);
+            }
+
+            await dbTransaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await _repository.UnfilteredQuery()
+            .Include(x => x.DeliveryDetails)
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId, cancellationToken);
         if (entity == null) throw new Exception("Product delivery not found");
 
-        entity.IsDeleted = false;
-        entity.DeletedAt = null;
-        entity.DeletedById = null;
+        // Restoring must not over-deliver a booking that has since been delivered again
+        foreach (var detail in entity.DeliveryDetails)
+        {
+            var bookingBaseQty = await _bookingDetailRepository.Query()
+                .Where(bd => bd.Id == detail.BookingDetailId)
+                .Select(bd => bd.BaseQuantity)
+                .FirstOrDefaultAsync(cancellationToken);
 
-        await _repository.UpdateAsync(entity, cancellationToken);
-        return true;
+            var deliveredBaseQty = await ActiveDeliveryDetails()
+                .Where(dd => dd.BookingDetailId == detail.BookingDetailId && dd.DeliveryId != id)
+                .SumAsync(dd => dd.BaseQuantity, cancellationToken);
+
+            if (deliveredBaseQty + detail.BaseQuantity > bookingBaseQty)
+                throw new Exception("Cannot restore this delivery: the booking stock has already been delivered by another delivery.");
+        }
+
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var txIds = await GetLinkedTransactionIdsAsync(entity, cancellationToken);
+
+            await _repository.UnfilteredQuery()
+                .Where(x => x.Id == id)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.IsDeleted, false)
+                    .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                    .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
+
+            await _detailRepository.UnfilteredQuery()
+                .Where(dd => dd.DeliveryId == id && dd.IsDeleted)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.IsDeleted, false)
+                    .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                    .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
+
+            if (txIds.Count > 0)
+            {
+                await _transactionRepository.UnfilteredQuery()
+                    .Where(t => txIds.Contains(t.Id) && t.IsDeleted)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.IsDeleted, false)
+                        .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                        .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
+
+                await _bankTransactionRepository.UnfilteredQuery()
+                    .Where(bt => bt.TransactionId.HasValue && txIds.Contains(bt.TransactionId.Value) && bt.IsDeleted)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.IsDeleted, false)
+                        .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                        .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
+            }
+
+            await dbTransaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
+
+    #region Delivery payment / cascade helpers
+
+    private IQueryable<DeliveryDetail> ActiveDeliveryDetails()
+        => _detailRepository.Query().Where(dd => !dd.IsDeleted && !dd.Delivery!.IsDeleted);
+
+    private async Task<decimal> CalculateBaseQuantityAsync(int deliveryUnitId, float deliveryQuantity, CancellationToken cancellationToken)
+    {
+        var unitConversion = await _unitConversionRepository.Query()
+            .FirstOrDefaultAsync(x => x.Id == deliveryUnitId, cancellationToken);
+
+        return unitConversion != null
+            ? (decimal)(deliveryQuantity * unitConversion.ConversionValue)
+            : (decimal)deliveryQuantity;
+    }
+
+    private static decimal CalculateGrandTotal(IEnumerable<DeliveryDetail> details)
+        => details.Sum(d => d.ChargeAmount + d.AdjustmentValue + d.LabourCharge);
+
+    /// <summary>
+    /// Sets CollectedAmount / PaymentStatus on the delivery and distributes the collected amount across its details.
+    /// </summary>
+    private static void ApplyCollection(Delivery entity, IList<DeliveryDetail> details, decimal paymentAmount, decimal grandTotal)
+    {
+        entity.CollectedAmount = paymentAmount;
+
+        if (paymentAmount > 0 && paymentAmount >= grandTotal - 0.01m)
+        {
+            entity.PaymentStatus = PaymentStatuses.PAID;
+            entity.PaymentDate = entity.DeliveryDate;
+        }
+        else
+        {
+            entity.PaymentStatus = PaymentStatuses.UNPAID;
+            entity.PaymentDate = null;
+        }
+
+        var remaining = paymentAmount;
+        for (int i = 0; i < details.Count; i++)
+        {
+            var detail = details[i];
+            var detailDue = detail.ChargeAmount + detail.LabourCharge + detail.AdjustmentValue;
+            var allocated = i == details.Count - 1 ? remaining : Math.Min(remaining, Math.Max(detailDue, 0m));
+            detail.CollectedAmount = allocated;
+            remaining -= allocated;
+        }
+    }
+
+    /// <summary>
+    /// Creates, updates or removes the delivery-time CUSTOMER_PAYMENT transaction and its bank deposit
+    /// so they match <paramref name="paymentAmount"/>. Sets entity.TransactionId; the caller saves the delivery.
+    /// </summary>
+    private async Task SyncPaymentTransactionAsync(
+        Delivery entity,
+        int? customerId,
+        decimal paymentAmount,
+        string? paymentMethod,
+        int? bankId,
+        string? paymentReference,
+        string? notes,
+        CancellationToken cancellationToken)
+    {
+        var method = string.IsNullOrWhiteSpace(paymentMethod) ? PaymentMethods.CASH : paymentMethod;
+        var existingTx = await FindDeliveryPaymentTransactionAsync(entity, cancellationToken);
+
+        if (paymentAmount <= 0)
+        {
+            if (existingTx != null)
+            {
+                entity.TransactionId = null;
+                await _repository.UpdateAsync(entity, cancellationToken);
+
+                var removedTxId = existingTx.Id;
+                await _bankTransactionRepository.DeletableQuery(bt => bt.TransactionId == removedTxId).ExecuteDeleteAsync(cancellationToken);
+                await _transactionRepository.DeletableQuery(t => t.Id == removedTxId).ExecuteDeleteAsync(cancellationToken);
+            }
+            entity.TransactionId = null;
+            return;
+        }
+
+        string transactionCode;
+        Guid transactionId;
+
+        if (existingTx == null)
+        {
+            var transactionHead = await _transactionHeadRepository.Query()
+                .FirstOrDefaultAsync(th => th.Type == TransactionHeadTypes.DEBIT && th.UsageFor == UsageFor.CUSTOMER_PAYMENT && th.IsActive, cancellationToken);
+
+            if (transactionHead == null)
+                throw new Exception("CUSTOMER_PAYMENT transaction head not found");
+
+            transactionCode = await GenerateDeliveryTransactionCodeAsync(entity.DeliveryDate, cancellationToken);
+
+            var chargeTransactionRequest = new TransactionRequest(
+                Id: Guid.NewGuid(),
+                TransactionCode: transactionCode,
+                TransactionDate: entity.DeliveryDate,
+                TransactionHeadId: transactionHead.Id,
+                BranchId: entity.BranchId,
+                CustomerId: customerId,
+                BookingId: entity.BookingId,
+                DeliveryId: entity.Id,
+                Amount: paymentAmount,
+                DiscountAmount: 0,
+                AdjustmentValue: 0,
+                NetAmount: paymentAmount,
+                PaymentMethod: method,
+                PaymentReference: paymentReference,
+                BankId: bankId,
+                Category: null,
+                SubCategory: null,
+                Description: $"Payment for Delivery {entity.DeliveryNumber}",
+                Note: notes
+            );
+
+            var chargeTransaction = await _transactionService.AddAsync(chargeTransactionRequest, CancellationToken.None);
+            transactionId = chargeTransaction.Id;
+        }
+        else
+        {
+            var existingTxId = existingTx.Id;
+            var tx = await _transactionRepository.UpdatableQuery(t => t.Id == existingTxId).FirstAsync(cancellationToken);
+            tx.TransactionDate = entity.DeliveryDate;
+            tx.Amount = paymentAmount;
+            tx.NetAmount = paymentAmount;
+            tx.PaymentMethod = method;
+            tx.PaymentReference = paymentReference;
+            tx.BankId = bankId;
+            tx.Note = notes;
+            tx.DeliveryId = entity.Id;
+            tx.Description = $"Payment for Delivery {entity.DeliveryNumber}";
+            _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(tx);
+            await _transactionRepository.UpdateAsync(tx, cancellationToken);
+
+            transactionCode = tx.TransactionCode;
+            transactionId = tx.Id;
+        }
+
+        entity.TransactionId = transactionId;
+
+        // Bank / cheque payments carry a matching bank deposit; cash payments must not
+        var bankTx = await _bankTransactionRepository.UpdatableQuery(bt => bt.TransactionId == transactionId && !bt.IsDeleted)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (method != PaymentMethods.CASH && bankId.HasValue)
+        {
+            var bank = await _bankRepository.GetByIdAsync(bankId.Value, cancellationToken);
+            if (bank == null) return;
+
+            var excludeBankTxId = bankTx?.Id ?? 0L;
+            var depositBankId = bankId.Value;
+            var otherMovements = await _bankTransactionRepository.Query()
+                .Where(bt => bt.BankId == depositBankId && bt.IsActive && !bt.IsDeleted && bt.Id != excludeBankTxId)
+                .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
+            var balanceAfter = bank.OpeningBalance + otherMovements + paymentAmount;
+            var description = $"Delivery Payment - {entity.DeliveryNumber} ({method})";
+
+            if (bankTx == null)
+            {
+                bankTx = new BankTransaction
+                {
+                    TransactionNumber = transactionCode,
+                    TransactionDate = entity.DeliveryDate,
+                    BankId = bankId.Value,
+                    TransactionType = BankTransactionTypes.Deposit,
+                    Amount = paymentAmount,
+                    Reference = paymentReference,
+                    Description = description,
+                    BalanceAfter = balanceAfter,
+                    SourceType = BankSourceTypes.DELIVERY,
+                    TransactionId = transactionId,
+                    BranchId = entity.BranchId,
+                    IsActive = true
+                };
+                _defaultValueInjector.InjectCreatingAudit<BankTransaction, long>(bankTx);
+                await _bankTransactionRepository.AddAsync(bankTx, cancellationToken);
+            }
+            else
+            {
+                bankTx.TransactionDate = entity.DeliveryDate;
+                bankTx.BankId = bankId.Value;
+                bankTx.Amount = paymentAmount;
+                bankTx.Reference = paymentReference;
+                bankTx.Description = description;
+                bankTx.BalanceAfter = balanceAfter;
+                _defaultValueInjector.InjectUpdatingAudit<BankTransaction, long>(bankTx);
+                await _bankTransactionRepository.UpdateAsync(bankTx, cancellationToken);
+            }
+        }
+        else if (bankTx != null)
+        {
+            await _bankTransactionRepository.DeletableQuery(bt => bt.TransactionId == transactionId).ExecuteDeleteAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>The CUSTOMER_PAYMENT transaction recorded at delivery time, if any.</summary>
+    private async Task<Transaction?> FindDeliveryPaymentTransactionAsync(Delivery delivery, CancellationToken cancellationToken = default)
+    {
+        if (delivery.TransactionId.HasValue)
+        {
+            var txId = delivery.TransactionId.Value;
+            var tx = await _transactionRepository.Query().FirstOrDefaultAsync(t => t.Id == txId, cancellationToken);
+            if (tx != null) return tx;
+        }
+
+        var deliveryId = delivery.Id;
+        return await _transactionRepository.Query()
+            .Where(t => t.DeliveryId == deliveryId)
+            .OrderBy(t => t.CreatedTime)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>All transactions (including soft-deleted) that belong to this delivery.</summary>
+    private async Task<List<Guid>> GetLinkedTransactionIdsAsync(Delivery delivery, CancellationToken cancellationToken = default)
+    {
+        var deliveryId = delivery.Id;
+        var mainTxId = delivery.TransactionId ?? Guid.Empty;
+        return await _transactionRepository.UnfilteredQuery()
+            .Where(t => t.TenantId == _tenantId && (t.DeliveryId == deliveryId || t.Id == mainTxId))
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Refuses the operation when the delivery has payments other than the one recorded at delivery time
+    /// (e.g. a later collection linked to this delivery). Those must be reversed first.
+    /// </summary>
+    private async Task EnsureNoExternalPaymentsAsync(Delivery delivery, string action, CancellationToken cancellationToken = default)
+    {
+        var mainTx = await FindDeliveryPaymentTransactionAsync(delivery, cancellationToken);
+        var mainTxId = mainTx?.Id ?? Guid.Empty;
+        var deliveryId = delivery.Id;
+
+        var otherPayments = await _transactionRepository.Query()
+            .Where(t => t.DeliveryId == deliveryId && t.Id != mainTxId)
+            .Select(t => t.TransactionCode)
+            .ToListAsync(cancellationToken);
+
+        if (otherPayments.Count > 0)
+            throw new Exception($"This delivery cannot be {action} because later payments are linked to it ({string.Join(", ", otherPayments)}). Delete those transactions first.");
+    }
+
+    private async Task<string> GenerateDeliveryTransactionCodeAsync(DateTime txDate, CancellationToken cancellationToken)
+    {
+        var datePart = txDate.ToString("yyMMdd");
+        const string prefix = "DEL";
+
+        var existingCodes = await _transactionRepository.UnfilteredQuery()
+            .Where(x => x.TenantId == _tenantId && x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+            .Select(x => x.TransactionCode)
+            .ToListAsync(cancellationToken);
+
+        int maxSequence = 0;
+        var seqPattern = new System.Text.RegularExpressions.Regex($@"^{System.Text.RegularExpressions.Regex.Escape(prefix)}-{datePart}-(\d+)");
+        foreach (var code in existingCodes)
+        {
+            var match = seqPattern.Match(code);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int seq) && seq > maxSequence)
+                maxSequence = seq;
+        }
+
+        return CodeGenerator.GenerateTransactionCode(prefix, maxSequence + 1, txDate);
+    }
+
+    #endregion
 
     public async Task<bool> ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -472,6 +728,17 @@ public class DeliveryService : IDeliveryService
             throw new Exception("Product delivery not found");
 
         var response = entity.Adapt<DeliveryResponse>();
+
+        // Delivery-time payment details for the edit form
+        var paymentTx = await FindDeliveryPaymentTransactionAsync(entity);
+        if (paymentTx != null)
+        {
+            response.TransactionId = paymentTx.Id;
+            response.PaymentMethod = paymentTx.PaymentMethod;
+            response.BankId = paymentTx.BankId;
+            response.PaymentReference = paymentTx.PaymentReference;
+            response.TransactionNotes = paymentTx.Note;
+        }
 
         // Populate additional fields from booking details for edit functionality
         foreach (var detail in response.DeliveryDetails)
@@ -655,7 +922,7 @@ public class DeliveryService : IDeliveryService
                 throw new Exception($"Booking detail not found");
 
             // Calculate already delivered base quantity for this booking detail
-            var deliveredBaseQty = await _detailRepository.Query()
+            var deliveredBaseQty = await ActiveDeliveryDetails()
                 .Where(dd => dd.BookingDetailId == detail.BookingDetailId && dd.DeliveryId != existingDeliveryId)
                 .SumAsync(dd => dd.BaseQuantity);
 
@@ -697,7 +964,7 @@ public class DeliveryService : IDeliveryService
                 throw new Exception($"Booking detail not found");
 
             // Calculate already delivered base quantity for this booking detail (excluding current delivery)
-            var deliveredBaseQty = await _detailRepository.Query()
+            var deliveredBaseQty = await ActiveDeliveryDetails()
                 .Where(dd => dd.BookingDetailId == detail.BookingDetailId && dd.DeliveryId != existingDeliveryId)
                 .SumAsync(dd => dd.BaseQuantity);
 
@@ -765,7 +1032,7 @@ public class DeliveryService : IDeliveryService
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.BookingUnit)
             .Include(b => b.BookingDetails)
-                .ThenInclude(bd => bd.DeliveryDetails)
+                .ThenInclude(bd => bd.DeliveryDetails.Where(dd => !dd.IsDeleted && !dd.Delivery!.IsDeleted))
             .FirstOrDefaultAsync(b => b.Id == guid);
 
         if (booking == null)

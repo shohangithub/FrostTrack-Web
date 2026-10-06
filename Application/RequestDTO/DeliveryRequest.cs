@@ -38,6 +38,13 @@ public class UpdateDeliveryRequest
     public required decimal ChargeAmount { get; set; }
     public required decimal AdjustmentValue { get; set; }
     public List<UpdateDeliveryDetailRequest> DeliveryDetails { get; set; } = [];
+
+    // Delivery-time payment. TransactionAmount = null keeps the current collected amount; 0 removes the payment.
+    public decimal? TransactionAmount { get; set; }
+    public string? PaymentMethod { get; set; }
+    public int? BankId { get; set; }
+    public string? PaymentReference { get; set; }
+    public string? TransactionNotes { get; set; }
 }
 
 public class UpdateDeliveryDetailRequest

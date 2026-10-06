@@ -12,6 +12,9 @@ public class Company : BaseEntity<int>
     public bool AutoGenerateBookingNo { get; set; } = false;
     public bool EnableRecurringChargeJob { get; set; } = false;
     public bool EnableEmailNotifications { get; set; } = false;
+    // Booking / delivery / transaction edit & delete is allowed only within this many days of the record date
+    public bool RestrictEditDelete { get; set; } = true;
+    public int EditDeleteAllowedDays { get; set; } = 90;
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsSingleBranch { get; set; }

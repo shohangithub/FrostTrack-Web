@@ -13,6 +13,9 @@ public class BookingService : IBookingService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<RecurringChargeEntry, Guid> _recurringChargeEntryRepository;
+    private readonly IEditWindowGuard _editWindowGuard;
+    private readonly IRepository<DeliveryDetail, Guid> _deliveryDetailRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
@@ -32,9 +35,15 @@ public class BookingService : IBookingService
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<TransactionHead, Guid> transactionHeadRepository,
         IRepository<RecurringChargeEntry, Guid> recurringChargeEntryRepository,
-        ICodeGenerationService codeGenerationService)
+        ICodeGenerationService codeGenerationService,
+        IEditWindowGuard editWindowGuard,
+        IRepository<DeliveryDetail, Guid> deliveryDetailRepository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _editWindowGuard = editWindowGuard;
+        _deliveryDetailRepository = deliveryDetailRepository;
+        _unitOfWork = unitOfWork;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
         _tenantId = _tenantProvider.GetTenantId();
@@ -104,107 +113,42 @@ public class BookingService : IBookingService
 
         await _repository.AddAsync(entity, cancellationToken);
 
-        // Create INITIAL RecurringChargeEntry for each booking detail (first billing cycle)
-        if (entity.BookingDetails != null && entity.BookingDetails.Any())
-        {
-            var now = DateTime.UtcNow;
-            foreach (var detail in entity.BookingDetails.Where(d => !d.IsDeleted))
-            {
-                var periodEnd = CalculateLastDeliveryDate(entity.BookingDate, detail.BillType);
-                var amount = (decimal)detail.BookingQuantity * detail.BookingRate;
-                var entry = new RecurringChargeEntry
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = _tenantId,
-                    BookingId = entity.Id,
-                    BookingDetailId = detail.Id,
-                    RecurringChargeRunId = null,
-                    Source = RecurringChargeSources.Initial,
-                    BillPeriodFrom = entity.BookingDate,
-                    BillPeriodTo = periodEnd,
-                    BillType = detail.BillType,
-                    Cycles = 1,
-                    Quantity = detail.BookingQuantity,
-                    Rate = detail.BookingRate,
-                    Amount = amount,
-                    Note = $"Initial charge on booking {entity.BookingNumber}",
-                    CreatedAt = now,
-                };
-                await _recurringChargeEntryRepository.AddAsync(entry, cancellationToken);
-            }
-
-            // Create a Transaction record (accounts receivable) for the booking charge
-            // This makes the customer's storage obligation visible in the accounting ledgers.
-            var storageChargeHead = await _transactionHeadRepository.Query()
-                .FirstOrDefaultAsync(th => th.Code == "STORAGE_CHARGE" && th.IsActive, cancellationToken);
-
-            if (storageChargeHead != null)
-            {
-                var totalChargeAmount = entity.BookingDetails
-                    .Where(d => !d.IsDeleted)
-                    .Sum(d => (decimal)d.BookingQuantity * d.BookingRate + d.LabourCharge);
-
-                if (totalChargeAmount > 0)
-                {
-                    var currentDate = entity.BookingDate;
-                    var datePart = currentDate.ToString("yyMMdd");
-                    var prefix = "BKC";
-
-                    var existingCodes = await _transactionRepository.Query()
-                        .Where(x => x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
-                        .Select(x => x.TransactionCode)
-                        .ToListAsync(cancellationToken);
-
-                    int maxSequence = 0;
-                    var seqPattern = new System.Text.RegularExpressions.Regex($@"^{System.Text.RegularExpressions.Regex.Escape(prefix)}-{datePart}-(\d+)");
-                    foreach (var code in existingCodes)
-                    {
-                        var match = seqPattern.Match(code);
-                        if (match.Success && int.TryParse(match.Groups[1].Value, out int seq))
-                        {
-                            if (seq > maxSequence) maxSequence = seq;
-                        }
-                    }
-
-                    int nextSequence = maxSequence + 1;
-                    var transactionCode = CodeGenerator.GenerateTransactionCode(prefix, nextSequence, entity.BookingDate);
-                    var chargeTransaction = new Transaction
-                    {
-                        Id = Guid.NewGuid(),
-                        TenantId = _tenantId,
-                        TransactionCode = transactionCode,
-                        TransactionDate = entity.BookingDate,
-                        TransactionHeadId = storageChargeHead.Id,
-                        BranchId = entity.BranchId,
-                        CustomerId = entity.CustomerId,
-                        BookingId = entity.Id,
-                        Amount = totalChargeAmount,
-                        DiscountAmount = 0,
-                        AdjustmentValue = 0,
-                        NetAmount = totalChargeAmount,
-                        PaymentMethod = PaymentMethods.CREDIT, // On account — customer pays later
-                        Description = $"Storage charge for Booking {entity.BookingNumber}",
-                        Note = $"Auto-generated on booking creation",
-                    };
-                    _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(chargeTransaction);
-                    await _transactionRepository.AddAsync(chargeTransaction, cancellationToken);
-                }
-            }
-        }
+        // Initial charge entries + storage charge transaction (shared with UpdateAsync)
+        await SyncBookingChargesAsync(entity, cancellationToken);
 
         var response = entity.Adapt<BookingResponse>();
         return response;
     }
 
+    private const string BOOKING_CHARGE_PREFIX = "BKC-";
+
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        var booking = await _repository.UnfilteredQuery()
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId, cancellationToken);
+        if (booking == null) throw new Exception("Booking record not found!");
+
+        await EnsureBookingRemovableAsync(booking, permanent: true, cancellationToken);
+
+        // Auto-generated storage charge and charge entries belong to the booking and go with it
+        await _recurringChargeEntryRepository.UnfilteredQuery()
+            .Where(x => x.BookingId == id)
+            .ExecuteDeleteAsync(cancellationToken);
+        await _transactionRepository.UnfilteredQuery()
+            .Where(t => t.BookingId == id && t.TransactionCode.StartsWith(BOOKING_CHARGE_PREFIX))
+            .ExecuteDeleteAsync(cancellationToken);
+
         return await _bookingRepository.DeleteAsync(id, cancellationToken);
     }
 
     public async Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default)
     {
-        var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
-        return result > 0;
+        var deleted = 0;
+        foreach (var id in ids.Distinct())
+        {
+            if (await DeleteAsync(id, cancellationToken)) deleted++;
+        }
+        return deleted > 0;
     }
 
     public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -212,17 +156,60 @@ public class BookingService : IBookingService
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Booking record not found!");
 
+        await EnsureBookingRemovableAsync(entity, permanent: false, cancellationToken);
+
         entity.IsDeleted = true;
         entity.DeletedAt = DateTime.UtcNow;
         entity.DeletedById = _currentUser.Id;
 
         await _repository.UpdateAsync(entity, cancellationToken);
+
+        // Hide the auto-generated storage charge from ledgers while the booking is deleted
+        DateTime? now = entity.DeletedAt;
+        int? userId = _currentUser.Id;
+        await _transactionRepository.UnfilteredQuery()
+            .Where(t => t.BookingId == id && t.TransactionCode.StartsWith(BOOKING_CHARGE_PREFIX) && !t.IsDeleted)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.IsDeleted, true)
+                .SetProperty(x => x.DeletedAt, now)
+                .SetProperty(x => x.DeletedById, userId), cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// A booking can only be removed inside the edit window and when no deliveries or payments depend on it.
+    /// </summary>
+    private async Task EnsureBookingRemovableAsync(Booking booking, bool permanent, CancellationToken cancellationToken)
+    {
+        await _editWindowGuard.EnsureEditableAsync(booking.BookingDate, "booking", cancellationToken);
+
+        var bookingId = booking.Id;
+        var deliveryQuery = permanent
+            ? _deliveryRepository.UnfilteredQuery().Where(d => d.TenantId == _tenantId)
+            : _deliveryRepository.Query();
+        var deliveryNumbers = await deliveryQuery
+            .Where(d => d.BookingId == bookingId)
+            .Select(d => d.DeliveryNumber)
+            .ToListAsync(cancellationToken);
+
+        if (deliveryNumbers.Count > 0)
+            throw new Exception($"This booking has deliveries ({string.Join(", ", deliveryNumbers)}). Delete those deliveries first.");
+
+        var transactionQuery = permanent
+            ? _transactionRepository.UnfilteredQuery().Where(t => t.TenantId == _tenantId)
+            : _transactionRepository.Query();
+        var paymentCodes = await transactionQuery
+            .Where(t => t.BookingId == bookingId && !t.TransactionCode.StartsWith(BOOKING_CHARGE_PREFIX))
+            .Select(t => t.TransactionCode)
+            .ToListAsync(cancellationToken);
+
+        if (paymentCodes.Count > 0)
+            throw new Exception($"This booking has transactions ({string.Join(", ", paymentCodes)}). Delete those transactions first.");
     }
 
     public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId, cancellationToken);
         if (entity == null) throw new Exception("Booking record not found!");
 
         entity.IsDeleted = false;
@@ -230,6 +217,13 @@ public class BookingService : IBookingService
         entity.DeletedById = null;
 
         await _repository.UpdateAsync(entity, cancellationToken);
+
+        await _transactionRepository.UnfilteredQuery()
+            .Where(t => t.BookingId == id && t.TransactionCode.StartsWith(BOOKING_CHARGE_PREFIX) && t.IsDeleted)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.IsDeleted, false)
+                .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
         return true;
     }
 
@@ -294,6 +288,9 @@ public class BookingService : IBookingService
         var existingData = await _bookingRepository.GetByIdAsync(id, cancellationToken);
         if (existingData == null) throw new Exception("Booking record not found!");
 
+        await _editWindowGuard.EnsureEditableAsync(existingData.BookingDate, "booking", cancellationToken);
+        await _editWindowGuard.EnsureEditableAsync(request.BookingDate, "booking", cancellationToken);
+
         existingData.BranchId = _currentUser.BranchId;
         existingData.CustomerId = request.CustomerId;
         existingData.Notes = request.Notes;
@@ -302,9 +299,208 @@ public class BookingService : IBookingService
 
         _defaultValueInjector.InjectUpdatingAudit<Booking, Guid>(existingData);
 
-        var response = await _bookingRepository.ManageUpdate(request, existingData, cancellationToken);
+        var removedDetailIds = await EnsureBookingLinesEditableAsync(request, existingData, cancellationToken);
 
-        return response;
+        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            // Charge entries of removed lines must go first (restrict FK to BookingDetail)
+            if (removedDetailIds.Count > 0)
+            {
+                await _recurringChargeEntryRepository.DeletableQuery(e => removedDetailIds.Contains(e.BookingDetailId))
+                    .ExecuteDeleteAsync(cancellationToken);
+            }
+
+            var response = await _bookingRepository.ManageUpdate(request, existingData, cancellationToken);
+
+            // Keep the initial charge entries and the storage charge transaction in line with the edited booking
+            await SyncBookingChargesAsync(existingData, cancellationToken);
+
+            await dbTransaction.CommitAsync(cancellationToken);
+            return response;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// A line with deliveries cannot be removed, and its quantity cannot drop below what was already delivered.
+    /// Returns the ids of the lines being removed.
+    /// </summary>
+    private async Task<List<Guid>> EnsureBookingLinesEditableAsync(BookingRequest request, Booking existingData, CancellationToken cancellationToken)
+    {
+        var incomingIds = request.BookingDetails
+            .Where(x => x.Id != Guid.Empty)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        var removedDetailIds = existingData.BookingDetails
+            .Where(d => !incomingIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToList();
+
+        if (removedDetailIds.Count > 0)
+        {
+            // Any delivery line (even a soft-deleted one) still references the booking line
+            var hasDeliveries = await _deliveryDetailRepository.Query()
+                .AnyAsync(dd => removedDetailIds.Contains(dd.BookingDetailId), cancellationToken);
+            if (hasDeliveries)
+                throw new Exception("A booking item that has deliveries cannot be removed. Delete those deliveries first.");
+        }
+
+        foreach (var item in request.BookingDetails.Where(x => x.Id != Guid.Empty))
+        {
+            var bookingDetailId = item.Id;
+            var deliveredBaseQty = await _deliveryDetailRepository.Query()
+                .Where(dd => dd.BookingDetailId == bookingDetailId && !dd.IsDeleted && !dd.Delivery!.IsDeleted)
+                .SumAsync(dd => dd.BaseQuantity, cancellationToken);
+            if (deliveredBaseQty <= 0) continue;
+
+            var unitConversion = await _unitConversionRepository.Query()
+                .FirstOrDefaultAsync(x => x.Id == item.BookingUnitId, cancellationToken);
+            var newBaseQty = unitConversion != null
+                ? (decimal)(item.BookingQuantity * unitConversion.ConversionValue)
+                : (decimal)item.BookingQuantity;
+
+            if (newBaseQty + 0.0001m < deliveredBaseQty)
+            {
+                var deliveredInUnit = unitConversion != null && unitConversion.ConversionValue > 0
+                    ? deliveredBaseQty / (decimal)unitConversion.ConversionValue
+                    : deliveredBaseQty;
+                throw new Exception($"Booking quantity ({item.BookingQuantity}) cannot be less than the quantity already delivered ({deliveredInUnit:0.##}).");
+            }
+        }
+
+        return removedDetailIds;
+    }
+
+    /// <summary>
+    /// Creates or updates the INITIAL recurring charge entry for every booking line and the
+    /// auto-generated storage charge (BKC) transaction so they match the booking.
+    /// </summary>
+    private async Task SyncBookingChargesAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        var details = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
+        var bookingId = booking.Id;
+
+        // INITIAL charge entry per line (RUN entries are history and stay untouched)
+        var initialEntries = await _recurringChargeEntryRepository
+            .UpdatableQuery(e => e.BookingId == bookingId && e.Source == RecurringChargeSources.Initial)
+            .ToListAsync(cancellationToken);
+
+        foreach (var detail in details)
+        {
+            var periodEnd = CalculateLastDeliveryDate(booking.BookingDate, detail.BillType);
+            var amount = (decimal)detail.BookingQuantity * detail.BookingRate;
+            var entry = initialEntries.FirstOrDefault(e => e.BookingDetailId == detail.Id);
+
+            if (entry == null)
+            {
+                await _recurringChargeEntryRepository.AddAsync(new RecurringChargeEntry
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = _tenantId,
+                    BookingId = bookingId,
+                    BookingDetailId = detail.Id,
+                    RecurringChargeRunId = null,
+                    Source = RecurringChargeSources.Initial,
+                    BillPeriodFrom = booking.BookingDate,
+                    BillPeriodTo = periodEnd,
+                    BillType = detail.BillType,
+                    Cycles = 1,
+                    Quantity = detail.BookingQuantity,
+                    Rate = detail.BookingRate,
+                    Amount = amount,
+                    Note = $"Initial charge on booking {booking.BookingNumber}",
+                    CreatedAt = DateTime.UtcNow,
+                }, cancellationToken);
+            }
+            else
+            {
+                entry.BillPeriodFrom = booking.BookingDate;
+                entry.BillPeriodTo = periodEnd;
+                entry.BillType = detail.BillType;
+                entry.Quantity = detail.BookingQuantity;
+                entry.Rate = detail.BookingRate;
+                entry.Amount = entry.Cycles * amount;
+                await _recurringChargeEntryRepository.UpdateAsync(entry, cancellationToken);
+            }
+        }
+
+        // Storage charge transaction (accounts receivable for the booking)
+        var totalChargeAmount = details.Sum(d => (decimal)d.BookingQuantity * d.BookingRate + d.LabourCharge);
+
+        var chargeTx = await _transactionRepository
+            .UpdatableQuery(t => t.BookingId == bookingId && t.TransactionCode.StartsWith(BOOKING_CHARGE_PREFIX))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (chargeTx != null)
+        {
+            if (totalChargeAmount <= 0)
+            {
+                var chargeTxId = chargeTx.Id;
+                await _transactionRepository.DeletableQuery(t => t.Id == chargeTxId).ExecuteDeleteAsync(cancellationToken);
+                return;
+            }
+
+            chargeTx.TransactionDate = booking.BookingDate;
+            chargeTx.CustomerId = booking.CustomerId;
+            chargeTx.BranchId = booking.BranchId;
+            chargeTx.Amount = totalChargeAmount;
+            chargeTx.NetAmount = totalChargeAmount;
+            chargeTx.Description = $"Storage charge for Booking {booking.BookingNumber}";
+            _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(chargeTx);
+            await _transactionRepository.UpdateAsync(chargeTx, cancellationToken);
+            return;
+        }
+
+        if (totalChargeAmount <= 0) return;
+
+        var storageChargeHead = await _transactionHeadRepository.Query()
+            .FirstOrDefaultAsync(th => th.Code == "STORAGE_CHARGE" && th.IsActive, cancellationToken);
+        if (storageChargeHead == null) return;
+
+        var datePart = booking.BookingDate.ToString("yyMMdd");
+        const string prefix = "BKC";
+
+        var existingCodes = await _transactionRepository.UnfilteredQuery()
+            .Where(x => x.TenantId == _tenantId && x.TransactionCode.StartsWith($"{prefix}-{datePart}-"))
+            .Select(x => x.TransactionCode)
+            .ToListAsync(cancellationToken);
+
+        int maxSequence = 0;
+        var seqPattern = new System.Text.RegularExpressions.Regex($@"^{System.Text.RegularExpressions.Regex.Escape(prefix)}-{datePart}-(\d+)");
+        foreach (var code in existingCodes)
+        {
+            var match = seqPattern.Match(code);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int seq) && seq > maxSequence)
+                maxSequence = seq;
+        }
+
+        var chargeTransaction = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantId,
+            TransactionCode = CodeGenerator.GenerateTransactionCode(prefix, maxSequence + 1, booking.BookingDate),
+            TransactionDate = booking.BookingDate,
+            TransactionHeadId = storageChargeHead.Id,
+            BranchId = booking.BranchId,
+            CustomerId = booking.CustomerId,
+            BookingId = bookingId,
+            Amount = totalChargeAmount,
+            DiscountAmount = 0,
+            AdjustmentValue = 0,
+            NetAmount = totalChargeAmount,
+            PaymentMethod = PaymentMethods.CREDIT, // On account — customer pays later
+            Description = $"Storage charge for Booking {booking.BookingNumber}",
+            Note = "Auto-generated on booking creation",
+        };
+        _defaultValueInjector.InjectCreatingAudit<Transaction, Guid>(chargeTransaction);
+        await _transactionRepository.AddAsync(chargeTransaction, cancellationToken);
     }
 
     public async Task<IEnumerable<BookingListResponse>> ListAsync(CancellationToken cancellationToken = default)

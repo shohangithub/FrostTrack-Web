@@ -32,6 +32,10 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 import { BookingInvoicePrintComponent } from '../booking-invoice-print/booking-invoice-print.component';
 
+import {
+  EditWindowService,
+  IEditWindowPolicy,
+} from '../../../common/services/edit-window.service';
 @Component({
   selector: 'app-booking-list',
   templateUrl: './booking-list.component.html',
@@ -73,6 +77,7 @@ export class BookingListComponent implements OnInit {
   currentUser: any;
   canEdit: boolean = false;
   canDelete: boolean = false;
+  editPolicy: IEditWindowPolicy | null = null;
 
   // For printing
   invoiceId: string = '';
@@ -84,6 +89,7 @@ export class BookingListComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private layoutService: LayoutService,
+    private editWindowService: EditWindowService,
     private bookingService: BookingService,
   ) {
     window.onresize = () => {
@@ -91,6 +97,16 @@ export class BookingListComponent implements OnInit {
     };
     this.layoutService.loadCurrentRoute();
     this.setPermissions();
+    this.editWindowService.getPolicy(true).subscribe((policy) => {
+      this.editPolicy = policy;
+      // Table cells are OnPush: hand the grid a new array so action buttons re-evaluate
+      this.data = [...this.data];
+    });
+  }
+
+  /** Edit/delete is only offered inside the company's edit window (server enforces it too). */
+  isEditable(row: any): boolean {
+    return EditWindowService.isWithinWindow(this.editPolicy, row?.bookingDate);
   }
 
   private setPermissions() {

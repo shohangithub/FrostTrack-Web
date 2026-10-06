@@ -67,12 +67,17 @@ public class CompanyService : ICompanyService
             result.IsSingleBranch,
             (int)result.CodeGeneration,
             result.IsActive,
-            result.Status
+            result.Status,
+            result.RestrictEditDelete,
+            result.EditDeleteAllowedDays
         );
     }
 
     public async Task<CompanyResponse> AddAsync(CompanyRequest request, CancellationToken cancellationToken = default)
     {
+        if (request.RestrictEditDelete && request.EditDeleteAllowedDays < 1)
+            throw new Exception("Edit/delete allowed days must be at least 1");
+
         var entity = new Company
         {
             Name = request.Name,
@@ -88,7 +93,9 @@ public class CompanyService : ICompanyService
             InvoiceFooter = request.InvoiceFooter ?? string.Empty,
             IsSingleBranch = request.IsSingleBranch,
             CodeGeneration = (ECodeGeneration)request.CodeGeneration,
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            RestrictEditDelete = request.RestrictEditDelete,
+            EditDeleteAllowedDays = request.EditDeleteAllowedDays
         };
 
         _defaultValueInjector.InjectTenant<Company, int>(entity);
@@ -113,12 +120,17 @@ public class CompanyService : ICompanyService
             entity.IsSingleBranch,
             (int)entity.CodeGeneration,
             entity.IsActive,
-            entity.Status
+            entity.Status,
+            entity.RestrictEditDelete,
+            entity.EditDeleteAllowedDays
         ) : null;
     }
 
     public async Task<CompanyResponse> UpdateAsync(int id, CompanyRequest request, CancellationToken cancellationToken = default)
     {
+        if (request.RestrictEditDelete && request.EditDeleteAllowedDays < 1)
+            throw new Exception("Edit/delete allowed days must be at least 1");
+
         var existingData = await _repository.GetByIdAsync(id, cancellationToken);
         if (existingData is null)
             throw new KeyNotFoundException($"Company with ID {id} not found");
@@ -137,6 +149,8 @@ public class CompanyService : ICompanyService
         existingData.IsSingleBranch = request.IsSingleBranch;
         existingData.CodeGeneration = (ECodeGeneration)request.CodeGeneration;
         existingData.IsActive = request.IsActive;
+        existingData.RestrictEditDelete = request.RestrictEditDelete;
+        existingData.EditDeleteAllowedDays = request.EditDeleteAllowedDays;
 
         var result = await _repository.UpdateAsync(existingData, cancellationToken);
 
@@ -159,7 +173,9 @@ public class CompanyService : ICompanyService
             result.IsSingleBranch,
             (int)result.CodeGeneration,
             result.IsActive,
-            result.Status
+            result.Status,
+            result.RestrictEditDelete,
+            result.EditDeleteAllowedDays
         ) : null;
     }
 

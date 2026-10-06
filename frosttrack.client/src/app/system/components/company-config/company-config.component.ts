@@ -11,6 +11,7 @@ import { ToastrService, ToastrModule } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { FormShimmerComponent } from '../../../shared/form-shimmer.component';
 import { CompanyService } from '../../services/company.service';
+import { EditWindowService } from '../../../common/services/edit-window.service';
 import {
   ICompanyRequest,
   ICompanyResponse,
@@ -45,7 +46,8 @@ export class CompanyConfigComponent implements OnInit {
     private fb: UntypedFormBuilder,
     public activeModal: NgbActiveModal,
     private toastr: ToastrService,
-    private companyService: CompanyService
+    private companyService: CompanyService,
+    private editWindowService: EditWindowService
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +73,8 @@ export class CompanyConfigComponent implements OnInit {
       isSingleBranch: [false],
       codeGeneration: [2, [Validators.required]], // Default to Company
       isActive: [true, [Validators.required]],
+      restrictEditDelete: [true],
+      editDeleteAllowedDays: [90, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -93,6 +97,8 @@ export class CompanyConfigComponent implements OnInit {
           isSingleBranch: response.isSingleBranch,
           codeGeneration: response.codeGeneration,
           isActive: response.isActive,
+          restrictEditDelete: response.restrictEditDelete ?? true,
+          editDeleteAllowedDays: response.editDeleteAllowedDays ?? 90,
         });
         this.isLoading = false;
       },
@@ -122,12 +128,15 @@ export class CompanyConfigComponent implements OnInit {
         isSingleBranch: this.register.value.isSingleBranch,
         codeGeneration: this.register.value.codeGeneration,
         isActive: this.register.value.isActive,
+        restrictEditDelete: this.register.value.restrictEditDelete ?? true,
+        editDeleteAllowedDays: Number(this.register.value.editDeleteAllowedDays) || 90,
       };
 
       if (this.isEditing) {
         this.companyService.update(this.row.id, payload).subscribe({
           next: () => {
             this.isSaveLoading = false;
+            this.editWindowService.invalidate();
             this.activeModal.close(true);
           },
           error: (err: ErrorResponse) => {
@@ -140,6 +149,7 @@ export class CompanyConfigComponent implements OnInit {
         this.companyService.create(payload).subscribe({
           next: () => {
             this.isSaveLoading = false;
+            this.editWindowService.invalidate();
             this.activeModal.close(true);
           },
           error: (err: ErrorResponse) => {

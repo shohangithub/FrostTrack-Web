@@ -26,6 +26,10 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
+import {
+  EditWindowService,
+  IEditWindowPolicy,
+} from '../../../common/services/edit-window.service';
 @Component({
   selector: 'app-transaction-list',
   templateUrl: './transaction-list.component.html',
@@ -58,6 +62,7 @@ export class TransactionListComponent implements OnInit {
   paging: PagingResponse | undefined;
   canEdit: boolean = false;
   canDelete: boolean = false;
+  editPolicy: IEditWindowPolicy | null = null;
   searchSubject = new Subject<any>();
   selection = SelectionType.checkbox;
 
@@ -66,6 +71,7 @@ export class TransactionListComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private layoutService: LayoutService,
+    private editWindowService: EditWindowService,
     private transactionService: TransactionService,
   ) {
     window.onresize = () => {
@@ -73,6 +79,16 @@ export class TransactionListComponent implements OnInit {
     };
     this.layoutService.loadCurrentRoute();
     this.setPermissions();
+    this.editWindowService.getPolicy(true).subscribe((policy) => {
+      this.editPolicy = policy;
+      // Table cells are OnPush: hand the grid a new array so action buttons re-evaluate
+      this.data = [...this.data];
+    });
+  }
+
+  /** Edit/delete is only offered inside the company's edit window (server enforces it too). */
+  isEditable(row: any): boolean {
+    return EditWindowService.isWithinWindow(this.editPolicy, row?.transactionDate);
   }
 
   private setPermissions() {

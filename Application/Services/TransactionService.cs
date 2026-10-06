@@ -4,6 +4,9 @@ public class TransactionService : ITransactionService
 {
     private readonly IRepository<Transaction, Guid> _repository;
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
+    private readonly IRepository<Delivery, Guid> _deliveryRepository;
+    private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
+    private readonly IEditWindowGuard _editWindowGuard;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
@@ -16,9 +19,15 @@ public class TransactionService : ITransactionService
         DefaultValueInjector defaultValueInjector,
         ITenantProvider tenantProvider,
         IUserContextService userContextService,
-        ICodeGenerationService codeGenerationService)
+        ICodeGenerationService codeGenerationService,
+        IRepository<Delivery, Guid> deliveryRepository,
+        IRepository<BankTransaction, long> bankTransactionRepository,
+        IEditWindowGuard editWindowGuard)
     {
         _repository = repository;
+        _deliveryRepository = deliveryRepository;
+        _bankTransactionRepository = bankTransactionRepository;
+        _editWindowGuard = editWindowGuard;
         _transactionHeadRepository = transactionHeadRepository;
         _defaultValueInjector = defaultValueInjector;
         _tenantProvider = tenantProvider;
@@ -71,16 +80,59 @@ public class TransactionService : ITransactionService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        // Permanent delete is usually invoked from the "deleted" tab, so look past the soft-delete filter
+        var entity = await _repository.UnfilteredQuery()
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
 
-        return await _repository.DeleteAsync(entity, cancellationToken);
+        await EnsureModifiableAsync(entity, cancellationToken);
+
+        await _bankTransactionRepository.UnfilteredQuery()
+            .Where(bt => bt.TransactionId == id)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var result = await _repository.UnfilteredQuery()
+            .Where(x => x.Id == id)
+            .ExecuteDeleteAsync(cancellationToken);
+        return result > 0;
     }
 
     public async Task<bool> DeleteBatchAsync(List<Guid> ids, CancellationToken cancellationToken = default)
     {
-        var result = await _repository.DeletableQuery(x => ids.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
-        return result > 0;
+        var deleted = 0;
+        foreach (var id in ids.Distinct())
+        {
+            if (await DeleteAsync(id, cancellationToken)) deleted++;
+        }
+        return deleted > 0;
+    }
+
+    /// <summary>
+    /// Applies the edit/delete window and refuses changes to payments that a delivery owns
+    /// (those must be changed from the delivery so its collected amount stays in sync).
+    /// </summary>
+    private async Task EnsureModifiableAsync(Transaction entity, CancellationToken cancellationToken, bool checkEditWindow = true)
+    {
+        if (checkEditWindow)
+            await _editWindowGuard.EnsureEditableAsync(entity.TransactionDate, "transaction", cancellationToken);
+
+        var transactionId = entity.Id;
+        var owningDelivery = await _deliveryRepository.UnfilteredQuery()
+            .Where(d => d.TenantId == _tenantId && d.TransactionId == transactionId)
+            .Select(d => d.DeliveryNumber)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (owningDelivery == null && entity.DeliveryId.HasValue && entity.TransactionCode.StartsWith("DEL-"))
+        {
+            var deliveryId = entity.DeliveryId.Value;
+            owningDelivery = await _deliveryRepository.UnfilteredQuery()
+                .Where(d => d.Id == deliveryId)
+                .Select(d => d.DeliveryNumber)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (owningDelivery != null)
+            throw new Exception($"This payment was collected with delivery {owningDelivery}. Edit or delete it from that delivery instead.");
     }
 
     public async Task<TransactionResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -166,6 +218,9 @@ public class TransactionService : ITransactionService
 
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
+
+        await EnsureModifiableAsync(entity, cancellationToken);
+        await _editWindowGuard.EnsureEditableAsync(request.TransactionDate != default ? request.TransactionDate : DateTime.UtcNow, "transaction", cancellationToken);
 
         // Load TransactionHead to get Type and DisplayType
         var transactionHead = await _transactionHeadRepository.Query()
@@ -433,24 +488,45 @@ public class TransactionService : ITransactionService
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
 
+        await EnsureModifiableAsync(entity, cancellationToken);
+
         entity.IsDeleted = true;
         entity.DeletedAt = DateTime.UtcNow;
         entity.DeletedById = _currentUser.Id;
 
         await _repository.UpdateAsync(entity, cancellationToken);
+
+        // Keep the matching bank deposit/withdrawal out of bank balances too
+        DateTime? now = entity.DeletedAt;
+        int? userId = _currentUser.Id;
+        await _bankTransactionRepository.UnfilteredQuery()
+            .Where(bt => bt.TransactionId == id && !bt.IsDeleted)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.IsDeleted, true)
+                .SetProperty(x => x.DeletedAt, now)
+                .SetProperty(x => x.DeletedById, userId), cancellationToken);
         return true;
     }
 
     public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await _repository.UnfilteredQuery().FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantId, cancellationToken);
         if (entity == null) throw new Exception("Transaction not found!");
+
+        await EnsureModifiableAsync(entity, cancellationToken, checkEditWindow: false);
 
         entity.IsDeleted = false;
         entity.DeletedAt = null;
         entity.DeletedById = null;
 
         await _repository.UpdateAsync(entity, cancellationToken);
+
+        await _bankTransactionRepository.UnfilteredQuery()
+            .Where(bt => bt.TransactionId == id && bt.IsDeleted)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.IsDeleted, false)
+                .SetProperty(x => x.DeletedAt, (DateTime?)null)
+                .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
         return true;
     }
 
