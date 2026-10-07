@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IDailyStockBookService, DailyStockBookService>();
         services.AddScoped<IDatewiseBookingReportService, DatewiseBookingReportService>();
         services.AddScoped<IDatewiseDeliveryReportService, DatewiseDeliveryReportService>();
+        services.AddScoped<ICustomerBillStatementService, CustomerBillStatementService>();
         services.AddScoped<ICashBookService, CashBookService>();
         services.AddScoped<ILedgerBookService, LedgerBookService>();
         services.AddScoped<IBankBookService, BankBookService>();

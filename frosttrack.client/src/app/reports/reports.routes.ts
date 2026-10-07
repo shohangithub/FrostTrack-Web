@@ -120,4 +120,11 @@ export const reportRoutes: Route[] = [
         (m) => m.IncomeExpenseRangeReportComponent,
       ),
   },
+  {
+    path: 'customer-bill-statement',
+    loadComponent: () =>
+      import('./components/customer-bill-statement/customer-bill-statement.component').then(
+        (m) => m.CustomerBillStatementComponent,
+      ),
+  },
 ];

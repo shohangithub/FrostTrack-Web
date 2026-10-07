@@ -48,18 +48,20 @@ public static class RecurringChargeCalculator
 
     // ── private helpers ──────────────────────────────────────────────────────
 
+    // A cycle is complete only once the full period has elapsed (time-of-day included).
+    // Dates are stored as UTC instants of local midnight, so comparing calendar days alone
+    // would complete a cycle one local day early.
     private static int MonthsBetween(DateTime from, DateTime to)
     {
         int months = (to.Year - from.Year) * 12 + (to.Month - from.Month);
-        if (to.Day < from.Day) months--; // incomplete calendar month
+        if (months > 0 && from.AddMonths(months) > to) months--; // incomplete month
         return Math.Max(months, 0);
     }
 
     private static int YearsBetween(DateTime from, DateTime to)
     {
         int years = to.Year - from.Year;
-        if (to.Month < from.Month || (to.Month == from.Month && to.Day < from.Day))
-            years--;
+        if (years > 0 && from.AddYears(years) > to) years--; // incomplete year
         return Math.Max(years, 0);
     }
 }

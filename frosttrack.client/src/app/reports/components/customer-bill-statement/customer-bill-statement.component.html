@@ -1,0 +1,444 @@
+<section class="main-content">
+  <div class="section-body">
+
+    <!-- Filter Section -->
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card mt-2">
+          <span class="card-label">গ্রাহক বিল বিবরণী / Customer Bill Statement</span>
+          <div class="p-10 mt-2">
+            <form class="product-form" [formGroup]="reportForm" (ngSubmit)="generateReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <label for="customerId" class="col-sm-12 col-form-label">
+                      Customer <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-12">
+                      <ng-select id="customerId" [items]="customers" bindLabel="customerName" bindValue="id"
+                        placeholder="Select customer" formControlName="customerId" [clearable]="true">
+                        <ng-template ng-option-tmp let-item="item">
+                          {{ item.customerName }}
+                          @if (item.customerMobile) {
+                          <small class="text-muted">({{ item.customerMobile }})</small>
+                          }
+                        </ng-template>
+                      </ng-select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="fromDate" class="col-sm-12 col-form-label">
+                      From Date <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-12">
+                      <input type="date" id="fromDate" class="form-control form-control-sm" formControlName="fromDate" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                  <div class="form-group row">
+                    <label for="toDate" class="col-sm-12 col-form-label">
+                      To Date <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-12">
+                      <input type="date" id="toDate" class="form-control form-control-sm" formControlName="toDate" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                  <div class="form-group row">
+                    <div class="col-sm-12 text-end">
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-1" (click)="selectMonth(-1)">
+                        Last Month
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="selectMonth(0)">
+                        This Month
+                      </button>
+                      <button type="submit" class="btn btn-primary px-3" [disabled]="isLoading || reportForm.invalid">
+                        @if (isLoading) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Show Bill
+                      </button>
+                      @if (statement) {
+                      <button type="button" class="btn btn-secondary ms-2 px-3" (click)="reset()">Clear</button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              @if (reportForm.hasError('invalidRange')) {
+              <small class="form-text text-danger">From date cannot be after To date</small>
+              }
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Section -->
+    @if (statement && !isLoading) {
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card">
+
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn" [openNewTab]="true" [closeWindow]="true" [previewOnly]="false"
+                  [useExistingCss]="true" printTitle="Customer Bill Statement"
+                  printSectionId="customer-bill-print-section" ngxPrint>
+                  <i class="fas fa-print me-1"></i>Print
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="customer-bill-print-section" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <div class="invoice-container">
+
+                  <app-report-invoice-header [Title]="'গ্রাহক বিল বিবরণী'" [InvoiceNumber]="''">
+                  </app-report-invoice-header>
+
+                  <!-- Customer & Period -->
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">Customer:</td>
+                        <td class="info-value fw-bold">{{ statement.customerName }}</td>
+                        <td class="info-label">Bill Period:</td>
+                        <td class="info-value">
+                          {{ statement.fromDate | date: 'dd-MMM-yyyy' }} to {{ statement.toDate | date: 'dd-MMM-yyyy' }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Mobile:</td>
+                        <td class="info-value">{{ statement.customerMobile || '-' }}</td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">{{ today | date: 'dd-MMM-yyyy hh:mm a' }}</td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Address:</td>
+                        <td class="info-value" colspan="3">{{ statement.address || '-' }}</td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Stock & storage rent -->
+                  <div class="section-title">মজুদ ও ভাড়া / Stock in store &amp; rent for this period</div>
+                  <div class="stored-products-section">
+                    <table class="products-table stock-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th>Booking</th>
+                          <th>Product</th>
+                          <th class="text-end">Rate</th>
+                          <th class="text-end">Opening Stock</th>
+                          <th class="text-end">Booked</th>
+                          <th class="text-end">Delivered</th>
+                          <th class="text-end">Stock on Bill Date</th>
+                          <th>Billing Date(s)</th>
+                          <th class="text-end">Rent (৳)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (s of statement.stockLines; track $index) {
+                        <tr>
+                          <td>
+                            {{ s.bookingNumber }}
+                            <div class="sub-text">{{ s.bookingDate | date: 'dd-MMM-yy' }}</div>
+                          </td>
+                          <td>{{ s.productName }}</td>
+                          <td class="text-end">{{ s.rate | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ s.openingStock | number: '1.0-2' }}</td>
+                          <td class="text-end">{{ s.bookedQty ? (s.bookedQty | number: '1.0-2') : '-' }}</td>
+                          <td class="text-end">{{ s.deliveredQty ? (s.deliveredQty | number: '1.0-2') : '-' }}</td>
+                          <td class="text-end fw-bold">{{ s.closingStock | number: '1.0-2' }} <span class="sub-text">{{ s.unitName }}</span></td>
+                          <td class="small-text">
+                            @for (d of s.billingDates; track $index; let last = $last) {
+                            {{ d | date: 'dd-MMM' }}@if (!last) {, }
+                            }
+                            @if (s.cyclesInPeriod > s.billingDates.length) {
+                            … ({{ s.cyclesInPeriod }} cycles)
+                            }
+                            @if (s.cyclesInPeriod === 0) { - }
+                          </td>
+                          <td class="text-end fw-bold">{{ s.rentThisPeriod | number: '1.2-2' }}</td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                          <td colspan="9" class="text-center py-2">No stock in store for this period.</td>
+                        </tr>
+                        }
+                      </tbody>
+                      @if (statement.stockLines.length > 0) {
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="6" class="text-end">Total:</td>
+                          <td class="text-end">{{ closingStockTotal | number: '1.0-2' }}</td>
+                          <td></td>
+                          <td class="text-end">{{ stockRentTotal | number: '1.2-2' }}</td>
+                        </tr>
+                      </tfoot>
+                      }
+                    </table>
+                    <div class="statement-note">
+                      Rent = stock on bill date × rate for every billing date in the period (the booking date is the
+                      first cycle). Goods delivered in the period are charged through their delivery rent.
+                    </div>
+                  </div>
+
+                  <!-- Bookings -->
+                  <div class="section-title">বুকিং বিবরণ / Bookings in this period</div>
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th style="width: 30px;">ক্রমিক</th>
+                          <th>Date</th>
+                          <th>Booking No</th>
+                          <th>Product</th>
+                          <th class="text-end">Qty</th>
+                          <th class="text-end">Rate</th>
+                          <th class="text-end">Rent (৳)</th>
+                          <th class="text-end">Labour (৳)</th>
+                          <th class="text-end">Total (৳)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (b of statement.bookings; track $index) {
+                        <tr>
+                          <td class="text-center">{{ $index + 1 }}</td>
+                          <td>{{ b.bookingDate | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ b.bookingNumber }}</td>
+                          <td>{{ b.productName }}</td>
+                          <td class="text-end">{{ b.quantity | number: '1.0-2' }} {{ b.unitName }}</td>
+                          <td class="text-end">{{ b.rate | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ b.rentAmount | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ b.labourCharge | number: '1.2-2' }}</td>
+                          <td class="text-end fw-bold">{{ b.total | number: '1.2-2' }}</td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                          <td colspan="9" class="text-center py-2">No bookings in this period.</td>
+                        </tr>
+                        }
+                      </tbody>
+                      @if (statement.bookings.length > 0) {
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="6" class="text-end">Total:</td>
+                          <td class="text-end">{{ statement.bookingRentTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ statement.bookingLabourTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ (statement.bookingRentTotal + statement.bookingLabourTotal) | number: '1.2-2' }}</td>
+                        </tr>
+                      </tfoot>
+                      }
+                    </table>
+                  </div>
+
+                  <!-- Deliveries -->
+                  <div class="section-title">ডেলিভারি বিবরণ / Deliveries in this period</div>
+                  <div class="stored-products-section">
+                    <table class="products-table stock-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th style="width: 30px;">ক্রমিক</th>
+                          <th>Date</th>
+                          <th>Delivery No</th>
+                          <th>Booking No</th>
+                          <th>Product</th>
+                          <th class="text-end">Qty</th>
+                          <th class="text-center">Cycles</th>
+                          <th class="text-end">Rent (৳)</th>
+                          <th class="text-end">Labour (৳)</th>
+                          <th class="text-end">Total (৳)</th>
+                          <th class="text-end">Collected (৳)</th>
+                          <th class="text-end">Due (৳)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (d of statement.deliveries; track $index) {
+                        <tr>
+                          <td class="text-center">{{ $index + 1 }}</td>
+                          <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ d.deliveryNumber }}</td>
+                          <td>{{ d.bookingNumber }}</td>
+                          <td>{{ d.productName }}</td>
+                          <td class="text-end">{{ d.quantity | number: '1.0-2' }} {{ d.unitName }}</td>
+                          <td class="text-center">{{ d.billingCycles }}</td>
+                          <td class="text-end">{{ d.rentCharge | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ d.labourCharge | number: '1.2-2' }}</td>
+                          <td class="text-end fw-bold">{{ d.total | number: '1.2-2' }}</td>
+                          <td class="text-end income-amount">{{ d.collectedAmount ? (d.collectedAmount | number: '1.2-2') : '-' }}</td>
+                          <td class="text-end">{{ d.dueAmount | number: '1.2-2' }}</td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                          <td colspan="12" class="text-center py-2">No deliveries in this period.</td>
+                        </tr>
+                        }
+                      </tbody>
+                      @if (statement.deliveries.length > 0) {
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="7" class="text-end">Total:</td>
+                          <td class="text-end">{{ statement.deliveryRentTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ statement.deliveryLabourTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ (statement.deliveryRentTotal + statement.deliveryLabourTotal) | number: '1.2-2' }}</td>
+                          <td class="text-end income-amount">{{ statement.deliveryCollectedTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ (statement.deliveryRentTotal + statement.deliveryLabourTotal - statement.deliveryCollectedTotal) | number: '1.2-2' }}</td>
+                        </tr>
+                        @if (statement.deliveryAdjustmentTotal !== 0) {
+                        <tr>
+                          <td colspan="9" class="text-end">Delivery adjustments:</td>
+                          <td class="text-end">{{ statement.deliveryAdjustmentTotal | number: '1.2-2' }}</td>
+                          <td colspan="2"></td>
+                        </tr>
+                        }
+                      </tfoot>
+                      }
+                    </table>
+                  </div>
+
+                  <!-- Payments & Discounts -->
+                  <div class="section-title">পরিশোধ / Payments received in this period</div>
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th style="width: 30px;">ক্রমিক</th>
+                          <th>Date</th>
+                          <th>Receipt No</th>
+                          <th>Type</th>
+                          <th>Description</th>
+                          <th class="text-end">Amount (৳)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (p of statement.payments; track $index) {
+                        <tr>
+                          <td class="text-center">{{ $index + 1 }}</td>
+                          <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ p.transactionCode }}</td>
+                          <td>{{ p.paymentMethod || '-' }}</td>
+                          <td class="small-text">
+                            @if (p.deliveryNumber) {
+                            <span class="fw-bold">At delivery {{ p.deliveryNumber }}</span>
+                            } @else {
+                            {{ p.description }}
+                            }
+                          </td>
+                          <td class="text-end income-amount">{{ p.amount | number: '1.2-2' }}</td>
+                        </tr>
+                        }
+                        @for (p of statement.discounts; track $index) {
+                        <tr>
+                          <td class="text-center">{{ statement.payments.length + $index + 1 }}</td>
+                          <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ p.transactionCode }}</td>
+                          <td>DISCOUNT</td>
+                          <td class="small-text">{{ p.description }}</td>
+                          <td class="text-end">{{ p.amount | number: '1.2-2' }}</td>
+                        </tr>
+                        }
+                        @if (statement.payments.length === 0 && statement.discounts.length === 0) {
+                        <tr>
+                          <td colspan="6" class="text-center py-2">No payments in this period.</td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Bill Summary -->
+                  <div class="section-title">বিল সারসংক্ষেপ / Bill Summary</div>
+                  <div class="stored-products-section bill-summary">
+                    <table class="products-table">
+                      <tbody>
+                        <tr>
+                          <td>পূর্বের বকেয়া / Previous Due</td>
+                          <td class="text-end">{{ statement.previousDue | number: '1.2-2' }}</td>
+                        </tr>
+                        <tr>
+                          <td>(+) ভাড়া / Rent charged this period</td>
+                          <td class="text-end">{{ statement.rentCharged | number: '1.2-2' }}</td>
+                        </tr>
+                        <tr>
+                          <td>(+) লেবার চার্জ / Labour charged this period</td>
+                          <td class="text-end">{{ statement.labourCharged | number: '1.2-2' }}</td>
+                        </tr>
+                        <tr class="total-row">
+                          <td class="fw-bold">মোট প্রদেয় / Total Payable</td>
+                          <td class="text-end fw-bold">{{ (statement.previousDue + statement.totalCharged) | number: '1.2-2' }}</td>
+                        </tr>
+                        @if (statement.paidAtDelivery > 0) {
+                        <tr>
+                          <td>(−) ডেলিভারির সময় পরিশোধ / Paid at delivery</td>
+                          <td class="text-end income-amount">{{ statement.paidAtDelivery | number: '1.2-2' }}</td>
+                        </tr>
+                        }
+                        <tr>
+                          <td>(−) {{ statement.paidAtDelivery > 0 ? 'অন্যান্য পরিশোধ / Other payments' : 'পরিশোধ / Paid this period' }}</td>
+                          <td class="text-end income-amount">{{ statement.otherPayments | number: '1.2-2' }}</td>
+                        </tr>
+                        @if (statement.totalDiscount > 0) {
+                        <tr>
+                          <td>(−) ছাড় / Discount</td>
+                          <td class="text-end">{{ statement.totalDiscount | number: '1.2-2' }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot>
+                        <tr class="net-row">
+                          @if (statement.closingDue >= 0) {
+                          <td>বর্তমান বকেয়া / Current Due</td>
+                          <td class="text-end deficit-value">৳ {{ statement.closingDue | number: '1.2-2' }}</td>
+                          } @else {
+                          <td>অগ্রিম / Advance</td>
+                          <td class="text-end surplus-value">৳ {{ -statement.closingDue | number: '1.2-2' }}</td>
+                          }
+                        </tr>
+                      </tfoot>
+                    </table>
+                    <div class="statement-note">
+                      Rent charged this period = total of the "Stock in store &amp; rent" table
+                      @if (statement.deliveryAdjustmentTotal !== 0) { + delivery adjustments }.
+                    </div>
+                  </div>
+
+                  @if (!hasActivity) {
+                  <p class="text-center text-muted">No bookings, deliveries or payments in this period.</p>
+                  }
+
+                  <div class="signature-section">
+                    <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-label">Customer Signature</div>
+                    </div>
+                    <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-label">Authorized By</div>
+                      <div class="signature-sublabel">(Accounts)</div>
+                    </div>
+                  </div>
+
+                  <app-report-footer></app-report-footer>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</section>

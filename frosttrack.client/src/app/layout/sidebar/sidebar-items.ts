@@ -706,6 +706,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/reports/customer-bill-statement',
+        title: 'Customer Bill Statement',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/reports/customer-due-report',
         title: 'Customer Due Report',
         iconType: '',

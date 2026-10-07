@@ -1,0 +1,35 @@
+// Extra styles for the customer bill statement; base report styles come from income-expense-report.component.scss
+
+.stored-products-section .products-table {
+  .section-head {
+    background-color: #eeeeee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  td.small-text {
+    font-size: 10px;
+  }
+
+  .sub-text {
+    font-size: 9px;
+    color: #555;
+  }
+
+  &.stock-table th,
+  &.stock-table td {
+    font-size: 10px;
+    padding: 4px 5px;
+  }
+}
+
+.bill-summary {
+  width: 60%;
+  margin-left: auto;
+}
+
+.statement-note {
+  font-size: 9px;
+  color: #555;
+  margin-top: 4px;
+}
