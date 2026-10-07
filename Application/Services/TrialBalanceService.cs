@@ -87,7 +87,7 @@ public class TrialBalanceService : ITrialBalanceService
 
         // 3. Bank Accounts (Real Accounts / Assets -> DEBIT)
         var banks = await _bankRepository.Query()
-            .Where(b => b.TenantId == _tenantId && b.IsActive)
+            .Where(b => b.TenantId == _tenantId && b.IsActive && !b.IsDeleted)
             .ToListAsync(cancellationToken);
 
         var bankItems = new List<TrialBalanceItemResponse>();

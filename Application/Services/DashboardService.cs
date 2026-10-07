@@ -46,11 +46,13 @@ public class DashboardService : IDashboardService
         // Build base queries filtered by tenant and date range
         var bookingsQuery = _bookingRepository.Query()
             .Where(x => x.TenantId == _tenantId
+                && !x.IsDeleted && !x.IsArchived
                 && x.BookingDate >= fromUtc
                 && x.BookingDate < toUtc);
 
         var deliveriesQuery = _deliveryRepository.Query()
             .Where(x => x.TenantId == _tenantId
+                && !x.IsArchived
                 && x.DeliveryDate >= fromUtc
                 && x.DeliveryDate < toUtc);
 
@@ -159,8 +161,21 @@ public class DashboardService : IDashboardService
         }
 
         // Get all data
-        var bookings = await bookingsQuery.ToListAsync(cancellationToken);
-        var deliveries = await deliveriesQuery.ToListAsync(cancellationToken);
+        // Amounts are summed in SQL; loading the entities alone left the detail collections empty (trends were always 0)
+        var bookings = await bookingsQuery
+            .Select(b => new
+            {
+                b.BookingDate,
+                Amount = b.BookingDetails.Where(d => !d.IsDeleted).Sum(d => (decimal)d.BookingQuantity * d.BookingRate)
+            })
+            .ToListAsync(cancellationToken);
+        var deliveries = await deliveriesQuery
+            .Select(d => new
+            {
+                d.DeliveryDate,
+                Amount = d.DeliveryDetails.Where(dd => !dd.IsDeleted).Sum(dd => dd.ChargeAmount + dd.LabourCharge)
+            })
+            .ToListAsync(cancellationToken);
         var transactions = await transactionsQuery.ToListAsync(cancellationToken);
 
         // Generate date labels
@@ -203,7 +218,7 @@ public class DashboardService : IDashboardService
             .GroupBy(b => b.BookingDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(
                 g.Key,
-                g.SelectMany(b => b.BookingDetails).Sum(d => (decimal)d.BookingQuantity * d.BookingRate),
+                g.Sum(b => b.Amount),
                 g.Count()
             ))
             .OrderBy(d => d.Date)
@@ -214,7 +229,7 @@ public class DashboardService : IDashboardService
             .GroupBy(d => d.DeliveryDate.ToLocalTime().Date)
             .Select(g => new DailyTrendData(
                 g.Key,
-                g.SelectMany(d => d.DeliveryDetails).Sum(dd => (decimal)dd.DeliveryQuantity * dd.BookingDetail!.BookingRate),
+                g.Sum(d => d.Amount), // delivery bill: rent + labour
                 g.Count()
             ))
             .OrderBy(d => d.Date)

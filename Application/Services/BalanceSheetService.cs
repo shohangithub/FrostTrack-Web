@@ -53,7 +53,7 @@ public class BalanceSheetService : IBalanceSheetService
 
         // 1. ASSETS: Bank balances as of the report date (up to toUtc)
         var banks = await _bankRepository.Query()
-            .Where(b => b.TenantId == _tenantId && b.IsActive)
+            .Where(b => b.TenantId == _tenantId && b.IsActive && !b.IsDeleted)
             .ToListAsync(cancellationToken);
 
         foreach (var bank in banks)

@@ -88,6 +88,7 @@ public class ProductCategoryService : IProductCategoryService
     public async Task<IEnumerable<ProductCategoryListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var response = await _repository.Query()
+           .Where(x => !x.IsDeleted)
            .Select(x => new ProductCategoryListResponse(x.Id, x.CategoryName, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
            .ToListAsync(cancellationToken);
         return response;

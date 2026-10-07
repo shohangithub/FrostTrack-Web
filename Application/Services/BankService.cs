@@ -99,6 +99,7 @@ public class BankService : IBankService
     public async Task<IEnumerable<BankListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
+            .Where(x => !x.IsDeleted)
             .OrderBy(x => x.BankName)
             .Select(x => new BankListResponse(
                x.Id, x.BankName, x.BankCode, x.BankBranch, x.AccountNumber, x.AccountTitle,
@@ -173,6 +174,13 @@ public class BankService : IBankService
     {
         var entity = await _repository.Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+        // Bank books and balances keep summing a deleted bank's transactions, so refuse while any are active
+        var hasTransactions = await _bankTransactionRepository.Query()
+            .AnyAsync(bt => bt.BankId == id && !bt.IsDeleted, cancellationToken);
+        if (hasTransactions)
+            throw new Exception("This bank has transactions. Delete or move those transactions first, or mark the bank inactive instead.");
+
         entity.IsDeleted = true;
         entity.DeletedAt = DateTime.UtcNow;
         entity.DeletedById = _currentUser.Id;

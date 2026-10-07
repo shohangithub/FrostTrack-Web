@@ -81,7 +81,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<IEnumerable<EmployeeListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var data = await _repository.Query().ToListAsync(cancellationToken);
+        var data = await _repository.Query().Where(x => !x.IsDeleted).ToListAsync(cancellationToken);
         return data.Adapt<IEnumerable<EmployeeListResponse>>();
     }
 

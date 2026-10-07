@@ -111,7 +111,7 @@ public class ProductService : IProductService
 
     public async Task<IEnumerable<ProductListResponse>> ListAsync(Expression<Func<Product, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
-        var query = _repository.Query();
+        var query = _repository.Query().Where(x => !x.IsDeleted);
         if (predicate != null)
         {
             query = query.Where(predicate);

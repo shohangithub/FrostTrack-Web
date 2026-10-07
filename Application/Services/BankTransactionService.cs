@@ -46,7 +46,7 @@ public class BankTransactionService : IBankTransactionService
 
         // Get current bank balance
         var bank = await _bankRepository.GetByIdAsync(bankTransaction.BankId, cancellationToken);
-        if (bank is null) throw new ArgumentException("Bank not found");
+        if (bank is null || bank.IsDeleted) throw new ArgumentException("Bank not found");
 
         var entity = bankTransaction.Adapt<BankTransaction>();
         entity.BranchId = _currentUser.BranchId;
@@ -210,6 +210,7 @@ public class BankTransactionService : IBankTransactionService
     {
         var result = await _repository.Query()
             .Include(x => x.Bank)
+            .Where(x => !x.IsDeleted)
             .OrderByDescending(x => x.TransactionDate)
             .ToListAsync(cancellationToken);
 

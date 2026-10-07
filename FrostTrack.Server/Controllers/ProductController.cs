@@ -23,7 +23,7 @@ public class ProductController : ControllerBase
     [Route("get-list-without-service")]
     public async Task<IEnumerable<ProductListResponse>> GetProductsWithoutService(CancellationToken cancellationToken)
     {
-        Expression<Func<Product, bool>> predicate = x => x.IsActive;
+        Expression<Func<Product, bool>> predicate = x => x.IsActive && !x.IsDeleted;
         return await _productService.ListAsync(predicate, cancellationToken);
     }
 
@@ -32,7 +32,7 @@ public class ProductController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<Product, bool>> predicate = x => x.IsActive == x.IsActive;
+        Expression<Func<Product, bool>> predicate = x => !x.IsDeleted;
         return await _productService.GetLookup(predicate, cancellationToken);
     }
 

@@ -24,7 +24,7 @@ public class ProductCategoryController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<ProductCategory, bool>> predicate = x => x.IsActive == x.IsActive;
+        Expression<Func<ProductCategory, bool>> predicate = x => !x.IsDeleted;
         return await _productCategoryService.GetLookup(predicate, cancellationToken);
     }
 

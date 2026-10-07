@@ -567,7 +567,7 @@ public class DeliveryService : IDeliveryService
         if (method != PaymentMethods.CASH && bankId.HasValue)
         {
             var bank = await _bankRepository.GetByIdAsync(bankId.Value, cancellationToken);
-            if (bank == null) return;
+            if (bank == null || bank.IsDeleted) throw new Exception("Selected bank not found");
 
             var excludeBankTxId = bankTx?.Id ?? 0L;
             var depositBankId = bankId.Value;
@@ -842,7 +842,7 @@ public class DeliveryService : IDeliveryService
     {
         // Get all bookings for this customer with product details
         var bookings = await _bookingRepository.Query()
-            .Where(b => b.CustomerId == customerId)
+            .Where(b => b.CustomerId == customerId && !b.IsDeleted)
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.Product)
             .Include(b => b.BookingDetails)
@@ -909,7 +909,7 @@ public class DeliveryService : IDeliveryService
             .Include(b => b.Customer)
             .FirstOrDefaultAsync(b => b.Id == request.BookingId);
 
-        if (booking == null)
+        if (booking == null || booking.IsDeleted)
             throw new Exception("Booking not found");
 
         foreach (var detail in request.DeliveryDetails)
@@ -1035,7 +1035,7 @@ public class DeliveryService : IDeliveryService
                 .ThenInclude(bd => bd.DeliveryDetails.Where(dd => !dd.IsDeleted && !dd.Delivery!.IsDeleted))
             .FirstOrDefaultAsync(b => b.Id == guid);
 
-        if (booking == null)
+        if (booking == null || booking.IsDeleted)
             throw new Exception($"Booking with number '{bookingNumber}' not found");
 
         // // Get all deliveries for this booking to calculate remaining quantities
@@ -1183,7 +1183,7 @@ public class DeliveryService : IDeliveryService
     public async Task<IEnumerable<Lookup<Guid>>> GetBookingLookupAsync()
     {
         return await _bookingRepository.Query()
-            .Where(b => b.TenantId == _tenantId)
+            .Where(b => b.TenantId == _tenantId && !b.IsDeleted)
             .OrderByDescending(b => b.CreatedTime)
             .Select(b => new Lookup<Guid>(b.Id, b.BookingNumber + " - " + b.Customer.CustomerName))
             .ToListAsync();

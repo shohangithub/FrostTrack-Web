@@ -83,6 +83,7 @@ public class PaymentMethodService : IPaymentMethodService
     public async Task<IEnumerable<PaymentMethodListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
+            .Where(x => !x.IsDeleted)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.MethodName)
             .ToListAsync(cancellationToken);
@@ -92,7 +93,7 @@ public class PaymentMethodService : IPaymentMethodService
     public async Task<IEnumerable<PaymentMethodListResponse>> GetActiveListAsync(CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
-            .Where(x => x.IsActive)
+            .Where(x => x.IsActive && !x.IsDeleted)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.MethodName)
             .ToListAsync(cancellationToken);
@@ -102,7 +103,7 @@ public class PaymentMethodService : IPaymentMethodService
     public async Task<IEnumerable<PaymentMethodListResponse>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
-            .Where(x => x.IsActive && x.Category.ToLower() == category.ToLower())
+            .Where(x => x.IsActive && !x.IsDeleted && x.Category.ToLower() == category.ToLower())
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.MethodName)
             .ToListAsync(cancellationToken);

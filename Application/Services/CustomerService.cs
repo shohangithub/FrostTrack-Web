@@ -113,6 +113,7 @@ public class CustomerService : ICustomerService
     public async Task<IEnumerable<CustomerListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var response = await _repository.Query()
+           .Where(x => !x.IsDeleted)
            .Select(x => new CustomerListResponse(
                x.Id, x.CustomerName, x.CustomerCode, x.CustomerBarcode, x.CustomerMobile,
                x.CustomerEmail, x.OfficePhone, x.Address, x.ImageUrl, x.CreditLimit,

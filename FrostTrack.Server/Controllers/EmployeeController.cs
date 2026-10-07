@@ -23,7 +23,7 @@ public class EmployeeController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<Employee, bool>> predicate = x => x.IsActive == true;
+        Expression<Func<Employee, bool>> predicate = x => x.IsActive && !x.IsDeleted;
         return await _employeeService.GetLookup(predicate, cancellationToken);
     }
 

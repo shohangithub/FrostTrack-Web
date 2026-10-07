@@ -508,6 +508,7 @@ public class BookingService : IBookingService
         var response = await _repository.Query()
            .Include(x => x.Customer)
            .Include(x => x.Branch)
+           .Where(x => !x.IsDeleted)
            .Select(x => new BookingListResponse(
                 x.Id,
                 x.BookingNumber,

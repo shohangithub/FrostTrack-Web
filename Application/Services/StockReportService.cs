@@ -43,6 +43,7 @@ public class StockReportService : IStockReportService
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.BookingUnit)
             .Where(b => b.TenantId == _tenantId &&
+                       !b.IsDeleted &&
                        b.BookingDate >= startDate &&
                        b.BookingDate <= endDate);
 
@@ -66,7 +67,7 @@ public class StockReportService : IStockReportService
 
         foreach (var booking in bookings)
         {
-            foreach (var bookingDetail in booking.BookingDetails)
+            foreach (var bookingDetail in booking.BookingDetails.Where(bd => !bd.IsDeleted))
             {
                 // Skip if product filter specified and doesn't match
                 if (productId.HasValue && bookingDetail.ProductId != productId.Value)

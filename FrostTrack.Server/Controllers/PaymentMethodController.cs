@@ -43,7 +43,7 @@ public class PaymentMethodController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<PaymentMethod, bool>> predicate = x => x.IsActive;
+        Expression<Func<PaymentMethod, bool>> predicate = x => x.IsActive && !x.IsDeleted;
         return await _paymentMethodService.GetLookup(predicate, cancellationToken);
     }
 

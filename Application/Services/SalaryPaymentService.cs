@@ -55,7 +55,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var tenantId = _tenantProvider.GetTenantId();
 
         var employees = await _employeeRepository.Query()
-            .Where(e => e.TenantId == tenantId && e.IsActive)
+            .Where(e => e.TenantId == tenantId && e.IsActive && !e.IsDeleted)
             .ToListAsync(cancellationToken);
 
         if (!employees.Any())
@@ -111,7 +111,7 @@ public class SalaryPaymentService : ISalaryPaymentService
         var tenantId = _tenantProvider.GetTenantId();
         var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId, cancellationToken);
 
-        if (employee == null || employee.TenantId != tenantId)
+        if (employee == null || employee.IsDeleted || employee.TenantId != tenantId)
             throw new NotFoundException("Employee not found");
 
         var transactionHead = await _transactionHeadRepository.Query()
@@ -358,7 +358,7 @@ public class SalaryPaymentService : ISalaryPaymentService
             throw new BusinessRuleException($"Cannot update salary payment. Updates are only allowed within {EditWindowDays} day(s) of creation.");
 
         var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId, cancellationToken);
-        if (employee == null || employee.TenantId != tenantId)
+        if (employee == null || employee.IsDeleted || employee.TenantId != tenantId)
             throw new NotFoundException("Employee not found");
 
         var netAmount = request.BasicSalary + request.Bonus - request.Deduction;

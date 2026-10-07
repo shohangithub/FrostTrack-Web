@@ -104,6 +104,7 @@ public class AssetService : IAssetService
     public async Task<IEnumerable<AssetListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
+            .Where(x => !x.IsDeleted)
             .Select(x => new AssetListResponse(
                x.Id, x.AssetName, x.AssetCode, x.AssetType, x.SerialNumber, x.Model, x.Manufacturer,
                x.PurchaseDate, x.PurchaseCost, x.CurrentValue, x.DepreciationRate, x.Location,

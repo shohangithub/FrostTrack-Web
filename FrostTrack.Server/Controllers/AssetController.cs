@@ -23,7 +23,7 @@ public class AssetController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<Asset, bool>> predicate = x => x.IsActive == true;
+        Expression<Func<Asset, bool>> predicate = x => x.IsActive && !x.IsDeleted;
         return await _assetService.GetLookup(predicate, cancellationToken);
     }
 

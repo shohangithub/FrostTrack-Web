@@ -37,6 +37,7 @@ public class DatewiseBookingReportService : IDatewiseBookingReportService
             .Include(b => b.BookingDetails)
                 .ThenInclude(bd => bd.BookingUnit)
             .Where(b => b.TenantId == _tenantId &&
+                       !b.IsDeleted &&
                        b.BookingDate >= startDate &&
                        b.BookingDate <= endDate);
 

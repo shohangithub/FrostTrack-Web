@@ -22,7 +22,7 @@ public class UnitConversionController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<UnitConversion, bool>> predicate = x => x.IsActive == x.IsActive;
+        Expression<Func<UnitConversion, bool>> predicate = x => !x.IsDeleted;
         return await _unitConversionService.GetLookup(predicate, cancellationToken);
     }
 

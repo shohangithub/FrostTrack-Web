@@ -23,7 +23,7 @@ public class BankController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<Bank, bool>> predicate = x => x.IsActive == true;
+        Expression<Func<Bank, bool>> predicate = x => x.IsActive && !x.IsDeleted;
         return await _bankService.GetLookup(predicate, cancellationToken);
     }
 

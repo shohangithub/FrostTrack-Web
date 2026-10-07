@@ -88,6 +88,7 @@ public class UnitConversionService : IUnitConversionService
     public async Task<IEnumerable<UnitConversionListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var response = await _repository.Query().Include(x => x.BaseUnit)
+           .Where(x => !x.IsDeleted)
            .Select(x => new UnitConversionListResponse(x.Id, x.UnitName, x.BaseUnit.Id, x.BaseUnit.UnitName, x.ConversionValue, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
            .ToListAsync(cancellationToken);
         return response;

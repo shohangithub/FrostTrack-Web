@@ -78,7 +78,7 @@ public class TransactionHeadService : ITransactionHeadService
     public async Task<IEnumerable<TransactionHeadLookup>> GetTransactionLookup(CancellationToken cancellationToken = default)
     {
         return await _repository.Query()
-            .Where(x => x.UsageFor == UsageFor.TRANSACTION && x.IsActive)
+            .Where(x => x.UsageFor == UsageFor.TRANSACTION && x.IsActive && !x.IsDeleted)
             .Select(x => new TransactionHeadLookup(
                 x.Id,
                 x.Name,
@@ -93,6 +93,7 @@ public class TransactionHeadService : ITransactionHeadService
     public async Task<IEnumerable<TransactionHeadListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var result = await _repository.Query()
+            .Where(x => !x.IsDeleted)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
@@ -101,15 +102,17 @@ public class TransactionHeadService : ITransactionHeadService
 
     public async Task<PaginationResult<TransactionHeadListResponse>> PaginationListAsync(PaginationQuery requestQuery, CancellationToken cancellationToken = default)
     {
-        Expression<Func<TransactionHead, bool>>? predicate = x => x.UsageFor == UsageFor.TRANSACTION;
+        Expression<Func<TransactionHead, bool>>? predicate = x => x.UsageFor == UsageFor.TRANSACTION && !x.IsDeleted;
 
-        // Search filter
+        // Search filter (must keep the general-transaction and not-deleted conditions)
         if (!string.IsNullOrEmpty(requestQuery.OpenText))
         {
+            var text = requestQuery.OpenText;
             predicate = x =>
-                x.Code.Contains(requestQuery.OpenText) ||
-                x.Name.Contains(requestQuery.OpenText) ||
-                (x.Description != null && x.Description.Contains(requestQuery.OpenText));
+                x.UsageFor == UsageFor.TRANSACTION && !x.IsDeleted &&
+                (x.Code.Contains(text) ||
+                 x.Name.Contains(text) ||
+                 (x.Description != null && x.Description.Contains(text)));
         }
 
         Expression<Func<TransactionHead, TransactionHeadListResponse>>? selector = x => new TransactionHeadListResponse(

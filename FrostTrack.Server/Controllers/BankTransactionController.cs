@@ -21,7 +21,7 @@ public class BankTransactionController : ControllerBase
     [Route("lookup")]
     public async Task<IEnumerable<Lookup<long>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<BankTransaction, bool>> predicate = x => true;
+        Expression<Func<BankTransaction, bool>> predicate = x => !x.IsDeleted;
         return await _bankTransactionService.GetLookup(predicate, cancellationToken);
     }
 

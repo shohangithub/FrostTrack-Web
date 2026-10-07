@@ -114,6 +114,7 @@ public class BaseUnitService : IBaseUnitService
     public async Task<IEnumerable<BaseUnitListResponse>> ListAsync(CancellationToken cancellationToken = default)
     {
         var response = await _repository.Query()
+           .Where(x => !x.IsDeleted)
            .Select(x => new BaseUnitListResponse(x.Id, x.UnitName, x.Description, x.Status, x.IsDeleted, x.IsArchived, x.DeletedAt, x.ArchivedAt))
            .ToListAsync(cancellationToken);
         return response;

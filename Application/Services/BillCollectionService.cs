@@ -158,7 +158,7 @@ public class BillCollectionService : IBillCollectionService
             throw new Exception("Payment amount must be greater than zero");
 
         var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
-        if (customer == null)
+        if (customer == null || customer.IsDeleted)
             throw new Exception("Customer not found");
 
         // Ensure CUSTOMER_PAYMENT TransactionHead exists
@@ -215,7 +215,8 @@ public class BillCollectionService : IBillCollectionService
         if (request.PaymentMethod != PaymentMethods.CASH && request.BankId.HasValue)
         {
             var bank = await _bankRepository.GetByIdAsync(request.BankId.Value, cancellationToken);
-            if (bank != null)
+            if (bank == null || bank.IsDeleted)
+                throw new Exception("Selected bank not found");
             {
                 var currentBalance = bank.OpeningBalance + await _bankTransactionRepository.Query()
                     .Where(bt => bt.BankId == request.BankId.Value && bt.IsActive && !bt.IsDeleted)
@@ -354,7 +355,7 @@ public class BillCollectionService : IBillCollectionService
             throw new Exception("A valid reason or approval justification is required for discount/adjustment");
 
         var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
-        if (customer == null)
+        if (customer == null || customer.IsDeleted)
             throw new Exception("Customer not found");
 
         var summary = await GetCustomerBalanceSummaryAsync(request.CustomerId, cancellationToken);

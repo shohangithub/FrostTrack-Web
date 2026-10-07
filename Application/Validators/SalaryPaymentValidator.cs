@@ -53,7 +53,7 @@ public class SalaryPaymentValidator : AbstractValidator<SalaryPaymentRequest>
     private async Task<bool> BeValidEmployee(int employeeId, CancellationToken cancellationToken)
     {
         var employee = await _employeeRepository.GetByIdAsync(employeeId, cancellationToken);
-        return employee != null && employee.IsActive;
+        return employee != null && employee.IsActive && !employee.IsDeleted;
     }
 
     private bool BeValidPaymentMethod(string paymentMethod)

@@ -21,7 +21,7 @@ public class EmployeeReportService : IEmployeeReportService
         CancellationToken cancellationToken = default)
     {
         var query = _employeeRepository.Query()
-            .Where(e => e.TenantId == _tenantId);
+            .Where(e => e.TenantId == _tenantId && !e.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(department))
             query = query.Where(e => e.Department == department);

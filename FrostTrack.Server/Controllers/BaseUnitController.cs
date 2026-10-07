@@ -22,7 +22,7 @@ public class BaseUnitController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<int>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<BaseUnit, bool>> predicate = x => x.IsActive == x.IsActive;
+        Expression<Func<BaseUnit, bool>> predicate = x => !x.IsDeleted;
         return await _baseBaseUnitService.GetLookup(predicate, cancellationToken);
     }
 

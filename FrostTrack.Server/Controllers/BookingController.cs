@@ -29,7 +29,7 @@ public class BookingController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<Guid>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<Booking, bool>> predicate = x => true;
+        Expression<Func<Booking, bool>> predicate = x => !x.IsDeleted;
         return await _bookingService.GetLookup(predicate, cancellationToken);
     }
 

@@ -21,7 +21,7 @@ public class TransactionHeadController : ControllerBase
     [Route("Lookup")]
     public async Task<IEnumerable<Lookup<Guid>>> GetLookup(CancellationToken cancellationToken)
     {
-        Expression<Func<TransactionHead, bool>> predicate = x => x.IsActive == x.IsActive;
+        Expression<Func<TransactionHead, bool>> predicate = x => !x.IsDeleted;
         return await _transactionHeadService.GetLookup(predicate, cancellationToken);
     }
 
