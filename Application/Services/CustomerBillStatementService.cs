@@ -24,6 +24,18 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         _transactionRepository = transactionRepository;
     }
 
+    public async Task<List<Lookup<int>>> GetContractCustomersAsync(CancellationToken cancellationToken = default)
+    {
+        return await _bookingRepository.Query()
+            .Where(b => b.IsContracted && !b.IsDeleted && !b.IsArchived && !b.Customer!.IsDeleted)
+            .Select(b => new { b.CustomerId, b.Customer!.CustomerName, b.Customer.CustomerMobile })
+            .Distinct()
+            .OrderBy(c => c.CustomerName)
+            .Select(c => new Lookup<int>(c.CustomerId,
+                c.CustomerMobile != null && c.CustomerMobile != "" ? c.CustomerName + " (" + c.CustomerMobile + ")" : c.CustomerName))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<CustomerBillStatementResponse> GetStatementAsync(
         int customerId,
         DateTime fromUtc,
@@ -37,11 +49,17 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         var bookings = await _bookingRepository.Query()
             .Include(b => b.BookingDetails).ThenInclude(bd => bd.Product)
             .Include(b => b.BookingDetails).ThenInclude(bd => bd.BookingUnit)
-            .Where(b => b.CustomerId == customerId && !b.IsDeleted && !b.IsArchived && b.BookingDate < toUtcExclusive)
+            .Where(b => b.CustomerId == customerId && b.IsContracted && !b.IsDeleted && !b.IsArchived && b.BookingDate < toUtcExclusive)
             .OrderBy(b => b.BookingDate)
             .ToListAsync(cancellationToken);
 
         var bookingIds = bookings.Select(b => b.Id).ToList();
+
+        // Only contract (চুক্তি) bookings are billed here. Payments/discounts not linked to any booking are
+        // counted only when the customer has no regular bookings; otherwise they belong to the regular due.
+        var hasRegularBookings = await _bookingRepository.Query()
+            .AnyAsync(b => b.CustomerId == customerId && !b.IsContracted && !b.IsDeleted && !b.IsArchived, cancellationToken);
+        var includeUnlinked = !hasRegularBookings;
 
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails).ThenInclude(dd => dd.BookingDetail).ThenInclude(bd => bd!.Product)
@@ -51,7 +69,8 @@ public class CustomerBillStatementService : ICustomerBillStatementService
             .ToListAsync(cancellationToken);
 
         var payments = await _transactionRepository.Query()
-            .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)) || t.CustomerId == customerId)
+            .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                         || (includeUnlinked && !t.BookingId.HasValue && t.CustomerId == customerId))
                         && t.TransactionDate < toUtcExclusive
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
@@ -70,7 +89,8 @@ public class CustomerBillStatementService : ICustomerBillStatementService
             .ToListAsync(cancellationToken);
 
         var discounts = await _transactionRepository.Query()
-            .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)) || t.CustomerId == customerId)
+            .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
+                         || (includeUnlinked && !t.BookingId.HasValue && t.CustomerId == customerId))
                         && t.TransactionDate < toUtcExclusive
                         && t.TransactionHead != null
                         && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
@@ -247,7 +267,8 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         var paidBefore = payments.Where(p => p.Date < fromUtc).Sum(p => p.Amount);
         var discountBefore = discounts.Where(p => p.Date < fromUtc).Sum(p => p.Amount);
 
-        response.PreviousDue = customer.OpeningBalance + rentBefore + adjustmentBefore + labourBefore - paidBefore - discountBefore;
+        var openingBalance = includeUnlinked ? customer.OpeningBalance : 0m;
+        response.PreviousDue = openingBalance + rentBefore + adjustmentBefore + labourBefore - paidBefore - discountBefore;
         response.RentCharged = rentAtEnd - rentBefore + response.DeliveryAdjustmentTotal;
         response.LabourCharged = labourAtEnd - labourBefore;
         response.TotalCharged = response.RentCharged + response.LabourCharged;

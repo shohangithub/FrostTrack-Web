@@ -241,6 +241,8 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId");
+
                     b.ToTable("Assets");
                 });
 
@@ -344,6 +346,8 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId");
+
                     b.ToTable("Banks");
                 });
 
@@ -433,6 +437,8 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BankId");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("BankTransactions");
                 });
@@ -536,6 +542,9 @@ namespace Persistence.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsContracted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
@@ -888,6 +897,8 @@ namespace Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Customers");
                 });

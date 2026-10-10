@@ -14,6 +14,10 @@ public class CustomerBillStatementController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("customers")]
+    public async Task<IActionResult> GetContractCustomers(CancellationToken cancellationToken)
+        => Ok(await _service.GetContractCustomersAsync(cancellationToken));
+
     [HttpGet]
     public async Task<IActionResult> GetStatement(
         [FromQuery] int customerId,

@@ -97,6 +97,9 @@ public class DeliveryService : IDeliveryService
             if (paymentAmount > deliveryGrandTotal + 0.01m)
                 throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
 
+            if (paymentAmount > 0 && await IsContractBookingAsync(request.BookingId, cancellationToken))
+                throw new Exception(ContractPaymentMessage);
+
             ApplyCollection(entity, details, paymentAmount, deliveryGrandTotal);
             entity.TransactionId = null;
 
@@ -170,6 +173,9 @@ public class DeliveryService : IDeliveryService
 
         if (paymentAmount > deliveryGrandTotal + 0.01m)
             throw new Exception($"Collection amount (৳{paymentAmount:N2}) cannot exceed delivery total (৳{deliveryGrandTotal:N2})");
+
+        if (existing.Booking?.IsContracted == true && paymentAmount > existing.CollectedAmount + 0.01m)
+            throw new Exception(ContractPaymentMessage);
 
         var paymentMethod = request.PaymentMethod ?? existingTx?.PaymentMethod;
         var bankId = request.PaymentMethod != null ? request.BankId : existingTx?.BankId;
@@ -422,6 +428,12 @@ public class DeliveryService : IDeliveryService
     }
 
     #region Delivery payment / cascade helpers
+
+    private const string ContractPaymentMessage =
+        "This is a contract (চুক্তি) booking: no payment is collected at delivery. It is billed per cycle through the Customer Bill Statement.";
+
+    private Task<bool> IsContractBookingAsync(Guid bookingId, CancellationToken cancellationToken)
+        => _bookingRepository.Query().AnyAsync(b => b.Id == bookingId && b.IsContracted, cancellationToken);
 
     private IQueryable<DeliveryDetail> ActiveDeliveryDetails()
         => _detailRepository.Query().Where(dd => !dd.IsDeleted && !dd.Delivery!.IsDeleted);
@@ -1055,6 +1067,7 @@ public class DeliveryService : IDeliveryService
             BranchId = booking.BranchId,
             BranchName = booking.Branch?.Name,
             Notes = booking.Notes,
+            IsContracted = booking.IsContracted,
             LastDeliveryDate = booking.BookingDetails.FirstOrDefault()?.LastDeliveryDate ?? default,
             BookingDetails = []
         };

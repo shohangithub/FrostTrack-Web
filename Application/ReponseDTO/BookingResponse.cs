@@ -16,7 +16,8 @@ public record BookingResponse(
   bool IsArchived,
   DateTime? DeletedAt,
   DateTime? ArchivedAt,
-        ICollection<BookingDetailResponse> BookingDetails
+        ICollection<BookingDetailResponse> BookingDetails,
+        bool IsContracted
     );
 
 public record BookingDetailResponse(
@@ -69,5 +70,6 @@ public record BookingListResponse(
   bool IsArchived,
   DateTime? DeletedAt,
   DateTime? ArchivedAt,
-        IEnumerable<BookingDetailListResponse> BookingDetails
+        IEnumerable<BookingDetailListResponse> BookingDetails,
+        bool IsContracted
     );

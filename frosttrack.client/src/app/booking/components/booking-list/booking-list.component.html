@@ -212,6 +212,9 @@
               >
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{ row.bookingNumber }}
+                  @if (row.isContracted) {
+                    <span class="badge bg-info ms-1" title="Contract booking: billed per cycle">চুক্তি</span>
+                  }
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column

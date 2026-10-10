@@ -206,6 +206,7 @@ export class BookingComponent implements OnInit {
       bookingDate: [new Date().systemFormat(), [Validators.required]],
       customer: [null, [Validators.required]],
       notes: [''],
+      isContracted: [false],
       BookingDetails: this.fb.array([]),
     });
     // if (!this.isEditing) this.generateCode();
@@ -236,6 +237,7 @@ export class BookingComponent implements OnInit {
           branchId: response.branchId,
           bookingDate: new Date(response.bookingDate).systemFormat(),
           notes: response.notes || '',
+          isContracted: response.isContracted ?? false,
           BookingDetails: [],
           customer:
             this.customers.find((x) => x.id === response.customerId) || null,

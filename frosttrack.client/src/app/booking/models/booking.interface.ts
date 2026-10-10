@@ -13,6 +13,8 @@ export interface IBookingRequest {
   branchId: number;
   notes?: string;
   bookingDetails: IBookingDetailRequest[];
+  /** Contract booking (চুক্তি): no payment at delivery, billed per cycle via the bill statement. */
+  isContracted?: boolean;
 }
 
 export interface IBookingDetailRequest {
@@ -43,6 +45,8 @@ export interface IBookingResponse {
   deletedAt?: string;
   archivedAt?: string;
   bookingDetails: IBookingDetailResponse[];
+  /** Contract booking (চুক্তি): no payment at delivery, billed per cycle via the bill statement. */
+  isContracted?: boolean;
 }
 
 export interface IBookingDetailResponse {
@@ -78,6 +82,8 @@ export interface IBookingListResponse {
   deletedAt?: string;
   archivedAt?: string;
   bookingDetails: IBookingDetailListResponse[];
+  /** Contract booking (চুক্তি): no payment at delivery, billed per cycle via the bill statement. */
+  isContracted?: boolean;
 }
 
 export interface IBookingPaginationQuery extends PaginationQuery {

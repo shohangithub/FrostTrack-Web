@@ -12,6 +12,11 @@ export class CustomerBillStatementService {
 
   constructor(private http: HttpClient) {}
 
+  /** Customers that have contract (চুক্তি) bookings, as { value, text }. */
+  getContractCustomers(): Observable<{ value: number; text: string }[]> {
+    return this.http.get<{ value: number; text: string }[]>(`${this.apiUrl}/customers`);
+  }
+
   /** fromDate / toDate are local calendar days in yyyy-MM-dd form. */
   getStatement(
     customerId: number,

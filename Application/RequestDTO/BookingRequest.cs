@@ -8,7 +8,8 @@ public record BookingRequest(
         int CustomerId,
         int BranchId,
         string? Notes,
-        ICollection<BookingDetailRequest> BookingDetails
+        ICollection<BookingDetailRequest> BookingDetails,
+        bool IsContracted = false
    );
 
 public record BookingDetailRequest(

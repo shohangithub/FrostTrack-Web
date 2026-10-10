@@ -37,6 +37,8 @@ export interface IBookingForDeliveryResponse {
   branchName?: string;
   notes?: string;
   lastDeliveryDate: Date;
+  /** Contract booking (চুক্তি): no payment is taken at delivery. */
+  isContracted?: boolean;
   bookingDetails: IBookingDetailForDeliveryResponse[];
 }
 

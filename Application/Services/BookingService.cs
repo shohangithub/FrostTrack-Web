@@ -310,6 +310,7 @@ public class BookingService : IBookingService
         existingData.BranchId = _currentUser.BranchId;
         existingData.CustomerId = request.CustomerId;
         existingData.Notes = request.Notes;
+        existingData.IsContracted = request.IsContracted;
         existingData.BookingDate = request.BookingDate.Kind == DateTimeKind.Utc
         ? request.BookingDate : request.BookingDate.ToUniversalTime();
 
@@ -565,7 +566,8 @@ public class BookingService : IBookingService
                     d.BaseQuantity,
                     d.BaseRate,
                     d.LabourCharge,
-                    d.LastDeliveryDate))
+                    d.LastDeliveryDate)),
+                x.IsContracted
                ))
            .ToListAsync(cancellationToken);
         return response;
@@ -631,7 +633,8 @@ public class BookingService : IBookingService
                 d.BaseQuantity,
                 d.BaseRate,
                 d.LabourCharge,
-                d.LastDeliveryDate))
+                d.LastDeliveryDate)),
+            x.IsContracted
             );
 
         var baseQuery = status == "deleted"

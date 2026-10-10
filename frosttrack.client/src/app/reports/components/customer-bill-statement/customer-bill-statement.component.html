@@ -15,15 +15,10 @@
                       Customer <span class="text-danger">*</span>
                     </label>
                     <div class="col-sm-12">
-                      <ng-select id="customerId" [items]="customers" bindLabel="customerName" bindValue="id"
-                        placeholder="Select customer" formControlName="customerId" [clearable]="true">
-                        <ng-template ng-option-tmp let-item="item">
-                          {{ item.customerName }}
-                          @if (item.customerMobile) {
-                          <small class="text-muted">({{ item.customerMobile }})</small>
-                          }
-                        </ng-template>
-                      </ng-select>
+                      <ng-select id="customerId" [items]="customers" bindLabel="text" bindValue="value"
+                        placeholder="Select contract customer" formControlName="customerId" [clearable]="true"
+                        notFoundText="No customers with contract (চুক্তি) bookings"></ng-select>
+                      <small class="text-muted">Only contract (চুক্তি) bookings are billed here.</small>
                     </div>
                   </div>
                 </div>

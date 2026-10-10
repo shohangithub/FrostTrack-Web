@@ -91,6 +91,8 @@ public class BookingForDeliveryResponse
     public string? BranchName { get; set; }
     public string? Notes { get; set; }
     public DateTime LastDeliveryDate { get; set; }
+    /// <summary>Contract booking (চুক্তি): no payment is taken at delivery.</summary>
+    public bool IsContracted { get; set; }
     public List<BookingDetailForDeliveryResponse> BookingDetails { get; set; } = [];
 }
 

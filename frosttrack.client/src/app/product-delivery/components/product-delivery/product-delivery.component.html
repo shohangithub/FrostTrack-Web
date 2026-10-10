@@ -269,6 +269,35 @@
                   Collect Payment
                 </span>
                 <div class="card-body">
+                  @if (isContractBooking) {
+                  <div class="alert alert-info py-2 mb-2">
+                    <i class="fas fa-file-contract me-1"></i>
+                    <strong>চুক্তি / Contract booking:</strong> no payment is collected at delivery. The rent is
+                    billed per cycle on the Customer Bill Statement.
+                  </div>
+                  <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                      <div class="form-group row mb-0">
+                        <label class="col-sm-3 col-form-label">Notes:</label>
+                        <div class="col-sm-9">
+                          <textarea class="form-control form-control-sm" formControlName="transactionNotes" rows="2"
+                            placeholder="Optional delivery notes or remarks..."></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                      <div class="form-group row mb-2">
+                        <label class="col-sm-4 col-form-label fw-bold">Total Charges:</label>
+                        <div class="col-sm-8">
+                          <input type="text" class="form-control form-control-sm text-end fw-bold" [value]="
+                              deliveryForm.get('chargeAmount')?.value
+                                | number: '1.2-2'
+                            " readonly />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  } @else {
                   <div class="row">
                     <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                       <div class="form-group row mb-2">
@@ -332,6 +361,7 @@
                       </div>
                     </div>
                   </div>
+                  }
                   <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-end mt-2">
                       <button type="button" class="btn btn-success btn-block btn-sm mb-2 me-2"

@@ -49,6 +49,11 @@ export class DeliveryComponent implements OnInit {
   deliveryNumber = '';
   isEditMode = false;
 
+  /** Contract (চুক্তি) bookings are billed per cycle on the bill statement, not paid at delivery. */
+  get isContractBooking(): boolean {
+    return !!this.bookingData?.isContracted;
+  }
+
   // For printing
   invoiceId: string = '';
   showInvoice: boolean = false;
@@ -582,7 +587,9 @@ export class DeliveryComponent implements OnInit {
       }
     }
 
-    const txAmount = Number(this.deliveryForm.get('transactionAmount')?.value) || 0;
+    const txAmount = this.isContractBooking
+      ? 0
+      : Number(this.deliveryForm.get('transactionAmount')?.value) || 0;
     const chargeAmount = Number(this.deliveryForm.get('chargeAmount')?.value) || 0;
 
     if (txAmount < 0) {
@@ -600,7 +607,8 @@ export class DeliveryComponent implements OnInit {
     const formData = this.deliveryForm.value;
 
     // If amount is not set (<= 0) or less than total charge, show confirmation
-    if (txAmount < chargeAmount - 0.01) {
+    // (not for contract bookings: they are never paid at delivery)
+    if (!this.isContractBooking && txAmount < chargeAmount - 0.01) {
       let confirmHtml = '';
 
       if (txAmount <= 0) {
@@ -746,7 +754,7 @@ export class DeliveryComponent implements OnInit {
 
   submitDelivery(formData: any) {
     this.isSubmitting = true;
-    const txAmount = Number(formData.transactionAmount) || 0;
+    const txAmount = this.isContractBooking ? 0 : Number(formData.transactionAmount) || 0;
     const hasPayment = txAmount > 0;
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -772,7 +780,12 @@ export class DeliveryComponent implements OnInit {
         })),
       createTransaction: hasPayment,
       // On edit always send the amount: 0 removes the delivery-time payment
-      transactionAmount: hasPayment || id ? txAmount : undefined,
+      // Contract bookings: send nothing so an amount taken before the booking became a contract is kept
+      transactionAmount: this.isContractBooking
+        ? undefined
+        : hasPayment || id
+          ? txAmount
+          : undefined,
       paymentMethod: hasPayment ? formData.paymentMethod || 'CASH' : undefined,
       bankId: hasPayment && formData.paymentMethod !== 'CASH' ? formData.bankId : undefined,
       paymentReference: hasPayment && formData.paymentMethod !== 'CASH' ? formData.paymentReference : undefined,

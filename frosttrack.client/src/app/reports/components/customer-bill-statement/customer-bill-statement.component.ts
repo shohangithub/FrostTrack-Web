@@ -14,8 +14,6 @@ import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
-import { CustomerService } from 'app/common/services/customer.service';
-import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { todayInputFormat } from 'app/utils/date-utils';
 import { CustomerBillStatementService } from '../../services/customer-bill-statement.service';
 import { ICustomerBillStatement } from '../../models/customer-bill-statement.interface';
@@ -40,14 +38,14 @@ import { ICustomerBillStatement } from '../../models/customer-bill-statement.int
 })
 export class CustomerBillStatementComponent implements OnInit {
   reportForm: UntypedFormGroup;
-  customers: ICustomerListResponse[] = [];
+  /** Only customers with contract (চুক্তি) bookings are billed on this statement. */
+  customers: { value: number; text: string }[] = [];
   statement: ICustomerBillStatement | null = null;
   isLoading = false;
   today = new Date();
 
   constructor(
     private fb: UntypedFormBuilder,
-    private customerService: CustomerService,
     private billStatementService: CustomerBillStatementService,
     private toastr: ToastrService,
     private layoutService: LayoutService,
@@ -72,7 +70,7 @@ export class CustomerBillStatementComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.customerService.getList().subscribe({
+    this.billStatementService.getContractCustomers().subscribe({
       next: (data) => (this.customers = data),
       error: () => this.toastr.error('Failed to load customers', 'Error'),
     });

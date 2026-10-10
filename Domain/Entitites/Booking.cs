@@ -11,6 +11,12 @@ public class Booking : AuditableEntity<Guid>
     public required int BranchId { get; set; }
     public Branch? Branch { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Contract booking (চুক্তি): no money is collected at delivery time; the customer is billed per
+    /// cycle through the Customer Bill Statement, which only lists contract bookings.
+    /// </summary>
+    public bool IsContracted { get; set; } = false;
     public ICollection<BookingDetail> BookingDetails { get; set; } = [];
     //public ICollection<Transaction> Transactions { get; set; } = [];
 }
