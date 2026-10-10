@@ -74,15 +74,17 @@ public class RecurringChargeManagementService(
             {
                 foreach (var detail in booking.BookingDetails.Where(d => !d.IsDeleted))
                 {
-                    var fromDate = detail.LastRecurringChargeDate ?? booking.BookingDate;
-                    int newCycles = RecurringChargeCalculator.CompletedCycles(detail.BillType, fromDate, asOfDate);
+                    // Cycles are always counted from the booking date (same rule as the dues)
+                    int charged = RecurringChargeCalculator.ChargedCycles(detail.BillType, booking.BookingDate, detail.LastRecurringChargeDate);
+                    int completed = RecurringChargeCalculator.CompletedCycles(detail.BillType, booking.BookingDate, asOfDate);
+                    int newCycles = completed - charged;
 
                     if (newCycles <= 0) continue;
 
-                    var periodStart = detail.LastRecurringChargeDate ?? booking.BookingDate;
-                    var periodEnd = AdvanceByPeriods(detail.BillType, periodStart, newCycles);
+                    var periodStart = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, charged + 1);
+                    var periodEnd = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, completed + 1).AddDays(-1);
 
-                    detail.LastRecurringChargeDate = AdvanceByPeriods(detail.BillType, fromDate, newCycles);
+                    detail.LastRecurringChargeDate = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, completed);
 
                     // Recurring rent is charged on the stock still in store, not the original booked quantity
                     var stockQty = RemainingQuantity(detail);
@@ -190,7 +192,8 @@ public class RecurringChargeManagementService(
             foreach (var detail in booking.BookingDetails.Where(d => !d.IsDeleted))
             {
                 var fromDate = detail.LastRecurringChargeDate ?? booking.BookingDate;
-                int cycles = RecurringChargeCalculator.CompletedCycles(detail.BillType, fromDate, asOfDate);
+                int cycles = RecurringChargeCalculator.CompletedCycles(detail.BillType, booking.BookingDate, asOfDate)
+                             - RecurringChargeCalculator.ChargedCycles(detail.BillType, booking.BookingDate, detail.LastRecurringChargeDate);
                 if (cycles <= 0) continue;
 
                 var stockQty = RemainingQuantity(detail);
@@ -233,14 +236,4 @@ public class RecurringChargeManagementService(
         ErrorMessage = r.ErrorMessage,
     };
 
-    private static DateTime AdvanceByPeriods(string billType, DateTime from, int periods) =>
-        billType.ToUpperInvariant() switch
-        {
-            BillTypes.Monthly => from.AddMonths(periods),
-            BillTypes.Daily => from.AddDays(periods),
-            BillTypes.Weekly => from.AddDays(periods * 7),
-            BillTypes.Yearly => from.AddYears(periods),
-            BillTypes.Hourly => from.AddHours(periods),
-            _ => from.AddMonths(periods),
-        };
 }

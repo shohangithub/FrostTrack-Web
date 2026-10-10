@@ -293,28 +293,20 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         return new LineAccrual(stock, deliveredQty, rent, bd.LabourCharge + deliveredLabour);
     }
 
-    /// <summary>Booking date (first cycle) and each later cycle boundary that falls inside the period.</summary>
+    /// <summary>
+    /// Start dates of the billing cycles that fall inside the period. The booking date starts cycle 1;
+    /// later cycles start the day after each anniversary (see RecurringChargeCalculator).
+    /// </summary>
     private static List<DateTime> BillingDatesInPeriod(DateTime bookingDate, string billType, DateTime fromUtc, DateTime toUtcExclusive)
     {
         var dates = new List<DateTime>();
         var firstK = Math.Max(0, RecurringChargeCalculator.CompletedCycles(billType, bookingDate, fromUtc) - 1);
         for (int k = firstK; k < firstK + 2000; k++)
         {
-            var cycleDate = AdvanceByPeriods(billType, bookingDate, k);
-            if (cycleDate >= toUtcExclusive) break;
-            if (cycleDate >= fromUtc) dates.Add(cycleDate);
+            var cycleStart = RecurringChargeCalculator.CycleStart(billType, bookingDate, k);
+            if (cycleStart >= toUtcExclusive) break;
+            if (cycleStart >= fromUtc) dates.Add(cycleStart);
         }
         return dates;
     }
-
-    private static DateTime AdvanceByPeriods(string billType, DateTime from, int periods) =>
-        (billType ?? string.Empty).ToUpperInvariant() switch
-        {
-            BillTypes.Monthly => from.AddMonths(periods),
-            BillTypes.Daily => from.AddDays(periods),
-            BillTypes.Weekly => from.AddDays(periods * 7),
-            BillTypes.Yearly => from.AddYears(periods),
-            BillTypes.Hourly => from.AddHours(periods),
-            _ => from.AddMonths(periods),
-        };
 }

@@ -199,18 +199,9 @@ public class BookingRepository : IBookingRepository
         return existingData.Adapt<BookingResponse>();
     }
 
-    private DateTime CalculateLastDeliveryDate(DateTime bookingDate, string billType)
-    {
-        return billType switch
-        {
-            BillTypes.Hourly => bookingDate.AddHours(1),
-            BillTypes.Daily => bookingDate.AddDays(1),
-            BillTypes.Weekly => bookingDate.AddDays(7),
-            BillTypes.Monthly => bookingDate.AddMonths(1),
-            BillTypes.Yearly => bookingDate.AddYears(1),
-            _ => bookingDate.AddMonths(1) // Default to monthly
-        };
-    }
+    // Last day of the first billing cycle (the first anniversary); the second cycle starts the day after
+    private static DateTime CalculateLastDeliveryDate(DateTime bookingDate, string billType)
+        => Domain.RecurringChargeCalculator.CycleStart(billType, bookingDate, 1).AddDays(-1);
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

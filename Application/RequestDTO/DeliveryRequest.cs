@@ -28,6 +28,7 @@ public class CreateDeliveryDetailRequest
     public required decimal ChargeAmount { get; set; }
     public decimal LabourCharge { get; set; }
     public required decimal AdjustmentValue { get; set; }
+    public int BillingCycles { get; set; } = 1;
 }
 
 public class UpdateDeliveryRequest

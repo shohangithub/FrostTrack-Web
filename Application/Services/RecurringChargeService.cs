@@ -18,14 +18,15 @@ public class RecurringChargeService(
         {
             foreach (var detail in booking.BookingDetails.Where(d => !d.IsDeleted))
             {
-                var fromDate = detail.LastRecurringChargeDate ?? booking.BookingDate;
-                int newCycles = RecurringChargeCalculator.CompletedCycles(detail.BillType, fromDate, asOfDate);
+                // Cycles are always counted from the booking date (same rule as the dues)
+                int charged = RecurringChargeCalculator.ChargedCycles(detail.BillType, booking.BookingDate, detail.LastRecurringChargeDate);
+                int completed = RecurringChargeCalculator.CompletedCycles(detail.BillType, booking.BookingDate, asOfDate);
 
-                if (newCycles <= 0)
+                if (completed <= charged)
                     continue;
 
-                // Advance LastRecurringChargeDate to the latest completed cycle boundary
-                detail.LastRecurringChargeDate = AdvanceByPeriods(detail.BillType, fromDate, newCycles);
+                // Advance LastRecurringChargeDate to the start of the latest started cycle
+                detail.LastRecurringChargeDate = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, completed);
                 await bookingDetailRepository.UpdateAsync(detail, cancellationToken);
                 updated++;
             }
@@ -33,17 +34,4 @@ public class RecurringChargeService(
 
         return updated;
     }
-
-    // ── helpers ──────────────────────────────────────────────────────────────
-
-    private static DateTime AdvanceByPeriods(string billType, DateTime from, int periods) =>
-        billType.ToUpperInvariant() switch
-        {
-            BillTypes.Monthly => from.AddMonths(periods),
-            BillTypes.Daily => from.AddDays(periods),
-            BillTypes.Weekly => from.AddDays(periods * 7),
-            BillTypes.Yearly => from.AddYears(periods),
-            BillTypes.Hourly => from.AddHours(periods),
-            _ => from.AddMonths(periods)
-        };
 }

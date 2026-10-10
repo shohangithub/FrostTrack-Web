@@ -317,73 +317,60 @@ export class DeliveryComponent implements OnInit {
     deliveryDate: string | Date,
     billType: string,
   ): number {
-    const start = new Date(bookingDate);
-    const end = new Date(deliveryDate);
-
-    // Calculate the difference in milliseconds
-    const diffTime = end.getTime() - start.getTime();
-
-    if (diffTime < 0) {
-      return 1; // Delivery before booking
+    // Same rule as the server (RecurringChargeCalculator): booking on 01-Jul gives
+    // cycle 1 = 01-Jul..01-Aug, cycle 2 = 02-Aug..01-Sep, ... The anniversary day still
+    // belongs to the previous cycle; the next one starts the day after.
+    const start = this.toLocalDay(bookingDate);
+    const end = this.toLocalDay(deliveryDate);
+    if (!start || !end || end <= start) {
+      return 1; // same day (or delivery before booking) is the first cycle
     }
 
-    let cycles = 0;
+    const type = (billType || '').toUpperCase();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const days = Math.round((end.getTime() - start.getTime()) / dayMs);
 
-    switch (billType) {
-      case 'HOURLY':
-        // Number of hours
-        cycles = Math.ceil(diffTime / (1000 * 60 * 60));
-        break;
+    if (type === 'HOURLY') return Math.max(1, days * 24);
+    if (type === 'DAILY') return days + 1;
 
-      case 'DAILY':
-        // Number of days
-        cycles = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        break;
-
-      case 'WEEKLY':
-        // Number of weeks
-        cycles = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-        break;
-
-      case 'MONTHLY': {
-        // Calculate months difference
-        let months =
-          (end.getFullYear() - start.getFullYear()) * 12 +
-          (end.getMonth() - start.getMonth());
-
-        // If we're in a new month but haven't passed the booking day, don't count it yet
-        if (end.getDate() < start.getDate()) {
-          months--;
-        }
-
-        // Add 1 to include the first month
-        cycles = months + 1;
-        break;
-      }
-
-      case 'YEARLY': {
-        // Calculate years difference
-        let years = end.getFullYear() - start.getFullYear();
-
-        // If we're in a new year but haven't passed the booking month/day, don't count it yet
-        if (
-          end.getMonth() < start.getMonth() ||
-          (end.getMonth() === start.getMonth() &&
-            end.getDate() < start.getDate())
-        ) {
-          years--;
-        }
-
-        // Add 1 to include the first year
-        cycles = years + 1;
-        break;
-      }
-
-      default:
-        cycles = 1; // Default to 1 cycle
+    // Upper-bound estimate of completed cycles, then step back until the cycle start is on/before the end date
+    let completed =
+      type === 'WEEKLY'
+        ? Math.floor(days / 7)
+        : type === 'YEARLY'
+          ? end.getFullYear() - start.getFullYear()
+          : (end.getFullYear() - start.getFullYear()) * 12 +
+            (end.getMonth() - start.getMonth());
+    while (completed > 0 && this.cycleStart(type, start, completed) > end) {
+      completed--;
     }
+    return Math.max(completed, 0) + 1;
+  }
 
-    return Math.max(cycles, 1); // At least 1 cycle
+  /** Start of cycle k (k >= 1): the day after the k-th anniversary (month-end days clamp like .NET AddMonths). */
+  private cycleStart(type: string, start: Date, k: number): Date {
+    let anniversary: Date;
+    if (type === 'WEEKLY') {
+      anniversary = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7 * k);
+    } else {
+      const months = type === 'YEARLY' ? 12 * k : k;
+      const target = new Date(start.getFullYear(), start.getMonth() + months, 1);
+      const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+      anniversary = new Date(target.getFullYear(), target.getMonth(), Math.min(start.getDate(), lastDay));
+    }
+    return new Date(anniversary.getFullYear(), anniversary.getMonth(), anniversary.getDate() + 1);
+  }
+
+  /** Local calendar day (midnight) of an ISO date/time or a "yyyy-MM-dd" input value. */
+  private toLocalDay(value: string | Date): Date | null {
+    if (!value) return null;
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [y, m, d] = value.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    const parsed = new Date(value);
+    if (isNaN(parsed.getTime())) return null;
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
   }
 
   calculateTotalCharge() {
