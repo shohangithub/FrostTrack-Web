@@ -28,6 +28,8 @@ import {
   ITransactionHeadResponse,
 } from '../../../models/transaction-head.interface';
 import { FormShimmerComponent } from '../../../../shared/form-shimmer.component';
+import { TransactionGroupService } from '../../../services/transaction-group.service';
+import { ILookup } from '../../../../core/models/lookup';
 
 @Component({
   selector: 'app-add-transaction-head',
@@ -55,12 +57,14 @@ export class AddTransactionHeadComponent implements OnInit {
   statusList = COMMON_STATUS_LIST;
   typeList = TRANSACTION_TYPE_LIST;
   displayTypeList = DISPLAY_TYPE_LIST;
+  transactionGroupList: ILookup<string>[] = [];
 
   constructor(
     private fb: UntypedFormBuilder,
     public modal: NgbActiveModal,
     private toastr: ToastrService,
-    private transactionHeadService: TransactionHeadService
+    private transactionHeadService: TransactionHeadService,
+    private transactionGroupService: TransactionGroupService
   ) {
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
@@ -72,11 +76,13 @@ export class AddTransactionHeadComponent implements OnInit {
       isActive: new UntypedFormControl(),
       colorCode: new UntypedFormControl(),
       iconClass: new UntypedFormControl(),
+      transactionGroupId: new UntypedFormControl(null),
     });
   }
 
   ngOnInit(): void {
     this.initFormData();
+    this.loadTransactionGroups();
     if (this.isEditing) {
       this.getExistingData();
     }
@@ -92,6 +98,13 @@ export class AddTransactionHeadComponent implements OnInit {
       isActive: [true, [Validators.required]],
       colorCode: [''],
       iconClass: [''],
+      transactionGroupId: [null],
+    });
+  }
+
+  loadTransactionGroups() {
+    this.transactionGroupService.getLookup().subscribe({
+      next: (response) => (this.transactionGroupList = response),
     });
   }
 
@@ -109,6 +122,7 @@ export class AddTransactionHeadComponent implements OnInit {
           isActive: response.isActive || false,
           colorCode: response.colorCode || '',
           iconClass: response.iconClass || '',
+          transactionGroupId: response.transactionGroupId ?? null,
         });
         this.isLoading = false;
       },
@@ -151,6 +165,7 @@ export class AddTransactionHeadComponent implements OnInit {
         isActive: formData.isActive,
         colorCode: formData.colorCode,
         iconClass: formData.iconClass,
+        transactionGroupId: formData.transactionGroupId || null,
       };
       this.transactionHeadService.update(formData.id, payload).subscribe({
         next: (response: ITransactionHeadResponse) => {

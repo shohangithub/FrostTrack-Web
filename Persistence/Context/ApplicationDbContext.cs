@@ -52,6 +52,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<AdvanceAllocation> AdvanceAllocations { get; set; }
     public DbSet<TransactionHead> TransactionHeads { get; set; }
+    public DbSet<TransactionGroup> TransactionGroups { get; set; }
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
     public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
     public DbSet<RecurringChargeEntry> RecurringChargeEntries { get; set; }
@@ -207,6 +208,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.HasOne(x => x.Delivery)
                   .WithMany()
                   .HasForeignKey(x => x.DeliveryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TransactionGroup>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<TransactionHead>(entity =>
+        {
+            entity.HasOne(x => x.TransactionGroup)
+                  .WithMany()
+                  .HasForeignKey(x => x.TransactionGroupId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

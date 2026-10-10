@@ -5,22 +5,25 @@ namespace Application.Services;
 public class TransactionHeadService : ITransactionHeadService
 {
     private readonly IRepository<TransactionHead, Guid> _repository;
+    private readonly IRepository<TransactionGroup, Guid> _groupRepository;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
 
     public TransactionHeadService(
         IRepository<TransactionHead, Guid> repository,
+        IRepository<TransactionGroup, Guid> groupRepository,
         ICodeGenerationService codeGenerationService,
         DefaultValueInjector defaultValueInjector)
     {
         _repository = repository;
+        _groupRepository = groupRepository;
         _codeGenerationService = codeGenerationService;
         _defaultValueInjector = defaultValueInjector;
     }
 
     public async Task<TransactionHeadResponse> AddAsync(TransactionHeadRequest request, CancellationToken cancellationToken = default)
     {
-        TransactionHeadValidator validator = new(_repository);
+        TransactionHeadValidator validator = new(_repository, _groupRepository);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var entity = request.Adapt<TransactionHead>();
@@ -122,7 +125,8 @@ public class TransactionHeadService : ITransactionHeadService
             x.Type,
             x.DisplayType,
             x.IsSystem,
-            x.IsActive ? "Active" : "Inactive"
+            x.IsActive ? "Active" : "Inactive",
+            x.TransactionGroup != null ? x.TransactionGroup.Name : null
         );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
@@ -130,7 +134,7 @@ public class TransactionHeadService : ITransactionHeadService
 
     public async Task<TransactionHeadResponse> UpdateAsync(Guid id, TransactionHeadRequest request, CancellationToken cancellationToken = default)
     {
-        TransactionHeadValidator validator = new(_repository, id);
+        TransactionHeadValidator validator = new(_repository, _groupRepository, id);
         await validator.ValidateAndThrowAsync(request, cancellationToken);
 
         var existingData = await _repository.GetByIdAsync(id, cancellationToken);
@@ -146,6 +150,7 @@ public class TransactionHeadService : ITransactionHeadService
             existingData.ColorCode = request.ColorCode;
             existingData.IconClass = request.IconClass;
             existingData.IsActive = request.IsActive;
+            existingData.TransactionGroupId = request.TransactionGroupId;
         }
         else
         {

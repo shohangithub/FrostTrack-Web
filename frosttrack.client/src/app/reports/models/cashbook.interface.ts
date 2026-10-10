@@ -2,6 +2,7 @@ export interface ICashBookItem {
   transactionHeadId: string;
   transactionHeadName: string;
   transactionType: string;
+  isGroup?: boolean; // true when the row merges heads of one Transaction Group
   transactionCount: number;
   debitAmount: number;
   creditAmount: number;

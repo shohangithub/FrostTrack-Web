@@ -5,6 +5,7 @@ export interface ITransactionHeadListResponse {
   displayType: string;
   isSystem: boolean;
   status: string;
+  transactionGroupName?: string | null;
 }
 
 export interface ITransactionHeadResponse {
@@ -19,6 +20,7 @@ export interface ITransactionHeadResponse {
   colorCode?: string;
   iconClass?: string;
   status: string;
+  transactionGroupId?: string | null;
 }
 
 export interface ITransactionHeadRequest {
@@ -30,6 +32,7 @@ export interface ITransactionHeadRequest {
   isActive: boolean;
   colorCode?: string;
   iconClass?: string;
+  transactionGroupId?: string | null;
 }
 
 export interface ITransactionHeadLookup {

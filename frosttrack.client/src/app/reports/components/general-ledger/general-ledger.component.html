@@ -214,6 +214,9 @@
                           <td>{{ item.date | date: "dd-MMM-yyyy HH:mm" }}</td>
                           <td>
                             <div>{{ item.accountName }}</div>
+                            @if (item.groupName && item.headName) {
+                            <small class="text-muted" style="font-size: 10px;">{{ item.headName }}</small>
+                            }
                             @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
                             <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
                             }
@@ -252,6 +255,12 @@
                   } @else {
                   <div class="no-data-message">No general ledger transactions for this day</div>
                   }
+
+                  <!-- Account-wise (Transaction Group) Summary -->
+                  @if (generalLedgerReport.accountSummary.length) {
+                  <ng-container *ngTemplateOutlet="accountSummaryTpl; context: { $implicit: generalLedgerReport.accountSummary }"></ng-container>
+                  }
+
 
                   <app-report-footer></app-report-footer>
                 </div>
@@ -348,6 +357,9 @@
                           <td class="col-sl text-center">{{ i + 1 }}</td>
                           <td>
                             <div>{{ item.accountName }}</div>
+                            @if (item.groupName && item.headName) {
+                            <small class="text-muted" style="font-size: 10px;">{{ item.headName }}</small>
+                            }
                             @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
                             <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
                             }
@@ -394,6 +406,12 @@
                   <div class="no-data-message">No general ledger transactions found in this date range</div>
                   }
 
+                  <!-- Account-wise (Transaction Group) Summary -->
+                  @if (generalLedgerRangeReport.accountSummary.length) {
+                  <ng-container *ngTemplateOutlet="accountSummaryTpl; context: { $implicit: generalLedgerRangeReport.accountSummary }"></ng-container>
+                  }
+
+
                   <app-report-footer></app-report-footer>
                 </div>
               </div>
@@ -405,3 +423,37 @@
     }
   </div>
 </section>
+
+<ng-template #accountSummaryTpl let-rows>
+  <div class="stored-products-section">
+    <h6 class="fw-bold mb-2">হিসাব ভিত্তিক সারসংক্ষেপ / Account Summary</h6>
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th class="col-sl">SL</th>
+          <th>অ্যাকাউন্ট / Account</th>
+          <th class="text-center">সংখ্যা / Count</th>
+          <th class="col-amount text-end">ডেবিট / Debit Tk.</th>
+          <th class="col-amount text-end">ক্রেডিট / Credit Tk.</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track row.accountName + row.isGroup; let i = $index) {
+        <tr>
+          <td class="col-sl text-center">{{ i + 1 }}</td>
+          <td>
+            @if (row.isGroup) {
+            <strong>{{ row.accountName }}</strong>
+            } @else {
+            {{ row.accountName }}
+            }
+          </td>
+          <td class="text-center">{{ row.transactionCount }}</td>
+          <td class="text-end">{{ row.debitAmount > 0 ? (row.debitAmount | number: "1.2-2") : '-' }}</td>
+          <td class="text-end">{{ row.creditAmount > 0 ? (row.creditAmount | number: "1.2-2") : '-' }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</ng-template>

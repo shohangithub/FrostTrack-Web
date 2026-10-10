@@ -56,6 +56,7 @@ public class TrialBalanceService : ITrialBalanceService
         var transactions = await _transactionRepository.Query()
             .AsNoTracking()
             .Include(t => t.TransactionHead)
+                .ThenInclude(h => h!.TransactionGroup)
             .Where(t => t.TenantId == _tenantId
                      && t.TransactionDate >= window.FromUtc && t.TransactionDate < window.ToUtc
                      && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT
@@ -64,35 +65,50 @@ public class TrialBalanceService : ITrialBalanceService
             .ToListAsync(cancellationToken);
 
         // Under standard accounting rules:
-        // Nominal Income / Revenue (TransactionHeadTypes.DEBIT in FrostTrack, meaning money IN) -> CREDIT
-        var revenueItems = transactions
-            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT)
-            .GroupBy(t => new { t.TransactionHead!.Name })
-            .Select(g => new TrialBalanceItemResponse
+        //   Nominal Income (TransactionHeadTypes.DEBIT in FrostTrack, meaning money IN)  -> CREDIT column
+        //   Nominal Expense (TransactionHeadTypes.CREDIT in FrostTrack, meaning money OUT) -> DEBIT column
+        // Heads mapped to a Transaction Group are merged into one row (showing both Debit and Credit);
+        // unmapped heads are grouped by their own name, split by type as before.
+        var headRows = transactions
+            .GroupBy(t =>
             {
-                AccountName = g.Key.Name,
-                AccountType = g.Key.Name,
-                DebitAmount = 0,
-                CreditAmount = g.Sum(t => Math.Abs(t.NetAmount)),
-                TransactionCount = g.Count(),
-                Balance = g.Sum(t => Math.Abs(t.NetAmount))
+                var head = t.TransactionHead!;
+                var group = head.TransactionGroup;
+                return group != null
+                    ? new { Key = $"G:{group.Id}", Name = group.Name, IsGroup = true, IsIncome = false, group.SortOrder }
+                    : new { Key = $"H:{head.Type}:{head.Name}", Name = head.Name, IsGroup = false, IsIncome = head.Type == TransactionHeadTypes.DEBIT, SortOrder = 0 };
+            })
+            .Select(g =>
+            {
+                var debit = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT).Sum(t => Math.Abs(t.NetAmount));
+                var credit = g.Where(t => t.TransactionHead!.Type == TransactionHeadTypes.DEBIT).Sum(t => Math.Abs(t.NetAmount));
+                return new
+                {
+                    g.Key.IsGroup,
+                    g.Key.IsIncome,
+                    g.Key.SortOrder,
+                    Item = new TrialBalanceItemResponse
+                    {
+                        AccountName = g.Key.Name,
+                        AccountType = g.Key.Name,
+                        DebitAmount = debit,
+                        CreditAmount = credit,
+                        TransactionCount = g.Count(),
+                        // Ungrouped rows keep their previous single-side balance; grouped rows show the net (Credit - Debit)
+                        Balance = g.Key.IsGroup ? credit - debit : debit + credit
+                    }
+                };
             })
             .ToList();
 
-        // Nominal Expense (TransactionHeadTypes.CREDIT in FrostTrack, meaning money OUT) -> DEBIT
-        var expenseItems = transactions
-            .Where(t => t.TransactionHead!.Type == TransactionHeadTypes.CREDIT)
-            .GroupBy(t => new { t.TransactionHead!.Name })
-            .Select(g => new TrialBalanceItemResponse
-            {
-                AccountName = g.Key.Name,
-                AccountType = g.Key.Name,
-                DebitAmount = g.Sum(t => Math.Abs(t.NetAmount)),
-                CreditAmount = 0,
-                TransactionCount = g.Count(),
-                Balance = g.Sum(t => Math.Abs(t.NetAmount))
-            })
+        var groupItems = headRows
+            .Where(r => r.IsGroup)
+            .OrderBy(r => r.SortOrder)
+            .ThenBy(r => r.Item.AccountName)
+            .Select(r => r.Item)
             .ToList();
+        var expenseItems = headRows.Where(r => !r.IsGroup && !r.IsIncome).Select(r => r.Item).ToList();
+        var revenueItems = headRows.Where(r => !r.IsGroup && r.IsIncome).Select(r => r.Item).ToList();
 
         // Direct bank receipts and payments during period (not contra, not auto-generated)
         var directBankTx = await _bankTransactionRepository.Query()
@@ -196,6 +212,7 @@ public class TrialBalanceService : ITrialBalanceService
             allItems.Add(openingBalanceItem);
         }
 
+        allItems.AddRange(groupItems);
         allItems.AddRange(expenseItems);
         allItems.AddRange(revenueItems);
         allItems.AddRange(bankItems);

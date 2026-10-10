@@ -5,11 +5,16 @@ namespace Application.Validators;
 internal class TransactionHeadValidator : AbstractValidator<TransactionHeadRequest>
 {
     private readonly IRepository<TransactionHead, Guid> _repository;
+    private readonly IRepository<TransactionGroup, Guid> _groupRepository;
     private readonly Guid? _id;
 
-    public TransactionHeadValidator(IRepository<TransactionHead, Guid> repository, Guid? id = null)
+    public TransactionHeadValidator(
+        IRepository<TransactionHead, Guid> repository,
+        IRepository<TransactionGroup, Guid> groupRepository,
+        Guid? id = null)
     {
         _repository = repository;
+        _groupRepository = groupRepository;
         _id = id;
 
         RuleFor(x => x.Name)
@@ -23,6 +28,15 @@ internal class TransactionHeadValidator : AbstractValidator<TransactionHeadReque
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
+
+        RuleFor(x => x.TransactionGroupId)
+            .MustAsync(GroupExists).WithMessage("Selected transaction group not found")
+            .When(x => x.TransactionGroupId.HasValue);
+    }
+
+    private async Task<bool> GroupExists(Guid? groupId, CancellationToken cancellationToken)
+    {
+        return await _groupRepository.Query().AnyAsync(x => x.Id == groupId, cancellationToken);
     }
 
     private async Task<bool> BeUniqueCode(string code, CancellationToken cancellationToken)

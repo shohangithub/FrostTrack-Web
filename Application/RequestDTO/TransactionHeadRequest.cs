@@ -8,5 +8,6 @@ public record TransactionHeadRequest(
     int SortOrder,
     bool IsActive,
     string? ColorCode,
-    string? IconClass
+    string? IconClass,
+    Guid? TransactionGroupId = null
 );

@@ -2215,6 +2215,73 @@ namespace Persistence.Migrations
                     b.ToTable("Transactions", "finance");
                 });
 
+            modelBuilder.Entity("Domain.Entitites.TransactionGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnOrder(0);
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TransactionGroups", "finance");
+                });
+
             modelBuilder.Entity("Domain.Entitites.TransactionHead", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2291,6 +2358,9 @@ namespace Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("TransactionGroupId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -2302,6 +2372,8 @@ namespace Persistence.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TransactionGroupId");
 
                     b.ToTable("TransactionHeads", "finance");
                 });
@@ -2775,6 +2847,16 @@ namespace Persistence.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TransactionHead");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.TransactionHead", b =>
+                {
+                    b.HasOne("Domain.Entitites.TransactionGroup", "TransactionGroup")
+                        .WithMany()
+                        .HasForeignKey("TransactionGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("TransactionGroup");
                 });
 
             modelBuilder.Entity("Domain.Entitites.UnitConversion", b =>

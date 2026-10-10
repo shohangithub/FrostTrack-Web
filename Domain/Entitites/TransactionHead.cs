@@ -36,6 +36,10 @@ public class TransactionHead : AuditableEntity<Guid>
     [MaxLength(50)]
     public string? IconClass { get; set; }
 
+    // Optional: heads sharing a group are merged into one Trial Balance row
+    public Guid? TransactionGroupId { get; set; }
+    public TransactionGroup? TransactionGroup { get; set; }
+
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";
 }

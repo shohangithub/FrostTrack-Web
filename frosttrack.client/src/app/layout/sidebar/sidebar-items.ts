@@ -1053,6 +1053,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/common/transaction-group',
+        title: 'Transaction Group',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/common/customer',
         title: 'Customer',
         iconType: '',

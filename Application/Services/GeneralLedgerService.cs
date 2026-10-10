@@ -38,6 +38,7 @@ public class GeneralLedgerService : IGeneralLedgerService
             ReportDate = reportDate,
             OpeningBalance = result.OpeningBalance,
             Items = result.Days.SelectMany(d => d.Items).OrderBy(i => i.Date).ToList(),
+            AccountSummary = result.AccountSummary,
             TotalDebit = result.TotalDebit,
             TotalCredit = result.TotalCredit,
             ClosingBalance = result.ClosingBalance
@@ -59,6 +60,7 @@ public class GeneralLedgerService : IGeneralLedgerService
         var transactions = await _transactionRepository.Query()
             .AsNoTracking()
             .Include(t => t.TransactionHead)
+                .ThenInclude(h => h!.TransactionGroup)
             .Include(t => t.Bank)
             .Where(t => t.TenantId == _tenantId
                 && t.TransactionDate >= window.FromUtc && t.TransactionDate < window.ToUtc
@@ -101,7 +103,10 @@ public class GeneralLedgerService : IGeneralLedgerService
             var creditAmount = !isMoneyIn ? netAmount : 0;
 
             var isBankOrCheque = transaction.PaymentMethod != PaymentMethods.CASH || transaction.BankId.HasValue;
-            var accountName = transaction.TransactionHead?.Name ?? "Unknown";
+            var headName = transaction.TransactionHead?.Name ?? "Unknown";
+            var groupName = transaction.TransactionHead?.TransactionGroup?.Name;
+            // Mapped heads show under their Transaction Group; the head name is kept for display underneath
+            var accountName = groupName ?? headName;
             if (transaction.Bank != null)
             {
                 accountName = $"{accountName} ({transaction.Bank.BankName})";
@@ -131,6 +136,8 @@ public class GeneralLedgerService : IGeneralLedgerService
                 TransactionCode = transaction.TransactionCode,
                 Description = description,
                 AccountName = accountName,
+                HeadName = headName,
+                GroupName = groupName,
                 AccountType = isBankOrCheque ? "Bank" : "Cash",
                 TransactionType = transaction.TransactionHead?.Type ?? "Unknown",
                 PaymentMethod = transaction.PaymentMethod,
@@ -258,12 +265,33 @@ public class GeneralLedgerService : IGeneralLedgerService
             running = dayClosing;
         }
 
+        // Period summary: one row per Transaction Group (or head / bank account when not grouped)
+        var accountSummary = days
+            .SelectMany(d => d.Items)
+            .GroupBy(i => new
+            {
+                Name = i.GroupName ?? i.HeadName ?? i.AccountName,
+                IsGroup = i.GroupName != null
+            })
+            .Select(g => new GeneralLedgerAccountSummaryResponse
+            {
+                AccountName = g.Key.Name,
+                IsGroup = g.Key.IsGroup,
+                TransactionCount = g.Count(),
+                DebitAmount = g.Sum(i => i.DebitAmount),
+                CreditAmount = g.Sum(i => i.CreditAmount)
+            })
+            .OrderByDescending(a => a.IsGroup)
+            .ThenBy(a => a.AccountName)
+            .ToList();
+
         return new GeneralLedgerRangeResponse
         {
             FromDate = window.FromDate,
             ToDate = window.ToDate,
             OpeningBalance = openingBalance,
             Days = days,
+            AccountSummary = accountSummary,
             TotalDebit = days.Sum(d => d.TotalDebit),
             TotalCredit = days.Sum(d => d.TotalCredit),
             OpeningBalanceAdjustment = totalAdjustment,

@@ -70,7 +70,9 @@ namespace Application.Services
                     t.TransactionHeadId,
                     t.TransactionHead!.Name,
                     t.TransactionHead!.Type,
-                    t.NetAmount))
+                    t.NetAmount,
+                    t.TransactionHead!.TransactionGroupId,
+                    t.TransactionHead!.TransactionGroup != null ? t.TransactionHead!.TransactionGroup.Name : null))
                 .ToListAsync(cancellationToken);
 
             // Internal cash <-> bank transfers (contra) in the window
@@ -155,7 +157,7 @@ namespace Application.Services
         }
 
         /// <summary>
-        /// Groups cash transactions by transaction head, followed by contra bank transfers.
+        /// Groups cash transactions by transaction head (or its Transaction Group), followed by contra bank transfers.
         /// Money IN = Debit, Money OUT = Credit (physical cash drawer perspective).
         /// </summary>
         private static List<CashBookItemResponse> BuildItems(
@@ -167,38 +169,38 @@ namespace Application.Services
             var items = new List<CashBookItemResponse>();
             var runningBalance = openingBalance;
 
+            // Heads mapped to a Transaction Group are merged into one row (Income and Expense together);
+            // unmapped heads stay one row per head as before.
             var headGroups = transactions
-                .GroupBy(t => new
-                {
-                    t.TransactionHeadId,
-                    TransactionHeadName = t.HeadName ?? "Unknown",
-                    TransactionType = t.HeadType ?? "Unknown"
-                })
+                .GroupBy(t => t.GroupId.HasValue && t.GroupName != null
+                    ? new { Id = t.GroupId.Value, Name = t.GroupName, IsGroup = true }
+                    : new { Id = t.TransactionHeadId, Name = t.HeadName ?? "Unknown", IsGroup = false })
                 .Select(g => new
                 {
-                    g.Key.TransactionHeadId,
-                    g.Key.TransactionHeadName,
-                    g.Key.TransactionType,
+                    g.Key.Id,
+                    g.Key.Name,
+                    g.Key.IsGroup,
+                    TransactionType = g.Key.IsGroup ? "GROUP" : (g.First().HeadType ?? "Unknown"),
                     Count = g.Count(),
-                    TotalAmount = g.Sum(t => Math.Abs(t.NetAmount))
+                    DebitAmount = g.Where(t => t.HeadType == TransactionHeadTypes.DEBIT).Sum(t => Math.Abs(t.NetAmount)),
+                    CreditAmount = g.Where(t => t.HeadType != TransactionHeadTypes.DEBIT).Sum(t => Math.Abs(t.NetAmount))
                 })
-                .OrderBy(g => g.TransactionHeadName);
+                .OrderBy(g => g.Name);
 
+            // Money IN = Debit, Money OUT = Credit
             foreach (var group in headGroups)
             {
-                var isMoneyIn = group.TransactionType == TransactionHeadTypes.DEBIT;
-                var debitAmount = isMoneyIn ? group.TotalAmount : 0;
-                var creditAmount = !isMoneyIn ? group.TotalAmount : 0;
-                runningBalance += debitAmount - creditAmount;
+                runningBalance += group.DebitAmount - group.CreditAmount;
 
                 items.Add(new CashBookItemResponse
                 {
-                    TransactionHeadId = group.TransactionHeadId,
-                    TransactionHeadName = group.TransactionHeadName,
+                    TransactionHeadId = group.Id,
+                    TransactionHeadName = group.Name,
                     TransactionType = group.TransactionType,
+                    IsGroup = group.IsGroup,
                     TransactionCount = group.Count,
-                    DebitAmount = debitAmount,
-                    CreditAmount = creditAmount,
+                    DebitAmount = group.DebitAmount,
+                    CreditAmount = group.CreditAmount,
                     Balance = withRunningBalance ? runningBalance : 0
                 });
             }
@@ -232,7 +234,7 @@ namespace Application.Services
             return items;
         }
 
-        private sealed record CashTx(DateTime TransactionDate, Guid TransactionHeadId, string? HeadName, string? HeadType, decimal NetAmount);
+        private sealed record CashTx(DateTime TransactionDate, Guid TransactionHeadId, string? HeadName, string? HeadType, decimal NetAmount, Guid? GroupId, string? GroupName);
 
         private sealed record CashTransfer(DateTime TransactionDate, string TransactionType, decimal Amount);
     }

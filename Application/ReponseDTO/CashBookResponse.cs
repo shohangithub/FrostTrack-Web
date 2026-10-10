@@ -5,6 +5,8 @@ namespace Application.ReponseDTO
         public Guid TransactionHeadId { get; set; }
         public string TransactionHeadName { get; set; } = string.Empty;
         public string TransactionType { get; set; } = string.Empty;
+        /// <summary>True when this row merges heads of one Transaction Group (TransactionHeadId then holds the group id).</summary>
+        public bool IsGroup { get; set; }
         public int TransactionCount { get; set; }
         public decimal DebitAmount { get; set; }
         public decimal CreditAmount { get; set; }
