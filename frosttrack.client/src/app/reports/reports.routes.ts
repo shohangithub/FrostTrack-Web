@@ -127,4 +127,28 @@ export const reportRoutes: Route[] = [
         (m) => m.CustomerBillStatementComponent,
       ),
   },
+  {
+    path: 'booking-report',
+    data: { mode: 'booking' },
+    loadComponent: () =>
+      import('./components/datewise-activity-report/datewise-activity-report.component').then(
+        (m) => m.DatewiseActivityReportComponent,
+      ),
+  },
+  {
+    path: 'delivery-report',
+    data: { mode: 'delivery' },
+    loadComponent: () =>
+      import('./components/datewise-activity-report/datewise-activity-report.component').then(
+        (m) => m.DatewiseActivityReportComponent,
+      ),
+  },
+  {
+    path: 'booking-delivery-report',
+    data: { mode: 'both' },
+    loadComponent: () =>
+      import('./components/datewise-activity-report/datewise-activity-report.component').then(
+        (m) => m.DatewiseActivityReportComponent,
+      ),
+  },
 ];

@@ -1,0 +1,370 @@
+<section class="main-content">
+  <div class="section-body">
+    <!-- Header with Tabs -->
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card mt-2 mb-2">
+          <span class="card-label">{{ title.bn }} / {{ title.en }}</span>
+          <div class="report-tabs-bar">
+            <ul class="nav nav-tabs report-nav-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'daily'" (click)="switchTab('daily')" type="button">
+                  <i class="fas fa-calendar-day"></i> দৈনিক / Daily
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'range'" (click)="switchTab('range')" type="button">
+                  <i class="fas fa-calendar-alt"></i> সময়কাল / Date Range
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- TAB 1: DAILY FILTER FORM -->
+          @if (activeTab === 'daily') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="dailyForm" (ngSubmit)="generateDailyReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="reportDate" class="col-form-label py-1">
+                      Report Date / তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="reportDate" class="form-control form-control-sm" formControlName="reportDate" />
+                  </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="dailyCustomer" class="col-form-label py-1">Customer / গ্রাহক</label>
+                    <ng-select id="dailyCustomer" [items]="customers" bindLabel="customerName" bindValue="id"
+                      placeholder="All Customers" formControlName="customerId" [clearable]="true"></ng-select>
+                  </div>
+                </div>
+
+                <div class="col-lg-5 col-md-4 col-sm-12 col-xs-12 text-end mb-2">
+                  <button type="submit" class="btn btn-primary px-3 btn-sm" [disabled]="isLoading || dailyForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Daily Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm" (click)="resetDaily()">Clear</button>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+          }
+
+          <!-- TAB 2: RANGE FILTER FORM -->
+          @if (activeTab === 'range') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="rangeForm" (ngSubmit)="generateRangeReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-2 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="fromDate" class="col-form-label py-1">
+                      From Date / শুরু তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="fromDate" class="form-control form-control-sm" formControlName="fromDate" />
+                  </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="toDate" class="col-form-label py-1">
+                      To Date / শেষ তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="toDate" class="form-control form-control-sm" formControlName="toDate" />
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 col-sm-12 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="rangeCustomer" class="col-form-label py-1">Customer / গ্রাহক</label>
+                    <ng-select id="rangeCustomer" [items]="customers" bindLabel="customerName" bindValue="id"
+                      placeholder="All Customers" formControlName="customerId" [clearable]="true"></ng-select>
+                  </div>
+                </div>
+
+                <div class="col-lg-5 col-md-12 col-sm-12 col-xs-12 text-end mb-2">
+                  <div class="btn-group btn-group-sm me-2 mb-1" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('week')">This Week</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('month')">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('lastMonth')">Last Month</button>
+                  </div>
+                  <button type="submit" class="btn btn-primary px-3 btn-sm mb-1" [disabled]="isLoading || rangeForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Range Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm mb-1" (click)="resetRange()">Clear</button>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT DISPLAY -->
+    @if (showReport && !isLoading && report) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-primary btn-sm" [openNewTab]="true" [closeWindow]="true"
+                  [previewOnly]="false" [useExistingCss]="true" [printTitle]="title.en"
+                  printSectionId="print-section-activity" ngxPrint>
+                  <i class="fas fa-print me-1"></i>Print Report
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="print-section-activity" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <div class="invoice-container">
+                  <app-report-invoice-header [Title]="title.bn + ' / ' + title.en" [InvoiceNumber]="''"></app-report-invoice-header>
+
+                  <!-- Report Meta -->
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        @if (report.fromDate === report.toDate) {
+                        <td class="info-label">Report Date / তারিখ:</td>
+                        <td class="info-value">{{ toLocalDate(report.fromDate) | date: "dd-MMM-yyyy" }}</td>
+                        } @else {
+                        <td class="info-label">Period / সময়কাল:</td>
+                        <td class="info-value">
+                          {{ toLocalDate(report.fromDate) | date: "dd-MMM-yyyy" }} to {{ toLocalDate(report.toDate) | date: "dd-MMM-yyyy" }}
+                        </td>
+                        }
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">{{ today | date: "dd-MMM-yyyy hh:mm a" }}</td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Customer / গ্রাহক:</td>
+                        <td class="info-value">{{ report.customerName || 'All Customers' }}</td>
+                        <td class="info-label">Entries:</td>
+                        <td class="info-value">
+                          @if (showBookings) { Bookings: {{ report.totals.bookingCount }} }
+                          @if (showBookings && showDeliveries) { &nbsp;|&nbsp; }
+                          @if (showDeliveries) { Deliveries: {{ report.totals.deliveryCount }} }
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  @if (report.days.length > 0) {
+                  @for (day of report.days; track day.date) {
+                  <div class="stored-products-section mb-3">
+                    @if (report.fromDate !== report.toDate) {
+                    <div class="d-flex justify-content-between align-items-center bg-light p-1 px-2 border border-bottom-0 day-header">
+                      <strong>{{ toLocalDate(day.date) | date: "dd-MMM-yyyy (EEEE)" }}</strong>
+                      <span class="text-muted" style="font-size: 10px;">
+                        @if (showBookings) { Booking: ৳{{ day.totals.bookingTotal | number: "1.2-2" }} }
+                        @if (showBookings && showDeliveries) { | }
+                        @if (showDeliveries) {
+                        Delivery: ৳{{ day.totals.deliveryTotal | number: "1.2-2" }} |
+                        Collected: ৳{{ day.totals.deliveryCollected | number: "1.2-2" }}
+                        }
+                      </span>
+                    </div>
+                    }
+
+                    <!-- Bookings of the day -->
+                    @if (showBookings && day.bookings.length > 0) {
+                    <table class="products-table compact mb-2">
+                      <thead>
+                        @if (showDeliveries) {
+                        <tr>
+                          <th [attr.colspan]="report.customerId ? 8 : 9" class="table-caption">বুকিং / Bookings</th>
+                        </tr>
+                        }
+                        <tr>
+                          <th class="col-sl">SL</th>
+                          <th>Booking No</th>
+                          @if (!report.customerId) {
+                          <th>Customer</th>
+                          }
+                          <th>Product</th>
+                          <th class="col-qty">Qty</th>
+                          <th class="text-end">Rate</th>
+                          <th class="col-amount text-end">Rent Tk.</th>
+                          <th class="col-amount text-end">Labour Tk.</th>
+                          <th class="col-amount text-end">Total Tk.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (b of day.bookings; track i; let i = $index) {
+                        <tr>
+                          <td class="col-sl text-center">{{ i + 1 }}</td>
+                          <td>{{ b.bookingNumber }}</td>
+                          @if (!report.customerId) {
+                          <td>
+                            {{ b.customerName }}
+                            @if (b.customerMobile) {
+                            <div class="sub-text">{{ b.customerMobile }}</div>
+                            }
+                          </td>
+                          }
+                          <td>{{ b.productName }}</td>
+                          <td class="text-end">{{ b.quantity | number: "1.0-2" }} <span class="sub-text">{{ b.unitName }}</span></td>
+                          <td class="text-end">{{ b.rate | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ b.rentAmount | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ b.labourCharge ? (b.labourCharge | number: "1.2-2") : "-" }}</td>
+                          <td class="text-end"><strong>{{ b.total | number: "1.2-2" }}</strong></td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td [attr.colspan]="report.customerId ? 5 : 6" class="text-end">Booking Total:</td>
+                          <td class="text-end">{{ day.totals.bookingRent | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.bookingLabour | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.bookingTotal | number: "1.2-2" }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    }
+
+                    <!-- Deliveries of the day -->
+                    @if (showDeliveries && day.deliveries.length > 0) {
+                    <table class="products-table compact mb-2">
+                      <thead>
+                        @if (showBookings) {
+                        <tr>
+                          <th [attr.colspan]="report.customerId ? 11 : 12" class="table-caption">ডেলিভারি / Deliveries</th>
+                        </tr>
+                        }
+                        <tr>
+                          <th class="col-sl">SL</th>
+                          <th>Delivery No</th>
+                          <th>Booking No</th>
+                          @if (!report.customerId) {
+                          <th>Customer</th>
+                          }
+                          <th>Product</th>
+                          <th class="col-qty">Qty</th>
+                          <th class="text-center">Cycles</th>
+                          <th class="col-amount text-end">Rent Tk.</th>
+                          <th class="col-amount text-end">Labour Tk.</th>
+                          <th class="col-amount text-end">Total Tk.</th>
+                          <th class="col-amount text-end">Collected Tk.</th>
+                          <th class="col-amount text-end">Due Tk.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (d of day.deliveries; track i; let i = $index) {
+                        <tr>
+                          <td class="col-sl text-center">{{ i + 1 }}</td>
+                          <td>{{ d.deliveryNumber }}</td>
+                          <td>{{ d.bookingNumber }}</td>
+                          @if (!report.customerId) {
+                          <td>
+                            {{ d.customerName }}
+                            @if (d.customerMobile) {
+                            <div class="sub-text">{{ d.customerMobile }}</div>
+                            }
+                          </td>
+                          }
+                          <td>{{ d.productName }}</td>
+                          <td class="text-end">{{ d.quantity | number: "1.0-2" }} <span class="sub-text">{{ d.unitName }}</span></td>
+                          <td class="text-center">{{ d.billingCycles }}</td>
+                          <td class="text-end">{{ d.rentCharge | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ d.labourCharge ? (d.labourCharge | number: "1.2-2") : "-" }}</td>
+                          <td class="text-end"><strong>{{ d.total | number: "1.2-2" }}</strong></td>
+                          <td class="text-end">{{ d.collectedAmount ? (d.collectedAmount | number: "1.2-2") : "-" }}</td>
+                          <td class="text-end">{{ d.dueAmount | number: "1.2-2" }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td [attr.colspan]="report.customerId ? 6 : 7" class="text-end">Delivery Total:</td>
+                          <td class="text-end">{{ day.totals.deliveryRent | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.deliveryLabour | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.deliveryTotal | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.deliveryCollected | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ day.totals.deliveryDue | number: "1.2-2" }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    }
+                  </div>
+                  }
+
+                  <!-- Grand Summary -->
+                  <div class="section-title">সারসংক্ষেপ / Summary</div>
+                  <div class="stored-products-section summary-table">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th class="text-center">Entries</th>
+                          <th class="col-amount text-end">Rent Tk.</th>
+                          <th class="col-amount text-end">Labour Tk.</th>
+                          <th class="col-amount text-end">Total Tk.</th>
+                          @if (showDeliveries) {
+                          <th class="col-amount text-end">Collected Tk.</th>
+                          <th class="col-amount text-end">Due Tk.</th>
+                          }
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if (showBookings) {
+                        <tr>
+                          <td><strong>বুকিং / Bookings</strong></td>
+                          <td class="text-center">{{ report.totals.bookingCount }}</td>
+                          <td class="text-end">{{ report.totals.bookingRent | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ report.totals.bookingLabour | number: "1.2-2" }}</td>
+                          <td class="text-end"><strong>{{ report.totals.bookingTotal | number: "1.2-2" }}</strong></td>
+                          @if (showDeliveries) {
+                          <td class="text-end">-</td>
+                          <td class="text-end">-</td>
+                          }
+                        </tr>
+                        }
+                        @if (showDeliveries) {
+                        <tr>
+                          <td><strong>ডেলিভারি / Deliveries</strong></td>
+                          <td class="text-center">{{ report.totals.deliveryCount }}</td>
+                          <td class="text-end">{{ report.totals.deliveryRent | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ report.totals.deliveryLabour | number: "1.2-2" }}</td>
+                          <td class="text-end"><strong>{{ report.totals.deliveryTotal | number: "1.2-2" }}</strong></td>
+                          <td class="text-end">{{ report.totals.deliveryCollected | number: "1.2-2" }}</td>
+                          <td class="text-end">{{ report.totals.deliveryDue | number: "1.2-2" }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">
+                    No {{ mode === 'both' ? 'bookings or deliveries' : mode === 'booking' ? 'bookings' : 'deliveries' }}
+                    found for the selected {{ report.fromDate === report.toDate ? 'date' : 'period' }}
+                  </div>
+                  }
+
+                  <app-report-footer></app-report-footer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</section>
