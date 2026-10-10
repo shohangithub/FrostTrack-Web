@@ -51,6 +51,8 @@ export class BillCollectionListComponent implements OnInit {
   pagination: ITransactionPaginationQuery = {
     usageFor: USAGE_FOR.CUSTOMER_PAYMENT,
     status: 'active',
+    // Only customer payments; money taken at delivery time is shown with its delivery
+    excludeDeliveryPayments: true,
     pageSize: DefaultPagination.PAGESIZE,
     pageIndex: DefaultPagination.PAGEINDEX,
     orderBy: DefaultPagination.ORDERBY,
@@ -111,6 +113,12 @@ export class BillCollectionListComponent implements OnInit {
     // For bill collection, we don't need special filtering - just get all transactions with pagination
     this.transactionService.getWithPagination(this.pagination).subscribe({
       next: (result: PaginationResult<ITransactionListResponse>) => {
+        // A delete can empty the last page: step back to the previous page
+        if (result.data.length === 0 && this.pagination.pageIndex > 0) {
+          this.pagination.pageIndex = Math.max(0, (result.paging?.totalPages ?? 1) - 1);
+          this.fetchData();
+          return;
+        }
         this.data = result.data;
         this.paging = result.paging;
         this.loadingIndicator = false;
@@ -204,13 +212,15 @@ export class BillCollectionListComponent implements OnInit {
   }
 
   setPage(pageInfo: any) {
-    this.pagination.pageIndex = pageInfo.offset + 1;
+    // ngx-datatable offset and the API page index are both 0-based
+    this.pagination.pageIndex = pageInfo.offset;
     this.fetchData();
   }
 
   onSort(event: any) {
     this.pagination.orderBy = event.sorts[0].prop;
     this.pagination.isAscending = event.sorts[0].dir === 'asc';
+    this.pagination.pageIndex = DefaultPagination.PAGEINDEX; // new order starts on the first page
     this.fetchData();
   }
 

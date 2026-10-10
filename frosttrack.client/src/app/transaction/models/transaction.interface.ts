@@ -101,4 +101,6 @@ export interface ITransactionDetailResponse extends ITransactionListResponse {
 export interface ITransactionPaginationQuery extends PaginationQuery {
   usageFor: string;
   status: 'active' | 'archived' | 'deleted';
+  /** Leave out payments taken at delivery time (Customer Payment list). */
+  excludeDeliveryPayments?: boolean;
 }

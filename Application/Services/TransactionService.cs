@@ -351,6 +351,12 @@ public class TransactionService : ITransactionService
                 x.TransactionHead.UsageFor == requestQuery.UsageFor);
         }
 
+        // Customer Payment list: money taken at delivery time is managed from the delivery, not listed here
+        if (requestQuery.ExcludeDeliveryPayments == true)
+        {
+            predicate = predicate.And(x => x.DeliveryId == null && !x.TransactionCode.StartsWith("DEL-"));
+        }
+
         if (!string.IsNullOrWhiteSpace(requestQuery.OpenText))
         {
             var searchText = requestQuery.OpenText.Trim().ToLower();
