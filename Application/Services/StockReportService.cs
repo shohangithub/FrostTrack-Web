@@ -73,11 +73,12 @@ public class StockReportService : IStockReportService
                 if (productId.HasValue && bookingDetail.ProductId != productId.Value)
                     continue;
 
-                // Calculate total delivered for this booking detail
+                // Total delivered for this booking detail, converted to the booking unit through base quantities
+                // (a delivery may use a different unit of the same family than the booking)
                 var deliveredQuantity = deliveries
                     .SelectMany(d => d.DeliveryDetails)
-                    .Where(dd => dd.BookingDetailId == bookingDetail.Id)
-                    .Sum(dd => dd.DeliveryQuantity);
+                    .Where(dd => dd.BookingDetailId == bookingDetail.Id && !dd.IsDeleted)
+                    .Sum(dd => ToBookingUnit(bookingDetail, dd));
 
                 var remainingQuantity = bookingDetail.BookingQuantity - deliveredQuantity;
 
@@ -200,5 +201,13 @@ public class StockReportService : IStockReportService
             TotalRemainingQuantity = itemsList.Sum(i => i.RemainingQuantity),
             TotalValue = itemsList.Sum(i => i.TotalValue)
         };
+    }
+
+    /// <summary>Delivered quantity expressed in the booking line's unit.</summary>
+    private static float ToBookingUnit(BookingDetail bookingDetail, DeliveryDetail deliveryDetail)
+    {
+        if (bookingDetail.BaseQuantity <= 0 || bookingDetail.BookingQuantity <= 0)
+            return deliveryDetail.DeliveryQuantity;
+        return (float)(deliveryDetail.BaseQuantity * (decimal)bookingDetail.BookingQuantity / bookingDetail.BaseQuantity);
     }
 }

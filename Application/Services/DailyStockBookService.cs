@@ -85,6 +85,7 @@ public class DailyStockBookService : IDailyStockBookService
                 continue;
 
             var detailIds = details.Select(d => d.Id).ToHashSet();
+            var detailById = details.ToDictionary(d => d.Id);
             var productName = string.Join(", ", details.Select(d => d.Product?.ProductName).Where(n => !string.IsNullOrEmpty(n)).Distinct());
             var totalBookedQuantity = details.Sum(d => d.BookingQuantity);
 
@@ -96,8 +97,8 @@ public class DailyStockBookService : IDailyStockBookService
             var previousDeliveries = allDeliveries
                 .Where(d => d.BookingId == booking.Id && d.DeliveryDate < startOfDay)
                 .SelectMany(d => d.DeliveryDetails)
-                .Where(dd => detailIds.Contains(dd.BookingDetailId))
-                .Sum(dd => dd.DeliveryQuantity);
+                .Where(dd => detailIds.Contains(dd.BookingDetailId) && !dd.IsDeleted)
+                .Sum(dd => ToBookingUnit(detailById[dd.BookingDetailId], dd));
 
             var previousStock = Math.Max(0, previousBookings - previousDeliveries);
 
@@ -112,8 +113,8 @@ public class DailyStockBookService : IDailyStockBookService
                             d.DeliveryDate >= startOfDay && 
                             d.DeliveryDate <= endOfDay)
                 .SelectMany(d => d.DeliveryDetails)
-                .Where(dd => detailIds.Contains(dd.BookingDetailId))
-                .Sum(dd => dd.DeliveryQuantity);
+                .Where(dd => detailIds.Contains(dd.BookingDetailId) && !dd.IsDeleted)
+                .Sum(dd => ToBookingUnit(detailById[dd.BookingDetailId], dd));
 
             // Current stock = previous stock + today's bookings - today's deliveries
             var currentStock = Math.Max(0, previousStock + todayBookings - todayDeliveries);
@@ -152,5 +153,13 @@ public class DailyStockBookService : IDailyStockBookService
             .OrderBy(x => x.CustomerName)
             .ThenBy(x => x.BookingDate)
             .ThenBy(x => x.ReceiptNo);
+    }
+
+    /// <summary>Delivered quantity expressed in the booking line's unit (delivery may use another unit of the same family).</summary>
+    private static float ToBookingUnit(BookingDetail bookingDetail, DeliveryDetail deliveryDetail)
+    {
+        if (bookingDetail.BaseQuantity <= 0 || bookingDetail.BookingQuantity <= 0)
+            return deliveryDetail.DeliveryQuantity;
+        return (float)(deliveryDetail.BaseQuantity * (decimal)bookingDetail.BookingQuantity / bookingDetail.BaseQuantity);
     }
 }

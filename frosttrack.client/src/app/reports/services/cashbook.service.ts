@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
-import { ICashBookReport } from '../models/cashbook.interface';
+import { ICashBookReport, ICashBookRangeReport } from '../models/cashbook.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -17,5 +17,13 @@ export class CashBookService {
     params = params.append('reportDate', reportDate.toISOString());
 
     return this.http.get<ICashBookReport>(this.apiUrl, { params });
+  }
+
+  getCashBookRange(fromDate: Date, toDate: Date): Observable<ICashBookRangeReport> {
+    let params = new HttpParams();
+    params = params.append('fromDate', fromDate.toISOString());
+    params = params.append('toDate', toDate.toISOString());
+
+    return this.http.get<ICashBookRangeReport>(`${this.apiUrl}/range`, { params });
   }
 }

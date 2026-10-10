@@ -110,4 +110,25 @@ public class BalanceCalculatorService : IBalanceCalculatorService
 
         return bankInitialOpening + previousBankAmount;
     }
+
+    public async Task<IReadOnlyCollection<DateTime>> GetOpeningBalanceResetDaysAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    {
+        var resetTimestamps = await _transactionRepository.Query()
+            .AsNoTracking()
+            .Where(t =>
+                t.TenantId == _tenantId &&
+                !t.IsDeleted &&
+                !t.IsArchived &&
+                t.TransactionHead!.UsageFor == UsageFor.OPENING_BALANCE &&
+                t.TransactionDate >= fromUtc &&
+                t.TransactionDate < toUtc)
+            .Select(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
+
+        return resetTimestamps
+            .Select(ReportDateWindow.ToLocalDay)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+    }
 }

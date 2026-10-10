@@ -5,10 +5,13 @@ export interface ITrialBalanceItem {
   creditAmount: number;
   balance: number;
   transactionCount: number;
+  sortOrder?: number;
 }
 
 export interface ITrialBalanceSummary {
-  reportDate: Date;
+  reportDate: Date | string;
+  fromDate?: Date | string;
+  toDate?: Date | string;
   openingBalance: number;
   totalDebit: number;
   totalCredit: number;

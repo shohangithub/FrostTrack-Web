@@ -264,8 +264,24 @@ public class BookingService : IBookingService
             .Include(x => x.Customer)
             .Include(x => x.Branch)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        var response = result is not null ? result.Adapt<BookingResponse>() : null;
-        return response;
+        if (result is null) return null;
+
+        var response = result.Adapt<BookingResponse>();
+
+        // Flag lines that deliveries depend on so the form can lock their product and unit
+        var detailIds = result.BookingDetails.Select(d => d.Id).ToList();
+        var deliveredDetailIds = (await _deliveryDetailRepository.Query()
+            .Where(dd => detailIds.Contains(dd.BookingDetailId))
+            .Select(dd => dd.BookingDetailId)
+            .Distinct()
+            .ToListAsync(cancellationToken)).ToHashSet();
+
+        return response with
+        {
+            BookingDetails = response.BookingDetails
+                .Select(d => d with { HasDeliveries = deliveredDetailIds.Contains(d.Id) })
+                .ToList()
+        };
     }
 
     public async Task<IEnumerable<Lookup<Guid>>> GetLookup(Expression<Func<Booking, bool>> predicate, CancellationToken cancellationToken = default)
@@ -343,13 +359,26 @@ public class BookingService : IBookingService
             .Select(d => d.Id)
             .ToList();
 
-        if (removedDetailIds.Count > 0)
+        // Lines referenced by any delivery line (even one in the Deleted tab, which can be restored)
+        var existingIds = existingData.BookingDetails.Select(d => d.Id).ToList();
+        var deliveredDetailIds = (await _deliveryDetailRepository.Query()
+            .Where(dd => existingIds.Contains(dd.BookingDetailId))
+            .Select(dd => dd.BookingDetailId)
+            .Distinct()
+            .ToListAsync(cancellationToken)).ToHashSet();
+
+        if (removedDetailIds.Any(deliveredDetailIds.Contains))
+            throw new Exception("A booking item that has deliveries cannot be removed. Delete those deliveries first (including any in the Deleted tab).");
+
+        // Deliveries store their quantity in base units of the booking's unit; changing the product or unit
+        // afterwards would make stock and rent wrong, so both are locked once a line has deliveries.
+        foreach (var item in request.BookingDetails.Where(x => x.Id != Guid.Empty && deliveredDetailIds.Contains(x.Id)))
         {
-            // Any delivery line (even a soft-deleted one) still references the booking line
-            var hasDeliveries = await _deliveryDetailRepository.Query()
-                .AnyAsync(dd => removedDetailIds.Contains(dd.BookingDetailId), cancellationToken);
-            if (hasDeliveries)
-                throw new Exception("A booking item that has deliveries cannot be removed. Delete those deliveries first.");
+            var existing = existingData.BookingDetails.First(d => d.Id == item.Id);
+            if (existing.ProductId != item.ProductId)
+                throw new Exception("The product of a booking item that has deliveries cannot be changed. Delete those deliveries first (including any in the Deleted tab).");
+            if (existing.BookingUnitId != item.BookingUnitId)
+                throw new Exception("The unit of a booking item that has deliveries cannot be changed. Delete those deliveries first (including any in the Deleted tab).");
         }
 
         foreach (var item in request.BookingDetails.Where(x => x.Id != Guid.Empty))

@@ -14,6 +14,8 @@ public record TrialBalanceItemResponse
 public record TrialBalanceSummaryResponse
 {
     public DateTime ReportDate { get; set; }
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
     public decimal OpeningBalance { get; set; }
     public decimal TotalDebit { get; set; }
     public decimal TotalCredit { get; set; }

@@ -20,3 +20,25 @@ export interface IGeneralLedgerItem {
   debitAmount: number;
   creditAmount: number;
 }
+
+export interface IGeneralLedgerDayReport {
+  date: string | Date;
+  openingBalance: number;
+  isOpeningBalanceReset: boolean;
+  openingBalanceAdjustment: number;
+  items: IGeneralLedgerItem[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}
+
+export interface IGeneralLedgerRangeReport {
+  fromDate: string | Date;
+  toDate: string | Date;
+  openingBalance: number;
+  days: IGeneralLedgerDayReport[];
+  totalDebit: number;
+  totalCredit: number;
+  openingBalanceAdjustment: number;
+  closingBalance: number;
+}

@@ -10,6 +10,30 @@ public class BankBookResponse
     public decimal ClosingBalance { get; set; }
 }
 
+public class BankBookDayResponse
+{
+    public DateTime Date { get; set; }
+    public decimal OpeningBalance { get; set; }
+    public List<BankBookItemResponse> Items { get; set; } = new();
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+    public decimal ClosingBalance { get; set; }
+}
+
+public class BankBookRangeResponse
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public int? BankId { get; set; }
+    public string? BankName { get; set; }
+    public string? AccountNumber { get; set; }
+    public decimal OpeningBalance { get; set; }
+    public List<BankBookDayResponse> Days { get; set; } = new();
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+    public decimal ClosingBalance { get; set; }
+}
+
 public class BankBookItemResponse
 {
     public long Id { get; set; }

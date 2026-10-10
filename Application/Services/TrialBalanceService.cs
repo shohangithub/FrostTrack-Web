@@ -1,3 +1,6 @@
+using Application.Contractors;
+using Application.Contractors.Authentication;
+using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
 using Application.Services.Common;
@@ -26,29 +29,35 @@ public class TrialBalanceService : ITrialBalanceService
         _tenantId = tenantProvider.GetTenantId();
     }
 
-    public async Task<TrialBalanceSummaryResponse> GetTrialBalanceAsync(
+    public Task<TrialBalanceSummaryResponse> GetTrialBalanceAsync(
         DateTime reportDate,
         CancellationToken cancellationToken)
     {
-        var fromLocal = reportDate.Date;
-        var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local)
-            .ToUniversalTime();
+        return BuildAsync(ReportDateWindow.ForDay(reportDate), cancellationToken);
+    }
 
-        var toLocalExclusive = fromLocal.AddDays(1);
-        var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local)
-            .ToUniversalTime();
+    public Task<TrialBalanceSummaryResponse> GetTrialBalanceRangeAsync(
+        DateTime fromDate,
+        DateTime toDate,
+        CancellationToken cancellationToken)
+    {
+        return BuildAsync(ReportDateWindow.ForRange(fromDate, toDate), cancellationToken);
+    }
 
-        var dateWithUTCTime = reportDate.GetDateUtcTime();
-        var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
+    private async Task<TrialBalanceSummaryResponse> BuildAsync(
+        ReportDateWindow window,
+        CancellationToken cancellationToken)
+    {
+        // 1. Opening Balance at start of period (Capital / Equity -> CREDIT)
+        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(
+            window.FromUtc, window.OpeningAnchorUtc, true, cancellationToken);
 
-        // 1. Opening Balance at start of report date (Capital / Equity -> CREDIT)
-        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
-
-        // 2. Fetch nominal transactions for the report date
+        // 2. Fetch nominal transactions for the period
         var transactions = await _transactionRepository.Query()
+            .AsNoTracking()
             .Include(t => t.TransactionHead)
             .Where(t => t.TenantId == _tenantId
-                     && t.TransactionDate >= fromUtc && t.TransactionDate < toUtc
+                     && t.TransactionDate >= window.FromUtc && t.TransactionDate < window.ToUtc
                      && !t.IsDeleted && !t.IsArchived && t.PaymentMethod != PaymentMethods.CREDIT
                      && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
                      && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
@@ -85,8 +94,50 @@ public class TrialBalanceService : ITrialBalanceService
             })
             .ToList();
 
-        // 3. Bank Accounts (Real Accounts / Assets -> DEBIT)
+        // Direct bank receipts and payments during period (not contra, not auto-generated)
+        var directBankTx = await _bankTransactionRepository.Query()
+            .AsNoTracking()
+            .Include(bt => bt.Bank)
+            .Where(bt => bt.TenantId == _tenantId
+                     && bt.TransactionDate >= window.FromUtc && bt.TransactionDate < window.ToUtc
+                     && bt.IsActive && !bt.IsDeleted
+                     && bt.SourceType != BankSourceTypes.CASH
+                     && bt.SourceType != BankSourceTypes.CUSTOMER_PAYMENT
+                     && bt.SourceType != BankSourceTypes.DELIVERY
+                     && bt.TransactionId == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var dbt in directBankTx)
+        {
+            if (dbt.TransactionType == BankTransactionTypes.Deposit)
+            {
+                revenueItems.Add(new TrialBalanceItemResponse
+                {
+                    AccountName = $"{dbt.Bank?.BankName ?? "Bank"} - Direct Deposit",
+                    AccountType = "Bank Receipt",
+                    DebitAmount = 0,
+                    CreditAmount = dbt.Amount,
+                    TransactionCount = 1,
+                    Balance = dbt.Amount
+                });
+            }
+            else if (dbt.TransactionType == BankTransactionTypes.Withdraw)
+            {
+                expenseItems.Add(new TrialBalanceItemResponse
+                {
+                    AccountName = $"{dbt.Bank?.BankName ?? "Bank"} - Direct Payment",
+                    AccountType = "Bank Payment",
+                    DebitAmount = dbt.Amount,
+                    CreditAmount = 0,
+                    TransactionCount = 1,
+                    Balance = dbt.Amount
+                });
+            }
+        }
+
+        // 3. Bank Accounts (Real Accounts / Assets -> DEBIT) as of end of period
         var banks = await _bankRepository.Query()
+            .AsNoTracking()
             .Where(b => b.TenantId == _tenantId && b.IsActive && !b.IsDeleted)
             .ToListAsync(cancellationToken);
 
@@ -94,7 +145,8 @@ public class TrialBalanceService : ITrialBalanceService
         foreach (var bank in banks)
         {
             var bankTxSum = await _bankTransactionRepository.Query()
-                .Where(bt => bt.BankId == bank.Id && bt.IsActive && !bt.IsDeleted && bt.TransactionDate < toUtc)
+                .AsNoTracking()
+                .Where(bt => bt.BankId == bank.Id && bt.IsActive && !bt.IsDeleted && bt.TransactionDate < window.ToUtc)
                 .SumAsync(bt => bt.TransactionType == BankTransactionTypes.Deposit ? bt.Amount : -bt.Amount, cancellationToken);
 
             var endingBalance = bank.OpeningBalance + bankTxSum;
@@ -112,8 +164,9 @@ public class TrialBalanceService : ITrialBalanceService
             }
         }
 
-        // 4. Physical Cash in Hand as of end-of-day (Asset -> DEBIT)
-        var cashInHandBalance = await _balanceCalculatorService.GetCashOpeningBalanceAsync(toUtc, toDate, cancellationToken);
+        // 4. Physical Cash in Hand as of end of period (Asset -> DEBIT)
+        var cashInHandBalance = await _balanceCalculatorService.GetCashOpeningBalanceAsync(
+            window.ToUtc, window.ClosingAnchorUtc, cancellationToken);
 
         var cashInHandItem = new TrialBalanceItemResponse
         {
@@ -137,8 +190,6 @@ public class TrialBalanceService : ITrialBalanceService
             SortOrder = 1
         };
 
-        // Assemble all items in proper presentation order:
-        // Capital -> Revenues -> Expenses -> Bank Accounts -> Cash in Hand
         var allItems = new List<TrialBalanceItemResponse>();
         if (openingBalance != 0)
         {
@@ -161,11 +212,14 @@ public class TrialBalanceService : ITrialBalanceService
 
         return new TrialBalanceSummaryResponse
         {
-            ReportDate = reportDate,
+            ReportDate = window.ToDate,
+            FromDate = window.FromDate,
+            ToDate = window.ToDate,
             OpeningBalance = openingBalance,
             TotalDebit = totalDebit,
             TotalCredit = totalCredit,
             ClosingBalance = difference,
+            TotalTransactions = allItems.Sum(i => i.TransactionCount),
             Items = allItems
         };
     }

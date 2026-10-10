@@ -1,4 +1,5 @@
 using Application.Contractors;
+using Application.Contractors.Authentication;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
@@ -11,48 +12,167 @@ namespace Application.Services
         private readonly IRepository<Transaction, Guid> _transactionRepository;
         private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
         private readonly IBalanceCalculatorService _balanceCalculatorService;
+        private readonly Guid _tenantId;
 
         public CashBookService(
             IRepository<Transaction, Guid> transactionRepository,
             IRepository<BankTransaction, long> bankTransactionRepository,
-            IBalanceCalculatorService balanceCalculatorService)
+            IBalanceCalculatorService balanceCalculatorService,
+            ITenantProvider tenantProvider)
         {
             _transactionRepository = transactionRepository;
             _bankTransactionRepository = bankTransactionRepository;
             _balanceCalculatorService = balanceCalculatorService;
+            _tenantId = tenantProvider.GetTenantId();
         }
 
+        /// <summary>
+        /// Daily Cash Book. Internally this is a one-day range, so daily and range reports
+        /// always produce identical figures for the same day.
+        /// </summary>
         public async Task<CashBookResponse> GetCashBookAsync(DateTime reportDate, CancellationToken cancellationToken = default)
         {
-            // Get opening balance (cash transactions before report date)
+            var result = await BuildAsync(ReportDateWindow.ForDay(reportDate), cancellationToken);
+            var day = result.Days.FirstOrDefault();
 
-            var fromLocal = reportDate.Date;
-            var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local)
-                .ToUniversalTime();
+            return new CashBookResponse
+            {
+                OpeningBalance = result.OpeningBalance,
+                Items = day?.Items ?? new List<CashBookItemResponse>(),
+                TotalDebit = result.TotalDebit,
+                TotalCredit = result.TotalCredit,
+                ClosingBalance = result.ClosingBalance
+            };
+        }
 
-            var toLocalExclusive = fromLocal.AddDays(1);
-            var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local)
-                .ToUniversalTime();
+        public Task<CashBookRangeResponse> GetCashBookRangeAsync(DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
+        {
+            return BuildAsync(ReportDateWindow.ForRange(fromDate, toDate), cancellationToken);
+        }
 
-            var dateWithUTCTime = reportDate.GetDateUtcTime();
-            var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
+        private async Task<CashBookRangeResponse> BuildAsync(ReportDateWindow window, CancellationToken cancellationToken)
+        {
+            // Opening cash balance at the start of the first day
+            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(
+                window.FromUtc, window.OpeningAnchorUtc, false, cancellationToken);
 
-            var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, false, cancellationToken);
-
-            // Get cash transactions for the report date
+            // Cash revenue / expense transactions in the window (projected, read-only)
             var transactions = await _transactionRepository.Query()
-                .Include(t => t.TransactionHead)
-                .Where(t => t.TransactionDate >= fromUtc && t.TransactionDate < toUtc && t.PaymentMethod == PaymentMethods.CASH && !t.IsDeleted && t.IsArchived == false && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .AsNoTracking()
+                .Where(t => t.TenantId == _tenantId
+                         && t.TransactionDate >= window.FromUtc && t.TransactionDate < window.ToUtc
+                         && t.PaymentMethod == PaymentMethods.CASH
+                         && !t.IsDeleted && !t.IsArchived
+                         && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                         && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+                .Select(t => new CashTx(
+                    t.TransactionDate,
+                    t.TransactionHeadId,
+                    t.TransactionHead!.Name,
+                    t.TransactionHead!.Type,
+                    t.NetAmount))
                 .ToListAsync(cancellationToken);
 
+            // Internal cash <-> bank transfers (contra) in the window
+            var transfers = await _bankTransactionRepository.Query()
+                .AsNoTracking()
+                .Where(bt => bt.TenantId == _tenantId
+                          && bt.TransactionDate >= window.FromUtc && bt.TransactionDate < window.ToUtc
+                          && bt.IsActive && !bt.IsArchived && !bt.IsDeleted
+                          && (bt.SourceType == null || bt.SourceType == BankSourceTypes.CASH))
+                .Select(bt => new CashTransfer(bt.TransactionDate, bt.TransactionType, bt.Amount))
+                .ToListAsync(cancellationToken);
 
-            // Group by transaction head and sum amounts
-            var groupedTransactions = transactions
+            // Days (after the first) on which an explicit opening balance re-anchors cash
+            var resetDays = (await _balanceCalculatorService.GetOpeningBalanceResetDaysAsync(
+                    window.FromUtc, window.ToUtc, cancellationToken))
+                .Where(d => d > window.FromDate)
+                .ToHashSet();
+
+            var txByDay = transactions.ToLookup(t => ReportDateWindow.ToLocalDay(t.TransactionDate));
+            var transfersByDay = transfers.ToLookup(t => ReportDateWindow.ToLocalDay(t.TransactionDate));
+
+            var activeDays = txByDay.Select(g => g.Key)
+                .Concat(transfersByDay.Select(g => g.Key))
+                .Concat(resetDays)
+                .Where(d => d >= window.FromDate && d <= window.ToDate)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            var days = new List<CashBookDayResponse>();
+            var running = openingBalance;
+            decimal totalAdjustment = 0;
+
+            foreach (var day in activeDays)
+            {
+                var dayOpening = running;
+                decimal adjustment = 0;
+                var isReset = resetDays.Contains(day);
+
+                if (isReset)
+                {
+                    // Re-read the opening exactly as the daily report would for this day
+                    var reanchored = await _balanceCalculatorService.GetCashOpeningBalanceAsync(
+                        ReportDateWindow.DayStartUtc(day), ReportDateWindow.OpeningAnchorFor(day), cancellationToken);
+                    adjustment = reanchored - running;
+                    dayOpening = reanchored;
+                    totalAdjustment += adjustment;
+                }
+
+                var items = BuildItems(txByDay[day], transfersByDay[day], dayOpening, withRunningBalance: true);
+                var dayDebit = items.Sum(i => i.DebitAmount);
+                var dayCredit = items.Sum(i => i.CreditAmount);
+                var dayClosing = dayOpening + dayDebit - dayCredit;
+
+                days.Add(new CashBookDayResponse
+                {
+                    Date = day,
+                    OpeningBalance = dayOpening,
+                    IsOpeningBalanceReset = isReset,
+                    OpeningBalanceAdjustment = adjustment,
+                    Items = items,
+                    TotalDebit = dayDebit,
+                    TotalCredit = dayCredit,
+                    ClosingBalance = dayClosing
+                });
+
+                running = dayClosing;
+            }
+
+            return new CashBookRangeResponse
+            {
+                FromDate = window.FromDate,
+                ToDate = window.ToDate,
+                OpeningBalance = openingBalance,
+                Days = days,
+                HeadSummary = BuildItems(transactions, transfers, 0, withRunningBalance: false),
+                TotalDebit = days.Sum(d => d.TotalDebit),
+                TotalCredit = days.Sum(d => d.TotalCredit),
+                OpeningBalanceAdjustment = totalAdjustment,
+                ClosingBalance = running
+            };
+        }
+
+        /// <summary>
+        /// Groups cash transactions by transaction head, followed by contra bank transfers.
+        /// Money IN = Debit, Money OUT = Credit (physical cash drawer perspective).
+        /// </summary>
+        private static List<CashBookItemResponse> BuildItems(
+            IEnumerable<CashTx> transactions,
+            IEnumerable<CashTransfer> transfers,
+            decimal openingBalance,
+            bool withRunningBalance)
+        {
+            var items = new List<CashBookItemResponse>();
+            var runningBalance = openingBalance;
+
+            var headGroups = transactions
                 .GroupBy(t => new
                 {
                     t.TransactionHeadId,
-                    TransactionHeadName = t.TransactionHead?.Name ?? "Unknown",
-                    TransactionType = t.TransactionHead?.Type ?? "Unknown"
+                    TransactionHeadName = t.HeadName ?? "Unknown",
+                    TransactionType = t.HeadType ?? "Unknown"
                 })
                 .Select(g => new
                 {
@@ -62,18 +182,13 @@ namespace Application.Services
                     Count = g.Count(),
                     TotalAmount = g.Sum(t => Math.Abs(t.NetAmount))
                 })
-                .OrderBy(g => g.TransactionHeadName)
-                .ToList();
+                .OrderBy(g => g.TransactionHeadName);
 
-            var items = new List<CashBookItemResponse>();
-            var runningBalance = openingBalance;
-
-            foreach (var group in groupedTransactions)
+            foreach (var group in headGroups)
             {
                 var isMoneyIn = group.TransactionType == TransactionHeadTypes.DEBIT;
-                var debitAmount = isMoneyIn ? group.TotalAmount : 0; // Money IN = Debit
-                var creditAmount = !isMoneyIn ? group.TotalAmount : 0; // Money OUT = Credit
-
+                var debitAmount = isMoneyIn ? group.TotalAmount : 0;
+                var creditAmount = !isMoneyIn ? group.TotalAmount : 0;
                 runningBalance += debitAmount - creditAmount;
 
                 items.Add(new CashBookItemResponse
@@ -84,60 +199,41 @@ namespace Application.Services
                     TransactionCount = group.Count,
                     DebitAmount = debitAmount,
                     CreditAmount = creditAmount,
-                    Balance = runningBalance
+                    Balance = withRunningBalance ? runningBalance : 0
                 });
             }
 
-            // Get cash-related bank transactions (internal transfers: cash to bank or bank to cash)
-            var bankTransactions = await _bankTransactionRepository.Query()
-                .Include(bt => bt.Bank)
-                .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsArchived && !bt.IsDeleted
-                    && (bt.SourceType == null || bt.SourceType == BankSourceTypes.CASH))
-                .GroupBy(bt => bt.TransactionType)
-                .Select(g => new
-                {
-                    TransactionType = g.Key,
-                    Count = g.Count(),
-                    TotalAmount = g.Sum(bt => bt.Amount)
-                })
-                .ToListAsync(cancellationToken);
+            var transferGroups = transfers
+                .GroupBy(t => t.TransactionType)
+                .Select(g => new { TransactionType = g.Key, Count = g.Count(), TotalAmount = g.Sum(t => t.Amount) })
+                .OrderBy(g => g.TransactionType);
 
-            foreach (var bankGroup in bankTransactions)
+            foreach (var group in transferGroups)
             {
-                // In Cash Book (Physical Cash):
-                // Bank Deposit: Money taken OUT of cash drawer into Bank -> Credit (Cash OUT)
-                // Bank Withdrawal: Money taken from Bank INTO cash drawer -> Debit (Cash IN)
-                var isDeposit = bankGroup.TransactionType == BankTransactionTypes.Deposit;
-                var debitAmount2 = !isDeposit ? bankGroup.TotalAmount : 0; // Money IN to Cash = Withdrawal
-                var creditAmount2 = isDeposit ? bankGroup.TotalAmount : 0; // Money OUT from Cash = Deposit
-
-                runningBalance += debitAmount2 - creditAmount2;
+                // Bank Deposit: cash leaves the drawer -> Credit
+                // Bank Withdrawal: cash enters the drawer -> Debit
+                var isDeposit = group.TransactionType == BankTransactionTypes.Deposit;
+                var debitAmount = !isDeposit ? group.TotalAmount : 0;
+                var creditAmount = isDeposit ? group.TotalAmount : 0;
+                runningBalance += debitAmount - creditAmount;
 
                 items.Add(new CashBookItemResponse
                 {
                     TransactionHeadId = Guid.Empty,
                     TransactionHeadName = isDeposit ? "Bank Deposit (নগদ জমা)" : "Bank Withdrawal (নগদ উত্তোলন)",
-                    TransactionType = bankGroup.TransactionType.ToString(),
-                    TransactionCount = bankGroup.Count,
-                    DebitAmount = debitAmount2,
-                    CreditAmount = creditAmount2,
-                    Balance = runningBalance
+                    TransactionType = group.TransactionType,
+                    TransactionCount = group.Count,
+                    DebitAmount = debitAmount,
+                    CreditAmount = creditAmount,
+                    Balance = withRunningBalance ? runningBalance : 0
                 });
             }
 
-
-            var totalDebit = items.Sum(i => i.DebitAmount);
-            var totalCredit = items.Sum(i => i.CreditAmount);
-            var closingBalance = openingBalance + totalDebit - totalCredit;
-
-            return new CashBookResponse
-            {
-                OpeningBalance = openingBalance,
-                Items = items,
-                TotalDebit = totalDebit,
-                TotalCredit = totalCredit,
-                ClosingBalance = closingBalance
-            };
+            return items;
         }
+
+        private sealed record CashTx(DateTime TransactionDate, Guid TransactionHeadId, string? HeadName, string? HeadType, decimal NetAmount);
+
+        private sealed record CashTransfer(DateTime TransactionDate, string TransactionType, decimal Amount);
     }
 }

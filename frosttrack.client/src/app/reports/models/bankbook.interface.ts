@@ -20,3 +20,25 @@ export interface IBankBookItem {
   creditAmount: number;
   balance: number;
 }
+
+export interface IBankBookDayReport {
+  date: string | Date;
+  openingBalance: number;
+  items: IBankBookItem[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}
+
+export interface IBankBookRangeReport {
+  fromDate: string | Date;
+  toDate: string | Date;
+  bankId?: number | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  openingBalance: number;
+  days: IBankBookDayReport[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}

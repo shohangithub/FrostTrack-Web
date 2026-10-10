@@ -1,93 +1,170 @@
 <section class="main-content">
   <div class="section-body">
-    <!-- Filter Section -->
+    <!-- Header with Tabs -->
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card mt-2">
-          <span class="card-label">Cash Book</span>
-          <div class="p-10 mt-2">
-            <form class="product-form" [formGroup]="reportForm" (ngSubmit)="generateReport()">
-              <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                  <div class="form-group row">
-                    <label for="reportDate" class="col-sm-12 col-form-label">Report Date <span
-                        class="text-danger">*</span></label>
-                    <div class="col-sm-12">
-                      <input type="date" id="reportDate" class="form-control form-control-sm"
-                        formControlName="reportDate" [class.is-invalid]="
-                          reportForm.get('reportDate')?.invalid &&
-                          reportForm.get('reportDate')?.touched
-                        " />
-                      @if (
-                      reportForm.get("reportDate")?.invalid &&
-                      reportForm.get("reportDate")?.touched
-                      ) {
-                      <small class="form-text text-danger">Report date is required</small>
-                      }
-                    </div>
+        <div class="card mt-2 mb-2">
+          <span class="card-label">নগদ বই / Cash Book</span>
+          <div class="report-tabs-bar">
+            <ul class="nav nav-tabs report-nav-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'daily'"
+                  (click)="switchTab('daily')"
+                  type="button"
+                >
+                  <i class="fas fa-calendar-day"></i> দৈনিক / Daily
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'range'"
+                  (click)="switchTab('range')"
+                  type="button"
+                >
+                  <i class="fas fa-calendar-alt"></i> সময়কাল / Date Range
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- TAB 1: DAILY FILTER FORM -->
+          @if (activeTab === 'daily') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="dailyForm" (ngSubmit)="generateDailyReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="reportDate" class="col-form-label py-1">
+                      Report Date / তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="reportDate"
+                      class="form-control form-control-sm"
+                      formControlName="reportDate"
+                    />
                   </div>
                 </div>
 
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <div class="col-sm-12 text-end">
-                      <button type="submit" class="btn btn-primary px-2" [disabled]="isLoading || reportForm.invalid">
-                        @if (isLoading) {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Show Report
-                      </button>
-                      @if (showReport) {
-                      <button type="button" class="btn btn-secondary ms-2 px-2" (click)="reset()">
-                        Clear
-                      </button>
-                      }
-                    </div>
-                  </div>
+                <div class="col-lg-9 col-md-8 col-sm-6 col-xs-12 text-end mb-2">
+                  <button type="submit" class="btn btn-primary px-3 btn-sm" [disabled]="isLoading || dailyForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Daily Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm" (click)="resetDaily()">
+                    Clear
+                  </button>
+                  }
                 </div>
               </div>
             </form>
           </div>
+          }
+
+          <!-- TAB 2: RANGE FILTER FORM -->
+          @if (activeTab === 'range') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="rangeForm" (ngSubmit)="generateRangeReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="fromDate" class="col-form-label py-1">
+                      From Date / শুরু তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="fromDate"
+                      class="form-control form-control-sm"
+                      formControlName="fromDate"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="toDate" class="col-form-label py-1">
+                      To Date / শেষ তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="toDate"
+                      class="form-control form-control-sm"
+                      formControlName="toDate"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-lg-6 col-md-4 col-sm-12 col-xs-12 text-end mb-2">
+                  <div class="btn-group btn-group-sm me-2 mb-1" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('week')">This Week</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('month')">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('lastMonth')">Last Month</button>
+                  </div>
+                  <button type="submit" class="btn btn-primary px-3 btn-sm mb-1" [disabled]="isLoading || rangeForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Range Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm mb-1" (click)="resetRange()">
+                    Clear
+                  </button>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+          }
         </div>
       </div>
     </div>
 
-    <!-- Report Display Section -->
-    @if (showReport && !isLoading && cashBookReport) {
+    <!-- REPORT DISPLAY: TAB 1 (DAILY) -->
+    @if (activeTab === 'daily' && showReport && !isLoading && cashBookReport) {
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card">
-          <!-- Action Buttons (No Print) -->
+          <!-- Print Button -->
           <div class="row no-print mb-3">
             <div class="col-12">
               <div class="d-flex gap-2 justify-content-end">
-                <button type="button" class="btn" [openNewTab]="true" [closeWindow]="true" [previewOnly]="false"
-                  [useExistingCss]="true" printTitle="Cash Book Report" printSectionId="print-section-id" ngxPrint>
-                  <i class="fas fa-print me-1"></i>Print
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="Cash Book Daily Report"
+                  printSectionId="print-section-daily"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print Daily Report
                 </button>
               </div>
             </div>
           </div>
 
-          <div id="print-section-id" class="print-section-container">
+          <div id="print-section-daily" class="print-section-container">
             <div class="card invoice-card">
               <div class="card-body p-0">
-                <!-- Report Print Area -->
                 <div class="invoice-container">
-                  <!-- Report Header Component -->
-                  <app-report-invoice-header [Title]="'নগদ বই / Cash Book'"
-                    [InvoiceNumber]="''"></app-report-invoice-header>
+                  <app-report-invoice-header [Title]="'দৈনিক নগদ বই / Daily Cash Book'" [InvoiceNumber]="''"></app-report-invoice-header>
 
-                  <!-- Report Information Section -->
                   <div class="booking-info-box">
                     <table class="info-table">
                       <tr>
                         <td class="info-label">Report Date:</td>
                         <td class="info-value">
-                          {{
-                          reportForm.get("reportDate")?.value
-                          | date: "dd-MMM-yyyy"
-                          }}
+                          {{ dailyForm.get("reportDate")?.value | date: "dd-MMM-yyyy" }}
                         </td>
                         <td class="info-label">Generated On:</td>
                         <td class="info-value">
@@ -97,80 +174,53 @@
                       <tr>
                         <td class="info-label">Opening Balance:</td>
                         <td class="info-value">
-                          ৳{{
-                          cashBookReport.openingBalance | number: "1.2-2"
-                          }}
+                          ৳{{ cashBookReport.openingBalance | number: "1.2-2" }}
                         </td>
                         <td class="info-label">Closing Balance:</td>
                         <td class="info-value">
-                          ৳{{
-                          cashBookReport.closingBalance | number: "1.2-2"
-                          }}
+                          ৳{{ cashBookReport.closingBalance | number: "1.2-2" }}
                         </td>
                       </tr>
                     </table>
                   </div>
 
-                  <!-- Cash Book Details Section -->
-                  <!-- <div class="section-title">Transaction Head Summary</div> -->
                   @if (cashBookReport.items.length > 0) {
                   <div class="stored-products-section">
                     <table class="products-table">
                       <thead>
                         <tr>
                           <th>ক্রমিক / SL No.</th>
-                          <th>লেনদেনের ধরন / Transaction Head</th>
+                          <th>লেনদেনের খাত / Transaction Head</th>
                           <th>সংখ্যা / Count</th>
-                          <th>আয় / Income</th>
-                          <th>ব্যয় / Expense</th>
-                          <th>ব্যালেন্স / Balance</th>
+                          <th class="text-end">আয় / Income Tk.</th>
+                          <th class="text-end">ব্যয় / Expense Tk.</th>
+                          <th class="text-end">ব্যালেন্স / Balance Tk.</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <!-- Opening Balance Row -->
                         <tr class="opening-row">
                           <td>-</td>
-                          <td><strong>Opening Balance</strong></td>
+                          <td><strong>Opening Balance (প্রারম্ভিক নগদ)</strong></td>
                           <td class="text-center">-</td>
                           <td class="text-end">-</td>
                           <td class="text-end">-</td>
                           <td class="text-end">
-                            <strong>{{
-                              cashBookReport.openingBalance
-                              | number: "1.2-2"
-                              }}</strong>
+                            <strong>{{ cashBookReport.openingBalance | number: "1.2-2" }}</strong>
                           </td>
                         </tr>
 
-                        <!-- Transaction Head Rows -->
-                        @for (
-                        item of cashBookReport.items;
-                        track i;
-                        let i = $index
-                        ) {
+                        @for (item of cashBookReport.items; track i; let i = $index) {
                         <tr>
                           <td>{{ i + 1 }}</td>
                           <td>{{ item.transactionHeadName }}</td>
-                          <td class="text-center">
-                            {{ item.transactionCount }}
+                          <td class="text-center">{{ item.transactionCount }}</td>
+                          <td class="text-end">
+                            {{ item.debitAmount > 0 ? (item.debitAmount | number: "1.2-2") : '-' }}
                           </td>
                           <td class="text-end">
-                            @if (item.debitAmount > 0) {
-                            {{ item.debitAmount | number: "1.2-2" }}
-                            } @else {
-                            -
-                            }
+                            {{ item.creditAmount > 0 ? (item.creditAmount | number: "1.2-2") : '-' }}
                           </td>
-                          <td class="text-end">
-                            @if (item.creditAmount > 0) {
-                            {{ item.creditAmount | number: "1.2-2" }}
-                            } @else {
-                            -
-                            }
-                          </td>
-                          <td class="text-end">
-                            {{ item.balance | number: "1.2-2" }}
-                          </td>
+                          <td class="text-end">{{ item.balance | number: "1.2-2" }}</td>
                         </tr>
                         }
                       </tbody>
@@ -180,32 +230,169 @@
                             <strong>Total / Closing Balance:</strong>
                           </td>
                           <td class="text-end">
-                            <strong>{{
-                              cashBookReport.totalDebit | number: "1.2-2"
-                              }}</strong>
+                            <strong>{{ cashBookReport.totalDebit | number: "1.2-2" }}</strong>
                           </td>
                           <td class="text-end">
-                            <strong>{{
-                              cashBookReport.totalCredit | number: "1.2-2"
-                              }}</strong>
+                            <strong>{{ cashBookReport.totalCredit | number: "1.2-2" }}</strong>
                           </td>
                           <td class="text-end">
-                            <strong>{{
-                              cashBookReport.closingBalance
-                              | number: "1.2-2"
-                              }}</strong>
+                            <strong>{{ cashBookReport.closingBalance | number: "1.2-2" }}</strong>
                           </td>
                         </tr>
                       </tfoot>
                     </table>
                   </div>
                   } @else {
-                  <div class="no-data-message">
-                    No transactions available
+                  <div class="no-data-message">No cash transactions recorded for this day</div>
+                  }
+
+                  <app-report-footer></app-report-footer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- REPORT DISPLAY: TAB 2 (RANGE) -->
+    @if (activeTab === 'range' && showReport && !isLoading && cashBookRangeReport) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <!-- Print Button -->
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="Cash Book Range Report"
+                  printSectionId="print-section-range"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print Range Report
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="print-section-range" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <div class="invoice-container">
+                  <app-report-invoice-header [Title]="'সময়কালীন নগদ বই / Cash Book (Date Range)'" [InvoiceNumber]="''"></app-report-invoice-header>
+
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">Period / সময়কাল:</td>
+                        <td class="info-value">
+                          {{ cashBookRangeReport.fromDate | date: "dd-MMM-yyyy" }} to {{ cashBookRangeReport.toDate | date: "dd-MMM-yyyy" }}
+                        </td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">
+                          {{ today | date: "dd-MMM-yyyy HH:mm a" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Opening Balance:</td>
+                        <td class="info-value">
+                          ৳{{ cashBookRangeReport.openingBalance | number: "1.2-2" }}
+                        </td>
+                        <td class="info-label">Period Closing:</td>
+                        <td class="info-value">
+                          ৳{{ cashBookRangeReport.closingBalance | number: "1.2-2" }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Overall Head Summary -->
+                  @if (cashBookRangeReport.headSummary.length > 0) {
+                  <div class="section-title mb-1 fw-bold">লেনদেনের খাতভিত্তিক মোট বিবরণী / Overall Head Summary</div>
+                  <div class="stored-products-section mb-3">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>ক্রমিক</th>
+                          <th>লেনদেনের খাত / Head Name</th>
+                          <th class="text-center">লেনদেন সংখ্যা</th>
+                          <th class="text-end">মোট আয় / Total In</th>
+                          <th class="text-end">মোট ব্যয় / Total Out</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (head of cashBookRangeReport.headSummary; track i; let i = $index) {
+                        <tr>
+                          <td>{{ i + 1 }}</td>
+                          <td>{{ head.transactionHeadName }}</td>
+                          <td class="text-center">{{ head.transactionCount }}</td>
+                          <td class="text-end">{{ head.debitAmount > 0 ? (head.debitAmount | number: "1.2-2") : '-' }}</td>
+                          <td class="text-end">{{ head.creditAmount > 0 ? (head.creditAmount | number: "1.2-2") : '-' }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="3" class="text-end"><strong>Period Total:</strong></td>
+                          <td class="text-end"><strong>{{ cashBookRangeReport.totalDebit | number: "1.2-2" }}</strong></td>
+                          <td class="text-end"><strong>{{ cashBookRangeReport.totalCredit | number: "1.2-2" }}</strong></td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                   }
 
-                  <!-- Report Footer Component -->
+                  <!-- Day-by-Day Breakdown -->
+                  @if (cashBookRangeReport.days.length > 0) {
+                  <div class="section-title mb-1 fw-bold">দৈনিক বিবরণী / Day-by-Day Transactions</div>
+                  @for (day of cashBookRangeReport.days; track day.date) {
+                  <div class="stored-products-section mb-3">
+                    <div class="d-flex justify-content-between align-items-center bg-light p-1 px-2 border border-bottom-0">
+                      <strong>{{ day.date | date: 'dd-MMM-yyyy (EEEE)' }}</strong>
+                      <span class="text-muted" style="font-size: 10px;">
+                        Opening: ৳{{ day.openingBalance | number: '1.2-2' }} |
+                        In: ৳{{ day.totalDebit | number: '1.2-2' }} |
+                        Out: ৳{{ day.totalCredit | number: '1.2-2' }} |
+                        Closing: ৳{{ day.closingBalance | number: '1.2-2' }}
+                      </span>
+                    </div>
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th>SL</th>
+                          <th>Transaction Head</th>
+                          <th class="text-center">Count</th>
+                          <th class="text-end">Income Tk.</th>
+                          <th class="text-end">Expense Tk.</th>
+                          <th class="text-end">Day Balance Tk.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of day.items; track i; let i = $index) {
+                        <tr>
+                          <td>{{ i + 1 }}</td>
+                          <td>{{ item.transactionHeadName }}</td>
+                          <td class="text-center">{{ item.transactionCount }}</td>
+                          <td class="text-end">{{ item.debitAmount > 0 ? (item.debitAmount | number: "1.2-2") : '-' }}</td>
+                          <td class="text-end">{{ item.creditAmount > 0 ? (item.creditAmount | number: "1.2-2") : '-' }}</td>
+                          <td class="text-end">{{ item.balance | number: "1.2-2" }}</td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  }
+                  } @else {
+                  <div class="no-data-message">No cash transactions in this date range</div>
+                  }
+
                   <app-report-footer></app-report-footer>
                 </div>
               </div>

@@ -1,277 +1,407 @@
 <section class="main-content">
   <div class="section-body">
-    <!-- Filter Section -->
+    <!-- Header with Tabs -->
     <div class="row clearfix">
       <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card mt-2">
-          <span class="card-label">General Ledger</span>
-          <div class="p-10 mt-2">
-            <form
-              class="product-form"
-              [formGroup]="reportForm"
-              (ngSubmit)="generateReport()"
-            >
-              <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                  <div class="form-group row">
-                    <label for="reportDate" class="col-sm-12 col-form-label"
-                      >Report Date <span class="text-danger">*</span></label
-                    >
-                    <div class="col-sm-12">
-                      <input
-                        type="date"
-                        id="reportDate"
-                        class="form-control form-control-sm"
-                        formControlName="reportDate"
-                        [class.is-invalid]="
-                          reportForm.get('reportDate')?.invalid &&
-                          reportForm.get('reportDate')?.touched
-                        "
-                      />
-                      @if (
-                        reportForm.get("reportDate")?.invalid &&
-                        reportForm.get("reportDate")?.touched
-                      ) {
-                        <small class="form-text text-danger"
-                          >Report date is required</small
-                        >
-                      }
-                    </div>
+        <div class="card mt-2 mb-2">
+          <span class="card-label">সাধারণ খাতা / General Ledger</span>
+          <div class="report-tabs-bar">
+            <ul class="nav nav-tabs report-nav-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'daily'"
+                  (click)="switchTab('daily')"
+                  type="button"
+                >
+                  <i class="fas fa-calendar-day"></i> দৈনিক / Daily
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'range'"
+                  (click)="switchTab('range')"
+                  type="button"
+                >
+                  <i class="fas fa-calendar-alt"></i> সময়কাল / Date Range
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- TAB 1: DAILY FILTER FORM -->
+          @if (activeTab === 'daily') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="dailyForm" (ngSubmit)="generateDailyReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="reportDate" class="col-form-label py-1">
+                      Report Date / তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="reportDate"
+                      class="form-control form-control-sm"
+                      formControlName="reportDate"
+                    />
                   </div>
                 </div>
 
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <div class="col-sm-12 text-end">
-                      <button
-                        type="submit"
-                        class="btn btn-primary px-2"
-                        [disabled]="isLoading || reportForm.invalid"
-                      >
-                        @if (isLoading) {
-                          <span
-                            class="spinner-border spinner-border-sm me-2"
-                            role="status"
-                          ></span>
-                        }
-                        Show Report
-                      </button>
-                      @if (showReport) {
-                        <button
-                          type="button"
-                          class="btn btn-secondary ms-2 px-2"
-                          (click)="reset()"
-                        >
-                          Clear
-                        </button>
-                      }
-                    </div>
-                  </div>
+                <div class="col-lg-9 col-md-8 col-sm-6 col-xs-12 text-end mb-2">
+                  <button type="submit" class="btn btn-primary px-3 btn-sm" [disabled]="isLoading || dailyForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Daily Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm" (click)="resetDaily()">
+                    Clear
+                  </button>
+                  }
                 </div>
               </div>
             </form>
           </div>
+          }
+
+          <!-- TAB 2: RANGE FILTER FORM -->
+          @if (activeTab === 'range') {
+          <div class="p-3">
+            <form class="product-form" [formGroup]="rangeForm" (ngSubmit)="generateRangeReport()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="fromDate" class="col-form-label py-1">
+                      From Date / শুরু তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="fromDate"
+                      class="form-control form-control-sm"
+                      formControlName="fromDate"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                  <div class="form-group mb-2">
+                    <label for="toDate" class="col-form-label py-1">
+                      To Date / শেষ তারিখ <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="toDate"
+                      class="form-control form-control-sm"
+                      formControlName="toDate"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-lg-6 col-md-4 col-sm-12 col-xs-12 text-end mb-2">
+                  <div class="btn-group btn-group-sm me-2 mb-1" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('week')">This Week</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('month')">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setQuickRange('lastMonth')">Last Month</button>
+                  </div>
+                  <button type="submit" class="btn btn-primary px-3 btn-sm mb-1" [disabled]="isLoading || rangeForm.invalid">
+                    @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Show Range Report
+                  </button>
+                  @if (showReport) {
+                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm mb-1" (click)="resetRange()">
+                    Clear
+                  </button>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+          }
         </div>
       </div>
     </div>
 
-    <!-- Report Display Section -->
-    @if (showReport && !isLoading && generalLedgerReport) {
-      <div class="row clearfix">
-        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-          <div class="card">
-            <!-- Action Buttons (No Print) -->
-            <div class="row no-print mb-3">
-              <div class="col-12">
-                <div class="d-flex gap-2 justify-content-end">
-                  <button
-                    type="button"
-                    class="btn"
-                    [openNewTab]="true"
-                    [closeWindow]="true"
-                    [previewOnly]="false"
-                    [useExistingCss]="true"
-                    printTitle="General Ledger Report"
-                    printSectionId="print-section-id"
-                    ngxPrint
-                  >
-                    <i class="fas fa-print me-1"></i>Print
-                  </button>
-                </div>
+    <!-- REPORT DISPLAY: TAB 1 (DAILY) -->
+    @if (activeTab === 'daily' && showReport && !isLoading && generalLedgerReport) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="General Ledger Daily Report"
+                  printSectionId="print-section-gl-daily"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print Daily Report
+                </button>
               </div>
             </div>
+          </div>
 
-            <div id="print-section-id" class="print-section-container">
-              <div class="card invoice-card">
-                <div class="card-body p-0">
-                  <!-- Report Print Area -->
-                  <div class="invoice-container">
-                    <!-- Report Header Component -->
-                    <app-report-invoice-header
-                      [Title]="'সাধারণ খাতা / General Ledger'"
-                      [InvoiceNumber]="''"
-                    ></app-report-invoice-header>
+          <div id="print-section-gl-daily" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <div class="invoice-container">
+                  <app-report-invoice-header [Title]="'দৈনিক সাধারণ খাতা / General Ledger'" [InvoiceNumber]="''"></app-report-invoice-header>
 
-                    <!-- Report Information Section -->
-                    <div class="booking-info-box">
-                      <table class="info-table">
-                        <tr>
-                          <td class="info-label">Report Date:</td>
-                          <td class="info-value">
-                            {{
-                              reportForm.get("reportDate")?.value
-                                | date: "dd-MMM-yyyy"
-                            }}
-                          </td>
-                          <td class="info-label">Generated On:</td>
-                          <td class="info-value">
-                            {{ today | date: "dd-MMM-yyyy HH:mm a" }}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="info-label">Opening Balance:</td>
-                          <td class="info-value">
-                            ৳{{
-                              generalLedgerReport.openingBalance
-                                | number: "1.2-2"
-                            }}
-                          </td>
-                          <td class="info-label">Closing Balance:</td>
-                          <td class="info-value">
-                            ৳{{
-                              generalLedgerReport.closingBalance
-                                | number: "1.2-2"
-                            }}
-                          </td>
-                        </tr>
-                      </table>
-                    </div>
-
-                    <!-- General Ledger Details Section -->
-                    <!-- <div class="section-title">
-                    Transaction Details (Cash + Bank)
-                  </div> -->
-                    @if (generalLedgerReport.items.length > 0) {
-                      <div class="stored-products-section">
-                        <table class="products-table">
-                          <thead>
-                            <tr>
-                              <th class="col-sl">ক্রমিক<br><span style="font-size: 9px; font-weight: normal;">SL No.</span></th>
-                              <th class="col-date">তারিখ / Date</th>
-                              <th>অ্যাকাউন্ট / Account</th>
-                              <th class="col-type">ধরন / Type</th>
-                              <th>বিবরণ / Description</th>
-                              <!-- <th>পেমেন্ট পদ্ধতি / Payment Method</th> -->
-                              <th class="col-amount">ডেবিট / Debit Tk.</th>
-                              <th class="col-amount">ক্রেডিট / Credit Tk.</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <!-- Opening Balance Row -->
-                            <tr class="opening-row">
-                              <td colspan="5" class="text-end">
-                                <strong>Opening Balance</strong>
-                              </td>
-                              <td class="text-end">-</td>
-                              <td class="text-end">
-                                <strong>{{
-                                  generalLedgerReport.openingBalance
-                                    | number: "1.2-2"
-                                }}</strong>
-                              </td>
-                            </tr>
-
-                            <!-- Transaction Rows -->
-                            @for (
-                              item of generalLedgerReport.items;
-                              track item.id;
-                              let i = $index
-                            ) {
-                              <tr>
-                                <td class="col-sl text-center">{{ i + 1 }}</td>
-                                <td>
-                                  {{ item.date | date: "dd-MMM-yyyy HH:mm a" }}
-                                </td>
-                                <td>
-                                  <div>{{ item.accountName }}</div>
-                                  @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
-                                    <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
-                                  }
-                                </td>
-                                <td>{{ item.transactionType | titlecase }}</td>
-                                <td>
-                                  <div>{{ item.description }}</div>
-                                  @if (item.referenceNo && !item.description.includes(item.referenceNo)) {
-                                    <small class="text-muted" style="font-size: 10px;">Ref: {{ item.referenceNo }}</small>
-                                  }
-                                </td>
-                                <!-- <td>{{ item.paymentMethod | titlecase }}</td> -->
-                                <td class="text-end">
-                                  @if (item.debitAmount > 0) {
-                                    {{ item.debitAmount | number: "1.2-2" }}
-                                  } @else {
-                                    -
-                                  }
-                                </td>
-                                <td class="text-end">
-                                  @if (item.creditAmount > 0) {
-                                    {{ item.creditAmount | number: "1.2-2" }}
-                                  } @else {
-                                    -
-                                  }
-                                </td>
-                              </tr>
-                            }
-                          </tbody>
-                          <tfoot>
-                            <tr class="total-row">
-                              <td colspan="5" class="text-end">
-                                <strong>Total / Closing Balance:</strong>
-                              </td>
-                              <td class="text-end">
-                                <strong>{{
-                                  generalLedgerReport.totalDebit
-                                    | number: "1.2-2"
-                                }}</strong>
-                              </td>
-                              <td class="text-end">
-                                <strong>{{
-                                  generalLedgerReport.totalCredit
-                                    | number: "1.2-2"
-                                }}</strong>
-                              </td>
-                            </tr>
-                            <tr class="closing-row">
-                              <td colspan="5" class="text-end">
-                                <strong>Closing Balance:</strong>
-                              </td>
-                              <td colspan="2" class="text-end">
-                                <strong
-                                  >৳{{
-                                    generalLedgerReport.closingBalance
-                                      | number: "1.2-2"
-                                  }}</strong
-                                >
-                              </td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    } @else {
-                      <div class="no-data-message">
-                        No transactions available
-                      </div>
-                    }
-
-                    <!-- Report Footer Component -->
-                    <app-report-footer></app-report-footer>
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">Report Date:</td>
+                        <td class="info-value">
+                          {{ dailyForm.get("reportDate")?.value | date: "dd-MMM-yyyy" }}
+                        </td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">
+                          {{ today | date: "dd-MMM-yyyy HH:mm a" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Opening Balance:</td>
+                        <td class="info-value">
+                          ৳{{ generalLedgerReport.openingBalance | number: "1.2-2" }}
+                        </td>
+                        <td class="info-label">Closing Balance:</td>
+                        <td class="info-value">
+                          ৳{{ generalLedgerReport.closingBalance | number: "1.2-2" }}
+                        </td>
+                      </tr>
+                    </table>
                   </div>
+
+                  @if (generalLedgerReport.items.length > 0) {
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th class="col-sl">SL</th>
+                          <th class="col-date">তারিখ / Date</th>
+                          <th>অ্যাকাউন্ট / Account</th>
+                          <th class="col-type">ধরন / Type</th>
+                          <th>বিবরণ / Description</th>
+                          <th class="col-amount text-end">ডেবিট / Debit Tk.</th>
+                          <th class="col-amount text-end">ক্রেডিট / Credit Tk.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr class="opening-row">
+                          <td colspan="5" class="text-end">
+                            <strong>Opening Balance (হাতে নগদ ও ব্যাংক)</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>{{ generalLedgerReport.openingBalance | number: "1.2-2" }}</strong>
+                          </td>
+                          <td class="text-end">-</td>
+                        </tr>
+
+                        @for (item of generalLedgerReport.items; track item.id; let i = $index) {
+                        <tr>
+                          <td class="col-sl text-center">{{ i + 1 }}</td>
+                          <td>{{ item.date | date: "dd-MMM-yyyy HH:mm" }}</td>
+                          <td>
+                            <div>{{ item.accountName }}</div>
+                            @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
+                            <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
+                            }
+                          </td>
+                          <td>{{ item.transactionType | titlecase }}</td>
+                          <td>
+                            <div>{{ item.description }}</div>
+                            @if (item.referenceNo && !item.description.includes(item.referenceNo)) {
+                            <small class="text-muted" style="font-size: 10px;">Ref: {{ item.referenceNo }}</small>
+                            }
+                          </td>
+                          <td class="text-end">
+                            {{ item.debitAmount > 0 ? (item.debitAmount | number: "1.2-2") : '-' }}
+                          </td>
+                          <td class="text-end">
+                            {{ item.creditAmount > 0 ? (item.creditAmount | number: "1.2-2") : '-' }}
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="5" class="text-end"><strong>Total:</strong></td>
+                          <td class="text-end"><strong>{{ generalLedgerReport.totalDebit | number: "1.2-2" }}</strong></td>
+                          <td class="text-end"><strong>{{ generalLedgerReport.totalCredit | number: "1.2-2" }}</strong></td>
+                        </tr>
+                        <tr class="closing-row">
+                          <td colspan="5" class="text-end"><strong>Closing Balance:</strong></td>
+                          <td colspan="2" class="text-end">
+                            <strong>৳{{ generalLedgerReport.closingBalance | number: "1.2-2" }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">No general ledger transactions for this day</div>
+                  }
+
+                  <app-report-footer></app-report-footer>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    }
+
+    <!-- REPORT DISPLAY: TAB 2 (RANGE) -->
+    @if (activeTab === 'range' && showReport && !isLoading && generalLedgerRangeReport) {
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <div class="row no-print mb-3">
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [openNewTab]="true"
+                  [closeWindow]="true"
+                  [previewOnly]="false"
+                  [useExistingCss]="true"
+                  printTitle="General Ledger Range Report"
+                  printSectionId="print-section-gl-range"
+                  ngxPrint
+                >
+                  <i class="fas fa-print me-1"></i>Print Range Report
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="print-section-gl-range" class="print-section-container">
+            <div class="card invoice-card">
+              <div class="card-body p-0">
+                <div class="invoice-container">
+                  <app-report-invoice-header [Title]="'সময়কালীন সাধারণ খাতা / General Ledger (Date Range)'" [InvoiceNumber]="''"></app-report-invoice-header>
+
+                  <div class="booking-info-box">
+                    <table class="info-table">
+                      <tr>
+                        <td class="info-label">Period / সময়কাল:</td>
+                        <td class="info-value">
+                          {{ generalLedgerRangeReport.fromDate | date: "dd-MMM-yyyy" }} to {{ generalLedgerRangeReport.toDate | date: "dd-MMM-yyyy" }}
+                        </td>
+                        <td class="info-label">Generated On:</td>
+                        <td class="info-value">
+                          {{ today | date: "dd-MMM-yyyy HH:mm a" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="info-label">Opening Balance:</td>
+                        <td class="info-value">
+                          ৳{{ generalLedgerRangeReport.openingBalance | number: "1.2-2" }}
+                        </td>
+                        <td class="info-label">Period Closing:</td>
+                        <td class="info-value">
+                          ৳{{ generalLedgerRangeReport.closingBalance | number: "1.2-2" }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  @if (generalLedgerRangeReport.days.length > 0) {
+                  @for (day of generalLedgerRangeReport.days; track day.date) {
+                  <div class="stored-products-section mb-3">
+                    <div class="d-flex justify-content-between align-items-center bg-light p-1 px-2 border border-bottom-0">
+                      <strong>{{ day.date | date: 'dd-MMM-yyyy (EEEE)' }}</strong>
+                      <span class="text-muted" style="font-size: 10px;">
+                        Opening: ৳{{ day.openingBalance | number: '1.2-2' }} |
+                        Debit: ৳{{ day.totalDebit | number: '1.2-2' }} |
+                        Credit: ৳{{ day.totalCredit | number: '1.2-2' }} |
+                        Closing: ৳{{ day.closingBalance | number: '1.2-2' }}
+                      </span>
+                    </div>
+                    <table class="products-table">
+                      <thead>
+                        <tr>
+                          <th class="col-sl">SL</th>
+                          <th>অ্যাকাউন্ট / Account</th>
+                          <th class="col-type">ধরন / Type</th>
+                          <th>বিবরণ / Description</th>
+                          <th class="col-amount text-end">ডেবিট / Debit Tk.</th>
+                          <th class="col-amount text-end">ক্রেডিট / Credit Tk.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of day.items; track item.id; let i = $index) {
+                        <tr>
+                          <td class="col-sl text-center">{{ i + 1 }}</td>
+                          <td>
+                            <div>{{ item.accountName }}</div>
+                            @if (item.accountType === 'Bank' && item.paymentMethod && item.paymentMethod.toUpperCase() !== 'CASH') {
+                            <span class="bank-tag">{{ item.paymentMethod | titlecase }}</span>
+                            }
+                          </td>
+                          <td>{{ item.transactionType | titlecase }}</td>
+                          <td>
+                            <div>{{ item.description }}</div>
+                            @if (item.referenceNo && !item.description.includes(item.referenceNo)) {
+                            <small class="text-muted" style="font-size: 10px;">Ref: {{ item.referenceNo }}</small>
+                            }
+                          </td>
+                          <td class="text-end">
+                            {{ item.debitAmount > 0 ? (item.debitAmount | number: "1.2-2") : '-' }}
+                          </td>
+                          <td class="text-end">
+                            {{ item.creditAmount > 0 ? (item.creditAmount | number: "1.2-2") : '-' }}
+                          </td>
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  }
+
+                  <!-- Grand Total Table -->
+                  <div class="stored-products-section">
+                    <table class="products-table">
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="4" class="text-end"><strong>Period Grand Total (মোট লেনদেন):</strong></td>
+                          <td class="text-end"><strong>{{ generalLedgerRangeReport.totalDebit | number: "1.2-2" }}</strong></td>
+                          <td class="text-end"><strong>{{ generalLedgerRangeReport.totalCredit | number: "1.2-2" }}</strong></td>
+                        </tr>
+                        <tr class="closing-row">
+                          <td colspan="4" class="text-end"><strong>Final Closing Fund (সর্বশেষ স্থিতি):</strong></td>
+                          <td colspan="2" class="text-end">
+                            <strong>৳{{ generalLedgerRangeReport.closingBalance | number: "1.2-2" }}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  } @else {
+                  <div class="no-data-message">No general ledger transactions found in this date range</div>
+                  }
+
+                  <app-report-footer></app-report-footer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     }
   </div>
 </section>

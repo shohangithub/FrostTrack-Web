@@ -79,7 +79,7 @@ namespace Application.Services
                 ReportDate = reportDate,
                 OpeningBalance = openingBalance,
                 Items = items,
-                TotalDebit = (-1) * totalDebit,
+                TotalDebit = totalDebit,
                 TotalCredit = totalCredit,
                 ClosingBalance = closingBalance
             };

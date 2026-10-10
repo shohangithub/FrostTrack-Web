@@ -10,6 +10,30 @@ public class GeneralLedgerResponse
     public decimal ClosingBalance { get; set; }
 }
 
+public class GeneralLedgerDayResponse
+{
+    public DateTime Date { get; set; }
+    public decimal OpeningBalance { get; set; }
+    public bool IsOpeningBalanceReset { get; set; }
+    public decimal OpeningBalanceAdjustment { get; set; }
+    public List<GeneralLedgerItemResponse> Items { get; set; } = new();
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+    public decimal ClosingBalance { get; set; }
+}
+
+public class GeneralLedgerRangeResponse
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal OpeningBalance { get; set; }
+    public List<GeneralLedgerDayResponse> Days { get; set; } = new();
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+    public decimal OpeningBalanceAdjustment { get; set; }
+    public decimal ClosingBalance { get; set; }
+}
+
 public class GeneralLedgerItemResponse
 {
     public string Id { get; set; } = string.Empty;

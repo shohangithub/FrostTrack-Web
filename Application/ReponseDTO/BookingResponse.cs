@@ -33,7 +33,11 @@ public record BookingDetailResponse(
        decimal BaseRate,
        decimal LabourCharge,
        DateTime LastDeliveryDate
-  );
+  )
+{
+    /// <summary>True when any delivery (including one in the Deleted tab) uses this line; its product and unit are then locked.</summary>
+    public bool HasDeliveries { get; init; }
+}
 
 public record BookingDetailListResponse(
        Guid Id,

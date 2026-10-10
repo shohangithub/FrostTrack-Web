@@ -1,4 +1,5 @@
 using Application.Contractors;
+using Application.Contractors.Authentication;
 using Application.ReponseDTO;
 using Domain.Entitites;
 using Microsoft.EntityFrameworkCore;
@@ -11,62 +12,93 @@ public class GeneralLedgerService : IGeneralLedgerService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
     private readonly IBalanceCalculatorService _balanceCalculatorService;
+    private readonly Guid _tenantId;
 
     public GeneralLedgerService(
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
-        IBalanceCalculatorService balanceCalculatorService)
+        IBalanceCalculatorService balanceCalculatorService,
+        ITenantProvider tenantProvider)
     {
         _transactionRepository = transactionRepository;
         _bankTransactionRepository = bankTransactionRepository;
         _balanceCalculatorService = balanceCalculatorService;
+        _tenantId = tenantProvider.GetTenantId();
     }
 
+    /// <summary>
+    /// Daily General Ledger. Internally a one-day range so daily and range figures always agree.
+    /// </summary>
     public async Task<GeneralLedgerResponse> GetGeneralLedgerAsync(DateTime reportDate, CancellationToken cancellationToken = default)
     {
-        var fromLocal = reportDate.Date;
-        var fromUtc = DateTime.SpecifyKind(fromLocal, DateTimeKind.Local)
-            .ToUniversalTime();
+        var result = await BuildAsync(ReportDateWindow.ForDay(reportDate), cancellationToken);
 
-        var toLocalExclusive = fromLocal.AddDays(1);
-        var toUtc = DateTime.SpecifyKind(toLocalExclusive, DateTimeKind.Local)
-            .ToUniversalTime();
+        return new GeneralLedgerResponse
+        {
+            ReportDate = reportDate,
+            OpeningBalance = result.OpeningBalance,
+            Items = result.Days.SelectMany(d => d.Items).OrderBy(i => i.Date).ToList(),
+            TotalDebit = result.TotalDebit,
+            TotalCredit = result.TotalCredit,
+            ClosingBalance = result.ClosingBalance
+        };
+    }
 
-        var dateWithUTCTime = reportDate.GetDateUtcTime();
-        var toDate = toUtc > dateWithUTCTime ? toUtc : dateWithUTCTime;
+    public Task<GeneralLedgerRangeResponse> GetGeneralLedgerRangeAsync(DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
+    {
+        return BuildAsync(ReportDateWindow.ForRange(fromDate, toDate), cancellationToken);
+    }
 
-        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(fromUtc, toDate, true, cancellationToken);
+    private async Task<GeneralLedgerRangeResponse> BuildAsync(ReportDateWindow window, CancellationToken cancellationToken)
+    {
+        // 1. Initial Opening Balance (Cash + Bank) as of window start
+        var openingBalance = await _balanceCalculatorService.GetOpeningBalanceAsync(
+            window.FromUtc, window.OpeningAnchorUtc, true, cancellationToken);
 
-        // Get cash and bank revenue/expense transactions
+        // 2. Fetch nominal transactions in window
         var transactions = await _transactionRepository.Query()
+            .AsNoTracking()
             .Include(t => t.TransactionHead)
             .Include(t => t.Bank)
-            .Where(t =>
-                t.TransactionDate >= fromUtc &&
-                t.TransactionDate < toUtc &&
-                !t.IsDeleted &&
-                !t.IsArchived &&
-                t.PaymentMethod != PaymentMethods.CREDIT &&
-                t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE &&
-                t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
-            .OrderBy(t => t.CreatedTime)
+            .Where(t => t.TenantId == _tenantId
+                && t.TransactionDate >= window.FromUtc && t.TransactionDate < window.ToUtc
+                && !t.IsDeleted && !t.IsArchived
+                && t.PaymentMethod != PaymentMethods.CREDIT
+                && t.TransactionHead!.UsageFor != UsageFor.OPENING_BALANCE
+                && t.TransactionHead!.UsageFor != UsageFor.CLOSING_BALANCE)
+            .OrderBy(t => t.TransactionDate)
+            .ThenBy(t => t.CreatedTime)
             .ToListAsync(cancellationToken);
 
-        var items = new List<GeneralLedgerItemResponse>();
-        decimal totalDebit = 0;
-        decimal totalCredit = 0;
+        // 3. Fetch bank transactions in window (excluding customer payments, delivery collections, and linked transactions)
+        var bankTransactions = await _bankTransactionRepository.Query()
+            .AsNoTracking()
+            .Include(bt => bt.Bank)
+            .Where(bt => bt.TenantId == _tenantId
+                && bt.TransactionDate >= window.FromUtc && bt.TransactionDate < window.ToUtc
+                && bt.IsActive && !bt.IsDeleted && !bt.IsArchived
+                && bt.SourceType != BankSourceTypes.CUSTOMER_PAYMENT
+                && bt.SourceType != BankSourceTypes.DELIVERY
+                && bt.TransactionId == null)
+            .OrderBy(bt => bt.TransactionDate)
+            .ThenBy(bt => bt.CreatedTime)
+            .ToListAsync(cancellationToken);
 
-        // Add transactions
+        // Check for opening balance reset days (e.g. season transitions)
+        var resetDays = (await _balanceCalculatorService.GetOpeningBalanceResetDaysAsync(
+                window.FromUtc, window.ToUtc, cancellationToken))
+            .Where(d => d > window.FromDate)
+            .ToHashSet();
+
+        // Convert transactions and bank transactions into GeneralLedgerItemResponse items
+        var allItems = new List<GeneralLedgerItemResponse>();
+
         foreach (var transaction in transactions)
         {
-            // Determine if the transaction is Money IN (DEBIT) or Money OUT (CREDIT)
             var isMoneyIn = transaction.TransactionHead?.Type == TransactionHeadTypes.DEBIT;
             var netAmount = Math.Abs(transaction.NetAmount);
-            var debitAmount = isMoneyIn ? netAmount : 0; // Money IN = Debit
-            var creditAmount = !isMoneyIn ? netAmount : 0; // Money OUT = Credit
-
-            totalDebit += debitAmount;
-            totalCredit += creditAmount;
+            var debitAmount = isMoneyIn ? netAmount : 0;
+            var creditAmount = !isMoneyIn ? netAmount : 0;
 
             var isBankOrCheque = transaction.PaymentMethod != PaymentMethods.CASH || transaction.BankId.HasValue;
             var accountName = transaction.TransactionHead?.Name ?? "Unknown";
@@ -92,7 +124,7 @@ public class GeneralLedgerService : IGeneralLedgerService
                 }
             }
 
-            items.Add(new GeneralLedgerItemResponse
+            allItems.Add(new GeneralLedgerItemResponse
             {
                 Id = transaction.Id.ToString(),
                 Date = transaction.TransactionDate,
@@ -108,16 +140,6 @@ public class GeneralLedgerService : IGeneralLedgerService
             });
         }
 
-        // Get bank transactions (exclude auto-created bill collections to avoid double-counting with 'transactions' above)
-        var bankTransactions = await _bankTransactionRepository.Query()
-            .Include(bt => bt.Bank)
-            .Where(bt => bt.TransactionDate >= fromUtc && bt.TransactionDate < toUtc && bt.IsActive && !bt.IsDeleted
-                && bt.SourceType != BankSourceTypes.CUSTOMER_PAYMENT
-                && bt.TransactionId == null)
-            .OrderBy(bt => bt.CreatedTime)
-            .ToListAsync(cancellationToken);
-
-        // Add bank transactions
         foreach (var bankTransaction in bankTransactions)
         {
             var isDeposit = bankTransaction.TransactionType == BankTransactionTypes.Deposit;
@@ -125,15 +147,11 @@ public class GeneralLedgerService : IGeneralLedgerService
 
             if (isCashContra)
             {
-                // Internal Transfer (Contra): Money moved between Cash and Bank
-                // Leg 1: The Bank side
+                // Contra Leg 1: Bank
                 var bankDebit = isDeposit ? bankTransaction.Amount : 0;
                 var bankCredit = !isDeposit ? bankTransaction.Amount : 0;
 
-                totalDebit += bankDebit;
-                totalCredit += bankCredit;
-
-                items.Add(new GeneralLedgerItemResponse
+                allItems.Add(new GeneralLedgerItemResponse
                 {
                     Id = $"{bankTransaction.Id}-BANK",
                     Date = bankTransaction.TransactionDate,
@@ -150,14 +168,11 @@ public class GeneralLedgerService : IGeneralLedgerService
                     CreditAmount = bankCredit
                 });
 
-                // Leg 2: The Cash side (balancing contra entry so total company fund remains accurate)
+                // Contra Leg 2: Cash
                 var cashDebit = !isDeposit ? bankTransaction.Amount : 0;
                 var cashCredit = isDeposit ? bankTransaction.Amount : 0;
 
-                totalDebit += cashDebit;
-                totalCredit += cashCredit;
-
-                items.Add(new GeneralLedgerItemResponse
+                allItems.Add(new GeneralLedgerItemResponse
                 {
                     Id = $"{bankTransaction.Id}-CASH",
                     Date = bankTransaction.TransactionDate,
@@ -176,14 +191,10 @@ public class GeneralLedgerService : IGeneralLedgerService
             }
             else
             {
-                // External Bank Transaction (Interest, Direct Wire, Capital, Loan)
                 var debitAmount = isDeposit ? bankTransaction.Amount : 0;
                 var creditAmount = !isDeposit ? bankTransaction.Amount : 0;
 
-                totalDebit += debitAmount;
-                totalCredit += creditAmount;
-
-                items.Add(new GeneralLedgerItemResponse
+                allItems.Add(new GeneralLedgerItemResponse
                 {
                     Id = bankTransaction.Id.ToString(),
                     Date = bankTransaction.TransactionDate,
@@ -200,19 +211,63 @@ public class GeneralLedgerService : IGeneralLedgerService
             }
         }
 
-        // Sort all items by date
-        items = items.OrderBy(i => i.Date).ToList();
+        var itemsByDay = allItems.ToLookup(i => ReportDateWindow.ToLocalDay(i.Date));
+        var activeDays = itemsByDay.Select(g => g.Key)
+            .Concat(resetDays)
+            .Where(d => d >= window.FromDate && d <= window.ToDate)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
 
-        var closingBalance = openingBalance + totalDebit - totalCredit;
+        var days = new List<GeneralLedgerDayResponse>();
+        var running = openingBalance;
+        decimal totalAdjustment = 0;
 
-        return new GeneralLedgerResponse
+        foreach (var day in activeDays)
         {
-            ReportDate = reportDate,
+            var dayOpening = running;
+            decimal adjustment = 0;
+            var isReset = resetDays.Contains(day);
+
+            if (isReset)
+            {
+                var reanchored = await _balanceCalculatorService.GetOpeningBalanceAsync(
+                    ReportDateWindow.DayStartUtc(day), ReportDateWindow.OpeningAnchorFor(day), true, cancellationToken);
+                adjustment = reanchored - running;
+                dayOpening = reanchored;
+                totalAdjustment += adjustment;
+            }
+
+            var dayItems = itemsByDay[day].OrderBy(i => i.Date).ToList();
+            var dayDebit = dayItems.Sum(i => i.DebitAmount);
+            var dayCredit = dayItems.Sum(i => i.CreditAmount);
+            var dayClosing = dayOpening + dayDebit - dayCredit;
+
+            days.Add(new GeneralLedgerDayResponse
+            {
+                Date = day,
+                OpeningBalance = dayOpening,
+                IsOpeningBalanceReset = isReset,
+                OpeningBalanceAdjustment = adjustment,
+                Items = dayItems,
+                TotalDebit = dayDebit,
+                TotalCredit = dayCredit,
+                ClosingBalance = dayClosing
+            });
+
+            running = dayClosing;
+        }
+
+        return new GeneralLedgerRangeResponse
+        {
+            FromDate = window.FromDate,
+            ToDate = window.ToDate,
             OpeningBalance = openingBalance,
-            Items = items,
-            TotalDebit = totalDebit,
-            TotalCredit = totalCredit,
-            ClosingBalance = closingBalance
+            Days = days,
+            TotalDebit = days.Sum(d => d.TotalDebit),
+            TotalCredit = days.Sum(d => d.TotalCredit),
+            OpeningBalanceAdjustment = totalAdjustment,
+            ClosingBalance = running
         };
     }
 }

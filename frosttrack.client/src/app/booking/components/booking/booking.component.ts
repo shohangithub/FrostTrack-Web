@@ -78,6 +78,8 @@ export class BookingComponent implements OnInit {
   isLoading = false;
   isSubmitted = false;
   isEditing = false;
+  /** The product picked in the item form belongs to a line that has deliveries: its unit is locked. */
+  unitLocked = false;
   private generatedCode: string = '';
   isGeneratingCode = false;
   isMainBranch: boolean = false;
@@ -256,6 +258,7 @@ export class BookingComponent implements OnInit {
             baseQuantity: [detail.baseQuantity],
             baseRate: [detail.baseRate],
             labourCharge: [detail.labourCharge || 0],
+            hasDeliveries: [detail.hasDeliveries ?? false],
           });
           this.BookingDetails.push(item);
         }
@@ -353,6 +356,13 @@ export class BookingComponent implements OnInit {
     if (product) {
       const cardData: Array<any> = this.BookingDetails.value;
       const existingProduct = cardData.find((x) => x.productId === product.id);
+
+      // A line with deliveries keeps its unit: stock and rent of those deliveries depend on it
+      this.unitLocked = !!existingProduct?.hasDeliveries;
+      const unitControl = childForm?.get('bookingUnit');
+      if (this.unitLocked) unitControl?.disable({ emitEvent: false });
+      else unitControl?.enable({ emitEvent: false });
+
       if (existingProduct) {
         childForm
           ?.get('bookingRate')
@@ -425,11 +435,22 @@ export class BookingComponent implements OnInit {
   }
 
   addToCart() {
-    const formData = this.productForm.value;
+    // getRawValue: the unit control is disabled (but still set) for lines with deliveries
+    const formData = this.productForm.getRawValue();
     const cardData: Array<any> = this.BookingDetails.value;
     const existingProduct = cardData.find(
       (x) => x.productId === formData.product.id,
     );
+    if (
+      existingProduct?.hasDeliveries &&
+      (formData.bookingUnit?.value ?? formData.bookingUnit) !==
+        existingProduct.bookingUnitId
+    ) {
+      this.toastr.error(
+        'This item has deliveries, so its unit cannot be changed. Delete those deliveries first.',
+      );
+      return;
+    }
     if (existingProduct) {
       existingProduct.bookingUnitId =
         formData.bookingUnit?.value || formData.bookingUnit;
@@ -452,14 +473,22 @@ export class BookingComponent implements OnInit {
         bookingRate: [formData.bookingRate, [Validators.required]],
         bookingQuantity: [formData.bookingQuantity, [Validators.required]],
         labourCharge: [formData.labourCharge || 0],
+        hasDeliveries: [false],
       });
       this.BookingDetails.push(item);
     }
     this.productForm.reset();
     this.initProductForm();
+    this.unitLocked = false;
   }
 
   removeFromCart(indx: number) {
+    if (this.BookingDetails.at(indx)?.value?.hasDeliveries) {
+      this.toastr.error(
+        'This item has deliveries and cannot be removed. Delete those deliveries first.',
+      );
+      return;
+    }
     this.BookingDetails.removeAt(indx);
   }
 

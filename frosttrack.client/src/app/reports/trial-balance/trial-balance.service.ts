@@ -17,4 +17,12 @@ export class TrialBalanceService {
 
     return this.http.get<ITrialBalanceSummary>(this.apiUrl, { params });
   }
+
+  getTrialBalanceRange(fromDate: Date, toDate: Date): Observable<ITrialBalanceSummary> {
+    const params = new HttpParams()
+      .set('fromDate', fromDate.toISOString())
+      .set('toDate', toDate.toISOString());
+
+    return this.http.get<ITrialBalanceSummary>(`${this.apiUrl}/range`, { params });
+  }
 }

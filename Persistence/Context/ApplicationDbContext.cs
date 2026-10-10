@@ -241,6 +241,34 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });
+
+        modelBuilder.Entity<Bank>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+        modelBuilder.Entity<BankTransaction>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+        modelBuilder.Entity<Asset>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

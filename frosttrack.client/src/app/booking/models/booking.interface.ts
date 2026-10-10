@@ -59,6 +59,8 @@ export interface IBookingDetailResponse {
   baseRate: number;
   labourCharge: number;
   lastDeliveryDate?: string;
+  /** Deliveries use this line, so its product and unit cannot be changed. */
+  hasDeliveries?: boolean;
 }
 
 export interface IBookingListResponse {
