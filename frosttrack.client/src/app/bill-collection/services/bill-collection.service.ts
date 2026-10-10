@@ -6,6 +6,14 @@ import { BaseService } from '@core/service/base.service';
 import { ErrorHandlerService } from '@core/service/error-handler.service';
 import { ITransactionDetailResponse } from 'app/transaction/models/transaction.interface';
 import { MessageHub } from '@config/message-hub';
+import {
+  IBookingPaymentDetail,
+  IBookingPaymentRequest,
+  IBookingPaymentResult,
+  ICustomerAdvances,
+  ICustomerDueBookings,
+  IPaymentReceiptInfo,
+} from '../models/booking-payment.interface';
 
 export interface IRecentCustomerPayment {
   id: string;
@@ -214,5 +222,56 @@ export class BillCollectionService extends BaseService {
       'Get Customer Discount Report'
     );
   }
-}
 
+  // ── Booking-wise payment ────────────────────────────────────────────────
+  /** Customer's bookings that still have a due, plus the customer's advance balance. */
+  getCustomerDueBookings(customerId: number): Observable<ICustomerDueBookings> {
+    return this.get<ICustomerDueBookings>(
+      `${this.path}/customer/${customerId}/due-bookings`,
+      'Get Due Bookings'
+    );
+  }
+
+  /** Booking information, deliveries, payments and due summary for the payment screen. */
+  getBookingPaymentDetail(bookingId: string): Observable<IBookingPaymentDetail> {
+    return this.get<IBookingPaymentDetail>(
+      `${this.path}/booking/${bookingId}/payment-detail`,
+      'Get Booking Payment Detail'
+    );
+  }
+
+  /** Payment against one booking: cash/bank, advance to apply and/or discount (total <= booking due). */
+  createBookingPayment(payload: IBookingPaymentRequest): Observable<IBookingPaymentResult> {
+    return this.postWithSuccess<IBookingPaymentResult>(
+      `${this.path}/booking-payment`,
+      payload,
+      'Booking Payment',
+      MessageHub.ADD
+    );
+  }
+
+  /** Advances received from the customer and where they were applied. */
+  getCustomerAdvances(customerId: number): Observable<ICustomerAdvances> {
+    return this.get<ICustomerAdvances>(
+      `${this.path}/customer/${customerId}/advances`,
+      'Get Customer Advances'
+    );
+  }
+
+  /** Undo an advance application (the amount returns to the advance balance). */
+  removeAdvanceAllocation(allocationId: string): Observable<boolean> {
+    return this.deleteWithSuccess<boolean>(
+      `${this.path}/advance-allocation/${allocationId}`,
+      'Remove Advance Application',
+      'Advance application removed'
+    );
+  }
+
+  /** Booking, advance used and discount for printing a booking payment receipt. */
+  getPaymentReceiptInfo(transactionId: string): Observable<IPaymentReceiptInfo> {
+    return this.get<IPaymentReceiptInfo>(
+      `${this.path}/receipt-info/${transactionId}`,
+      'Get Receipt Info'
+    );
+  }
+}

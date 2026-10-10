@@ -19,6 +19,9 @@ public class CustomerBillStatementResponse
     public List<BillStatementPaymentLine> Payments { get; set; } = [];
     public List<BillStatementPaymentLine> Discounts { get; set; } = [];
 
+    /// <summary>Charge ledger rows dated in the period (the log of every charge on this bill).</summary>
+    public List<LedgerEntryResponse> ChargeEntries { get; set; } = [];
+
     // Line totals (informational)
     public decimal BookingRentTotal { get; set; }
     public decimal BookingLabourTotal { get; set; }

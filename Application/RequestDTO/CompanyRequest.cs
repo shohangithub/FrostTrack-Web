@@ -16,5 +16,6 @@ public record CompanyRequest(
     int CodeGeneration,
     bool IsActive,
     bool RestrictEditDelete = true,
-    int EditDeleteAllowedDays = 90
+    int EditDeleteAllowedDays = 90,
+    DateTime? BillingStartDate = null
 );

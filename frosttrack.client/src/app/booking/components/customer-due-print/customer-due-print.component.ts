@@ -55,7 +55,8 @@ export class CustomerDuePrintComponent implements OnInit {
     this.loadingIndicator = true;
 
     // Load customer summary first
-    this.bookingService.getCustomerDueSummary().subscribe({
+    // Print what is still due (fully paid bookings left out)
+    this.bookingService.getCustomerDueSummary(false).subscribe({
       next: (summaries: ICustomerDueSummaryResponse[]) => {
         this.customerInfo =
           summaries.find((s) => s.customerId === this.customerId) || null;

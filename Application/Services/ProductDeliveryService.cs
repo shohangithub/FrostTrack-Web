@@ -14,6 +14,8 @@ public class DeliveryService : IDeliveryService
     private readonly IRepository<DeliveryChallanItem, Guid> _challanItemRepository;
     private readonly IRepository<DeliveryChallan, Guid> _challanRepository;
     private readonly IEditWindowGuard _editWindowGuard;
+    private readonly IRepository<AdvanceAllocation, Guid> _advanceAllocationRepository;
+    private readonly IBookingLedgerService _ledgerService;
 
     private readonly ITransactionService _transactionService;
     private readonly ICodeGenerationService _codeGenerationService;
@@ -36,6 +38,8 @@ public class DeliveryService : IDeliveryService
         IRepository<DeliveryChallanItem, Guid> challanItemRepository,
         IRepository<DeliveryChallan, Guid> challanRepository,
         IEditWindowGuard editWindowGuard,
+        IRepository<AdvanceAllocation, Guid> advanceAllocationRepository,
+        IBookingLedgerService ledgerService,
 
         ITransactionService transactionService,
         ICodeGenerationService codeGenerationService,
@@ -56,6 +60,8 @@ public class DeliveryService : IDeliveryService
         _challanItemRepository = challanItemRepository;
         _challanRepository = challanRepository;
         _editWindowGuard = editWindowGuard;
+        _advanceAllocationRepository = advanceAllocationRepository;
+        _ledgerService = ledgerService;
 
         _transactionService = transactionService;
         _codeGenerationService = codeGenerationService;
@@ -118,6 +124,7 @@ public class DeliveryService : IDeliveryService
                 await _repository.UpdateAsync(entity, CancellationToken.None);
             }
 
+            await _ledgerService.SyncBookingAsync(entity.BookingId, cancellationToken: cancellationToken); // keep the charge ledger in step
             await dbTransaction.CommitAsync(cancellationToken);
             return await GetByIdAsync(entity.Id);
         }
@@ -208,6 +215,7 @@ public class DeliveryService : IDeliveryService
 
             await _repository.UpdateAsync(entity, cancellationToken);
 
+            await _ledgerService.SyncBookingAsync(existing.BookingId, cancellationToken: cancellationToken); // keep the charge ledger in step
             await dbTransaction.CommitAsync(cancellationToken);
         }
         catch
@@ -278,6 +286,7 @@ public class DeliveryService : IDeliveryService
             await _detailRepository.UnfilteredQuery().Where(dd => dd.DeliveryId == id).ExecuteDeleteAsync();
             var result = await _repository.UnfilteredQuery().Where(x => x.Id == id).ExecuteDeleteAsync();
 
+            await _ledgerService.SyncBookingAsync(delivery.BookingId, cancellationToken: CancellationToken.None); // keep the charge ledger in step
             await dbTransaction.CommitAsync();
             return result > 0;
         }
@@ -347,6 +356,7 @@ public class DeliveryService : IDeliveryService
                         .SetProperty(x => x.DeletedById, userId), cancellationToken);
             }
 
+            await _ledgerService.SyncBookingAsync(entity.BookingId, cancellationToken: cancellationToken); // keep the charge ledger in step
             await dbTransaction.CommitAsync(cancellationToken);
             return true;
         }
@@ -417,6 +427,7 @@ public class DeliveryService : IDeliveryService
                         .SetProperty(x => x.DeletedById, (int?)null), cancellationToken);
             }
 
+            await _ledgerService.SyncBookingAsync(entity.BookingId, cancellationToken: cancellationToken); // keep the charge ledger in step
             await dbTransaction.CommitAsync(cancellationToken);
             return true;
         }
@@ -1244,11 +1255,9 @@ public class DeliveryService : IDeliveryService
             .Where(d => d.BookingId == bookingId && !d.IsDeleted)
             .ToListAsync();
 
-        var (_, _, totalAccrued, _) = BookingDueCalculator.CalculateBookingAccruedDetails(
-            booking,
-            activeDetails,
-            deliveries,
-            DateTime.UtcNow);
+        // Charges from the charge ledger (synced first so it is current)
+        await _ledgerService.SyncBookingAsync(bookingId);
+        var totalAccrued = (await _ledgerService.GetChargesAsync([bookingId], DateTime.UtcNow)).GetValueOrDefault(bookingId)?.Total ?? 0m;
 
         var deliveryIds = deliveries.Select(d => d.Id).ToList();
         var deliveryTxIds = deliveries.Where(d => d.TransactionId.HasValue).Select(d => d.TransactionId!.Value).ToList();
@@ -1274,7 +1283,11 @@ public class DeliveryService : IDeliveryService
                         && t.BookingId.HasValue && t.BookingId.Value == bookingId)
             .SumAsync(t => t.Amount > 0 ? t.Amount : t.DiscountAmount);
 
-        return Math.Max(totalAccrued - totalPaid - totalDiscount, 0m);
+        var advanceApplied = await _advanceAllocationRepository.Query()
+            .Where(a => a.BookingId == bookingId && !a.AdvanceTransaction!.IsArchived)
+            .SumAsync(a => a.Amount);
+
+        return Math.Max(totalAccrued - totalPaid - totalDiscount - advanceApplied, 0m);
     }
 
     public async Task<IEnumerable<Lookup<Guid>>> GetDeliveryLookupAsync()

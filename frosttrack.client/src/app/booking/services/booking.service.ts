@@ -86,17 +86,19 @@ export class BookingService extends BaseService {
     return this.get<any>(this.path + `/invoice-with-delivery/${id}`);
   }
 
-  getCustomerDueSummary(): Observable<ICustomerDueSummaryResponse[]> {
+  /** includeSettled = false: the server leaves fully paid bookings (and customers with nothing due) out. */
+  getCustomerDueSummary(includeSettled = true): Observable<ICustomerDueSummaryResponse[]> {
     return this.get<ICustomerDueSummaryResponse[]>(
-      this.path + '/customer-due-summary',
+      this.path + `/customer-due-summary?includeSettled=${includeSettled}`,
     );
   }
 
   getCustomerDueDetail(
     customerId: number,
+    includeSettled = true,
   ): Observable<ICustomerDueDetailResponse[]> {
     return this.get<ICustomerDueDetailResponse[]>(
-      this.path + `/customer-due-detail/${customerId}`,
+      this.path + `/customer-due-detail/${customerId}?includeSettled=${includeSettled}`,
     );
   }
 

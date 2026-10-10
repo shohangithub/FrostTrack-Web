@@ -2,11 +2,13 @@ using System.Collections.Concurrent;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manual recurring-charge run: posts every missing charge to the charge ledger (same sync as the
+/// daily job and the booking/delivery hooks), and keeps a run log. Preview shows what would be posted.
+/// </summary>
 public class RecurringChargeManagementService(
-    IRepository<Booking, Guid> bookingRepository,
-    IRepository<BookingDetail, Guid> bookingDetailRepository,
     IRepository<RecurringChargeRun, Guid> recurringChargeRunRepository,
-    IRepository<RecurringChargeEntry, Guid> recurringChargeEntryRepository,
+    IBookingLedgerService ledgerService,
     IUserContextService userContextService,
     ITenantProvider tenantProvider) : IRecurringChargeManagementService
 {
@@ -22,16 +24,23 @@ public class RecurringChargeManagementService(
         DateTime asOfDate,
         CancellationToken cancellationToken = default)
     {
-        var bookings = await LoadActiveBookingsAsync(asOfDate, cancellationToken);
-        var items = ComputePreviewItems(bookings, asOfDate);
+        var pending = await ledgerService.SyncAllAsync(asOfDate, dryRun: true, cancellationToken: cancellationToken);
 
         return new RecurringChargePreviewResponse
         {
             AsOfDate = asOfDate,
-            TotalAffectedBookings = items.Count,
-            TotalAffectedDetailLines = items.Sum(i => i.AffectedDetailLines),
-            TotalRecurringChargeAmount = items.Sum(i => i.TotalRecurringChargeAmount),
-            Bookings = items,
+            TotalAffectedBookings = pending.BookingsAffected,
+            TotalAffectedDetailLines = pending.EntriesPosted,
+            TotalRecurringChargeAmount = pending.AmountPosted,
+            Bookings = pending.Bookings.Select(b => new RecurringChargePreviewBookingResponse
+            {
+                BookingId = b.BookingId,
+                BookingNumber = b.BookingNumber,
+                CustomerName = b.CustomerName,
+                AffectedDetailLines = b.Entries,
+                TotalRecurringChargeAmount = b.Amount,
+                OldestLastRecurringChargeDate = b.OldestEntryDate,
+            }).ToList(),
         };
     }
 
@@ -66,64 +75,12 @@ public class RecurringChargeManagementService(
 
         try
         {
-            var bookings = await LoadActiveBookingsAsync(asOfDate, cancellationToken);
-            int affected = 0;
-            decimal totalAmount = 0m;
-
-            foreach (var booking in bookings)
-            {
-                foreach (var detail in booking.BookingDetails.Where(d => !d.IsDeleted))
-                {
-                    // Cycles are always counted from the booking date (same rule as the dues)
-                    int charged = RecurringChargeCalculator.ChargedCycles(detail.BillType, booking.BookingDate, detail.LastRecurringChargeDate);
-                    int completed = RecurringChargeCalculator.CompletedCycles(detail.BillType, booking.BookingDate, asOfDate);
-                    int newCycles = completed - charged;
-
-                    if (newCycles <= 0) continue;
-
-                    var periodStart = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, charged + 1);
-                    var periodEnd = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, completed + 1).AddDays(-1);
-
-                    detail.LastRecurringChargeDate = RecurringChargeCalculator.CycleStart(detail.BillType, booking.BookingDate, completed);
-
-                    // Recurring rent is charged on the stock still in store, not the original booked quantity
-                    var stockQty = RemainingQuantity(detail);
-                    if (stockQty <= 0)
-                    {
-                        await bookingDetailRepository.UpdateAsync(detail, cancellationToken);
-                        continue;
-                    }
-
-                    var entryAmount = newCycles * stockQty * detail.BookingRate;
-                    totalAmount += entryAmount;
-
-                    var entry = new RecurringChargeEntry
-                    {
-                        Id = Guid.NewGuid(),
-                        TenantId = tenantProvider.GetTenantId(),
-                        BookingId = booking.Id,
-                        BookingDetailId = detail.Id,
-                        RecurringChargeRunId = run.Id,
-                        Source = RecurringChargeSources.Run,
-                        BillPeriodFrom = periodStart,
-                        BillPeriodTo = periodEnd,
-                        BillType = detail.BillType,
-                        Cycles = newCycles,
-                        Quantity = (float)stockQty,
-                        Rate = detail.BookingRate,
-                        Amount = entryAmount,
-                        Note = $"Recurring-charge run {run.Id:N}",
-                        CreatedAt = DateTime.UtcNow,
-                    };
-                    await recurringChargeEntryRepository.AddAsync(entry, cancellationToken);
-                    await bookingDetailRepository.UpdateAsync(detail, cancellationToken);
-                    affected++;
-                }
-            }
+            // Entries posted by this run carry its id (RecurringChargeRunId)
+            var result = await ledgerService.SyncAllAsync(asOfDate, run.Id, cancellationToken: cancellationToken);
 
             run.Status = RecurringChargeRunStatuses.Success;
-            run.AffectedCount = affected;
-            run.TotalRecurringChargeAmount = totalAmount;
+            run.AffectedCount = result.EntriesPosted;
+            run.TotalRecurringChargeAmount = result.AmountPosted;
             run.CompletedAt = DateTime.UtcNow;
             await recurringChargeRunRepository.UpdateAsync(run, cancellationToken);
 
@@ -158,69 +115,6 @@ public class RecurringChargeManagementService(
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    // Loads delivery lines dated up to asOfDate so stock in store can be worked out per booking line
-    private Task<List<Booking>> LoadActiveBookingsAsync(DateTime asOfDate, CancellationToken ct) =>
-        bookingRepository.UnfilteredQuery()
-            .Include(b => b.BookingDetails)
-                .ThenInclude(bd => bd.DeliveryDetails.Where(dd =>
-                    !dd.IsDeleted && !dd.Delivery!.IsDeleted && dd.Delivery.DeliveryDate <= asOfDate))
-            .Include(b => b.Customer)
-            .Where(b => !b.IsDeleted && !b.IsArchived && b.TenantId == tenantProvider.GetTenantId())
-            .ToListAsync(ct);
-
-    /// <summary>Quantity still in store, in the booking unit.</summary>
-    private static decimal RemainingQuantity(BookingDetail detail)
-    {
-        if (detail.BaseQuantity <= 0) return 0m;
-        var deliveredBase = detail.DeliveryDetails.Sum(dd => dd.BaseQuantity);
-        var ratio = Math.Max(0m, (detail.BaseQuantity - deliveredBase) / detail.BaseQuantity);
-        return (decimal)detail.BookingQuantity * ratio;
-    }
-
-    private static List<RecurringChargePreviewBookingResponse> ComputePreviewItems(
-        List<Booking> bookings,
-        DateTime asOfDate)
-    {
-        var items = new List<RecurringChargePreviewBookingResponse>();
-
-        foreach (var booking in bookings)
-        {
-            int lines = 0;
-            decimal amount = 0m;
-            DateTime? oldestFrom = null;
-
-            foreach (var detail in booking.BookingDetails.Where(d => !d.IsDeleted))
-            {
-                var fromDate = detail.LastRecurringChargeDate ?? booking.BookingDate;
-                int cycles = RecurringChargeCalculator.CompletedCycles(detail.BillType, booking.BookingDate, asOfDate)
-                             - RecurringChargeCalculator.ChargedCycles(detail.BillType, booking.BookingDate, detail.LastRecurringChargeDate);
-                if (cycles <= 0) continue;
-
-                var stockQty = RemainingQuantity(detail);
-                if (stockQty <= 0) continue;
-
-                lines++;
-                amount += cycles * stockQty * detail.BookingRate;
-                if (oldestFrom == null || fromDate < oldestFrom)
-                    oldestFrom = fromDate;
-            }
-
-            if (lines == 0) continue;
-
-            items.Add(new RecurringChargePreviewBookingResponse
-            {
-                BookingId = booking.Id,
-                BookingNumber = booking.BookingNumber,
-                CustomerName = booking.Customer?.CustomerName ?? "—",
-                AffectedDetailLines = lines,
-                TotalRecurringChargeAmount = amount,
-                OldestLastRecurringChargeDate = oldestFrom,
-            });
-        }
-
-        return items;
-    }
-
     private static RecurringChargeRunResponse MapToResponse(RecurringChargeRun r) => new()
     {
         Id = r.Id,
@@ -235,5 +129,4 @@ public class RecurringChargeManagementService(
         CompletedAt = r.CompletedAt,
         ErrorMessage = r.ErrorMessage,
     };
-
 }

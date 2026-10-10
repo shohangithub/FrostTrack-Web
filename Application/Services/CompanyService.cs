@@ -69,7 +69,8 @@ public class CompanyService : ICompanyService
             result.IsActive,
             result.Status,
             result.RestrictEditDelete,
-            result.EditDeleteAllowedDays
+            result.EditDeleteAllowedDays,
+            result.BillingStartDate
         );
     }
 
@@ -95,7 +96,8 @@ public class CompanyService : ICompanyService
             CodeGeneration = (ECodeGeneration)request.CodeGeneration,
             IsActive = request.IsActive,
             RestrictEditDelete = request.RestrictEditDelete,
-            EditDeleteAllowedDays = request.EditDeleteAllowedDays
+            EditDeleteAllowedDays = request.EditDeleteAllowedDays,
+            BillingStartDate = request.BillingStartDate?.Date
         };
 
         _defaultValueInjector.InjectTenant<Company, int>(entity);
@@ -122,7 +124,8 @@ public class CompanyService : ICompanyService
             entity.IsActive,
             entity.Status,
             entity.RestrictEditDelete,
-            entity.EditDeleteAllowedDays
+            entity.EditDeleteAllowedDays,
+            entity.BillingStartDate
         ) : null;
     }
 
@@ -151,6 +154,7 @@ public class CompanyService : ICompanyService
         existingData.IsActive = request.IsActive;
         existingData.RestrictEditDelete = request.RestrictEditDelete;
         existingData.EditDeleteAllowedDays = request.EditDeleteAllowedDays;
+        existingData.BillingStartDate = request.BillingStartDate?.Date;
 
         var result = await _repository.UpdateAsync(existingData, cancellationToken);
 
@@ -175,7 +179,8 @@ public class CompanyService : ICompanyService
             result.IsActive,
             result.Status,
             result.RestrictEditDelete,
-            result.EditDeleteAllowedDays
+            result.EditDeleteAllowedDays,
+            result.BillingStartDate
         ) : null;
     }
 

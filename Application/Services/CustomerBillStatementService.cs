@@ -11,13 +11,19 @@ public class CustomerBillStatementService : ICustomerBillStatementService
     private readonly IRepository<Booking, Guid> _bookingRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<Transaction, Guid> _transactionRepository;
+    private readonly IRepository<AdvanceAllocation, Guid> _advanceAllocationRepository;
+    private readonly IBookingLedgerService _ledgerService;
 
     public CustomerBillStatementService(
         IRepository<Customer, int> customerRepository,
         IRepository<Booking, Guid> bookingRepository,
         IRepository<Delivery, Guid> deliveryRepository,
-        IRepository<Transaction, Guid> transactionRepository)
+        IRepository<Transaction, Guid> transactionRepository,
+        IRepository<AdvanceAllocation, Guid> advanceAllocationRepository,
+        IBookingLedgerService ledgerService)
     {
+        _ledgerService = ledgerService;
+        _advanceAllocationRepository = advanceAllocationRepository;
         _customerRepository = customerRepository;
         _bookingRepository = bookingRepository;
         _deliveryRepository = deliveryRepository;
@@ -68,9 +74,10 @@ public class CustomerBillStatementService : ICustomerBillStatementService
             .OrderBy(d => d.DeliveryDate)
             .ToListAsync(cancellationToken);
 
+        // Payments count for a contract booking when linked to it; a customer advance counts on the
+        // date it is applied to the booking (unapplied advance is not part of this bill).
         var payments = await _transactionRepository.Query()
-            .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
-                         || (includeUnlinked && !t.BookingId.HasValue && t.CustomerId == customerId))
+            .Where(t => t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)
                         && t.TransactionDate < toUtcExclusive
                         && t.TransactionHead != null
                         && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
@@ -87,6 +94,20 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                 Amount = t.Amount
             })
             .ToListAsync(cancellationToken);
+
+        var advanceApplied = await _advanceAllocationRepository.Query()
+            .Where(a => bookingIds.Contains(a.BookingId) && a.AllocationDate < toUtcExclusive && !a.AdvanceTransaction!.IsArchived)
+            .Select(a => new BillStatementPaymentLine
+            {
+                TransactionId = a.Id,
+                Date = a.AllocationDate,
+                TransactionCode = a.ReceiptCode ?? a.AdvanceTransaction!.TransactionCode,
+                PaymentMethod = "ADVANCE",
+                Description = "Advance " + a.AdvanceTransaction!.TransactionCode + " applied to booking " + a.Booking!.BookingNumber,
+                Amount = a.Amount
+            })
+            .ToListAsync(cancellationToken);
+        payments = payments.Concat(advanceApplied).OrderBy(p => p.Date).ToList();
 
         var discounts = await _transactionRepository.Query()
             .Where(t => ((t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value))
@@ -202,11 +223,25 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         response.PaidAtDelivery = response.Payments.Where(p => p.DeliveryId.HasValue).Sum(p => p.Amount);
         response.OtherPayments = response.Payments.Where(p => !p.DeliveryId.HasValue).Sum(p => p.Amount);
 
-        // ---- Stock in store and storage rent per booking line ----
-        // Same rule as the customer due report: delivered goods carry their delivery rent,
-        // goods still in store carry stock x rate x (first cycle + completed cycles).
-        decimal rentBefore = 0m, rentAtEnd = 0m, labourBefore = 0m, labourAtEnd = 0m;
+        // ---- Charges come from the charge ledger (every month, labour and adjustment is a dated row) ----
+        await _ledgerService.SyncBookingsAsync(bookingIds, cancellationToken: cancellationToken);
+        var ledgerEntries = new List<LedgerEntryResponse>();
+        foreach (var booking in bookings)
+        {
+            foreach (var entry in await _ledgerService.GetEntriesAsync(booking.Id, cancellationToken))
+            {
+                entry.BookingNumber = booking.BookingNumber;
+                ledgerEntries.Add(entry);
+            }
+        }
+        var entriesBefore = ledgerEntries.Where(e => e.EntryDate < fromUtc).ToList();
+        var entriesInPeriod = ledgerEntries.Where(e => e.EntryDate >= fromUtc && e.EntryDate < toUtcExclusive).ToList();
+        response.ChargeEntries = entriesInPeriod.OrderBy(e => e.EntryDate).ThenBy(e => e.BookingNumber).ToList();
 
+        static bool IsLabour(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.BookingLabour or ChargeTypes.DeliveryLabour;
+        static bool IsRentOrAdjustment(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.RentCycle or ChargeTypes.DeliveryAdjustment;
+
+        // ---- Stock in store and rent per booking line ----
         foreach (var booking in bookings)
         {
             foreach (var bd in booking.BookingDetails.Where(d => !d.IsDeleted))
@@ -219,26 +254,22 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                 var start = LineState(booking, bd, lineDeliveries, fromUtc);
                 var end = LineState(booking, bd, lineDeliveries, toUtcExclusive);
 
-                rentBefore += start.Rent;
-                rentAtEnd += end.Rent;
-                labourBefore += start.Labour;
-                labourAtEnd += end.Labour;
-
+                var lineRentEntries = entriesInPeriod
+                    .Where(e => e.ChargeType == ChargeTypes.RentCycle && e.BookingDetailId == bd.Id)
+                    .ToList();
+                var rentThisPeriod = lineRentEntries.Sum(e => e.Amount);
                 var bookedInPeriod = booking.BookingDate >= fromUtc;
-                var deliveredInPeriod = end.DeliveredQty - start.DeliveredQty;
-                var rentThisPeriod = end.Rent - start.Rent;
 
-                // Lines that were fully delivered before the period and did not change are left out
-                if (!bookedInPeriod && start.Stock <= 0 && end.Stock <= 0 && rentThisPeriod == 0m)
+                // Lines that were fully delivered before the period and were not charged in it are left out
+                if (!bookedInPeriod && start.Stock <= 0 && end.Stock <= 0 && lineRentEntries.Count == 0)
                     continue;
 
-                var billingDates = BillingDatesInPeriod(booking.BookingDate, bd.BillType, fromUtc, toUtcExclusive);
-                if (end.Stock <= 0m && lineDeliveries.Count > 0)
-                {
-                    // Fully delivered: cycles after the last delivery are not charged
-                    var lastDelivery = lineDeliveries.Where(x => x.DeliveryDate < toUtcExclusive).Max(x => x.DeliveryDate);
-                    billingDates = billingDates.Where(d => d <= lastDelivery).ToList();
-                }
+                // Billing dates = months posted in the period (corrections are not new months)
+                var billingDates = lineRentEntries
+                    .Where(e => e.Source == RecurringChargeSources.Posted)
+                    .Select(e => e.EntryDate)
+                    .OrderBy(d => d)
+                    .ToList();
 
                 response.StockLines.Add(new BillStatementStockLine
                 {
@@ -251,7 +282,7 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                     Rate = bd.BookingRate,
                     OpeningStock = bookedInPeriod ? 0m : start.Stock,
                     BookedQty = bookedInPeriod ? (decimal)bd.BookingQuantity : 0m,
-                    DeliveredQty = deliveredInPeriod,
+                    DeliveredQty = end.DeliveredQty - start.DeliveredQty,
                     ClosingStock = end.Stock,
                     BillingDates = billingDates.Take(12).ToList(),
                     CyclesInPeriod = billingDates.Count,
@@ -260,17 +291,14 @@ public class CustomerBillStatementService : ICustomerBillStatementService
             }
         }
 
-        // Delivery-level adjustments are part of the accrued rent as well
-        var adjustmentBefore = deliveries.Where(d => d.DeliveryDate < fromUtc).Sum(d => d.AdjustmentValue);
-
         // ---- Account summary ----
         var paidBefore = payments.Where(p => p.Date < fromUtc).Sum(p => p.Amount);
         var discountBefore = discounts.Where(p => p.Date < fromUtc).Sum(p => p.Amount);
 
         var openingBalance = includeUnlinked ? customer.OpeningBalance : 0m;
-        response.PreviousDue = openingBalance + rentBefore + adjustmentBefore + labourBefore - paidBefore - discountBefore;
-        response.RentCharged = rentAtEnd - rentBefore + response.DeliveryAdjustmentTotal;
-        response.LabourCharged = labourAtEnd - labourBefore;
+        response.PreviousDue = openingBalance + entriesBefore.Sum(e => e.Amount) - paidBefore - discountBefore;
+        response.RentCharged = entriesInPeriod.Where(IsRentOrAdjustment).Sum(e => e.Amount);
+        response.LabourCharged = entriesInPeriod.Where(IsLabour).Sum(e => e.Amount);
         response.TotalCharged = response.RentCharged + response.LabourCharged;
         response.TotalPaid = response.Payments.Sum(p => p.Amount);
         response.TotalDiscount = response.Discounts.Sum(p => p.Amount);

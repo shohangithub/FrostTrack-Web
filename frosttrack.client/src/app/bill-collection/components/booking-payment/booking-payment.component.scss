@@ -1,0 +1,117 @@
+// Report-style (read-only) tables, matching the report pages (info box + bordered tables)
+
+$font-size: 11px;
+$paid-color: #1a7a3d;
+$due-color: #b71c1c;
+
+.report-body {
+  font-size: $font-size;
+  color: #000;
+}
+
+.booking-info-box {
+  margin-bottom: 12px;
+  border: 2px solid #000;
+
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    td {
+      border: 1px solid #000;
+      padding: 5px 8px;
+      font-size: $font-size;
+      vertical-align: middle;
+    }
+
+    .info-label {
+      font-weight: bold;
+      width: 20%;
+      background-color: #f5f5f5;
+    }
+
+    .info-value {
+      width: 30%;
+    }
+  }
+}
+
+.section-title {
+  font-weight: bold;
+  font-size: 12px;
+  margin: 12px 0 6px;
+  text-align: center;
+  text-decoration: underline;
+}
+
+.stored-products-section {
+  margin-bottom: 10px;
+  overflow-x: auto;
+
+  .products-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      border: 1px solid #000;
+      padding: 5px 6px;
+      font-size: $font-size;
+      background-color: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+      font-size: $font-size;
+      vertical-align: middle;
+    }
+
+    .text-end {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    tfoot .total-row td {
+      background-color: #f9f9f9;
+      font-weight: bold;
+    }
+  }
+}
+
+.sub-text {
+  font-size: 9px;
+  color: #555;
+}
+
+.paid-amount {
+  color: $paid-color;
+  font-weight: 600;
+}
+
+.summary-table {
+  font-size: 12px;
+
+  td {
+    padding: 4px 2px;
+    border: none;
+  }
+
+  .due-row td {
+    font-weight: bold;
+    font-size: 14px;
+    color: $due-color;
+    border-top: 2px solid #000;
+  }
+}
+
+// Corrections in the charge ledger (posted later because data changed)
+.stored-products-section .products-table .correction-row td {
+  background-color: #fff8e1;
+  font-style: italic;
+}

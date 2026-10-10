@@ -21,8 +21,9 @@ public interface IBookingService
         string? status = null,
         bool? dueOnly = null,
         string? searchTerm = null,
-        CancellationToken cancellationToken = default);
-    Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool includeSettled = true);
+    Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default, bool includeSettled = true);
     Task<CustomerOutstandingResponse> GetCustomerOutstandingAsync(int customerId, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default);

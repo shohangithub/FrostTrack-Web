@@ -30,6 +30,8 @@ export class CustomerDueListComponent implements OnInit {
   loadingIndicator = true;
 
   selectedStatus: string = 'all';
+  /** Settled = due <= 0. Hidden by default (customers and bookings); the switch shows them again. */
+  showSettled = false;
   searchText: string = '';
   private searchSubject: Subject<string> = new Subject<string>();
 
@@ -58,7 +60,8 @@ export class CustomerDueListComponent implements OnInit {
     this.expandedLoadingSet.clear();
     this.expandedCustomerIds.clear();
     this.expandedRecurringChargeBookingIds.clear();
-    this.bookingService.getCustomerDueSummary().subscribe({
+    // Settled (fully paid) bookings are left out by the server unless "Show settled" is on
+    this.bookingService.getCustomerDueSummary(this.showSettled).subscribe({
       next: (response) => {
         this.data = response;
         this.applyFilters();
@@ -93,6 +96,11 @@ export class CustomerDueListComponent implements OnInit {
     this.searchSubject.next(this.searchText);
   }
 
+  onShowSettledChange() {
+    // Totals and bookings come from the server with or without settled bookings
+    this.fetchData();
+  }
+
   onStatusFilter(event: any) {
     this.selectedStatus = event.target.value;
     this.applyFilters();
@@ -106,7 +114,7 @@ export class CustomerDueListComponent implements OnInit {
       this.expandedCustomerIds.add(id);
       if (!this.expandedCustomers.has(id) && !this.expandedLoadingSet.has(id)) {
         this.expandedLoadingSet.add(id);
-        this.bookingService.getCustomerDueDetail(id).subscribe({
+        this.bookingService.getCustomerDueDetail(id, this.showSettled).subscribe({
           next: (response) => {
             this.expandedCustomers.set(id, response);
             this.expandedLoadingSet.delete(id);
@@ -249,6 +257,8 @@ export class CustomerDueListComponent implements OnInit {
   isBookingSettled(booking: ICustomerDueDetailResponse): boolean {
     return (booking.totalDue || 0) <= 0;
   }
+
+
 
   getDeliveredProductsSummary(delivery: any): string {
     if (!delivery || !delivery.deliveryDetails || delivery.deliveryDetails.length === 0) return 'Products Delivered';

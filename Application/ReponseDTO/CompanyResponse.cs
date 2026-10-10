@@ -18,7 +18,8 @@ public record CompanyResponse(
     bool IsActive,
     string Status,
     bool RestrictEditDelete,
-    int EditDeleteAllowedDays
+    int EditDeleteAllowedDays,
+    DateTime? BillingStartDate
 );
 
 public record EditWindowPolicyResponse(bool RestrictEditDelete, int EditDeleteAllowedDays);

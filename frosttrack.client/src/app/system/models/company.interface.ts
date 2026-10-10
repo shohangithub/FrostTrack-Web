@@ -31,6 +31,8 @@ export interface ICompanyResponse {
   status: string;
   restrictEditDelete?: boolean;
   editDeleteAllowedDays?: number;
+  /** Go-live date: charges dated before it are not billed (yyyy-MM-dd...). */
+  billingStartDate?: string | null;
 }
 
 export interface ICompanyRequest {
@@ -50,6 +52,7 @@ export interface ICompanyRequest {
   isActive: boolean;
   restrictEditDelete?: boolean;
   editDeleteAllowedDays?: number;
+  billingStartDate?: string | null;
 }
 
 export enum ECodeGeneration {

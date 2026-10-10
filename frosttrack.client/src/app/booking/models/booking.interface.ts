@@ -274,3 +274,42 @@ export interface IRecurringChargeRunRequest {
   asOfDate?: string;
   notes?: string;
 }
+
+/** Charge-ledger row (RecurringChargeEntries). */
+export interface ILedgerEntry {
+  id: string;
+  entryDate: string;
+  chargeType: string; // RENT_CYCLE | BOOKING_LABOUR | DELIVERY_LABOUR | DELIVERY_ADJUSTMENT
+  source: string; // POSTED | CORRECTION
+  cycleNo?: number | null;
+  bookingDetailId?: string | null;
+  bookingNumber?: string | null;
+  productName: string;
+  deliveryId?: string | null;
+  deliveryNumber?: string | null;
+  billPeriodFrom: string;
+  billPeriodTo: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface ILedgerCheckItem {
+  bookingId: string;
+  bookingNumber: string;
+  bookingDate: string;
+  customerName: string;
+  ledgerTotal: number;
+  /** Null for bookings dated before the go-live date (no full-history comparison possible). */
+  calculatedTotal: number | null;
+  difference: number;
+  pendingSync: number;
+}
+
+export interface ILedgerSyncResult {
+  bookingsAffected: number;
+  entriesPosted: number;
+  amountPosted: number;
+}

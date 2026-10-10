@@ -15,6 +15,12 @@ public class Company : BaseEntity<int>
     // Booking / delivery / transaction edit & delete is allowed only within this many days of the record date
     public bool RestrictEditDelete { get; set; } = true;
     public int EditDeleteAllowedDays { get; set; } = 90;
+    /// <summary>
+    /// Go-live date (calendar date). Billing months that ended before it and labour dated before it are
+    /// not posted to the charge ledger (settled before the system). The month running on the go-live
+    /// date is charged, dated on the go-live date. Null = charge from each booking's own date.
+    /// </summary>
+    public DateTime? BillingStartDate { get; set; }
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsSingleBranch { get; set; }

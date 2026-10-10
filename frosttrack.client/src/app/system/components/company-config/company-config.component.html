@@ -184,6 +184,14 @@
             Restrict edit / delete of bookings, deliveries and transactions
           </label>
         </div>
+        <div class="mb-2">
+          <label class="form-label" for="billingStartDate">Billing start date (go-live)</label>
+          <input type="date" class="form-control" id="billingStartDate" formControlName="billingStartDate" />
+          <small class="text-muted">
+            Months that ended before this date are not billed (settled before the system); the month running
+            on it is billed from this date. Leave empty to bill from each booking's own date.
+          </small>
+        </div>
         @if (register.get('restrictEditDelete')?.value) {
           <label class="form-label" for="editDeleteAllowedDays"
             >Allowed days (counted from the record date)</label

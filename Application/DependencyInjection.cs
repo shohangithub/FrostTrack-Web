@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IPrintService, PrintService>();
         services.AddScoped<IEditWindowGuard, EditWindowGuard>();
+        services.AddScoped<IBookingLedgerService, BookingLedgerService>();
         services.AddScoped<IDeliveryService, DeliveryService>();
         services.AddScoped<IDeliveryChallanService, DeliveryChallanService>();
         services.AddScoped<IBookingService, BookingService>();

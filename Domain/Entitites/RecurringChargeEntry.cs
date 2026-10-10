@@ -1,9 +1,9 @@
 namespace Domain.Entitites;
 
 /// <summary>
-/// Permanent ledger record for each recurring-charge cycle charged to a booking detail.
-/// Created at booking time (Source = INITIAL) and on each recurring-charge run (Source = RUN).
-/// Never updated — append-only audit trail.
+/// Charge ledger: one row per charge on a booking (rent per billing month, booking/delivery labour,
+/// delivery adjustment). Append-only — changes are posted as CORRECTION rows, rows are never edited.
+/// A booking's charges as of a date = sum of Amount where EntryDate &lt;= that date (ChargeType != LEGACY).
 /// </summary>
 [Table("RecurringChargeEntries", Schema = "product")]
 public class RecurringChargeEntry : BaseEntity<Guid>
@@ -11,8 +11,25 @@ public class RecurringChargeEntry : BaseEntity<Guid>
     public Guid BookingId { get; set; }
     public Booking? Booking { get; set; }
 
-    public Guid BookingDetailId { get; set; }
+    /// <summary>Booking line; null for delivery adjustments (or after the line was removed).</summary>
+    public Guid? BookingDetailId { get; set; }
     public BookingDetail? BookingDetail { get; set; }
+
+    /// <summary>RENT_CYCLE | BOOKING_LABOUR | DELIVERY_LABOUR | DELIVERY_ADJUSTMENT | LEGACY (see ChargeTypes).</summary>
+    [MaxLength(30)]
+    public string ChargeType { get; set; } = ChargeTypes.RentCycle;
+
+    /// <summary>Billing month number (1 = first month) for RENT_CYCLE entries.</summary>
+    public int? CycleNo { get; set; }
+
+    /// <summary>Delivery the charge comes from (labour/adjustment). No FK: delivery history is kept.</summary>
+    public Guid? DeliveryId { get; set; }
+
+    /// <summary>Date the charge applies from (month start, booking date or delivery date; posting date for corrections).</summary>
+    [Column(TypeName = "datetime2")]
+    public DateTime EntryDate { get; set; }
+
+    public int? CreatedById { get; set; }
 
     /// <summary>Null for Source = INITIAL; populated for Source = RUN.</summary>
     public Guid? RecurringChargeRunId { get; set; }
@@ -20,7 +37,7 @@ public class RecurringChargeEntry : BaseEntity<Guid>
 
     /// <summary>INITIAL (created at booking time) | RUN (created by a recurring-charge run).</summary>
     [MaxLength(20)]
-    public string Source { get; set; } = RecurringChargeSources.Initial;
+    public string Source { get; set; } = RecurringChargeSources.Posted;
 
     [Column(TypeName = "datetime2")]
     public DateTime BillPeriodFrom { get; set; }

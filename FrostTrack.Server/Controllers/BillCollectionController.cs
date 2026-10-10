@@ -34,6 +34,30 @@ public class BillCollectionController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("customer/{customerId}/due-bookings")]
+    public async Task<ActionResult<CustomerDueBookingsResponse>> GetCustomerDueBookings(int customerId, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetCustomerDueBookingsAsync(customerId, cancellationToken));
+
+    [HttpGet("booking/{bookingId}/payment-detail")]
+    public async Task<ActionResult<BookingPaymentDetailResponse>> GetBookingPaymentDetail(Guid bookingId, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetBookingPaymentDetailAsync(bookingId, cancellationToken));
+
+    [HttpPost("booking-payment")]
+    public async Task<ActionResult<BookingPaymentResultResponse>> CreateBookingPayment(BookingPaymentRequest request, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.CreateBookingPaymentAsync(request, cancellationToken));
+
+    [HttpGet("customer/{customerId}/advances")]
+    public async Task<ActionResult<CustomerAdvancesResponse>> GetCustomerAdvances(int customerId, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetCustomerAdvancesAsync(customerId, cancellationToken));
+
+    [HttpDelete("advance-allocation/{allocationId}")]
+    public async Task<ActionResult<bool>> RemoveAdvanceAllocation(Guid allocationId, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.RemoveAdvanceAllocationAsync(allocationId, cancellationToken));
+
+    [HttpGet("receipt-info/{transactionId}")]
+    public async Task<ActionResult<PaymentReceiptInfoResponse>> GetPaymentReceiptInfo(Guid transactionId, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetPaymentReceiptInfoAsync(transactionId, cancellationToken));
+
     [HttpPost("delivery-based")]
     public async Task<ActionResult<TransactionResponse>> CreateDeliveryBillCollection(
         DeliveryBillCollectionRequest request,

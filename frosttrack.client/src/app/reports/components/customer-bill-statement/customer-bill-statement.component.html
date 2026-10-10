@@ -353,6 +353,50 @@
                     </table>
                   </div>
 
+                  <!-- Charge log (ledger rows in the period) -->
+                  <div class="section-title">চার্জ খতিয়ান / Charges in this period</div>
+                  <div class="stored-products-section">
+                    <table class="products-table stock-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th>Date</th>
+                          <th>Booking</th>
+                          <th>Charge</th>
+                          <th>Product</th>
+                          <th class="text-end">Qty</th>
+                          <th class="text-end">Rate</th>
+                          <th class="text-end">Amount (৳)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (e of statement.chargeEntries; track e.id) {
+                        <tr>
+                          <td>{{ e.entryDate | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ e.bookingNumber }}</td>
+                          <td>
+                            {{ chargeLabel(e.chargeType, e.cycleNo) }}
+                            @if (e.source === 'CORRECTION') { <span class="sub-text">(correction)</span> }
+                          </td>
+                          <td>{{ e.productName || '-' }}</td>
+                          <td class="text-end">{{ e.quantity ? (e.quantity | number: '1.0-2') : '-' }}</td>
+                          <td class="text-end">{{ e.rate ? (e.rate | number: '1.2-2') : '-' }}</td>
+                          <td class="text-end fw-bold">{{ e.amount | number: '1.2-2' }}</td>
+                        </tr>
+                        } @empty {
+                        <tr><td colspan="7" class="text-center py-2">No charges in this period.</td></tr>
+                        }
+                      </tbody>
+                      @if (statement.chargeEntries.length > 0) {
+                      <tfoot>
+                        <tr class="total-row">
+                          <td colspan="6" class="text-end">Total charged:</td>
+                          <td class="text-end">{{ statement.totalCharged | number: '1.2-2' }}</td>
+                        </tr>
+                      </tfoot>
+                      }
+                    </table>
+                  </div>
+
                   <!-- Bill Summary -->
                   <div class="section-title">বিল সারসংক্ষেপ / Bill Summary</div>
                   <div class="stored-products-section bill-summary">

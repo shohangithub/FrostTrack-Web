@@ -14,6 +14,8 @@ public class BookingService : IBookingService
     private readonly IRepository<TransactionHead, Guid> _transactionHeadRepository;
     private readonly IRepository<RecurringChargeEntry, Guid> _recurringChargeEntryRepository;
     private readonly IEditWindowGuard _editWindowGuard;
+    private readonly IRepository<AdvanceAllocation, Guid> _advanceAllocationRepository;
+    private readonly IBookingLedgerService _ledgerService;
     private readonly IRepository<DeliveryDetail, Guid> _deliveryDetailRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICodeGenerationService _codeGenerationService;
@@ -38,8 +40,12 @@ public class BookingService : IBookingService
         ICodeGenerationService codeGenerationService,
         IEditWindowGuard editWindowGuard,
         IRepository<DeliveryDetail, Guid> deliveryDetailRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IRepository<AdvanceAllocation, Guid> advanceAllocationRepository,
+        IBookingLedgerService ledgerService)
     {
+        _advanceAllocationRepository = advanceAllocationRepository;
+        _ledgerService = ledgerService;
         _repository = repository;
         _editWindowGuard = editWindowGuard;
         _deliveryDetailRepository = deliveryDetailRepository;
@@ -205,7 +211,52 @@ public class BookingService : IBookingService
 
         if (paymentCodes.Count > 0)
             throw new Exception($"This booking has transactions ({string.Join(", ", paymentCodes)}). Delete those transactions first.");
+
+        var hasAdvance = await _advanceAllocationRepository.Query().AnyAsync(a => a.BookingId == bookingId, cancellationToken);
+        if (hasAdvance)
+            throw new Exception("Customer advance has been applied to this booking. Remove those advance applications first.");
     }
+
+    /// <summary>Bookings whose due (ledger charges − payments − discounts − advance applied) is not zero.</summary>
+    private async Task<HashSet<Guid>> GetOpenBookingIdsAsync(List<Guid> bookingIds, CancellationToken cancellationToken)
+    {
+        var charges = await _ledgerService.GetChargesAsync(bookingIds, DateTime.UtcNow, cancellationToken);
+        var paid = await _transactionRepository.Query()
+            .Where(t => !t.IsArchived && t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)
+                        && t.TransactionHead != null
+                        && t.TransactionHead.Type == TransactionHeadTypes.DEBIT
+                        && t.TransactionHead.UsageFor == UsageFor.CUSTOMER_PAYMENT)
+            .GroupBy(t => t.BookingId!.Value)
+            .Select(g => new { g.Key, Amount = g.Sum(t => t.Amount) })
+            .ToDictionaryAsync(x => x.Key, x => x.Amount, cancellationToken);
+        var discounted = await _transactionRepository.Query()
+            .Where(t => !t.IsArchived && t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT)
+            .GroupBy(t => t.BookingId!.Value)
+            .Select(g => new { g.Key, Amount = g.Sum(t => t.Amount > 0 ? t.Amount : t.DiscountAmount) })
+            .ToDictionaryAsync(x => x.Key, x => x.Amount, cancellationToken);
+        var advance = await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
+
+        return bookingIds
+            .Where(id =>
+            {
+                var due = (charges.GetValueOrDefault(id)?.Total ?? 0m)
+                          - paid.GetValueOrDefault(id)
+                          - discounted.GetValueOrDefault(id)
+                          - advance.GetValueOrDefault(id);
+                return Math.Abs(due) >= 0.01m;
+            })
+            .ToHashSet();
+    }
+
+    /// <summary>Customer advance applied to each booking (counts as paid for that booking).</summary>
+    private async Task<Dictionary<Guid, decimal>> AdvanceAppliedByBookingAsync(List<Guid> bookingIds, CancellationToken cancellationToken)
+        => await _advanceAllocationRepository.Query()
+            .Where(a => bookingIds.Contains(a.BookingId) && !a.AdvanceTransaction!.IsArchived)
+            .GroupBy(a => a.BookingId)
+            .Select(g => new { g.Key, Amount = g.Sum(a => a.Amount) })
+            .ToDictionaryAsync(x => x.Key, x => x.Amount, cancellationToken);
 
     public async Task<bool> RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -322,16 +373,9 @@ public class BookingService : IBookingService
 
         try
         {
-            // Charge entries of removed lines must go first (restrict FK to BookingDetail)
-            if (removedDetailIds.Count > 0)
-            {
-                await _recurringChargeEntryRepository.DeletableQuery(e => removedDetailIds.Contains(e.BookingDetailId))
-                    .ExecuteDeleteAsync(cancellationToken);
-            }
-
             var response = await _bookingRepository.ManageUpdate(request, existingData, cancellationToken);
 
-            // Keep the initial charge entries and the storage charge transaction in line with the edited booking
+            // Keep the charge ledger and the storage charge transaction in line with the edited booking
             await SyncBookingChargesAsync(existingData, cancellationToken);
 
             await dbTransaction.CommitAsync(cancellationToken);
@@ -409,57 +453,15 @@ public class BookingService : IBookingService
     }
 
     /// <summary>
-    /// Creates or updates the INITIAL recurring charge entry for every booking line and the
-    /// auto-generated storage charge (BKC) transaction so they match the booking.
+    /// Syncs the booking's charge ledger and the auto-generated storage charge (BKC) transaction.
     /// </summary>
     private async Task SyncBookingChargesAsync(Booking booking, CancellationToken cancellationToken)
     {
         var details = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
         var bookingId = booking.Id;
 
-        // INITIAL charge entry per line (RUN entries are history and stay untouched)
-        var initialEntries = await _recurringChargeEntryRepository
-            .UpdatableQuery(e => e.BookingId == bookingId && e.Source == RecurringChargeSources.Initial)
-            .ToListAsync(cancellationToken);
-
-        foreach (var detail in details)
-        {
-            var periodEnd = CalculateLastDeliveryDate(booking.BookingDate, detail.BillType);
-            var amount = (decimal)detail.BookingQuantity * detail.BookingRate;
-            var entry = initialEntries.FirstOrDefault(e => e.BookingDetailId == detail.Id);
-
-            if (entry == null)
-            {
-                await _recurringChargeEntryRepository.AddAsync(new RecurringChargeEntry
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = _tenantId,
-                    BookingId = bookingId,
-                    BookingDetailId = detail.Id,
-                    RecurringChargeRunId = null,
-                    Source = RecurringChargeSources.Initial,
-                    BillPeriodFrom = booking.BookingDate,
-                    BillPeriodTo = periodEnd,
-                    BillType = detail.BillType,
-                    Cycles = 1,
-                    Quantity = detail.BookingQuantity,
-                    Rate = detail.BookingRate,
-                    Amount = amount,
-                    Note = $"Initial charge on booking {booking.BookingNumber}",
-                    CreatedAt = DateTime.UtcNow,
-                }, cancellationToken);
-            }
-            else
-            {
-                entry.BillPeriodFrom = booking.BookingDate;
-                entry.BillPeriodTo = periodEnd;
-                entry.BillType = detail.BillType;
-                entry.Quantity = detail.BookingQuantity;
-                entry.Rate = detail.BookingRate;
-                entry.Amount = entry.Cycles * amount;
-                await _recurringChargeEntryRepository.UpdateAsync(entry, cancellationToken);
-            }
-        }
+        // Charge ledger: month 1 rent, labour and any corrections (see BookingLedgerService)
+        await _ledgerService.SyncBookingAsync(bookingId, cancellationToken: cancellationToken);
 
         // Storage charge transaction (accounts receivable for the booking)
         var totalChargeAmount = details.Sum(d => (decimal)d.BookingQuantity * d.BookingRate + d.LabourCharge);
@@ -747,7 +749,8 @@ public class BookingService : IBookingService
         string? status = null,
         bool? dueOnly = null,
         string? searchTerm = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool includeSettled = true)
     {
         DateTime asOfDate;
         if (reportDate.HasValue)
@@ -869,6 +872,12 @@ public class BookingService : IBookingService
             .GroupBy(d => d.BookingId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        // Charges come from the charge ledger (entries up to the report date)
+        var ledgerCharges = await _ledgerService.GetChargesAsync(bookingIds, asOfDate, cancellationToken);
+        var advanceByBooking = includeSettled
+            ? new Dictionary<Guid, decimal>()
+            : await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
+
         var customerGroups = bookings.GroupBy(b => b.CustomerId);
         var summaries = new List<CustomerDueSummaryResponse>();
 
@@ -882,17 +891,34 @@ public class BookingService : IBookingService
             decimal totalPaid = 0m;
             decimal totalDiscounts = 0m;
             decimal totalPendingRecurringCharge = 0m;
+            decimal settledAdvance = 0m;
+            var openBookings = new List<Booking>();
 
             foreach (var booking in customerBookings)
             {
+                if (!includeSettled)
+                {
+                    // Fully paid bookings are left out of the totals (their due is 0, so the customer due is unchanged)
+                    var c = ledgerCharges.GetValueOrDefault(booking.Id) ?? new LedgerCharges();
+                    var bookingDue = c.Total
+                        - paymentsByBooking.GetValueOrDefault(booking.Id)
+                        - discountsByBooking.GetValueOrDefault(booking.Id)
+                        - advanceByBooking.GetValueOrDefault(booking.Id);
+                    if (Math.Abs(bookingDue) < 0.01m)
+                    {
+                        // Advance applied to it came from the customer's unassigned payments; take it out too
+                        settledAdvance += advanceByBooking.GetValueOrDefault(booking.Id);
+                        continue;
+                    }
+                }
+                openBookings.Add(booking);
+
                 var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
                 var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
                 
-                var (_, _, bookingAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
-                    booking, 
-                    activeDetails, 
-                    bDeliveries, 
-                    asOfDate);
+                var charges = ledgerCharges.GetValueOrDefault(booking.Id) ?? new LedgerCharges();
+                var bookingAccrued = charges.Total;
+                var pendingRecurringCharge = charges.RentLaterMonths;
 
                 totalAccrued += bookingAccrued;
                 totalPendingRecurringCharge += pendingRecurringCharge;
@@ -910,7 +936,7 @@ public class BookingService : IBookingService
 
             if (unassignedPaymentsByCustomer.TryGetValue(group.Key, out var unassignedPaid))
             {
-                totalPaid += unassignedPaid;
+                totalPaid += unassignedPaid - settledAdvance;
             }
 
             if (unassignedDiscountsByCustomer.TryGetValue(group.Key, out var unassignedDisc))
@@ -920,7 +946,11 @@ public class BookingService : IBookingService
 
             var totalDue = Math.Max(totalAccrued - totalPaid - totalDiscounts, 0m);
 
-            var oldestBooking = customerBookings.OrderBy(b => b.BookingDate).First();
+            // Nothing open and nothing owed: not part of a due list without settled bookings
+            if (!includeSettled && openBookings.Count == 0 && totalDue <= 0.005m)
+                continue;
+
+            var oldestBooking = (openBookings.Count > 0 ? openBookings : customerBookings).OrderBy(b => b.BookingDate).First();
             var daysSinceOldestBooking = (asOfDate - oldestBooking.BookingDate).Days;
 
             // Determine last payment date and transaction-wise amount across all bookings or customer-level payments of this customer
@@ -955,7 +985,7 @@ public class BookingService : IBookingService
                 CustomerName = customer?.CustomerName ?? string.Empty,
                 CustomerMobile = customer?.CustomerMobile ?? string.Empty,
                 CustomerAddress = customer?.Address ?? string.Empty,
-                TotalBookings = customerBookings.Count,
+                TotalBookings = includeSettled ? customerBookings.Count : openBookings.Count,
                 OpeningBalance = openingBalance,
                 TotalAmount = totalAccrued,
                 PendingRecurringChargeAmount = totalPendingRecurringCharge,
@@ -996,7 +1026,7 @@ public class BookingService : IBookingService
         return summaries.OrderByDescending(c => c.TotalDue);
     }
 
-    public async Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CustomerDueDetailResponse>> GetCustomerDueDetailAsync(int customerId, CancellationToken cancellationToken = default, bool includeSettled = true)
     {
         var bookings = await _repository.Query()
             .Include(b => b.BookingDetails)
@@ -1006,6 +1036,18 @@ public class BookingService : IBookingService
         if (!bookings.Any()) return [];
 
         var bookingIds = bookings.Select(b => b.Id).ToList();
+
+        // Ledger must be current before it is read
+        await _ledgerService.SyncBookingsAsync(bookingIds, cancellationToken: cancellationToken);
+
+        if (!includeSettled)
+        {
+            // Leave fully paid bookings out before loading their deliveries and ledger rows
+            var openIds = await GetOpenBookingIdsAsync(bookingIds, cancellationToken);
+            bookings = bookings.Where(b => openIds.Contains(b.Id)).ToList();
+            if (!bookings.Any()) return [];
+            bookingIds = bookings.Select(b => b.Id).ToList();
+        }
 
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails)
@@ -1019,7 +1061,7 @@ public class BookingService : IBookingService
         var recurringChargeEntriesByBooking = await _recurringChargeEntryRepository.Query()
             .Include(e => e.BookingDetail)
                 .ThenInclude(bd => bd!.Product)
-            .Where(e => bookingIds.Contains(e.BookingId))
+            .Where(e => bookingIds.Contains(e.BookingId) && e.ChargeType != ChargeTypes.Legacy)
             .OrderBy(e => e.BillPeriodFrom)
             .ToListAsync(cancellationToken);
 
@@ -1076,7 +1118,10 @@ public class BookingService : IBookingService
             .GroupBy(x => x.DeliveryId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
+        var advanceByBooking = await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
+
         var details = new List<CustomerDueDetailResponse>();
+        var ledgerCharges = await _ledgerService.GetChargesAsync(bookingIds, DateTime.UtcNow, cancellationToken);
         var now = DateTime.UtcNow;
 
         foreach (var booking in bookings.OrderBy(x => x.BookingDate))
@@ -1090,7 +1135,8 @@ public class BookingService : IBookingService
             var deliveryResponses = new List<CustomerDueDeliveryResponse>();
             decimal deliveryCharge = 0m;
             DateTime? lastDeliveryDate = null;
-            var totalPaid = paymentsByBooking.TryGetValue(booking.Id, out var bPaid) ? bPaid : 0m;
+            var totalPaid = (paymentsByBooking.TryGetValue(booking.Id, out var bPaid) ? bPaid : 0m)
+                            + advanceByBooking.GetValueOrDefault(booking.Id);
 
             if (bookingDeliveries.Any())
             {
@@ -1156,11 +1202,11 @@ public class BookingService : IBookingService
                     : bookingDeliveries.Max(d => (DateTime?)d.DeliveryDate);
             }
 
-            var (totalRent, totalLabour, totalAccrued, pendingRecurringCharge) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
-                booking,
-                activeDetails,
-                bookingDeliveries,
-                now);
+            var charges = ledgerCharges.GetValueOrDefault(booking.Id) ?? new LedgerCharges();
+            var totalRent = charges.Rent + charges.Adjustment;
+            var totalLabour = charges.Labour;
+            var totalAccrued = charges.Total;
+            var pendingRecurringCharge = charges.RentLaterMonths;
             var bDiscount = discountsByBooking.TryGetValue(booking.Id, out var bdVal) ? bdVal : 0m;
             var totalDue = Math.Max(totalAccrued - totalPaid - bDiscount, 0m);
             var daysSinceBooking = (now - booking.BookingDate).Days;
@@ -1196,6 +1242,9 @@ public class BookingService : IBookingService
                     Id = (Guid)(object)e.Id!,
                     BookingId = e.BookingId,
                     BookingDetailId = e.BookingDetailId,
+                    ChargeType = e.ChargeType,
+                    CycleNo = e.CycleNo,
+                    EntryDate = e.EntryDate,
                     ProductName = e.BookingDetail?.Product?.ProductName ?? string.Empty,
                     RecurringChargeRunId = e.RecurringChargeRunId,
                     Source = e.Source,
@@ -1283,6 +1332,10 @@ public class BookingService : IBookingService
             .GroupBy(d => d.BookingId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        var advanceByBooking = await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
+
+        await _ledgerService.SyncBookingsAsync(bookingIds, cancellationToken: cancellationToken);
+        var ledgerCharges = await _ledgerService.GetChargesAsync(bookingIds, DateTime.UtcNow, cancellationToken);
         var now = DateTime.UtcNow;
         var bookingItems = new List<BookingOutstandingItem>();
         foreach (var booking in bookings)
@@ -1290,13 +1343,10 @@ public class BookingService : IBookingService
             var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
             var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
 
-            var (_, _, accrued, _) = Common.BookingDueCalculator.CalculateBookingAccruedDetails(
-                booking,
-                activeDetails,
-                bDeliveries,
-                now);
+            var accrued = (ledgerCharges.GetValueOrDefault(booking.Id) ?? new LedgerCharges()).Total;
 
-            var paid = paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m;
+            var paid = (paymentsByBooking.TryGetValue(booking.Id, out var bookingPaid) ? bookingPaid : 0m)
+                       + advanceByBooking.GetValueOrDefault(booking.Id);
             var disc = discountsByBooking.TryGetValue(booking.Id, out var bookingDisc) ? bookingDisc : 0m;
 
             bookingItems.Add(new BookingOutstandingItem

@@ -16,23 +16,23 @@ export const billCollectionRoutes: Route[] = [
   {
     path: 'add',
     loadComponent: () =>
-      import(
-        './components/delivery-bill-collection/delivery-bill-collection.component'
-      ).then((m) => m.DeliveryBillCollectionComponent),
+      import('./components/booking-payment/booking-payment.component').then(
+        (m) => m.BookingPaymentComponent,
+      ),
   },
   {
     path: 'customer-payment',
     loadComponent: () =>
-      import(
-        './components/delivery-bill-collection/delivery-bill-collection.component'
-      ).then((m) => m.DeliveryBillCollectionComponent),
+      import('./components/booking-payment/booking-payment.component').then(
+        (m) => m.BookingPaymentComponent,
+      ),
   },
   {
     path: 'delivery-based',
     loadComponent: () =>
-      import(
-        './components/delivery-bill-collection/delivery-bill-collection.component'
-      ).then((m) => m.DeliveryBillCollectionComponent),
+      import('./components/booking-payment/booking-payment.component').then(
+        (m) => m.BookingPaymentComponent,
+      ),
   },
   {
     path: 'delivery-based/edit/:id',

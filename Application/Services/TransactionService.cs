@@ -7,6 +7,7 @@ public class TransactionService : ITransactionService
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<BankTransaction, long> _bankTransactionRepository;
     private readonly IEditWindowGuard _editWindowGuard;
+    private readonly IRepository<AdvanceAllocation, Guid> _advanceAllocationRepository;
     private readonly ICodeGenerationService _codeGenerationService;
     private readonly DefaultValueInjector _defaultValueInjector;
     private readonly ITenantProvider _tenantProvider;
@@ -22,9 +23,11 @@ public class TransactionService : ITransactionService
         ICodeGenerationService codeGenerationService,
         IRepository<Delivery, Guid> deliveryRepository,
         IRepository<BankTransaction, long> bankTransactionRepository,
-        IEditWindowGuard editWindowGuard)
+        IEditWindowGuard editWindowGuard,
+        IRepository<AdvanceAllocation, Guid> advanceAllocationRepository)
     {
         _repository = repository;
+        _advanceAllocationRepository = advanceAllocationRepository;
         _deliveryRepository = deliveryRepository;
         _bankTransactionRepository = bankTransactionRepository;
         _editWindowGuard = editWindowGuard;
@@ -133,6 +136,14 @@ public class TransactionService : ITransactionService
 
         if (owningDelivery != null)
             throw new Exception($"This payment was collected with delivery {owningDelivery}. Edit or delete it from that delivery instead.");
+
+        var appliedTo = await _advanceAllocationRepository.Query()
+            .Where(a => a.AdvanceTransactionId == transactionId)
+            .Select(a => a.Booking!.BookingNumber)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        if (appliedTo.Count > 0)
+            throw new Exception($"This advance has been applied to booking(s) {string.Join(", ", appliedTo)}. Remove those advance applications first.");
     }
 
     public async Task<TransactionResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

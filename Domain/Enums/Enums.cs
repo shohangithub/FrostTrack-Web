@@ -76,6 +76,24 @@ public static class RecurringChargeRunStatuses
 /// </summary>
 public static class RecurringChargeSources
 {
+    // Legacy values (before the charge ledger)
     public const string Initial = "INITIAL";
     public const string Run = "RUN";
+
+    /// <summary>First posting of a charge on its natural date.</summary>
+    public const string Posted = "POSTED";
+    /// <summary>Difference posted later because booking/delivery data changed (dated the day it is posted).</summary>
+    public const string Correction = "CORRECTION";
+}
+
+/// <summary>What a charge-ledger entry (RecurringChargeEntry) charges for.</summary>
+public static class ChargeTypes
+{
+    /// <summary>One billing month: stock in store at the start of the month × rate.</summary>
+    public const string RentCycle = "RENT_CYCLE";
+    public const string BookingLabour = "BOOKING_LABOUR";
+    public const string DeliveryLabour = "DELIVERY_LABOUR";
+    public const string DeliveryAdjustment = "DELIVERY_ADJUSTMENT";
+    /// <summary>Entries created before the ledger existed; kept for history, not counted.</summary>
+    public const string Legacy = "LEGACY";
 }

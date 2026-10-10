@@ -8,20 +8,19 @@ using Microsoft.Extensions.Logging;
 namespace Infrastructure.BackgroundServices;
 
 /// <summary>
-/// Runs once per day at 01:00 UTC and advances <c>BookingDetail.LastRecurringChargeDate</c>
-/// for every active booking whose next billing-cycle boundary has passed.
-///
-/// Due amounts are always computed dynamically via <see cref="Domain.RecurringChargeCalculator"/>
-/// on every due-report request; this job merely tracks which cycles have been
-/// formally "acknowledged" and writes to the audit field.
+/// Keeps the charge ledger (RecurringChargeEntries) current: once shortly after start-up (catch-up)
+/// and then every day just after local midnight, it posts every billing month that has started,
+/// plus labour/adjustments/corrections, for all active bookings (see BookingLedgerService).
+/// Dues are read from the ledger, so this runs regardless of the company's recurring-charge switch.
 /// </summary>
 public sealed class BillingRecurringChargeJob : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BillingRecurringChargeJob> _logger;
 
-    // Run at 01:00 UTC every day
-    private static readonly TimeOnly TargetTime = new(1, 0, 0);
+    // Run at 00:05 server-local time every day (new billing months start at local midnight)
+    private static readonly TimeOnly TargetTime = new(0, 5, 0);
+    private static readonly TimeSpan StartupDelay = TimeSpan.FromMinutes(1);
 
     public BillingRecurringChargeJob(IServiceScopeFactory scopeFactory, ILogger<BillingRecurringChargeJob> logger)
     {
@@ -32,6 +31,17 @@ public sealed class BillingRecurringChargeJob : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("BillingRecurringChargeJob started.");
+
+        // Catch up after a restart (missed nights are posted on their real dates)
+        try
+        {
+            await Task.Delay(StartupDelay, stoppingToken);
+            await RunRecurringChargeCycleAsync(stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -61,21 +71,9 @@ public sealed class BillingRecurringChargeJob : BackgroundService
         try
         {
             await using var scope = _scopeFactory.CreateAsyncScope();
-            var companyRepo = scope.ServiceProvider.GetRequiredService<IRepository<Company, int>>();
-
-            var isJobEnabled = await companyRepo.Query()
-                .Where(c => c.IsActive && c.EnableRecurringChargeJob)
-                .AnyAsync(stoppingToken);
-
-            if (!isJobEnabled)
-            {
-                _logger.LogInformation("BillingRecurringChargeJob: Recurring charge job is disabled in Company Setup. Skipping execution.");
-                return;
-            }
-
             var svc = scope.ServiceProvider.GetRequiredService<IRecurringChargeService>();
             var count = await svc.ProcessRecurringChargesAsync(asOf, stoppingToken);
-            _logger.LogInformation("BillingRecurringChargeJob: advanced LastRecurringChargeDate for {Count} booking detail(s).", count);
+            _logger.LogInformation("BillingRecurringChargeJob: charge ledger synced, {Count} entr(ies) posted.", count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -83,10 +81,10 @@ public sealed class BillingRecurringChargeJob : BackgroundService
         }
     }
 
-    /// <summary>Returns the delay from now until the next <see cref="TargetTime"/> (UTC).</summary>
+    /// <summary>Returns the delay from now until the next <see cref="TargetTime"/> (server-local time).</summary>
     private static TimeSpan ComputeDelayUntilNextRun()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var nextRun = now.Date.Add(TargetTime.ToTimeSpan());
         if (nextRun <= now)
             nextRun = nextRun.AddDays(1);

@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<RecurringChargeEntry, Guid>, Repository<RecurringChargeEntry, Guid>>();
 
         services.AddScoped<IRepository<Delivery, Guid>, Repository<Delivery, Guid>>();
+        services.AddScoped<IRepository<AdvanceAllocation, Guid>, Repository<AdvanceAllocation, Guid>>();
         services.AddScoped<IRepository<DeliveryDetail, Guid>, Repository<DeliveryDetail, Guid>>();
         services.AddScoped<IRepository<DeliveryChallan, Guid>, Repository<DeliveryChallan, Guid>>();
         services.AddScoped<IRepository<DeliveryChallanItem, Guid>, Repository<DeliveryChallanItem, Guid>>();

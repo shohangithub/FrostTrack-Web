@@ -23,6 +23,7 @@ public class SeasonArchiveService : ISeasonArchiveService
     private readonly IBalanceCalculatorService _balanceCalculatorService;
     private readonly IUserContextService _userContextService;
     private readonly ITenantProvider _tenantProvider;
+    private readonly IBookingLedgerService _ledgerService;
 
     private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> _archiveLocks = new();
     private static SemaphoreSlim GetLock(Guid tenantId) =>
@@ -41,8 +42,10 @@ public class SeasonArchiveService : ISeasonArchiveService
         IUnitOfWork unitOfWork,
         IBalanceCalculatorService balanceCalculatorService,
         IUserContextService userContextService,
-        ITenantProvider tenantProvider)
+        ITenantProvider tenantProvider,
+        IBookingLedgerService ledgerService)
     {
+        _ledgerService = ledgerService;
         _bookingRepository = bookingRepository;
         _deliveryRepository = deliveryRepository;
         _challanRepository = challanRepository;
@@ -71,6 +74,8 @@ public class SeasonArchiveService : ISeasonArchiveService
             .ToListAsync(cancellationToken);
 
         var activeBookingIds = activeBookings.Select(b => b.Id).ToList();
+        await _ledgerService.SyncBookingsAsync(activeBookingIds, cancellationToken: cancellationToken);
+        var ledgerCharges = await _ledgerService.GetChargesAsync(activeBookingIds, cutoffUtc, cancellationToken);
 
         var deliveries = await _deliveryRepository.Query()
             .Include(d => d.DeliveryDetails)
@@ -144,17 +149,10 @@ public class SeasonArchiveService : ISeasonArchiveService
                 var activeDetails = b.BookingDetails.Where(d => !d.IsDeleted).ToList();
                 var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
-                var (_, _, bTotalAccrued, pendingRecurring) =
-                    BookingDueCalculator.CalculateBookingAccruedDetails(b, activeDetails, bDels, cutoffUtc);
-
-                var bDeliveryRent = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
-                var bDeliveryLabour = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
-                var bDeliveryAdj = bDels.Sum(d => d.AdjustmentValue);
-                var bDeliveryCharges = bDeliveryRent + bDeliveryLabour + bDeliveryAdj;
-
-                totalDeliveryCharges += bDeliveryCharges;
-                totalRecurringCharges += pendingRecurring;
-                totalBookingCharges += Math.Max(0m, bTotalAccrued - bDeliveryCharges - pendingRecurring);
+                var charges = ledgerCharges.GetValueOrDefault(b.Id) ?? new LedgerCharges();
+                totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment;
+                totalRecurringCharges += charges.RentLaterMonths;
+                totalBookingCharges += charges.RentFirstMonth + charges.BookingLabour;
             }
 
             var custPayments = allPayments.Where(p => p.CustomerId == customer.Id || (p.BookingId.HasValue && custBookingIds.Contains(p.BookingId.Value))).Sum(p => p.Amount);
@@ -253,6 +251,8 @@ public class SeasonArchiveService : ISeasonArchiveService
                 .ToListAsync(cancellationToken);
 
             var activeBookingIds = activeBookings.Select(b => b.Id).ToList();
+            await _ledgerService.SyncBookingsAsync(activeBookingIds, cancellationToken: cancellationToken);
+            var ledgerCharges = await _ledgerService.GetChargesAsync(activeBookingIds, cutoffUtc, cancellationToken);
 
             var deliveries = await _deliveryRepository.Query()
                 .Include(d => d.DeliveryDetails)
@@ -355,17 +355,10 @@ public class SeasonArchiveService : ISeasonArchiveService
                     var activeDetails = b.BookingDetails.Where(d => !d.IsDeleted).ToList();
                     var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
-                    var (_, _, bTotalAccrued, pendingRecurring) =
-                        BookingDueCalculator.CalculateBookingAccruedDetails(b, activeDetails, bDels, cutoffUtc);
-
-                    var bDeliveryRent = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.ChargeAmount));
-                    var bDeliveryLabour = bDels.Sum(d => d.DeliveryDetails.Sum(dd => dd.LabourCharge));
-                    var bDeliveryAdj = bDels.Sum(d => d.AdjustmentValue);
-                    var bDeliveryCharges = bDeliveryRent + bDeliveryLabour + bDeliveryAdj;
-
-                    totalDeliveryCharges += bDeliveryCharges;
-                    totalRecurringCharges += pendingRecurring;
-                    totalBookingCharges += Math.Max(0m, bTotalAccrued - bDeliveryCharges - pendingRecurring);
+                    var charges = ledgerCharges.GetValueOrDefault(b.Id) ?? new LedgerCharges();
+                    totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment;
+                    totalRecurringCharges += charges.RentLaterMonths;
+                    totalBookingCharges += charges.RentFirstMonth + charges.BookingLabour;
                 }
 
                 var custPayments = allPayments.Where(p => p.CustomerId == customer.Id || (p.BookingId.HasValue && custBookingIds.Contains(p.BookingId.Value))).Sum(p => p.Amount);

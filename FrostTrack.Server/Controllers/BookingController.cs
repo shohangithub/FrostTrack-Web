@@ -138,17 +138,21 @@ public class BookingController : ControllerBase
         [FromQuery] string? status,
         [FromQuery] bool? dueOnly,
         [FromQuery] string? searchTerm,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool includeSettled = true)
     {
         var dueSummary = await _bookingService.GetCustomerDueSummaryAsync(
-            reportDate, customerId, status, dueOnly, searchTerm, cancellationToken);
+            reportDate, customerId, status, dueOnly, searchTerm, cancellationToken, includeSettled);
         return Ok(dueSummary);
     }
 
     [HttpGet("customer-due-detail/{customerId}")]
-    public async Task<ActionResult<IEnumerable<CustomerDueDetailResponse>>> GetCustomerDueDetail(int customerId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<CustomerDueDetailResponse>>> GetCustomerDueDetail(
+        int customerId,
+        CancellationToken cancellationToken,
+        [FromQuery] bool includeSettled = true)
     {
-        var dueDetail = await _bookingService.GetCustomerDueDetailAsync(customerId, cancellationToken);
+        var dueDetail = await _bookingService.GetCustomerDueDetailAsync(customerId, cancellationToken, includeSettled);
         return Ok(dueDetail);
     }
 

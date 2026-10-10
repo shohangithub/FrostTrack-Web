@@ -1,0 +1,535 @@
+<section class="main-content">
+  <div class="section-body">
+    <form [formGroup]="form" (ngSubmit)="save(false)">
+      <div class="container-fluid mt-2">
+        <!-- ===== Payment Information (selection) ===== -->
+        <div class="card mb-3">
+          <span class="card-label">গ্রাহক পেমেন্ট / Customer Payment</span>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
+                <label class="col-form-label py-1">Receipt No</label>
+                <input type="text" class="form-control form-control-sm" formControlName="transactionCode" readonly />
+              </div>
+              <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
+                <label class="col-form-label py-1">Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="transactionDate" />
+              </div>
+              <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                <label class="col-form-label py-1">Customer / গ্রাহক <span class="text-danger">*</span></label>
+                <ng-select formControlName="customerId" [items]="customers" bindLabel="customerName" bindValue="id"
+                  [loading]="customerLoading" placeholder="Select customer">
+                  <ng-template ng-option-tmp let-item="item">
+                    {{ item.customerName }}
+                    @if (item.customerMobile) {
+                    <small class="text-muted">({{ item.customerMobile }})</small>
+                    }
+                  </ng-template>
+                </ng-select>
+              </div>
+              <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                <label class="col-form-label py-1">Booking / বুকিং <span class="text-danger">*</span></label>
+                <ng-select formControlName="bookingKey" [items]="bookingOptions" bindLabel="label" bindValue="value"
+                  [loading]="bookingsLoading" [placeholder]="form.get('customerId')?.value ? 'Select booking with due' : 'Select customer first'"
+                  notFoundText="No booking with due">
+                  <ng-template ng-option-tmp let-item="item">
+                    <div class="d-flex justify-content-between">
+                      <span>
+                        {{ item.label }}
+                        @if (item.isContracted) {
+                        <span class="badge bg-info ms-1">চুক্তি</span>
+                        }
+                      </span>
+                      @if (item.due !== undefined) {
+                      <strong class="text-danger">৳{{ item.due | number: '1.2-2' }}</strong>
+                      }
+                    </div>
+                  </ng-template>
+                </ng-select>
+                @if (dueBookings) {
+                <small class="text-muted">
+                  {{ dueBookings.bookings.length }} booking(s) with due · Advance balance:
+                  <strong>৳{{ dueBookings.advanceBalance | number: '1.2-2' }}</strong>
+                </small>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        @if (detailLoading) {
+        <div class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>
+        }
+
+        <!-- ===== BOOKING MODE ===== -->
+        @if (detail && !detailLoading) {
+        <div class="row">
+          <!-- Left: report-style booking information -->
+          <div class="col-lg-8 col-md-12">
+            <div class="card mb-3">
+              <span class="card-label">বুকিং তথ্য / Booking Information</span>
+              <div class="card-body report-body">
+                <div class="booking-info-box">
+                  <table class="info-table">
+                    <tr>
+                      <td class="info-label">Booking No:</td>
+                      <td class="info-value fw-bold">
+                        {{ detail.bookingNumber }}
+                        @if (detail.isContracted) {
+                        <span class="badge bg-info ms-1">চুক্তি</span>
+                        }
+                      </td>
+                      <td class="info-label">Booking Date:</td>
+                      <td class="info-value">{{ detail.bookingDate | date: 'dd-MMM-yyyy' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Customer:</td>
+                      <td class="info-value">{{ detail.customerName }}</td>
+                      <td class="info-label">Mobile:</td>
+                      <td class="info-value">{{ detail.customerMobile || '-' }}</td>
+                    </tr>
+                    @if (detail.notes) {
+                    <tr>
+                      <td class="info-label">Notes:</td>
+                      <td class="info-value" colspan="3">{{ detail.notes }}</td>
+                    </tr>
+                    }
+                  </table>
+                </div>
+
+                <!-- Items, stock & rent -->
+                <div class="section-title">পণ্য, মজুদ ও ভাড়া / Items, Stock &amp; Rent</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th class="text-end">Rate</th>
+                        <th class="text-end">Booked</th>
+                        <th class="text-end">Delivered</th>
+                        <th class="text-end">In Store</th>
+                        <th class="text-center">Month</th>
+                        <th class="text-end">Rent Charged</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of detail.items; track $index) {
+                      <tr>
+                        <td>{{ item.productName }} <span class="sub-text">{{ item.unitName }}</span></td>
+                        <td class="text-end">{{ item.rate | number: '1.2-2' }}</td>
+                        <td class="text-end">{{ item.bookedQty | number: '1.0-2' }}</td>
+                        <td class="text-end">{{ item.deliveredQty | number: '1.0-2' }}</td>
+                        <td class="text-end fw-bold">{{ item.stockInStore | number: '1.0-2' }}</td>
+                        <td class="text-center">{{ item.stockInStore > 0 ? item.currentMonth : '-' }}</td>
+                        <td class="text-end fw-bold">{{ item.stockRent | number: '1.2-2' }}</td>
+                      </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Charge ledger: every charge on this booking, dated -->
+                <div class="section-title">চার্জ খতিয়ান / Charge Ledger</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Charge</th>
+                        <th>Product</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Rate</th>
+                        <th>Note</th>
+                        <th class="text-end">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (e of detail.ledgerEntries; track e.id) {
+                      <tr [class.correction-row]="e.source === 'CORRECTION'">
+                        <td>{{ e.entryDate | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ chargeLabel(e.chargeType, e.cycleNo) }}</td>
+                        <td>{{ e.productName || '-' }}</td>
+                        <td class="text-end">{{ e.quantity ? (e.quantity | number: '1.0-2') : '-' }}</td>
+                        <td class="text-end">{{ e.rate ? (e.rate | number: '1.2-2') : '-' }}</td>
+                        <td class="sub-text">{{ e.note }}</td>
+                        <td class="text-end fw-bold">{{ e.amount | number: '1.2-2' }}</td>
+                      </tr>
+                      } @empty {
+                      <tr><td colspan="7" class="text-center py-2">No charges posted yet</td></tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td colspan="6" class="text-end">Total Charges:</td>
+                        <td class="text-end">{{ detail.summary.totalCharge | number: '1.2-2' }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <!-- Deliveries -->
+                <div class="section-title">ডেলিভারি / Deliveries</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Delivery No</th>
+                        <th>Product</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-center">Months</th>
+                        <th class="text-end">Rent</th>
+                        <th class="text-end">Labour</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Collected</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of detail.deliveries; track $index) {
+                      <tr>
+                        <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ d.deliveryNumber }}</td>
+                        <td>{{ d.productName }}</td>
+                        <td class="text-end">{{ d.quantity | number: '1.0-2' }} <span class="sub-text">{{ d.unitName }}</span></td>
+                        <td class="text-center">{{ d.billingCycles }}</td>
+                        <td class="text-end">{{ d.rentCharge | number: '1.2-2' }}</td>
+                        <td class="text-end">{{ d.labourCharge ? (d.labourCharge | number: '1.2-2') : '-' }}</td>
+                        <td class="text-end fw-bold">{{ d.total | number: '1.2-2' }}</td>
+                        <td class="text-end paid-amount">{{ d.collectedAmount ? (d.collectedAmount | number: '1.2-2') : '-' }}</td>
+                      </tr>
+                      } @empty {
+                      <tr><td colspan="9" class="text-center py-2">No deliveries yet</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Labour -->
+                <div class="section-title">লেবার / Labour</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th class="text-end">Booking Labour</th>
+                        <th class="text-end">Delivery Labour</th>
+                        <th class="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of detail.items; track $index) {
+                      <tr>
+                        <td>{{ item.productName }}</td>
+                        <td class="text-end">{{ item.bookingLabour | number: '1.2-2' }}</td>
+                        <td class="text-end">{{ item.deliveryLabour | number: '1.2-2' }}</td>
+                        <td class="text-end fw-bold">{{ item.bookingLabour + item.deliveryLabour | number: '1.2-2' }}</td>
+                      </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td class="text-end" colspan="3">Total Labour:</td>
+                        <td class="text-end">{{ detail.summary.labourCharge | number: '1.2-2' }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <!-- Previous payments -->
+                <div class="section-title">পূর্বের পরিশোধ / Previous Payments</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Receipt No</th>
+                        <th>Type</th>
+                        <th>Method</th>
+                        <th class="text-end">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (p of detail.payments; track p.id) {
+                      <tr>
+                        <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ p.referenceCode }}</td>
+                        <td>{{ kindLabel(p.kind) }}</td>
+                        <td>{{ p.paymentMethod }}</td>
+                        <td class="text-end paid-amount">{{ p.amount | number: '1.2-2' }}</td>
+                      </tr>
+                      }
+                      @for (a of detail.advanceApplications; track a.id) {
+                      <tr>
+                        <td>{{ a.date | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ a.referenceCode }}</td>
+                        <td>{{ kindLabel(a.kind) }}</td>
+                        <td>-</td>
+                        <td class="text-end paid-amount">{{ a.amount | number: '1.2-2' }}</td>
+                      </tr>
+                      }
+                      @for (d of detail.discounts; track d.id) {
+                      <tr>
+                        <td>{{ d.date | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ d.referenceCode }}</td>
+                        <td>{{ kindLabel(d.kind) }}</td>
+                        <td class="sub-text">{{ d.description }}</td>
+                        <td class="text-end">{{ d.amount | number: '1.2-2' }}</td>
+                      </tr>
+                      }
+                      @if (!detail.payments.length && !detail.advanceApplications.length && !detail.discounts.length) {
+                      <tr><td colspan="5" class="text-center py-2">No payments yet</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: summary + collect -->
+          <div class="col-lg-4 col-md-12">
+            <div class="card mb-3">
+              <span class="card-label">সারসংক্ষেপ / Summary</span>
+              <div class="card-body">
+                <table class="table table-sm summary-table mb-0">
+                  <tr><td>Rent (ভাড়া)</td><td class="text-end">{{ detail.summary.rentCharge | number: '1.2-2' }}</td></tr>
+                  <tr><td>Labour (লেবার)</td><td class="text-end">{{ detail.summary.labourCharge | number: '1.2-2' }}</td></tr>
+                  @if (detail.summary.adjustment) {
+                  <tr><td>Adjustment</td><td class="text-end">{{ detail.summary.adjustment | number: '1.2-2' }}</td></tr>
+                  }
+                  <tr class="fw-bold border-top"><td>Total Charges</td><td class="text-end">{{ detail.summary.totalCharge | number: '1.2-2' }}</td></tr>
+                  <tr><td>(−) Paid at delivery</td><td class="text-end paid-amount">{{ detail.summary.paidAtDelivery | number: '1.2-2' }}</td></tr>
+                  <tr><td>(−) Other payments</td><td class="text-end paid-amount">{{ detail.summary.otherPayments | number: '1.2-2' }}</td></tr>
+                  @if (detail.summary.advanceApplied) {
+                  <tr><td>(−) Advance applied</td><td class="text-end paid-amount">{{ detail.summary.advanceApplied | number: '1.2-2' }}</td></tr>
+                  }
+                  @if (detail.summary.discount) {
+                  <tr><td>(−) Discount</td><td class="text-end">{{ detail.summary.discount | number: '1.2-2' }}</td></tr>
+                  }
+                  <tr class="due-row"><td>Current Due (বকেয়া)</td><td class="text-end">৳ {{ bookingDue | number: '1.2-2' }}</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <span class="card-label">পেমেন্ট গ্রহণ / Collect</span>
+              <div class="card-body">
+                <div class="mb-2">
+                  <label class="col-form-label py-1 d-flex justify-content-between">
+                    <span>Payment Amount (৳)</span>
+                    <a href="javascript:void(0)" (click)="payFullDue()" class="small">Pay full due</a>
+                  </label>
+                  <input type="number" class="form-control form-control-sm text-end fw-bold" formControlName="cashAmount" min="0" step="any" />
+                </div>
+                <div class="row">
+                  <div class="col-6 mb-2">
+                    <label class="col-form-label py-1">Method</label>
+                    <ng-select formControlName="paymentMethod" [items]="paymentMethods" bindLabel="label" bindValue="value" [clearable]="false"></ng-select>
+                  </div>
+                  <div class="col-6 mb-2">
+                    <label class="col-form-label py-1">Reference</label>
+                    <input type="text" class="form-control form-control-sm" formControlName="paymentReference" placeholder="Cheque / Txn ref" />
+                  </div>
+                </div>
+                @if (needsBank) {
+                <div class="mb-2">
+                  <label class="col-form-label py-1">Bank <span class="text-danger">*</span></label>
+                  <ng-select formControlName="bankId" [items]="banks" bindLabel="text" bindValue="value" placeholder="Deposit bank"></ng-select>
+                </div>
+                }
+
+                <div class="mb-2">
+                  <label class="col-form-label py-1 d-flex justify-content-between">
+                    <span>Use Advance (available ৳{{ availableAdvance | number: '1.2-2' }})</span>
+                    @if (availableAdvance > 0) {
+                    <a href="javascript:void(0)" (click)="useMaxAdvance()" class="small">Use max</a>
+                    }
+                  </label>
+                  <input type="number" class="form-control form-control-sm text-end" formControlName="advanceAmount" min="0" step="any"
+                    [readonly]="availableAdvance <= 0" />
+                </div>
+
+                <div class="row">
+                  <div class="col-5 mb-2">
+                    <label class="col-form-label py-1">Discount (৳)</label>
+                    <input type="number" class="form-control form-control-sm text-end" formControlName="discountAmount" min="0" step="any" />
+                  </div>
+                  <div class="col-7 mb-2">
+                    <label class="col-form-label py-1">Reason @if (discountAmount > 0) {<span class="text-danger">*</span>}</label>
+                    <input type="text" class="form-control form-control-sm" formControlName="discountReason" placeholder="Discount / adjustment reason" />
+                  </div>
+                </div>
+
+                <div class="mb-2">
+                  <label class="col-form-label py-1">Note</label>
+                  <textarea class="form-control form-control-sm" formControlName="note" rows="2"></textarea>
+                </div>
+
+                <table class="table table-sm summary-table mb-2">
+                  <tr><td>Total this receipt</td><td class="text-end fw-bold">{{ totalEntered | number: '1.2-2' }}</td></tr>
+                  <tr class="due-row"><td>Due after this</td><td class="text-end">৳ {{ (dueAfter > 0 ? dueAfter : 0) | number: '1.2-2' }}</td></tr>
+                </table>
+
+                @if (validationError; as err) {
+                <div class="alert alert-warning py-1 px-2 small mb-2">{{ err }}</div>
+                }
+
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="cancel()">Cancel</button>
+                  <button type="button" class="btn btn-success btn-sm" [disabled]="isSubmitting || !!validationError || cashAmount <= 0" (click)="save(true)"
+                    title="Print is available when a cash / bank amount is taken">
+                    <i class="fas fa-print me-1"></i>Save &amp; Print
+                  </button>
+                  <button type="submit" class="btn btn-primary btn-sm" [disabled]="isSubmitting || !!validationError">
+                    <i class="fas fa-save me-1"></i>{{ isSubmitting ? 'Saving...' : 'Save' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- ===== ADVANCE MODE ===== -->
+        @if (isAdvanceMode && advances && !detailLoading) {
+        <div class="row">
+          <div class="col-lg-8 col-md-12">
+            <div class="card mb-3">
+              <span class="card-label">অগ্রিম / Customer Advance</span>
+              <div class="card-body report-body">
+                <div class="booking-info-box">
+                  <table class="info-table">
+                    <tr>
+                      <td class="info-label">Customer:</td>
+                      <td class="info-value fw-bold">{{ advances.customerName }}</td>
+                      <td class="info-label">Advance Balance:</td>
+                      <td class="info-value fw-bold">৳ {{ advances.advanceBalance | number: '1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Total Received:</td>
+                      <td class="info-value">৳ {{ advances.totalReceived | number: '1.2-2' }}</td>
+                      <td class="info-label">Applied to Bookings:</td>
+                      <td class="info-value">৳ {{ advances.totalApplied | number: '1.2-2' }}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div class="section-title">অগ্রিম গ্রহণ / Advances Received</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Receipt No</th>
+                        <th>Method</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Applied</th>
+                        <th class="text-end">Remaining</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (a of advances.advances; track a.transactionId) {
+                      <tr>
+                        <td>{{ a.date | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ a.transactionCode }}</td>
+                        <td>{{ a.paymentMethod }}</td>
+                        <td class="text-end">{{ a.amount | number: '1.2-2' }}</td>
+                        <td class="text-end">{{ a.applied | number: '1.2-2' }}</td>
+                        <td class="text-end fw-bold">{{ a.remaining | number: '1.2-2' }}</td>
+                      </tr>
+                      } @empty {
+                      <tr><td colspan="6" class="text-center py-2">No advance received yet</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="section-title">বুকিংয়ে ব্যবহার / Applied to Bookings</div>
+                <div class="stored-products-section">
+                  <table class="products-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Booking</th>
+                        <th>From Advance</th>
+                        <th>Receipt No</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-center no-print"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (al of advances.allocations; track al.id) {
+                      <tr>
+                        <td>{{ al.date | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ al.bookingNumber }}</td>
+                        <td>{{ al.advanceCode }}</td>
+                        <td>{{ al.receiptCode || '-' }}</td>
+                        <td class="text-end">{{ al.amount | number: '1.2-2' }}</td>
+                        <td class="text-center">
+                          <a href="javascript:void(0)" class="text-danger" title="Remove application" (click)="removeAllocation(al.id)">
+                            <i class="far fa-trash-alt"></i>
+                          </a>
+                        </td>
+                      </tr>
+                      } @empty {
+                      <tr><td colspan="6" class="text-center py-2">Not applied to any booking yet</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-12">
+            <div class="card mb-3">
+              <span class="card-label">অগ্রিম গ্রহণ / Receive Advance</span>
+              <div class="card-body">
+                <div class="mb-2">
+                  <label class="col-form-label py-1">Advance Amount (৳) <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control form-control-sm text-end fw-bold" formControlName="cashAmount" min="0" step="any" />
+                  <small class="text-muted">Kept as customer advance; apply it to a booking later from this screen.</small>
+                </div>
+                <div class="row">
+                  <div class="col-6 mb-2">
+                    <label class="col-form-label py-1">Method</label>
+                    <ng-select formControlName="paymentMethod" [items]="paymentMethods" bindLabel="label" bindValue="value" [clearable]="false"></ng-select>
+                  </div>
+                  <div class="col-6 mb-2">
+                    <label class="col-form-label py-1">Reference</label>
+                    <input type="text" class="form-control form-control-sm" formControlName="paymentReference" />
+                  </div>
+                </div>
+                @if (needsBank) {
+                <div class="mb-2">
+                  <label class="col-form-label py-1">Bank <span class="text-danger">*</span></label>
+                  <ng-select formControlName="bankId" [items]="banks" bindLabel="text" bindValue="value" placeholder="Deposit bank"></ng-select>
+                </div>
+                }
+                <div class="mb-2">
+                  <label class="col-form-label py-1">Note</label>
+                  <textarea class="form-control form-control-sm" formControlName="note" rows="2"></textarea>
+                </div>
+
+                @if (validationError; as err) {
+                <div class="alert alert-warning py-1 px-2 small mb-2">{{ err }}</div>
+                }
+
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="cancel()">Cancel</button>
+                  <button type="button" class="btn btn-success btn-sm" [disabled]="isSubmitting || !!validationError" (click)="save(true)">
+                    <i class="fas fa-print me-1"></i>Save &amp; Print
+                  </button>
+                  <button type="submit" class="btn btn-primary btn-sm" [disabled]="isSubmitting || !!validationError">
+                    <i class="fas fa-save me-1"></i>{{ isSubmitting ? 'Saving...' : 'Save' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </form>
+  </div>
+</section>

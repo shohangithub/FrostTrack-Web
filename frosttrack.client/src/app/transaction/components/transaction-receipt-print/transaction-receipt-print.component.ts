@@ -19,6 +19,8 @@ import { ReportFooterComponent } from '@shared/components/reports/report-footer.
 import { ReportInvoiceHeaderComponent } from '@shared/components/reports/report-invoice-header.component/report-invoice-header.component';
 import { TRANSACTION_TYPE } from 'app/common/data/settings-data';
 import { MonthYearTextPipe } from 'app/utils/pipes/month-year-text';
+import { BillCollectionService } from 'app/bill-collection/services/bill-collection.service';
+import { IPaymentReceiptInfo } from 'app/bill-collection/models/booking-payment.interface';
 
 /**
  * Reusable Transaction Receipt Print Component
@@ -80,6 +82,8 @@ export class TransactionReceiptPrintComponent implements OnInit {
   @Input() backUrl: string = 'list'; // Back URL (e.g., 'list', 'form', 'add')
 
   transactionReceipt: ITransactionDetailResponse | null = null;
+  /** Booking payment extras: booking no, advance applied and discount on the same receipt, current booking due. */
+  receiptInfo: IPaymentReceiptInfo | null = null;
   loadingIndicator = true;
   isTransactionLoading = false;
   transactionId: string = '';
@@ -98,6 +102,7 @@ export class TransactionReceiptPrintComponent implements OnInit {
     private transactionService: TransactionService,
     private toastr: ToastrService,
     private layoutService: LayoutService,
+    private billCollectionService: BillCollectionService,
   ) {
     this.layoutService.loadCurrentRoute();
   }
@@ -169,7 +174,15 @@ export class TransactionReceiptPrintComponent implements OnInit {
     this.transactionService.getById(this.transactionId).subscribe({
       next: (response: ITransactionDetailResponse) => {
         this.transactionReceipt = response;
+        this.receiptInfo = null;
         this.loadingIndicator = false;
+
+        // Booking-wise customer payment: show booking, advance used, discount and remaining due
+        if (response.bookingId && response.customerId && !(response as any).deliveryId) {
+          this.billCollectionService.getPaymentReceiptInfo(response.id).subscribe({
+            next: (info) => (this.receiptInfo = info),
+          });
+        }
 
         // Auto-print after data loads if autoPrint is enabled
         if (this.autoPrint) {

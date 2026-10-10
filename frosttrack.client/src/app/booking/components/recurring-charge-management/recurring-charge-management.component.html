@@ -413,6 +413,74 @@
             }
           </div>
         </div>
+
+        <!-- Charge ledger check -->
+        <div class="card mt-3">
+          <span class="card-label">Charge Ledger Check</span>
+          <div class="card-body">
+            <p class="text-muted small mb-2">
+              Dues are taken from the charge ledger: one dated row per billing month, labour and adjustment.
+              The daily job keeps it current. This check compares each booking's ledger with an independent
+              calculation and shows anything still waiting to be posted.
+            </p>
+            <div class="d-flex gap-2 mb-3">
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="checkLedger()" [disabled]="isCheckingLedger">
+                @if (isCheckingLedger) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                <i class="fas fa-search me-1"></i>Run Check
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" (click)="syncAllLedgers()" [disabled]="isSyncingLedger">
+                @if (isSyncingLedger) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                <i class="fas fa-sync me-1"></i>Sync All Bookings
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm ms-auto" (click)="rebuildLedger()" [disabled]="isSyncingLedger"
+                title="Setup only: re-post the whole ledger">
+                <i class="fas fa-redo me-1"></i>Rebuild Ledger
+              </button>
+            </div>
+            @if (ledgerCheck) {
+              @if (ledgerCheck.length === 0) {
+                <div class="alert alert-success py-2 mb-0">All booking ledgers are complete and match the calculation.</div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Booking</th>
+                        <th>Customer</th>
+                        <th class="text-end">Ledger</th>
+                        <th class="text-end">Calculated</th>
+                        <th class="text-end">Difference</th>
+                        <th class="text-end">Pending Sync</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of ledgerCheck; track item.bookingId) {
+                        <tr>
+                          <td>{{ item.bookingNumber }} <small class="text-muted">{{ item.bookingDate | date: 'dd-MMM-yy' }}</small></td>
+                          <td>{{ item.customerName }}</td>
+                          <td class="text-end">{{ item.ledgerTotal | number: '1.2-2' }}</td>
+                          <td class="text-end">{{ item.calculatedTotal === null ? '-' : (item.calculatedTotal | number: '1.2-2') }}</td>
+                          <td class="text-end" [class.text-danger]="item.difference !== 0">{{ item.difference | number: '1.2-2' }}</td>
+                          <td class="text-end" [class.text-warning]="item.pendingSync !== 0">{{ item.pendingSync | number: '1.2-2' }}</td>
+                          <td class="text-end">
+                            @if (item.pendingSync !== 0) {
+                              <button type="button" class="btn btn-outline-primary btn-sm py-0" (click)="syncBooking(item)">Re-sync</button>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <small class="text-muted d-block mt-2">
+                  A difference with no pending sync usually means a delivery's saved rent differs from the monthly
+                  stock rule (for example its date was edited). The ledger follows the stock rule.
+                </small>
+              }
+            }
+          </div>
+        </div>
       </div>
     </div>
   </div>

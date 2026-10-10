@@ -75,6 +75,7 @@ export class CompanyConfigComponent implements OnInit {
       isActive: [true, [Validators.required]],
       restrictEditDelete: [true],
       editDeleteAllowedDays: [90, [Validators.required, Validators.min(1)]],
+      billingStartDate: [null],
     });
   }
 
@@ -99,6 +100,8 @@ export class CompanyConfigComponent implements OnInit {
           isActive: response.isActive,
           restrictEditDelete: response.restrictEditDelete ?? true,
           editDeleteAllowedDays: response.editDeleteAllowedDays ?? 90,
+          // calendar date only (avoid time-zone shifts)
+          billingStartDate: response.billingStartDate ? response.billingStartDate.substring(0, 10) : null,
         });
         this.isLoading = false;
       },
@@ -130,6 +133,7 @@ export class CompanyConfigComponent implements OnInit {
         isActive: this.register.value.isActive,
         restrictEditDelete: this.register.value.restrictEditDelete ?? true,
         editDeleteAllowedDays: Number(this.register.value.editDeleteAllowedDays) || 90,
+        billingStartDate: this.register.value.billingStartDate || null,
       };
 
       if (this.isEditing) {

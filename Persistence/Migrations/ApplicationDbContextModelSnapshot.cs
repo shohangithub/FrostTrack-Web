@@ -135,6 +135,82 @@ namespace Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entitites.AdvanceAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnOrder(0);
+
+                    b.Property<Guid>("AdvanceTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AllocationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReceiptCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdvanceTransactionId");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("AdvanceAllocations", "finance");
+                });
+
             modelBuilder.Entity("Domain.Entitites.Asset", b =>
                 {
                     b.Property<int>("Id")
@@ -741,6 +817,9 @@ namespace Persistence.Migrations
 
                     b.Property<bool>("AutoInvoicePrint")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("BillingStartDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("BusinessCurrency")
                         .IsRequired()
@@ -1744,17 +1823,34 @@ namespace Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<Guid>("BookingDetailId")
+                    b.Property<Guid?>("BookingDetailId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ChargeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CycleNo")
+                        .HasColumnType("int");
+
                     b.Property<int>("Cycles")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("DeliveryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EntryDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
@@ -1779,13 +1875,15 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookingDetailId");
-
-                    b.HasIndex("BookingId");
-
                     b.HasIndex("RecurringChargeRunId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("BookingDetailId", "CycleNo")
+                        .IsUnique()
+                        .HasFilter("[Source] = 'POSTED' AND [ChargeType] = 'RENT_CYCLE' AND [BookingDetailId] IS NOT NULL");
+
+                    b.HasIndex("BookingId", "EntryDate");
 
                     b.ToTable("RecurringChargeEntries", "product");
                 });
@@ -2374,6 +2472,33 @@ namespace Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entitites.AdvanceAllocation", b =>
+                {
+                    b.HasOne("Domain.Entitites.Transaction", "AdvanceTransaction")
+                        .WithMany()
+                        .HasForeignKey("AdvanceTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entitites.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdvanceTransaction");
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("Domain.Entitites.BankTransaction", b =>
                 {
                     b.HasOne("Domain.Entitites.Bank", "Bank")
@@ -2566,8 +2691,7 @@ namespace Persistence.Migrations
                     b.HasOne("Domain.Entitites.BookingDetail", "BookingDetail")
                         .WithMany()
                         .HasForeignKey("BookingDetailId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Domain.Entitites.Booking", "Booking")
                         .WithMany()

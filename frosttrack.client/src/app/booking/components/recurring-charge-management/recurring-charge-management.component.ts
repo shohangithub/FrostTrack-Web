@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { SwalConfirm } from 'app/theme-config';
 import {
+  ILedgerCheckItem,
   IRecurringChargePreview,
   IRecurringChargeRunResponse,
 } from 'app/booking/models/booking.interface';
@@ -29,6 +30,11 @@ export class RecurringChargeManagementComponent implements OnInit {
 
   preview: IRecurringChargePreview | null = null;
   history: IRecurringChargeRunResponse[] = [];
+
+  // Charge ledger check (ledger total vs independent calculation)
+  ledgerCheck: ILedgerCheckItem[] | null = null;
+  isCheckingLedger = false;
+  isSyncingLedger = false;
 
   constructor(
     private recurringChargeService: RecurringChargeManagementService,
@@ -107,6 +113,88 @@ export class RecurringChargeManagementComponent implements OnInit {
       error: () => {
         this.isLoadingHistory = false;
       },
+    });
+  }
+
+  checkLedger(): void {
+    this.isCheckingLedger = true;
+    this.recurringChargeService.ledgerCheck(true).subscribe({
+      next: (res) => {
+        this.ledgerCheck = res;
+        this.isCheckingLedger = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to check the charge ledger.');
+        this.isCheckingLedger = false;
+      },
+    });
+  }
+
+  syncAllLedgers(): void {
+    Swal.fire({
+      title: 'Sync charge ledger for all bookings?',
+      html: 'Posts every missing month, labour and correction for all active bookings (safe to repeat).',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes, Sync',
+    }).then((result) => {
+      if (!result.value) return;
+      this.isSyncingLedger = true;
+      this.recurringChargeService.syncAllLedgers().subscribe({
+        next: (res) => {
+          this.isSyncingLedger = false;
+          this.toastr.success(
+            `${res.entriesPosted} entr(ies) posted for ${res.bookingsAffected} booking(s), ৳${res.amountPosted.toFixed(2)}`,
+          );
+          this.checkLedger();
+        },
+        error: () => {
+          this.isSyncingLedger = false;
+          this.toastr.error('Ledger sync failed.');
+        },
+      });
+    });
+  }
+
+  rebuildLedger(): void {
+    Swal.fire({
+      title: 'Rebuild the whole charge ledger?',
+      html:
+        'Use this only while setting up (e.g. after changing the billing start date).<br/>' +
+        'All current ledger rows are kept as LEGACY history (not counted) and every charge is posted again.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: SwalConfirm.confirmButtonColor,
+      cancelButtonColor: SwalConfirm.cancelButtonColor,
+      confirmButtonText: 'Yes, Rebuild',
+    }).then((result) => {
+      if (!result.value) return;
+      this.isSyncingLedger = true;
+      this.recurringChargeService.rebuildLedger().subscribe({
+        next: (res) => {
+          this.isSyncingLedger = false;
+          this.toastr.success(
+            `Ledger rebuilt: ${res.entriesPosted} entr(ies), ৳${res.amountPosted.toFixed(2)}`,
+          );
+          this.checkLedger();
+        },
+        error: () => {
+          this.isSyncingLedger = false;
+          this.toastr.error('Ledger rebuild failed.');
+        },
+      });
+    });
+  }
+
+  syncBooking(item: ILedgerCheckItem): void {
+    this.recurringChargeService.syncBookingLedger(item.bookingId).subscribe({
+      next: (res) => {
+        this.toastr.success(`Booking ${item.bookingNumber}: ${res.entriesPosted} entr(ies) posted`);
+        this.checkLedger();
+      },
+      error: () => this.toastr.error('Ledger sync failed.'),
     });
   }
 }

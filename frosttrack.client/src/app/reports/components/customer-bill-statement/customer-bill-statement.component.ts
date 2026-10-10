@@ -127,6 +127,21 @@ export class CustomerBillStatementComponent implements OnInit {
     return !!s && (s.stockLines.length > 0 || s.bookings.length > 0 || s.deliveries.length > 0 || s.payments.length > 0 || s.discounts.length > 0);
   }
 
+  chargeLabel(chargeType: string, cycleNo?: number | null): string {
+    switch (chargeType) {
+      case 'RENT_CYCLE':
+        return `Rent - month ${cycleNo ?? ''}`;
+      case 'BOOKING_LABOUR':
+        return 'Booking labour';
+      case 'DELIVERY_LABOUR':
+        return 'Delivery labour';
+      case 'DELIVERY_ADJUSTMENT':
+        return 'Delivery adjustment';
+      default:
+        return chargeType;
+    }
+  }
+
   private monthRange(offset: number): [string, string] {
     const now = new Date();
     const first = new Date(now.getFullYear(), now.getMonth() + offset, 1);

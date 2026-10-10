@@ -50,6 +50,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PaymentMethod> PaymentMethods { get; set; }
     public DbSet<PrintSettings> PrintSettings { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<AdvanceAllocation> AdvanceAllocations { get; set; }
     public DbSet<TransactionHead> TransactionHeads { get; set; }
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
     public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
@@ -229,6 +230,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         modelBuilder.Entity<RecurringChargeEntry>(entity =>
         {
             entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => new { x.BookingId, x.EntryDate });
+            // A billing month of a booking line is posted only once (corrections are separate rows)
+            entity.HasIndex(x => new { x.BookingDetailId, x.CycleNo })
+                  .IsUnique()
+                  .HasFilter("[Source] = 'POSTED' AND [ChargeType] = 'RENT_CYCLE' AND [BookingDetailId] IS NOT NULL");
+            // Removing a booking line keeps its ledger history (line reference becomes null)
+            entity.HasOne(x => x.BookingDetail)
+                  .WithMany()
+                  .HasForeignKey(x => x.BookingDetailId)
+                  .OnDelete(DeleteBehavior.SetNull);
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
         });
@@ -268,6 +279,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.HasIndex(x => x.TenantId);
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId);
+        });
+
+        modelBuilder.Entity<AdvanceAllocation>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.BookingId);
+            entity.HasIndex(x => x.AdvanceTransactionId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
         });
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
