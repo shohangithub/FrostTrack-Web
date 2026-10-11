@@ -120,6 +120,13 @@ public class BillStatementDeliveryLine
     /// <summary>Amount taken at the time of delivery for this line.</summary>
     public decimal CollectedAmount { get; set; }
     public decimal DueAmount { get; set; }
+    /// <summary>Delivered weight in the base unit (kg).</summary>
+    public decimal BaseQuantity { get; set; }
+    /// <summary>Stock of this booking line in store just before this delivery (in the booking unit).</summary>
+    public decimal StockBeforeQty { get; set; }
+    /// <summary>Stock of this booking line left in store after this delivery (in the booking unit).</summary>
+    public decimal RemainingQty { get; set; }
+    public string RemainingUnitName { get; set; } = string.Empty;
 }
 
 public class BillStatementPaymentLine

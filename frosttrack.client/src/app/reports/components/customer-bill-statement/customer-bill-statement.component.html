@@ -1,51 +1,100 @@
 <section class="main-content">
   <div class="section-body">
-
     <!-- Filter Section -->
     <div class="row clearfix">
       <div class="col-lg-12">
         <div class="card mt-2">
-          <span class="card-label">চুক্তি বিল বিবরণী / Contract Bill Statement</span>
+          <span class="card-label"
+            >চুক্তি বিল বিবরণী / Contract Bill Statement</span
+          >
           <div class="p-3">
-            <form class="product-form" [formGroup]="reportForm" (ngSubmit)="generateReport()">
+            <form
+              class="product-form"
+              [formGroup]="reportForm"
+              (ngSubmit)="generateReport()"
+            >
               <div class="row align-items-end filter-row">
                 <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
                   <label for="customerId" class="col-form-label py-1">
                     Customer / গ্রাহক <span class="text-danger">*</span>
                   </label>
-                  <ng-select id="customerId" [items]="customers" bindLabel="text" bindValue="value"
-                    placeholder="Select contract (চুক্তি) customer" formControlName="customerId" [clearable]="true"
-                    notFoundText="No customers with contract (চুক্তি) bookings"></ng-select>
+                  <ng-select
+                    id="customerId"
+                    [items]="customers"
+                    bindLabel="text"
+                    bindValue="value"
+                    placeholder="Select contract (চুক্তি) customer"
+                    formControlName="customerId"
+                    [clearable]="true"
+                    notFoundText="No customers with contract (চুক্তি) bookings"
+                  ></ng-select>
                 </div>
 
                 <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
                   <label for="fromDate" class="col-form-label py-1">
                     From Date / শুরু তারিখ <span class="text-danger">*</span>
                   </label>
-                  <input type="date" id="fromDate" class="form-control" formControlName="fromDate" />
+                  <input
+                    type="date"
+                    id="fromDate"
+                    class="form-control"
+                    formControlName="fromDate"
+                  />
                 </div>
 
                 <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
                   <label for="toDate" class="col-form-label py-1">
                     To Date / শেষ তারিখ <span class="text-danger">*</span>
                   </label>
-                  <input type="date" id="toDate" class="form-control" formControlName="toDate" />
+                  <input
+                    type="date"
+                    id="toDate"
+                    class="form-control"
+                    formControlName="toDate"
+                  />
                 </div>
 
                 <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
-                  <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
+                  <div
+                    class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2"
+                  >
                     <div class="btn-group" role="group">
-                      <button type="button" class="btn btn-outline-secondary" (click)="selectMonth(-1)">Last Month</button>
-                      <button type="button" class="btn btn-outline-secondary" (click)="selectMonth(0)">This Month</button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        (click)="selectMonth(-1)"
+                      >
+                        Last Month
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        (click)="selectMonth(0)"
+                      >
+                        This Month
+                      </button>
                     </div>
-                    <button type="submit" class="btn btn-primary px-3" [disabled]="isLoading || reportForm.invalid">
+                    <button
+                      type="submit"
+                      class="btn btn-primary px-3"
+                      [disabled]="isLoading || reportForm.invalid"
+                    >
                       @if (isLoading) {
-                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <span
+                          class="spinner-border spinner-border-sm me-1"
+                          role="status"
+                        ></span>
                       }
                       Show Bill
                     </button>
                     @if (statement) {
-                    <button type="button" class="btn btn-secondary px-3" (click)="reset()">Clear</button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary px-3"
+                        (click)="reset()"
+                      >
+                        Clear
+                      </button>
                     }
                   </div>
                 </div>
@@ -53,10 +102,13 @@
 
               <div class="d-flex flex-wrap gap-3 small">
                 <span class="text-muted">
-                  <i class="fas fa-info-circle me-1"></i>Only contract (চুক্তি) bookings are billed in this statement.
+                  <i class="fas fa-info-circle me-1"></i>Only contract (চুক্তি)
+                  bookings are billed in this statement.
                 </span>
-                @if (reportForm.hasError('invalidRange')) {
-                <span class="text-danger">From date cannot be after To date</span>
+                @if (reportForm.hasError("invalidRange")) {
+                  <span class="text-danger"
+                    >From date cannot be after To date</span
+                  >
                 }
               </div>
             </form>
@@ -67,233 +119,353 @@
 
     <!-- Report Section -->
     @if (statement && !isLoading) {
-    <div class="row clearfix">
-      <div class="col-lg-12">
-        <div class="card">
-
-          <div class="row no-print mb-3">
-            <div class="col-12">
-              <div class="d-flex gap-2 justify-content-end">
-                <button type="button" class="btn" [openNewTab]="true" [closeWindow]="true" [previewOnly]="false"
-                  [useExistingCss]="true" printTitle="Contract Bill Statement"
-                  printSectionId="customer-bill-print-section" ngxPrint>
-                  <i class="fas fa-print me-1"></i>Print
-                </button>
+      <div class="row clearfix">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="row no-print mb-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button
+                    type="button"
+                    class="btn"
+                    [openNewTab]="true"
+                    [closeWindow]="true"
+                    [previewOnly]="false"
+                    [useExistingCss]="true"
+                    printTitle="Contract Bill Statement"
+                    printSectionId="customer-bill-print-section"
+                    ngxPrint
+                  >
+                    <i class="fas fa-print me-1"></i>Print
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div id="customer-bill-print-section" class="print-section-container">
-            <div class="card invoice-card">
-              <div class="card-body p-0">
-                <div class="invoice-container">
+            <div
+              id="customer-bill-print-section"
+              class="print-section-container"
+            >
+              <div class="card invoice-card">
+                <div class="card-body p-0">
+                  <div class="invoice-container">
+                    <app-report-invoice-header
+                      [Title]="'চুক্তি বিল বিবরণী'"
+                      [InvoiceNumber]="''"
+                    >
+                    </app-report-invoice-header>
 
-                  <app-report-invoice-header [Title]="'চুক্তি বিল বিবরণী'" [InvoiceNumber]="''">
-                  </app-report-invoice-header>
-
-                  <!-- Customer & Period -->
-                  <div class="booking-info-box">
-                    <table class="info-table">
-                      <tr>
-                        <td class="info-label">Customer:</td>
-                        <td class="info-value fw-bold">{{ statement.customerName }}</td>
-                        <td class="info-label">Bill Period:</td>
-                        <td class="info-value">
-                          {{ statement.fromDate | date: 'dd-MMM-yyyy' }} to {{ statement.toDate | date: 'dd-MMM-yyyy' }}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td class="info-label">Mobile:</td>
-                        <td class="info-value">{{ statement.customerMobile || '-' }}</td>
-                        <td class="info-label">Generated On:</td>
-                        <td class="info-value">{{ today | date: 'dd-MMM-yyyy hh:mm a' }}</td>
-                      </tr>
-                      <tr>
-                        <td class="info-label">Address:</td>
-                        <td class="info-value" colspan="3">{{ statement.address || '-' }}</td>
-                      </tr>
-                    </table>
-                  </div>
-
-                  <!-- Stock & storage rent -->
-                  <div class="section-title">মজুদ ও ভাড়া</div>
-                  <div class="stored-products-section">
-                    <table class="products-table stock-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th>Booking</th>
-                          <th>Product</th>
-                          <th class="text-end">Rate</th>
-                          <th class="text-end">Opening Stock</th>
-                          <th class="text-end">Booked</th>
-                          <th class="text-end">Delivered</th>
-                          <th class="text-end">Stock on Bill Date</th>
-                          <th>Billing Date(s)</th>
-                          <th class="text-end">Rent (৳)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (s of statement.stockLines; track $index) {
+                    <!-- Customer & Period -->
+                    <div class="booking-info-box">
+                      <table class="info-table">
                         <tr>
-                          <td>
-                            {{ s.bookingNumber }}
-                            <div class="sub-text">{{ s.bookingDate | date: 'dd-MMM-yy' }}</div>
+                          <td class="info-label">Customer:</td>
+                          <td class="info-value fw-bold">
+                            {{ statement.customerName }}
                           </td>
-                          <td>{{ s.productName }}</td>
-                          <td class="text-end">{{ s.rate | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ s.openingStock | number: '1.0-2' }}</td>
-                          <td class="text-end">{{ s.bookedQty ? (s.bookedQty | number: '1.0-2') : '-' }}</td>
-                          <td class="text-end">{{ s.deliveredQty ? (s.deliveredQty | number: '1.0-2') : '-' }}</td>
-                          <td class="text-end fw-bold">{{ s.closingStock | number: '1.0-2' }} <span class="sub-text">{{ s.unitName }}</span></td>
-                          <td class="small-text">
-                            @for (d of s.billingDates; track $index; let last = $last) {
-                            {{ d | date: 'dd-MMM' }}@if (!last) {, }
-                            }
-                            @if (s.cyclesInPeriod > s.billingDates.length) {
-                            … ({{ s.cyclesInPeriod }} cycles)
-                            }
-                            @if (s.cyclesInPeriod === 0) { - }
+                          <td class="info-label">Bill Period:</td>
+                          <td class="info-value">
+                            {{ statement.fromDate | date: "dd-MMM-yyyy" }} to
+                            {{ statement.toDate | date: "dd-MMM-yyyy" }}
                           </td>
-                          <td class="text-end fw-bold">{{ s.rentThisPeriod | number: '1.2-2' }}</td>
                         </tr>
-                        } @empty {
                         <tr>
-                          <td colspan="9" class="text-center py-2">No stock in store for this period.</td>
+                          <td class="info-label">Mobile:</td>
+                          <td class="info-value">
+                            {{ statement.customerMobile || "-" }}
+                          </td>
+                          <td class="info-label">Generated On:</td>
+                          <td class="info-value">
+                            {{ today | date: "dd-MMM-yyyy hh:mm a" }}
+                          </td>
                         </tr>
-                        }
-                      </tbody>
-                      @if (statement.stockLines.length > 0) {
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="6" class="text-end">Total:</td>
-                          <td class="text-end">{{ closingStockTotal | number: '1.0-2' }}</td>
-                          <td></td>
-                          <td class="text-end">{{ stockRentTotal | number: '1.2-2' }}</td>
+                        <tr>
+                          <td class="info-label">Address:</td>
+                          <td class="info-value" colspan="3">
+                            {{ statement.address || "-" }}
+                          </td>
                         </tr>
-                      </tfoot>
-                      }
-                    </table>
-                    <div class="statement-note">
-                      Rent = the months billed in this period (stock at the start of each month × rate; the booking date
-                      is the first month).
+                      </table>
                     </div>
-                  </div>
 
-                  <!-- Charge log (ledger rows in the period) -->
-                  <div class="section-title">চার্জ খতিয়ান</div>
-                  <div class="stored-products-section">
-                    <table class="products-table stock-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th>Date</th>
-                          <th>Booking</th>
-                          <th>Charge</th>
-                          <th>Product</th>
-                          <th class="text-end">Qty</th>
-                          <th class="text-end">Rate</th>
-                          <th class="text-end">Amount (৳)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (e of statement.chargeEntries; track e.id) {
-                        <tr>
-                          <td>{{ e.entryDate | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ e.bookingNumber }}</td>
-                          <td>
-                            {{ chargeLabel(e.chargeType, e.cycleNo) }}
-                          </td>
-                          <td>{{ e.productName || '-' }}</td>
-                          <td class="text-end">{{ e.quantity ? (e.quantity | number: '1.0-2') : '-' }}</td>
-                          <td class="text-end">{{ e.rate ? (e.rate | number: '1.2-2') : '-' }}</td>
-                          <td class="text-end fw-bold">{{ e.amount | number: '1.2-2' }}</td>
-                        </tr>
-                        } @empty {
-                        <tr><td colspan="7" class="text-center py-2">No bills in this period.</td></tr>
-                        }
-                      </tbody>
-                      @if (statement.chargeEntries.length > 0) {
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="6" class="text-end">Total billed:</td>
-                          <td class="text-end">{{ (statement.rentCharged + statement.labourCharged) | number: '1.2-2' }}</td>
-                        </tr>
-                      </tfoot>
-                      }
-                    </table>
-                  </div>
-
-                  <!-- Deliveries -->
-                  <div class="section-title">ডেলিভারি বিবরণ</div>
-                  <div class="stored-products-section">
-                    <table class="products-table stock-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th style="width: 30px;">ক্রমিক</th>
-                          <th>Date</th>
-                          <th>Delivery No</th>
-                          <th>Booking No</th>
-                          <th>Product</th>
-                          <th class="text-end">Qty</th>
-                          @if (hasDeliveryLabour) {
-                          <th class="text-end">Labour (৳)</th>
+                    <!-- Stock & storage rent -->
+                    <div class="section-title">মজুদ ও ভাড়া</div>
+                    <div class="stored-products-section">
+                      <table class="products-table stock-table">
+                        <thead>
+                          <tr class="section-head">
+                            <th>বুকিং</th>
+                            <th>পণ্য</th>
+                            <th class="text-end">হার</th>
+                            <th class="text-end">প্রারম্ভিক মজুদ</th>
+                            <th class="text-end">বুকিং</th>
+                            <th class="text-end">ডেলিভারি</th>
+                            <th class="text-end">বিলের তারিখে মজুদ</th>
+                            <th>বিলের তারিখ</th>
+                            <th class="text-end">ভাড়া (৳)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (s of statement.stockLines; track $index) {
+                            <tr>
+                              <td>
+                                {{ s.bookingNumber }}
+                                <div class="sub-text">
+                                  {{ s.bookingDate | date: "dd-MMM-yy" }}
+                                </div>
+                              </td>
+                              <td>{{ s.productName }}</td>
+                              <td class="text-end">
+                                {{ s.rate | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ s.openingStock | number: "1.0-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{
+                                  s.bookedQty
+                                    ? (s.bookedQty | number: "1.0-2")
+                                    : "-"
+                                }}
+                              </td>
+                              <td class="text-end">
+                                {{
+                                  s.deliveredQty
+                                    ? (s.deliveredQty | number: "1.0-2")
+                                    : "-"
+                                }}
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ s.closingStock | number: "1.0-2" }}
+                                <span class="sub-text">{{ s.unitName }}</span>
+                              </td>
+                              <td class="small-text">
+                                @for (
+                                  d of s.billingDates;
+                                  track $index;
+                                  let last = $last
+                                ) {
+                                  {{ d | date: "dd-MMM" }}
+                                  @if (!last) {
+                                    ,
+                                  }
+                                }
+                                @if (s.cyclesInPeriod > s.billingDates.length) {
+                                  … ({{ s.cyclesInPeriod }} cycles)
+                                }
+                                @if (s.cyclesInPeriod === 0) {
+                                  -
+                                }
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ s.rentThisPeriod | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr>
+                              <td colspan="9" class="text-center py-2">
+                                No stock in store for this period.
+                              </td>
+                            </tr>
                           }
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (d of statement.deliveries; track $index) {
-                        <tr>
-                          <td class="text-center">{{ $index + 1 }}</td>
-                          <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ d.deliveryNumber }}</td>
-                          <td>{{ d.bookingNumber }}</td>
-                          <td>{{ d.productName }}</td>
-                          <td class="text-end">{{ d.quantity | number: '1.0-2' }} {{ d.unitName }}</td>
-                          @if (hasDeliveryLabour) {
-                          <td class="text-end">{{ d.labourCharge ? (d.labourCharge | number: '1.2-2') : '-' }}</td>
-                          }
-                        </tr>
-                        } @empty {
-                        <tr>
-                          <td [attr.colspan]="hasDeliveryLabour ? 7 : 6" class="text-center py-2">No deliveries in this period.</td>
-                        </tr>
+                        </tbody>
+                        @if (statement.stockLines.length > 0) {
+                          <tfoot>
+                            <tr class="total-row">
+                              <td colspan="6" class="text-end">মোট:</td>
+                              <td class="text-end">
+                                {{ closingStockTotal | number: "1.0-2" }}
+                              </td>
+                              <td></td>
+                              <td class="text-end">
+                                {{ stockRentTotal | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          </tfoot>
                         }
-                      </tbody>
-                      @if (statement.deliveries.length > 0 && hasDeliveryLabour) {
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="6" class="text-end">Total labour:</td>
-                          <td class="text-end">{{ statement.deliveryLabourTotal | number: '1.2-2' }}</td>
-                        </tr>
-                      </tfoot>
-                      }
-                    </table>
-                  </div>
-
-                  @if (!hasActivity) {
-                  <p class="text-center text-muted">No stock, bills or deliveries in this period.</p>
-                  }
-
-                  <div class="signature-section">
-                    <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <div class="signature-label">Customer Signature</div>
+                      </table>
+                      <div class="statement-note">
+                        Rent = the months billed in this period (stock at the
+                        start of each month × rate; the booking date is the
+                        first month).
+                      </div>
                     </div>
-                    <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <div class="signature-label">Authorized By</div>
-                      <div class="signature-sublabel">(Accounts)</div>
-                    </div>
-                  </div>
 
-                  <app-report-footer></app-report-footer>
+                    <!-- Charge log (ledger rows in the period) -->
+                    <div class="section-title">চার্জ খতিয়ান</div>
+                    <div class="stored-products-section">
+                      <table class="products-table stock-table">
+                        <thead>
+                          <tr class="section-head">
+                            <th>তারিখ</th>
+                            <th>বুকিং</th>
+                            <th>চার্জ</th>
+                            <th>পণ্য</th>
+                            <th class="text-end">পরিমাণ</th>
+                            <th class="text-end">হার</th>
+                            <th class="text-end">টাকা (৳)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (e of statement.chargeEntries; track e.id) {
+                            <tr>
+                              <td>{{ e.entryDate | date: "dd-MMM-yy" }}</td>
+                              <td>{{ e.bookingNumber }}</td>
+                              <td>
+                                {{ chargeLabel(e.chargeType, e.cycleNo) }}
+                              </td>
+                              <td>{{ e.productName || "-" }}</td>
+                              <td class="text-end">
+                                {{
+                                  e.quantity
+                                    ? (e.quantity | number: "1.0-2")
+                                    : "-"
+                                }}
+                              </td>
+                              <td class="text-end">
+                                {{ e.rate ? (e.rate | number: "1.2-2") : "-" }}
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ e.amount | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr>
+                              <td colspan="7" class="text-center py-2">
+                                No bills in this period.
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        @if (statement.chargeEntries.length > 0) {
+                          <tfoot>
+                            <tr class="total-row">
+                              <td colspan="6" class="text-end">মোট চার্জ:</td>
+                              <td class="text-end">
+                                {{
+                                  statement.rentCharged +
+                                    statement.labourCharged | number: "1.2-2"
+                                }}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        }
+                      </table>
+                    </div>
+
+                    <!-- Deliveries -->
+                    <div class="section-title">ডেলিভারি বিবরণ</div>
+                    <div class="stored-products-section">
+                      <table class="products-table stock-table">
+                        <thead>
+                          <tr class="section-head">
+                            <th style="width: 30px">ক্রমিক</th>
+                            <th>তারিখ</th>
+                            <th>ডেলিভারি নং</th>
+                            <th>বুকিং নং</th>
+                            <th>পণ্য</th>
+                            <th>একক</th>
+                            <th class="text-end">পূর্বের মজুদ</th>
+                            <th class="text-end">ডেলি. সংখ্যা</th>
+                            <th class="text-end">অবশিষ্ট পণ্য</th>
+
+                            @if (hasDeliveryLabour) {
+                              <th class="text-end">লেবার (৳)</th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (d of statement.deliveries; track $index) {
+                            <tr>
+                              <td class="text-center">{{ $index + 1 }}</td>
+                              <td>{{ d.deliveryDate | date: "dd-MMM-yy" }}</td>
+                              <td>{{ d.deliveryNumber }}</td>
+                              <td>{{ d.bookingNumber }}</td>
+                              <td>{{ d.productName }}</td>
+                              <td>{{ d.unitName }}</td>
+                              <td class="text-end">
+                                {{ d.stockBeforeQty | number: "1.0-2" }}
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ d.quantity | number: "1.0-2" }}
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ d.remainingQty | number: "1.0-2" }}
+                                @if (
+                                  d.remainingUnitName &&
+                                  d.remainingUnitName !== d.unitName
+                                ) {
+                                  <span class="sub-text">{{
+                                    d.remainingUnitName
+                                  }}</span>
+                                }
+                              </td>
+
+                              @if (hasDeliveryLabour) {
+                                <td class="text-end">
+                                  {{
+                                    d.labourCharge
+                                      ? (d.labourCharge | number: "1.2-2")
+                                      : "-"
+                                  }}
+                                </td>
+                              }
+                            </tr>
+                          } @empty {
+                            <tr>
+                              <td
+                                [attr.colspan]="hasDeliveryLabour ? 10 : 9"
+                                class="text-center py-2"
+                              >
+                                No deliveries in this period.
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        @if (
+                          statement.deliveries.length > 0 && hasDeliveryLabour
+                        ) {
+                          <tfoot>
+                            <tr class="total-row">
+                              <td colspan="9" class="text-end">মোট লেবার:</td>
+                              <td class="text-end">
+                                {{
+                                  statement.deliveryLabourTotal
+                                    | number: "1.2-2"
+                                }}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        }
+                      </table>
+                    </div>
+
+                    @if (!hasActivity) {
+                      <p class="text-center text-muted">
+                        No stock, bills or deliveries in this period.
+                      </p>
+                    }
+
+                    <div class="signature-section">
+                      <div class="signature-box">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Customer Signature</div>
+                      </div>
+                      <div class="signature-box">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Authorized By</div>
+                        <div class="signature-sublabel">(Accounts)</div>
+                      </div>
+                    </div>
+
+                    <app-report-footer></app-report-footer>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
-    </div>
     }
   </div>
 </section>

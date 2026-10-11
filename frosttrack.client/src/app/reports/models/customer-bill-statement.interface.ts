@@ -44,6 +44,13 @@ export interface IBillStatementDeliveryLine {
   total: number;
   collectedAmount: number;
   dueAmount: number;
+  /** Delivered weight in the base unit (kg). */
+  baseQuantity: number;
+  /** Stock of the booking line just before this delivery (booking unit). */
+  stockBeforeQty: number;
+  /** Stock of the booking line left after this delivery (booking unit). */
+  remainingQty: number;
+  remainingUnitName: string;
 }
 
 export interface IBillStatementPaymentLine {

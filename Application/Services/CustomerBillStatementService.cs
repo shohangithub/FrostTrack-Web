@@ -180,6 +180,27 @@ public class CustomerBillStatementService : ICustomerBillStatementService
 
         // ---- Deliveries made in the period ----
         var bookingNumbers = bookings.ToDictionary(b => b.Id, b => b.BookingNumber);
+
+        // Stock left on each booking line after each delivery: count every delivery up to the period end in date order
+        var detailById = bookings.SelectMany(b => b.BookingDetails).ToDictionary(bd => bd.Id);
+        var remainingAfter = new Dictionary<Guid, decimal>();
+        var stockBefore = new Dictionary<Guid, decimal>();
+        foreach (var line in deliveries
+                     .SelectMany(d => d.DeliveryDetails.Where(x => !x.IsDeleted), (d, dd) => (Delivery: d, Detail: dd))
+                     .GroupBy(x => x.Detail.BookingDetailId))
+        {
+            if (!detailById.TryGetValue(line.Key, out var bd)) continue;
+            decimal StockAt(decimal delivered) => bd.BaseQuantity > 0
+                ? (decimal)bd.BookingQuantity * Math.Max(0m, (bd.BaseQuantity - delivered) / bd.BaseQuantity)
+                : 0m;
+            var deliveredBase = 0m;
+            foreach (var x in line.OrderBy(x => x.Delivery.DeliveryDate).ThenBy(x => x.Delivery.CreatedTime))
+            {
+                stockBefore[x.Detail.Id] = StockAt(deliveredBase);
+                deliveredBase += x.Detail.BaseQuantity;
+                remainingAfter[x.Detail.Id] = StockAt(deliveredBase);
+            }
+        }
         foreach (var delivery in deliveries.Where(d => d.DeliveryDate >= fromUtc))
         {
             var lines = delivery.DeliveryDetails.Where(x => !x.IsDeleted).ToList();
@@ -209,7 +230,13 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                     LabourCharge = dd.LabourCharge,
                     Total = lineTotal,
                     CollectedAmount = lineCollected,
-                    DueAmount = lineTotal - lineCollected
+                    DueAmount = lineTotal - lineCollected,
+                    BaseQuantity = dd.BaseQuantity,
+                    StockBeforeQty = stockBefore.GetValueOrDefault(dd.Id),
+                    RemainingQty = remainingAfter.GetValueOrDefault(dd.Id),
+                    RemainingUnitName = dd.BookingDetail?.BookingUnit?.UnitName
+                        ?? (detailById.TryGetValue(dd.BookingDetailId, out var lineDetail) ? lineDetail.BookingUnit?.UnitName : null)
+                        ?? string.Empty
                 });
             }
             response.DeliveryAdjustmentTotal += delivery.AdjustmentValue;
