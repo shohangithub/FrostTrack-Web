@@ -4,6 +4,7 @@ namespace Application.Contractors
 {
     public interface ILedgerBookService
     {
-        Task<LedgerBookResponse> GetGeneralLedgerAsync(DateTime reportDate, CancellationToken cancellationToken = default);
+        Task<LedgerBookSummaryResponse> GetSummaryAsync(DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default);
+        Task<LedgerBookGroupResponse> GetGroupLedgerAsync(Guid groupId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default);
     }
 }

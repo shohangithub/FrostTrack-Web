@@ -57,13 +57,13 @@ export const reportRoutes: Route[] = [
         './components/customer-discount-report/customer-discount-report.component'
       ).then((m) => m.CustomerDiscountReportComponent),
   },
-  // {
-  //   path: 'ledger-book',
-  //   loadComponent: () =>
-  //     import('./components/ledger-book/ledger-book.component').then(
-  //       (m) => m.LedgerBookComponent
-  //     ),
-  // },
+  {
+    path: 'ledger-book',
+    loadComponent: () =>
+      import('./components/ledger-book/ledger-book.component').then(
+        (m) => m.LedgerBookComponent
+      ),
+  },
   {
     path: 'bankbook',
     loadComponent: () =>

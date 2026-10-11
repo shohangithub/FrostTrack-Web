@@ -1,6 +1,6 @@
 /*
 =====================================================================
-Ledger Book Report Component Styles
+General Ledger Report Component Styles
 =====================================================================
 */
 
@@ -91,7 +91,7 @@ $font-size: 11px;
     color: #000;
 }
 
-// Products Section (for ledger details)
+// Products Section (for general ledger details)
 .stored-products-section {
     margin-bottom: 15px;
 
@@ -128,7 +128,50 @@ $font-size: 11px;
             text-align: right;
         }
 
+        .col-sl {
+            width: 35px;
+            max-width: 42px;
+            text-align: center !important;
+            padding: 4px 2px !important;
+        }
+
+        .col-date {
+            width: 110px;
+            text-align: center !important;
+        }
+
+        .col-type {
+            width: 65px;
+            text-align: center !important;
+        }
+
+        .col-amount {
+            width: 85px;
+            text-align: right !important;
+        }
+
+        .bank-tag {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            font-weight: 600;
+            margin-top: 2px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         .opening-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .closing-row {
             background-color: #f9f9f9;
             font-weight: bold;
             -webkit-print-color-adjust: exact;
