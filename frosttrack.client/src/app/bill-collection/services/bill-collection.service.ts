@@ -13,6 +13,10 @@ import {
   ICustomerAdvances,
   ICustomerDueBookings,
   IPaymentReceiptInfo,
+  AdjustmentSource,
+  IBookingAdjustmentLine,
+  IBookingAdjustmentRequest,
+  IBookingAdjustmentResult,
 } from '../models/booking-payment.interface';
 
 export interface IRecentCustomerPayment {
@@ -114,6 +118,9 @@ export interface ICustomerDiscountItem {
   note?: string;
   bookingId?: string | null;
   createdTime?: string;
+  bookingNumber?: string | null;
+  /** MINUS = discount / reduce due, PLUS = manual extra charge. */
+  direction?: 'PLUS' | 'MINUS';
 }
 
 export interface ICustomerPaymentReportFilter {
@@ -225,10 +232,34 @@ export class BillCollectionService extends BaseService {
 
   // ── Booking-wise payment ────────────────────────────────────────────────
   /** Customer's bookings that still have a due, plus the customer's advance balance. */
-  getCustomerDueBookings(customerId: number): Observable<ICustomerDueBookings> {
+  getCustomerDueBookings(customerId: number, includeAll = false): Observable<ICustomerDueBookings> {
     return this.get<ICustomerDueBookings>(
-      `${this.path}/customer/${customerId}/due-bookings`,
+      `${this.path}/customer/${customerId}/due-bookings${includeAll ? '?includeAll=true' : ''}`,
       'Get Due Bookings'
+    );
+  }
+
+  // ── Discount & Adjustment (Adjustment + / −) ─────────────────────────────
+  /** Adjustment history of a booking, or of the customer's entries without a booking (bookingId null). */
+  getAdjustmentHistory(customerId: number, bookingId: string | null): Observable<IBookingAdjustmentLine[]> {
+    const query = `customerId=${customerId}${bookingId ? `&bookingId=${bookingId}` : ''}`;
+    return this.get<IBookingAdjustmentLine[]>(`${this.path}/adjustments?${query}`, 'Get Adjustment History');
+  }
+
+  createAdjustment(payload: IBookingAdjustmentRequest): Observable<IBookingAdjustmentResult> {
+    return this.postWithSuccess<IBookingAdjustmentResult>(
+      `${this.path}/adjustment`,
+      payload,
+      'Save Adjustment',
+      MessageHub.ADD
+    );
+  }
+
+  cancelAdjustment(source: AdjustmentSource, id: string): Observable<boolean> {
+    return this.deleteWithSuccess<boolean>(
+      `${this.path}/adjustment/${source}/${id}`,
+      'Cancel Adjustment',
+      'Adjustment cancelled'
     );
   }
 

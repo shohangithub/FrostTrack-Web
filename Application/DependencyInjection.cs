@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitConversionService, UnitConversionService>();
         services.AddScoped<ITransactionHeadService, TransactionHeadService>();
         services.AddScoped<ITransactionGroupService, TransactionGroupService>();
+        services.AddScoped<IBookingHistoryService, BookingHistoryService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IBankService, BankService>();
         services.AddScoped<IBankTransactionService, BankTransactionService>();

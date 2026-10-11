@@ -239,7 +239,7 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         response.ChargeEntries = entriesInPeriod.OrderBy(e => e.EntryDate).ThenBy(e => e.BookingNumber).ToList();
 
         static bool IsLabour(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.BookingLabour or ChargeTypes.DeliveryLabour;
-        static bool IsRentOrAdjustment(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.RentCycle or ChargeTypes.DeliveryAdjustment;
+        static bool IsRentOrAdjustment(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.RentCycle or ChargeTypes.DeliveryAdjustment or ChargeTypes.ManualAdjustment;
 
         // ---- Stock in store and rent per booking line ----
         foreach (var booking in bookings)

@@ -137,6 +137,8 @@ export class CustomerBillStatementComponent implements OnInit {
         return 'Delivery labour';
       case 'DELIVERY_ADJUSTMENT':
         return 'Delivery adjustment';
+      case 'MANUAL_ADJUSTMENT':
+        return 'Adjustment (+)';
       default:
         return chargeType;
     }

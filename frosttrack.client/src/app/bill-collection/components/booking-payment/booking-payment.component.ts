@@ -19,6 +19,7 @@ import { ICustomerListResponse } from 'app/common/models/customer.interface';
 import { BankService } from 'app/common/services/bank.service';
 import { todayInputFormat } from 'app/utils/date-utils';
 import { BillCollectionService } from '../../services/bill-collection.service';
+import { BookingAccountDetailComponent } from '../booking-account-detail/booking-account-detail.component';
 import {
   IBookingPaymentDetail,
   ICustomerAdvances,
@@ -44,7 +45,7 @@ interface IBookingOption {
 @Component({
   selector: 'app-booking-payment',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, BookingAccountDetailComponent],
   templateUrl: './booking-payment.component.html',
   styleUrls: ['./booking-payment.component.scss'],
 })
@@ -368,34 +369,6 @@ export class BookingPaymentComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/bill-collection/list']);
-  }
-
-  kindLabel(kind: string): string {
-    switch (kind) {
-      case 'AT_DELIVERY':
-        return 'At delivery';
-      case 'ADVANCE':
-        return 'Advance applied';
-      case 'DISCOUNT':
-        return 'Discount';
-      default:
-        return 'Payment';
-    }
-  }
-
-  chargeLabel(chargeType: string, cycleNo?: number | null): string {
-    switch (chargeType) {
-      case 'RENT_CYCLE':
-        return `Rent - month ${cycleNo ?? ''}`;
-      case 'BOOKING_LABOUR':
-        return 'Booking labour';
-      case 'DELIVERY_LABOUR':
-        return 'Delivery labour';
-      case 'DELIVERY_ADJUSTMENT':
-        return 'Delivery adjustment';
-      default:
-        return chargeType;
-    }
   }
 
   private round(value: number): number {

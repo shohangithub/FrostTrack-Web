@@ -58,6 +58,8 @@ export interface IBookingPaymentSummary {
   rentCharge: number;
   labourCharge: number;
   adjustment: number;
+  /** Manual "Adjustment +" entered on the Discount & Adjustment page. */
+  manualAdjustment: number;
   totalCharge: number;
   paidAtDelivery: number;
   otherPayments: number;
@@ -153,8 +155,8 @@ export interface IPaymentReceiptInfo {
 export interface IChargeLedgerEntry {
   id: string;
   entryDate: string;
-  chargeType: string; // RENT_CYCLE | BOOKING_LABOUR | DELIVERY_LABOUR | DELIVERY_ADJUSTMENT
-  source: string; // POSTED | CORRECTION
+  chargeType: string; // RENT_CYCLE | BOOKING_LABOUR | DELIVERY_LABOUR | DELIVERY_ADJUSTMENT | MANUAL_ADJUSTMENT
+  source: string; // POSTED | CORRECTION | MANUAL | REVERSAL
   cycleNo?: number | null;
   bookingDetailId?: string | null;
   bookingNumber?: string | null;
@@ -164,4 +166,48 @@ export interface IChargeLedgerEntry {
   rate: number;
   amount: number;
   note?: string | null;
+  referenceCode?: string | null;
+  reversalOfId?: string | null;
+}
+
+// ── Discount & Adjustment (Adjustment + / −) ───────────────────────────────
+export type AdjustmentDirection = 'PLUS' | 'MINUS';
+/** DISCOUNT = Adjustment − (BILL_DISCOUNT transaction), LEDGER = Adjustment + (charge-ledger row). */
+export type AdjustmentSource = 'DISCOUNT' | 'LEDGER';
+
+export interface IBookingAdjustmentLine {
+  id: string;
+  source: AdjustmentSource;
+  direction: AdjustmentDirection;
+  date: string;
+  referenceCode?: string | null;
+  bookingId?: string | null;
+  bookingNumber?: string | null;
+  amount: number;
+  reason: string;
+  note?: string | null;
+  createdBy?: string | null;
+  createdTime: string;
+  isCancelled: boolean;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+}
+
+export interface IBookingAdjustmentRequest {
+  transactionCode: string;
+  transactionDate: string;
+  branchId: number;
+  customerId: number;
+  bookingId: string | null;
+  direction: AdjustmentDirection;
+  amount: number;
+  reason: string;
+  note?: string | null;
+}
+
+export interface IBookingAdjustmentResult {
+  direction: AdjustmentDirection;
+  amount: number;
+  dueBefore: number;
+  dueAfter: number;
 }

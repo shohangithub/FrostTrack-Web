@@ -97,6 +97,8 @@ public class BookingPaymentSummary
     public decimal RentCharge { get; set; }
     public decimal LabourCharge { get; set; }
     public decimal Adjustment { get; set; }
+    /// <summary>Manual "Adjustment +" (extra charges entered on the Discount &amp; Adjustment page).</summary>
+    public decimal ManualAdjustment { get; set; }
     public decimal TotalCharge { get; set; }
     public decimal PaidAtDelivery { get; set; }
     public decimal OtherPayments { get; set; }

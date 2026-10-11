@@ -37,6 +37,8 @@ public class CustomerDueDetailResponse
     public decimal DeliveryLabourCharge { get; set; }
     public decimal TotalRentAmount { get; set; }
     public decimal TotalLabourAmount { get; set; }
+    /// <summary>Manual "Adjustment +" (extra charges from the Discount &amp; Adjustment page); part of TotalAccruedAmount.</summary>
+    public decimal ManualAdjustment { get; set; }
     public decimal OpeningBalance { get; set; }
     public decimal TotalAccruedAmount { get; set; }  // delivery charges + pending accrual
     public decimal PendingRecurringChargeAmount { get; set; } // cycles since last delivery not yet recorded

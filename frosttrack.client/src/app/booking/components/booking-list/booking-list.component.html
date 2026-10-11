@@ -270,6 +270,13 @@
                     >
                       <i class="fas fa-print"></i>
                     </button>
+                    <button
+                      class="btn btn-tbl-info h-auto"
+                      title="Booking History"
+                      (click)="openHistory(row)"
+                    >
+                      <i class="fas fa-history"></i>
+                    </button>
                     @if (canEdit && isEditable(row)) {
                       <button
                         class="btn btn-tbl-edit h-auto"

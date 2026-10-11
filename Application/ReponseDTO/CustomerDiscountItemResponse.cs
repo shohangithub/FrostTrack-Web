@@ -14,5 +14,8 @@ public record CustomerDiscountItemResponse(
     string DiscountReason,
     string? Note,
     Guid? BookingId,
-    DateTime? CreatedTime = null
+    DateTime? CreatedTime = null,
+    string? BookingNumber = null,
+    /// <summary>MINUS (discount / reduce due) or PLUS (manual extra charge).</summary>
+    string Direction = "MINUS"
 );

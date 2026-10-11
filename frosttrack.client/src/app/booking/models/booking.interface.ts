@@ -176,6 +176,8 @@ export interface ICustomerDueDetailResponse {
   bookingLabourCharge: number;
   deliveryLabourCharge?: number;
   totalRentAmount?: number;
+  /** Manual "Adjustment +" (part of totalAccruedAmount). */
+  manualAdjustment?: number;
   totalLabourAmount?: number;
   openingBalance: number;
   totalAccruedAmount: number;

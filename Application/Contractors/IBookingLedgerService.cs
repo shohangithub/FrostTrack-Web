@@ -24,6 +24,12 @@ public interface IBookingLedgerService
 
     Task<List<LedgerEntryResponse>> GetEntriesAsync(Guid bookingId, CancellationToken cancellationToken = default);
 
+    /// <summary>Posts a manual "Adjustment +" (extra charge) on a booking. Sync never touches these rows.</summary>
+    Task<LedgerEntryResponse> AddManualAdjustmentAsync(Guid bookingId, decimal amount, DateTime entryDate, string reason, string? referenceCode, CancellationToken cancellationToken = default);
+
+    /// <summary>Cancels a manual adjustment by posting the opposite amount (the ledger is append-only).</summary>
+    Task<bool> ReverseManualAdjustmentAsync(Guid entryId, CancellationToken cancellationToken = default);
+
     /// <summary>Bookings whose ledger total differs from the independent calculation or have pending postings.</summary>
     Task<List<LedgerCheckItem>> CheckAsync(bool onlyDifferences = true, CancellationToken cancellationToken = default);
 }

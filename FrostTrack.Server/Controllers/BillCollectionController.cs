@@ -35,8 +35,29 @@ public class BillCollectionController : ControllerBase
     }
 
     [HttpGet("customer/{customerId}/due-bookings")]
-    public async Task<ActionResult<CustomerDueBookingsResponse>> GetCustomerDueBookings(int customerId, CancellationToken cancellationToken)
-        => Ok(await _billCollectionService.GetCustomerDueBookingsAsync(customerId, cancellationToken));
+    public async Task<ActionResult<CustomerDueBookingsResponse>> GetCustomerDueBookings(
+        int customerId,
+        [FromQuery] bool includeAll,
+        CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetCustomerDueBookingsAsync(customerId, includeAll, cancellationToken));
+
+    /// <summary>Adjustment +/− history of a booking, or of the customer's entries without a booking.</summary>
+    [HttpGet("adjustments")]
+    public async Task<ActionResult<List<BookingAdjustmentLine>>> GetAdjustmentHistory(
+        [FromQuery] int customerId,
+        [FromQuery] Guid? bookingId,
+        CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.GetAdjustmentHistoryAsync(customerId, bookingId, cancellationToken));
+
+    [HttpPost("adjustment")]
+    public async Task<ActionResult<BookingAdjustmentResultResponse>> CreateAdjustment(
+        BookingAdjustmentRequest request,
+        CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.CreateAdjustmentAsync(request, cancellationToken));
+
+    [HttpDelete("adjustment/{source}/{id}")]
+    public async Task<ActionResult<bool>> CancelAdjustment(string source, Guid id, CancellationToken cancellationToken)
+        => Ok(await _billCollectionService.CancelAdjustmentAsync(source, id, cancellationToken));
 
     [HttpGet("booking/{bookingId}/payment-detail")]
     public async Task<ActionResult<BookingPaymentDetailResponse>> GetBookingPaymentDetail(Guid bookingId, CancellationToken cancellationToken)

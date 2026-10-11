@@ -1053,7 +1053,8 @@ public class BookingService : IBookingService
         var recurringChargeEntriesByBooking = await _recurringChargeEntryRepository.Query()
             .Include(e => e.BookingDetail)
                 .ThenInclude(bd => bd!.Product)
-            .Where(e => bookingIds.Contains(e.BookingId) && e.ChargeType != ChargeTypes.Legacy)
+            .Where(e => bookingIds.Contains(e.BookingId) && e.ChargeType != ChargeTypes.Legacy
+                        && e.ChargeType != ChargeTypes.ManualAdjustment) // shown as "Adjustment (+)" instead
             .OrderBy(e => e.BillPeriodFrom)
             .ToListAsync(cancellationToken);
 
@@ -1201,6 +1202,7 @@ public class BookingService : IBookingService
                 DeliveryLabourCharge = charges.DeliveryLabour,
                 TotalRentAmount = totalRent,
                 TotalLabourAmount = totalLabour,
+                ManualAdjustment = charges.ManualAdjustment,
                 OpeningBalance = 0m,         // per-booking; customer-level set at caller
                 TotalAccruedAmount = totalAccrued,
                 PendingRecurringChargeAmount = pendingRecurringCharge,

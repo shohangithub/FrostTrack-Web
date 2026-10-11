@@ -168,6 +168,17 @@ export const ROUTES: RouteInfo[] = [
         submenu: [],
       },
       {
+        path: '/booking/history',
+        title: 'Booking History',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        submenu: [],
+      },
+      {
         path: '/booking/customer-due-list',
         title: 'Customer Due List',
         iconType: '',

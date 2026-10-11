@@ -84,6 +84,10 @@ public static class RecurringChargeSources
     public const string Posted = "POSTED";
     /// <summary>Difference posted later because booking/delivery data changed (dated the day it is posted).</summary>
     public const string Correction = "CORRECTION";
+    /// <summary>Manual booking adjustment entered by a user (Discount &amp; Adjustment page).</summary>
+    public const string Manual = "MANUAL";
+    /// <summary>Opposite entry that cancels a manual adjustment (see RecurringChargeEntry.ReversalOfId).</summary>
+    public const string Reversal = "REVERSAL";
 }
 
 /// <summary>What a charge-ledger entry (RecurringChargeEntry) charges for.</summary>
@@ -94,6 +98,11 @@ public static class ChargeTypes
     public const string BookingLabour = "BOOKING_LABOUR";
     public const string DeliveryLabour = "DELIVERY_LABOUR";
     public const string DeliveryAdjustment = "DELIVERY_ADJUSTMENT";
+    /// <summary>
+    /// Manual "Adjustment +" on a booking (extra charge, with a reason). Entered by users, not calculated,
+    /// so ledger sync never compares or reverses it and a rebuild keeps it.
+    /// </summary>
+    public const string ManualAdjustment = "MANUAL_ADJUSTMENT";
     /// <summary>Entries created before the ledger existed; kept for history, not counted.</summary>
     public const string Legacy = "LEGACY";
 }

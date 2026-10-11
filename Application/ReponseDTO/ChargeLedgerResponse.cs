@@ -10,10 +10,12 @@ public class LedgerCharges
     public decimal BookingLabour { get; set; }
     public decimal DeliveryLabour { get; set; }
     public decimal Adjustment { get; set; }
+    /// <summary>Manual "Adjustment +" entries (net of cancellations).</summary>
+    public decimal ManualAdjustment { get; set; }
 
     public decimal Rent => RentFirstMonth + RentLaterMonths;
     public decimal Labour => BookingLabour + DeliveryLabour;
-    public decimal Total => Rent + Labour + Adjustment;
+    public decimal Total => Rent + Labour + Adjustment + ManualAdjustment;
 }
 
 public class LedgerSyncResult
@@ -53,6 +55,10 @@ public class LedgerEntryResponse
     public decimal Rate { get; set; }
     public decimal Amount { get; set; }
     public string? Note { get; set; }
+    /// <summary>Voucher number of a manual adjustment.</summary>
+    public string? ReferenceCode { get; set; }
+    /// <summary>Set on a REVERSAL entry: the manual adjustment it cancels.</summary>
+    public Guid? ReversalOfId { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

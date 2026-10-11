@@ -193,10 +193,14 @@ export class CustomerDueListComponent implements OnInit {
     this.router.navigate(['/booking/customer-due-print', customerId]);
   }
 
-  giveDiscount(customerId: number) {
+  giveDiscount(customerId: number, bookingId?: string) {
     this.router.navigate(['/bill-collection/discount'], {
-      queryParams: { customerId },
+      queryParams: bookingId ? { customerId, bookingId } : { customerId },
     });
+  }
+
+  openBookingHistory(bookingId: string) {
+    this.router.navigate(['/booking/history', bookingId]);
   }
 
   receivePayment(customerId: number) {

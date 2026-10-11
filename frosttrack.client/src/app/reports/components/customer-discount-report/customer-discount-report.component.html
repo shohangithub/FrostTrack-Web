@@ -210,9 +210,13 @@
                           </td>
                         </tr>
                         <tr>
-                          <td class="info-label">Total Discount:</td>
-                          <td class="info-value" colspan="3">
+                          <td class="info-label">Total Adjustment (−):</td>
+                          <td class="info-value">
                             <strong>৳{{ getTotalDiscount() | number: '1.2-2' }}</strong>
+                          </td>
+                          <td class="info-label">Total Adjustment (+):</td>
+                          <td class="info-value">
+                            <strong>৳{{ getTotalPlus() | number: '1.2-2' }}</strong>
                           </td>
                         </tr>
                       </table>
@@ -229,8 +233,10 @@
                               <th>তারিখ</th>
                               <th>গ্রাহকের নাম</th>
                               <th>মোবাইল</th>
+                              <th>বুকিং নং</th>
+                              <th>ধরন</th>
                               <th>পূর্বে বকেয়া</th>
-                              <th>ছাড়ের পরিমাণ</th>
+                              <th>পরিমাণ</th>
                               <th>অবশিষ্ট বকেয়া</th>
                               <th>কারণ</th>
                               <th>মন্তব্য</th>
@@ -248,14 +254,16 @@
                                 </td>
                                 <td>{{ item.customerName }}</td>
                                 <td>{{ item.customerMobile || '-' }}</td>
+                                <td class="text-center">{{ item.bookingNumber || 'গ্রাহক পর্যায়' }}</td>
+                                <td class="text-center">{{ item.direction === 'PLUS' ? 'সমন্বয় (+)' : 'সমন্বয় (−)' }}</td>
                                 <td class="text-end">
-                                  {{ item.totalDue | number: '1.2-2' }}
+                                  {{ item.direction === 'PLUS' ? '-' : (item.totalDue | number: '1.2-2') }}
                                 </td>
                                 <td class="text-end">
-                                  <strong>{{ item.discountAmount | number: '1.2-2' }}</strong>
+                                  <strong>{{ item.direction === 'PLUS' ? '+' : '−' }}{{ item.discountAmount | number: '1.2-2' }}</strong>
                                 </td>
                                 <td class="text-end">
-                                  {{ item.currentDue | number: '1.2-2' }}
+                                  {{ item.direction === 'PLUS' ? '-' : (item.currentDue | number: '1.2-2') }}
                                 </td>
                                 <td>{{ item.discountReason }}</td>
                                 <td>{{ item.note || '-' }}</td>
@@ -264,14 +272,17 @@
                           </tbody>
                           <tfoot>
                             <tr class="total-row">
-                              <td colspan="5" class="text-end">
+                              <td colspan="7" class="text-end">
                                 <strong>মোট / Total:</strong>
                               </td>
                               <td class="text-end">
                                 <strong>{{ getTotalDueBefore() | number: '1.2-2' }}</strong>
                               </td>
                               <td class="text-end">
-                                <strong>{{ getTotalDiscount() | number: '1.2-2' }}</strong>
+                                <strong>−{{ getTotalDiscount() | number: '1.2-2' }}</strong>
+                                @if (getTotalPlus() > 0) {
+                                <div><strong>+{{ getTotalPlus() | number: '1.2-2' }}</strong></div>
+                                }
                               </td>
                               <td class="text-end">
                                 <strong>{{ getTotalCurrentDueAfter() | number: '1.2-2' }}</strong>

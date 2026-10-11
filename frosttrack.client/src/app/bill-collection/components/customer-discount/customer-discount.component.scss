@@ -1,10 +1,53 @@
+$paid-color: #1a7a3d;
+$due-color: #b71c1c;
+
 .hover-chip {
   cursor: pointer;
   transition: all 0.15s ease-in-out;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  white-space: normal;
+  text-align: left;
 
   &:hover {
     background-color: #dee2e6 !important;
     transform: translateY(-1px);
+  }
+}
+
+.paid-amount {
+  color: $paid-color;
+  font-weight: 600;
+}
+
+.summary-table {
+  font-size: 12px;
+
+  td {
+    padding: 4px 2px;
+    border: none;
+  }
+
+  .due-row td {
+    font-weight: bold;
+    font-size: 14px;
+    color: $due-color;
+    border-top: 2px solid #000;
+  }
+}
+
+.history-table {
+  font-size: 11px;
+
+  th {
+    white-space: nowrap;
+  }
+
+  .cancelled-row td {
+    color: #888;
+    background-color: #fafafa;
+  }
+
+  .cancelled-row td:nth-child(4) {
+    text-decoration: line-through;
   }
 }

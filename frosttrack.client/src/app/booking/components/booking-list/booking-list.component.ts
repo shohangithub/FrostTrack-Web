@@ -201,6 +201,10 @@ export class BookingListComponent implements OnInit {
     this.router.navigate(['booking/edit', row.id]);
   }
 
+  openHistory(row: any) {
+    this.router.navigate(['booking/history', row.id]);
+  }
+
   setStatus(status: 'active' | 'archived' | 'deleted') {
     this.pagination.status = status;
     this.pagination.pageIndex = DefaultPagination.PAGEINDEX;

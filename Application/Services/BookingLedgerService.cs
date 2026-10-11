@@ -127,7 +127,8 @@ public class BookingLedgerService : IBookingLedgerService
             var expected = BuildExpected(booking, deliveries, asOf, await GetBillingStartUtcAsync(cancellationToken));
 
             var posted = await _entryRepository.Query()
-                .Where(e => e.BookingId == bookingId && e.ChargeType != ChargeTypes.Legacy)
+                .Where(e => e.BookingId == bookingId && e.ChargeType != ChargeTypes.Legacy
+                         && e.ChargeType != ChargeTypes.ManualAdjustment) // entered by users, never calculated
                 .Select(e => new { e.ChargeType, e.BookingDetailId, e.DeliveryId, e.CycleNo, e.Amount })
                 .ToListAsync(cancellationToken);
             var postedByKey = posted
@@ -291,8 +292,9 @@ public class BookingLedgerService : IBookingLedgerService
 
     public async Task<LedgerSyncResult> RebuildAllAsync(CancellationToken cancellationToken = default)
     {
-        // Setup only: current rows are kept as LEGACY history (not counted), then everything is posted again
-        await _entryRepository.DeletableQuery(e => e.ChargeType != ChargeTypes.Legacy)
+        // Setup only: current rows are kept as LEGACY history (not counted), then everything is posted again.
+        // Manual adjustments are user entries, not calculated, so they are kept as they are.
+        await _entryRepository.DeletableQuery(e => e.ChargeType != ChargeTypes.Legacy && e.ChargeType != ChargeTypes.ManualAdjustment)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.ChargeType, ChargeTypes.Legacy), cancellationToken);
         _syncedOn.Clear();
         return await SyncAllAsync(DateTime.UtcNow, cancellationToken: cancellationToken);
@@ -320,6 +322,7 @@ public class BookingLedgerService : IBookingLedgerService
                 case ChargeTypes.BookingLabour: c.BookingLabour += r.Amount; break;
                 case ChargeTypes.DeliveryLabour: c.DeliveryLabour += r.Amount; break;
                 case ChargeTypes.DeliveryAdjustment: c.Adjustment += r.Amount; break;
+                case ChargeTypes.ManualAdjustment: c.ManualAdjustment += r.Amount; break;
             }
         }
         return result;
@@ -346,6 +349,8 @@ public class BookingLedgerService : IBookingLedgerService
                 Rate = e.Rate,
                 Amount = e.Amount,
                 Note = e.Note,
+                ReferenceCode = e.ReferenceCode,
+                ReversalOfId = e.ReversalOfId,
                 CreatedAt = e.CreatedAt,
             })
             .ToListAsync(cancellationToken);
@@ -362,6 +367,76 @@ public class BookingLedgerService : IBookingLedgerService
         }
         return entries;
     }
+
+    // ── manual adjustments ───────────────────────────────────────────────────
+
+    public async Task<LedgerEntryResponse> AddManualAdjustmentAsync(
+        Guid bookingId, decimal amount, DateTime entryDate, string reason, string? referenceCode, CancellationToken cancellationToken = default)
+    {
+        if (amount <= 0) throw new Exception("Adjustment amount must be greater than zero");
+        if (string.IsNullOrWhiteSpace(reason)) throw new Exception("A reason is required for an adjustment");
+
+        var booking = await _bookingRepository.Query()
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+        if (booking == null || booking.IsDeleted) throw new Exception("Booking not found");
+        if (booking.IsArchived) throw new Exception("This booking is archived; its balance was carried forward to the customer");
+
+        var entry = new RecurringChargeEntry
+        {
+            Id = Guid.NewGuid(),
+            TenantId = booking.TenantId,
+            BookingId = booking.Id,
+            ChargeType = ChargeTypes.ManualAdjustment,
+            Source = RecurringChargeSources.Manual,
+            EntryDate = entryDate,
+            BillPeriodFrom = entryDate,
+            BillPeriodTo = entryDate,
+            BillType = BillTypes.Monthly,
+            Cycles = 1,
+            Amount = Math.Round(amount, 2),
+            Note = Truncate(reason.Trim(), 500),
+            ReferenceCode = referenceCode,
+            CreatedAt = DateTime.UtcNow,
+            CreatedById = _currentUser.Id > 0 ? _currentUser.Id : null,
+        };
+        await _entryRepository.AddAsync(entry, cancellationToken);
+        return (await GetEntriesAsync(bookingId, cancellationToken)).First(e => e.Id == entry.Id);
+    }
+
+    public async Task<bool> ReverseManualAdjustmentAsync(Guid entryId, CancellationToken cancellationToken = default)
+    {
+        var original = await _entryRepository.Query()
+            .FirstOrDefaultAsync(e => e.Id == entryId, cancellationToken);
+        if (original == null || original.ChargeType != ChargeTypes.ManualAdjustment || original.Source != RecurringChargeSources.Manual)
+            throw new Exception("Adjustment not found");
+        if (await _entryRepository.Query().AnyAsync(e => e.ReversalOfId == entryId, cancellationToken))
+            throw new Exception("This adjustment is already cancelled");
+
+        // The ledger is append-only: cancelling posts the opposite amount, dated today
+        var now = DateTime.UtcNow;
+        await _entryRepository.AddAsync(new RecurringChargeEntry
+        {
+            Id = Guid.NewGuid(),
+            TenantId = original.TenantId,
+            BookingId = original.BookingId,
+            ChargeType = ChargeTypes.ManualAdjustment,
+            Source = RecurringChargeSources.Reversal,
+            EntryDate = now,
+            BillPeriodFrom = now,
+            BillPeriodTo = now,
+            BillType = BillTypes.Monthly,
+            Cycles = 1,
+            Amount = -original.Amount,
+            Note = Truncate($"Cancelled: {original.Note}", 500),
+            ReferenceCode = original.ReferenceCode,
+            ReversalOfId = original.Id,
+            CreatedAt = now,
+            CreatedById = _currentUser.Id > 0 ? _currentUser.Id : null,
+        }, cancellationToken);
+        return true;
+    }
+
+    private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max];
 
     public async Task<List<LedgerCheckItem>> CheckAsync(bool onlyDifferences = true, CancellationToken cancellationToken = default)
     {
@@ -392,7 +467,9 @@ public class BookingLedgerService : IBookingLedgerService
             // Independent calculation (delivery rent as saved on the delivery)
             var (_, _, calculated, _) = BookingDueCalculator.CalculateBookingAccruedDetails(
                 booking, booking.BookingDetails.Where(d => !d.IsDeleted), deliveries.Where(d => d.BookingId == booking.Id), now);
-            var ledgerTotal = ledger.GetValueOrDefault(booking.Id)?.Total ?? 0m;
+            // Manual adjustments are not part of the independent calculation
+            var charges = ledger.GetValueOrDefault(booking.Id);
+            var ledgerTotal = (charges?.Total ?? 0m) - (charges?.ManualAdjustment ?? 0m);
             var item = new LedgerCheckItem
             {
                 BookingId = booking.Id,

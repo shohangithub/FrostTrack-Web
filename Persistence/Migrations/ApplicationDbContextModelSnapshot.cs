@@ -1865,6 +1865,13 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("RecurringChargeRunId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ReferenceCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("ReversalOfId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(20)

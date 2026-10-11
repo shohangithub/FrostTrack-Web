@@ -14,6 +14,7 @@ import {
   ICustomerOutstandingResponse,
 } from '../models/booking.interface';
 import { ILookup } from '../../core/models/lookup';
+import { IBookingHistory } from '../models/booking-history.interface';
 import { CodeResponse } from '../../core/models/code-response';
 import { BaseService } from '../../core/service/base.service';
 import { ErrorHandlerService } from '../../core/service/error-handler.service';
@@ -81,6 +82,11 @@ export class BookingService extends BaseService {
   }
 
 
+
+  /** Booking History report: info, items, deliveries, statement with running due, adjustments, summary. */
+  getHistory(id: string): Observable<IBookingHistory> {
+    return this.get<IBookingHistory>(`${environment.apiUrl}/BookingHistory/${id}`, 'Load Booking History');
+  }
 
   getInvoiceWithDelivery(id: string): Observable<any> {
     return this.get<any>(this.path + `/invoice-with-delivery/${id}`);

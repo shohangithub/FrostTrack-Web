@@ -56,6 +56,20 @@ export const BOOKING_ROUTE: Route[] = [
       ),
   },
   {
+    path: 'history',
+    loadComponent: () =>
+      import('./components/booking-history/booking-history.component').then(
+        (m) => m.BookingHistoryComponent,
+      ),
+  },
+  {
+    path: 'history/:id',
+    loadComponent: () =>
+      import('./components/booking-history/booking-history.component').then(
+        (m) => m.BookingHistoryComponent,
+      ),
+  },
+  {
     path: 'customer-due-list',
     loadComponent: () =>
       import('./components/customer-due-list/customer-due-list.component').then(

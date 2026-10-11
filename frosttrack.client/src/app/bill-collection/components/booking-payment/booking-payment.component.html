@@ -66,224 +66,7 @@
         <div class="row">
           <!-- Left: report-style booking information -->
           <div class="col-lg-8 col-md-12">
-            <div class="card mb-3">
-              <span class="card-label">বুকিং তথ্য / Booking Information</span>
-              <div class="card-body report-body">
-                <div class="booking-info-box">
-                  <table class="info-table">
-                    <tr>
-                      <td class="info-label">Booking No:</td>
-                      <td class="info-value fw-bold">
-                        {{ detail.bookingNumber }}
-                        @if (detail.isContracted) {
-                        <span class="badge bg-info ms-1">চুক্তি</span>
-                        }
-                      </td>
-                      <td class="info-label">Booking Date:</td>
-                      <td class="info-value">{{ detail.bookingDate | date: 'dd-MMM-yyyy' }}</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Customer:</td>
-                      <td class="info-value">{{ detail.customerName }}</td>
-                      <td class="info-label">Mobile:</td>
-                      <td class="info-value">{{ detail.customerMobile || '-' }}</td>
-                    </tr>
-                    @if (detail.notes) {
-                    <tr>
-                      <td class="info-label">Notes:</td>
-                      <td class="info-value" colspan="3">{{ detail.notes }}</td>
-                    </tr>
-                    }
-                  </table>
-                </div>
-
-                <!-- Items, stock & rent -->
-                <div class="section-title">পণ্য, মজুদ ও ভাড়া / Items, Stock &amp; Rent</div>
-                <div class="stored-products-section">
-                  <table class="products-table">
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th class="text-end">Rate</th>
-                        <th class="text-end">Booked</th>
-                        <th class="text-end">Delivered</th>
-                        <th class="text-end">In Store</th>
-                        <th class="text-center">Month</th>
-                        <th class="text-end">Rent Charged</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (item of detail.items; track $index) {
-                      <tr>
-                        <td>{{ item.productName }} <span class="sub-text">{{ item.unitName }}</span></td>
-                        <td class="text-end">{{ item.rate | number: '1.2-2' }}</td>
-                        <td class="text-end">{{ item.bookedQty | number: '1.0-2' }}</td>
-                        <td class="text-end">{{ item.deliveredQty | number: '1.0-2' }}</td>
-                        <td class="text-end fw-bold">{{ item.stockInStore | number: '1.0-2' }}</td>
-                        <td class="text-center">{{ item.stockInStore > 0 ? item.currentMonth : '-' }}</td>
-                        <td class="text-end fw-bold">{{ item.stockRent | number: '1.2-2' }}</td>
-                      </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Charge ledger: every charge on this booking, dated -->
-                <div class="section-title">চার্জ খতিয়ান / Charge Ledger</div>
-                <div class="stored-products-section">
-                  <table class="products-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Charge</th>
-                        <th>Product</th>
-                        <th class="text-end">Qty</th>
-                        <th class="text-end">Rate</th>
-                        <th>Note</th>
-                        <th class="text-end">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (e of detail.ledgerEntries; track e.id) {
-                      <tr [class.correction-row]="e.source === 'CORRECTION'">
-                        <td>{{ e.entryDate | date: 'dd-MMM-yy' }}</td>
-                        <td>{{ chargeLabel(e.chargeType, e.cycleNo) }}</td>
-                        <td>{{ e.productName || '-' }}</td>
-                        <td class="text-end">{{ e.quantity ? (e.quantity | number: '1.0-2') : '-' }}</td>
-                        <td class="text-end">{{ e.rate ? (e.rate | number: '1.2-2') : '-' }}</td>
-                        <td class="sub-text">{{ e.note }}</td>
-                        <td class="text-end fw-bold">{{ e.amount | number: '1.2-2' }}</td>
-                      </tr>
-                      } @empty {
-                      <tr><td colspan="7" class="text-center py-2">No charges posted yet</td></tr>
-                      }
-                    </tbody>
-                    <tfoot>
-                      <tr class="total-row">
-                        <td colspan="6" class="text-end">Total Charges:</td>
-                        <td class="text-end">{{ detail.summary.totalCharge | number: '1.2-2' }}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                <!-- Deliveries -->
-                <div class="section-title">ডেলিভারি / Deliveries</div>
-                <div class="stored-products-section">
-                  <table class="products-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Delivery No</th>
-                        <th>Product</th>
-                        <th class="text-end">Qty</th>
-                        <th class="text-center">Months</th>
-                        <th class="text-end">Rent</th>
-                        <th class="text-end">Labour</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Collected</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (d of detail.deliveries; track $index) {
-                      <tr>
-                        <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
-                        <td>{{ d.deliveryNumber }}</td>
-                        <td>{{ d.productName }}</td>
-                        <td class="text-end">{{ d.quantity | number: '1.0-2' }} <span class="sub-text">{{ d.unitName }}</span></td>
-                        <td class="text-center">{{ d.billingCycles }}</td>
-                        <td class="text-end">{{ d.rentCharge | number: '1.2-2' }}</td>
-                        <td class="text-end">{{ d.labourCharge ? (d.labourCharge | number: '1.2-2') : '-' }}</td>
-                        <td class="text-end fw-bold">{{ d.total | number: '1.2-2' }}</td>
-                        <td class="text-end paid-amount">{{ d.collectedAmount ? (d.collectedAmount | number: '1.2-2') : '-' }}</td>
-                      </tr>
-                      } @empty {
-                      <tr><td colspan="9" class="text-center py-2">No deliveries yet</td></tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Labour -->
-                <div class="section-title">লেবার / Labour</div>
-                <div class="stored-products-section">
-                  <table class="products-table">
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th class="text-end">Booking Labour</th>
-                        <th class="text-end">Delivery Labour</th>
-                        <th class="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (item of detail.items; track $index) {
-                      <tr>
-                        <td>{{ item.productName }}</td>
-                        <td class="text-end">{{ item.bookingLabour | number: '1.2-2' }}</td>
-                        <td class="text-end">{{ item.deliveryLabour | number: '1.2-2' }}</td>
-                        <td class="text-end fw-bold">{{ item.bookingLabour + item.deliveryLabour | number: '1.2-2' }}</td>
-                      </tr>
-                      }
-                    </tbody>
-                    <tfoot>
-                      <tr class="total-row">
-                        <td class="text-end" colspan="3">Total Labour:</td>
-                        <td class="text-end">{{ detail.summary.labourCharge | number: '1.2-2' }}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                <!-- Previous payments -->
-                <div class="section-title">পূর্বের পরিশোধ / Previous Payments</div>
-                <div class="stored-products-section">
-                  <table class="products-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Receipt No</th>
-                        <th>Type</th>
-                        <th>Method</th>
-                        <th class="text-end">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (p of detail.payments; track p.id) {
-                      <tr>
-                        <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
-                        <td>{{ p.referenceCode }}</td>
-                        <td>{{ kindLabel(p.kind) }}</td>
-                        <td>{{ p.paymentMethod }}</td>
-                        <td class="text-end paid-amount">{{ p.amount | number: '1.2-2' }}</td>
-                      </tr>
-                      }
-                      @for (a of detail.advanceApplications; track a.id) {
-                      <tr>
-                        <td>{{ a.date | date: 'dd-MMM-yy' }}</td>
-                        <td>{{ a.referenceCode }}</td>
-                        <td>{{ kindLabel(a.kind) }}</td>
-                        <td>-</td>
-                        <td class="text-end paid-amount">{{ a.amount | number: '1.2-2' }}</td>
-                      </tr>
-                      }
-                      @for (d of detail.discounts; track d.id) {
-                      <tr>
-                        <td>{{ d.date | date: 'dd-MMM-yy' }}</td>
-                        <td>{{ d.referenceCode }}</td>
-                        <td>{{ kindLabel(d.kind) }}</td>
-                        <td class="sub-text">{{ d.description }}</td>
-                        <td class="text-end">{{ d.amount | number: '1.2-2' }}</td>
-                      </tr>
-                      }
-                      @if (!detail.payments.length && !detail.advanceApplications.length && !detail.discounts.length) {
-                      <tr><td colspan="5" class="text-center py-2">No payments yet</td></tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <app-booking-account-detail [detail]="detail"></app-booking-account-detail>
           </div>
 
           <!-- Right: summary + collect -->
@@ -295,7 +78,10 @@
                   <tr><td>Rent (ভাড়া)</td><td class="text-end">{{ detail.summary.rentCharge | number: '1.2-2' }}</td></tr>
                   <tr><td>Labour (লেবার)</td><td class="text-end">{{ detail.summary.labourCharge | number: '1.2-2' }}</td></tr>
                   @if (detail.summary.adjustment) {
-                  <tr><td>Adjustment</td><td class="text-end">{{ detail.summary.adjustment | number: '1.2-2' }}</td></tr>
+                  <tr><td>Delivery adjustment</td><td class="text-end">{{ detail.summary.adjustment | number: '1.2-2' }}</td></tr>
+                  }
+                  @if (detail.summary.manualAdjustment) {
+                  <tr><td>(+) Adjustment</td><td class="text-end">{{ detail.summary.manualAdjustment | number: '1.2-2' }}</td></tr>
                   }
                   <tr class="fw-bold border-top"><td>Total Charges</td><td class="text-end">{{ detail.summary.totalCharge | number: '1.2-2' }}</td></tr>
                   <tr><td>(−) Paid at delivery</td><td class="text-end paid-amount">{{ detail.summary.paidAtDelivery | number: '1.2-2' }}</td></tr>
@@ -304,7 +90,7 @@
                   <tr><td>(−) Advance applied</td><td class="text-end paid-amount">{{ detail.summary.advanceApplied | number: '1.2-2' }}</td></tr>
                   }
                   @if (detail.summary.discount) {
-                  <tr><td>(−) Discount</td><td class="text-end">{{ detail.summary.discount | number: '1.2-2' }}</td></tr>
+                  <tr><td>(−) Adjustment</td><td class="text-end">{{ detail.summary.discount | number: '1.2-2' }}</td></tr>
                   }
                   <tr class="due-row"><td>Current Due (বকেয়া)</td><td class="text-end">৳ {{ bookingDue | number: '1.2-2' }}</td></tr>
                 </table>
@@ -351,12 +137,12 @@
 
                 <div class="row">
                   <div class="col-5 mb-2">
-                    <label class="col-form-label py-1">Discount (৳)</label>
+                    <label class="col-form-label py-1">Adjustment − (৳)</label>
                     <input type="number" class="form-control form-control-sm text-end" formControlName="discountAmount" min="0" step="any" />
                   </div>
                   <div class="col-7 mb-2">
                     <label class="col-form-label py-1">Reason @if (discountAmount > 0) {<span class="text-danger">*</span>}</label>
-                    <input type="text" class="form-control form-control-sm" formControlName="discountReason" placeholder="Discount / adjustment reason" />
+                    <input type="text" class="form-control form-control-sm" formControlName="discountReason" placeholder="Adjustment reason" />
                   </div>
                 </div>
 

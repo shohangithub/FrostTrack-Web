@@ -24,6 +24,8 @@ public class BillCollectionService : IBillCollectionService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEditWindowGuard _editWindowGuard;
     private readonly IBookingLedgerService _ledgerService;
+    private readonly IRepository<RecurringChargeEntry, Guid> _ledgerEntryRepository;
+    private readonly IRepository<ApplicationUser, int> _userRepository;
     private readonly Guid _tenantId;
 
     public BillCollectionService(
@@ -39,9 +41,13 @@ public class BillCollectionService : IBillCollectionService
         IRepository<AdvanceAllocation, Guid> advanceAllocationRepository,
         IUnitOfWork unitOfWork,
         IEditWindowGuard editWindowGuard,
-        IBookingLedgerService ledgerService)
+        IBookingLedgerService ledgerService,
+        IRepository<RecurringChargeEntry, Guid> ledgerEntryRepository,
+        IRepository<ApplicationUser, int> userRepository)
     {
         _ledgerService = ledgerService;
+        _ledgerEntryRepository = ledgerEntryRepository;
+        _userRepository = userRepository;
         _advanceAllocationRepository = advanceAllocationRepository;
         _unitOfWork = unitOfWork;
         _editWindowGuard = editWindowGuard;
@@ -96,7 +102,7 @@ public class BillCollectionService : IBillCollectionService
         await _ledgerService.SyncBookingsAsync(bookingIds, cancellationToken: cancellationToken);
         var ledger = await _ledgerService.GetChargesAsync(bookingIds, DateTime.UtcNow, cancellationToken);
         decimal totalBookingCharges = ledger.Values.Sum(c => c.RentFirstMonth + c.BookingLabour);
-        decimal totalDeliveryCharges = ledger.Values.Sum(c => c.DeliveryLabour + c.Adjustment);
+        decimal totalDeliveryCharges = ledger.Values.Sum(c => c.DeliveryLabour + c.Adjustment + c.ManualAdjustment);
         decimal totalRecurringCharges = ledger.Values.Sum(c => c.RentLaterMonths);
 
         var discountTrxs = await _transactionRepository.Query()
@@ -189,6 +195,7 @@ public class BillCollectionService : IBillCollectionService
 
     public async Task<CustomerDueBookingsResponse> GetCustomerDueBookingsAsync(
         int customerId,
+        bool includeAll,
         CancellationToken cancellationToken = default)
     {
         var customer = await _customerRepository.GetByIdAsync(customerId, cancellationToken);
@@ -229,7 +236,8 @@ public class BillCollectionService : IBillCollectionService
                 - discounted.GetValueOrDefault(booking.Id)
                 - allocated.GetValueOrDefault(booking.Id);
 
-            if (due > 0.005m)
+            // includeAll: every active booking (e.g. to add a charge to a fully paid booking)
+            if (includeAll || due > 0.005m)
             {
                 response.Bookings.Add(new DueBookingOption
                 {
@@ -603,6 +611,7 @@ public class BillCollectionService : IBillCollectionService
             RentCharge = rent,
             LabourCharge = labour,
             Adjustment = adjustment,
+            ManualAdjustment = charges.ManualAdjustment,
             TotalCharge = accrued,
             PaidAtDelivery = paymentLines.Where(p => p.Kind == "AT_DELIVERY").Sum(p => p.Amount),
             OtherPayments = paymentLines.Where(p => p.Kind == "PAYMENT").Sum(p => p.Amount),
@@ -1009,11 +1018,225 @@ public class BillCollectionService : IBillCollectionService
                 t.DiscountReason ?? string.Empty,
                 t.Note,
                 t.BookingId,
-                t.CreatedTime
+                t.CreatedTime,
+                t.Booking != null ? t.Booking.BookingNumber : null,
+                AdjustmentDirections.Minus
             ))
             .ToListAsync(cancellationToken);
 
         return discounts;
+    }
+
+    // ── Discount & Adjustment page (Adjustment + / −) ────────────────────────
+
+    /// <summary>
+    /// Adjustment history of one booking, or of the customer's entries without a booking when bookingId is null.
+    /// Adjustment − = BILL_DISCOUNT transactions; Adjustment + = MANUAL_ADJUSTMENT ledger rows. Cancelled entries are included.
+    /// </summary>
+    public async Task<List<BookingAdjustmentLine>> GetAdjustmentHistoryAsync(
+        int customerId,
+        Guid? bookingId,
+        CancellationToken cancellationToken = default)
+    {
+        // Soft-deleted (cancelled) discounts are part of the history, so look past the soft-delete filter
+        var discountQuery = _transactionRepository.UnfilteredQuery()
+            .Where(t => t.TenantId == _tenantId && !t.IsArchived
+                        && t.CustomerId == customerId
+                        && t.TransactionHead != null
+                        && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT);
+        discountQuery = bookingId.HasValue
+            ? discountQuery.Where(t => t.BookingId == bookingId)
+            : discountQuery.Where(t => t.BookingId == null);
+
+        var discounts = await discountQuery
+            .Select(t => new
+            {
+                t.Id,
+                t.TransactionDate,
+                t.TransactionCode,
+                t.BookingId,
+                BookingNumber = t.Booking != null ? t.Booking.BookingNumber : null,
+                Amount = t.Amount > 0 ? t.Amount : t.DiscountAmount,
+                Reason = t.DiscountReason ?? t.Description,
+                t.Note,
+                t.CreatedById,
+                t.CreatedTime,
+                t.IsDeleted,
+                t.DeletedAt,
+                t.DeletedById,
+            })
+            .ToListAsync(cancellationToken);
+
+        var ledgerRows = bookingId.HasValue
+            ? await _ledgerEntryRepository.Query()
+                .Where(e => e.BookingId == bookingId && e.ChargeType == ChargeTypes.ManualAdjustment)
+                .Select(e => new LedgerAdjustmentRow(
+                    e.Id,
+                    e.EntryDate,
+                    e.ReferenceCode,
+                    e.Source,
+                    e.ReversalOfId,
+                    e.Booking != null ? e.Booking.BookingNumber : null,
+                    e.Amount,
+                    e.Note,
+                    e.CreatedById,
+                    e.CreatedAt))
+                .ToListAsync(cancellationToken)
+            : new List<LedgerAdjustmentRow>();
+        var reversals = ledgerRows.Where(r => r.ReversalOfId.HasValue).ToDictionary(r => r.ReversalOfId!.Value);
+
+        var userIds = discounts.Select(d => (int?)d.CreatedById)
+            .Concat(discounts.Select(d => d.DeletedById))
+            .Concat(ledgerRows.Select(r => r.CreatedById))
+            .Where(id => id.HasValue && id > 0).Select(id => id!.Value).Distinct().ToList();
+        var userNames = await _userRepository.Query()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, Name = u.Name ?? u.UserName })
+            .ToDictionaryAsync(u => u.Id, u => u.Name, cancellationToken);
+        string? UserName(int? id) => id.HasValue ? userNames.GetValueOrDefault(id.Value) : null;
+
+        var lines = discounts.Select(d => new BookingAdjustmentLine
+        {
+            Id = d.Id,
+            Source = AdjustmentSources.Discount,
+            Direction = AdjustmentDirections.Minus,
+            Date = d.TransactionDate,
+            ReferenceCode = d.TransactionCode,
+            BookingId = d.BookingId,
+            BookingNumber = d.BookingNumber,
+            Amount = d.Amount,
+            Reason = d.Reason,
+            Note = d.Note,
+            CreatedBy = UserName(d.CreatedById),
+            CreatedTime = d.CreatedTime,
+            IsCancelled = d.IsDeleted,
+            CancelledAt = d.DeletedAt,
+            CancelledBy = UserName(d.DeletedById),
+        }).ToList();
+
+        foreach (var row in ledgerRows.Where(r => r.Source == RecurringChargeSources.Manual))
+        {
+            var reversal = reversals.GetValueOrDefault(row.Id);
+            lines.Add(new BookingAdjustmentLine
+            {
+                Id = row.Id,
+                Source = AdjustmentSources.Ledger,
+                Direction = row.Amount >= 0 ? AdjustmentDirections.Plus : AdjustmentDirections.Minus,
+                Date = row.EntryDate,
+                ReferenceCode = row.ReferenceCode,
+                BookingId = bookingId,
+                BookingNumber = row.BookingNumber,
+                Amount = Math.Abs(row.Amount),
+                Reason = row.Note ?? string.Empty,
+                CreatedBy = UserName(row.CreatedById),
+                CreatedTime = row.CreatedAt,
+                IsCancelled = reversal != null,
+                CancelledAt = reversal?.CreatedAt,
+                CancelledBy = reversal != null ? UserName(reversal.CreatedById) : null,
+            });
+        }
+
+        return lines.OrderByDescending(l => l.Date).ThenByDescending(l => l.CreatedTime).ToList();
+    }
+
+    private sealed record LedgerAdjustmentRow(
+        Guid Id, DateTime EntryDate, string? ReferenceCode, string Source, Guid? ReversalOfId,
+        string? BookingNumber, decimal Amount, string? Note, int? CreatedById, DateTime CreatedAt);
+
+    public async Task<BookingAdjustmentResultResponse> CreateAdjustmentAsync(
+        BookingAdjustmentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.Amount <= 0)
+            throw new Exception("Adjustment amount must be greater than zero");
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            throw new Exception("A reason is required for an adjustment");
+        var isPlus = request.Direction == AdjustmentDirections.Plus;
+        if (!isPlus && request.Direction != AdjustmentDirections.Minus)
+            throw new Exception("Adjustment type must be PLUS or MINUS");
+
+        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
+        if (customer == null || customer.IsDeleted)
+            throw new Exception("Customer not found");
+
+        var amount = Math.Round(request.Amount, 2);
+        var result = new BookingAdjustmentResultResponse { Direction = request.Direction, Amount = amount };
+
+        if (!request.BookingId.HasValue)
+        {
+            // Customer level (opening balance / old dues): only a reduction is possible
+            if (isPlus)
+                throw new Exception("Adjustment + needs a booking. Select a booking to add a charge.");
+            var summary = await GetCustomerBalanceSummaryAsync(request.CustomerId, cancellationToken);
+            result.DueBefore = summary.NetDue;
+            await CreateCustomerDiscountAsync(new CustomerDiscountRequest(
+                request.TransactionCode, request.TransactionDate, request.BranchId, request.CustomerId,
+                amount, request.Reason, Note: request.Note), cancellationToken);
+            result.DueAfter = Math.Max(0m, summary.NetDue - amount);
+            return result;
+        }
+
+        var bookingId = request.BookingId.Value;
+        var ownsBooking = await _bookingRepository.Query()
+            .AnyAsync(b => b.Id == bookingId && b.CustomerId == request.CustomerId && !b.IsDeleted, cancellationToken);
+        if (!ownsBooking)
+            throw new Exception("Booking not found for this customer");
+
+        var due = (await LoadBookingLedgerAsync(bookingId, cancellationToken)).Summary.Due;
+        result.DueBefore = due;
+
+        if (isPlus)
+        {
+            // Ledger dates are the UTC instant of local midnight
+            var entryDate = DateTime.SpecifyKind(request.TransactionDate.Date, DateTimeKind.Local).ToUniversalTime();
+            if (entryDate > DateTime.UtcNow)
+                throw new Exception("Adjustment date cannot be in the future");
+            var reason = string.IsNullOrWhiteSpace(request.Note)
+                ? request.Reason.Trim()
+                : $"{request.Reason.Trim()} ({request.Note.Trim()})";
+            await _ledgerService.AddManualAdjustmentAsync(bookingId, amount, entryDate, reason, request.TransactionCode, cancellationToken);
+            result.DueAfter = due + amount;
+        }
+        else
+        {
+            if (amount > Math.Max(0m, due) + 0.005m)
+                throw new Exception($"Adjustment − cannot be more than the booking due (৳{Math.Max(0m, due):N2})");
+            await CreateCustomerDiscountAsync(new CustomerDiscountRequest(
+                request.TransactionCode, request.TransactionDate, request.BranchId, request.CustomerId,
+                amount, request.Reason, TotalDue: due, CurrentDue: due - amount, Note: request.Note, BookingId: bookingId), cancellationToken);
+            result.DueAfter = due - amount;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Cancels an adjustment: Adjustment − (discount transaction) is soft-deleted under the edit window;
+    /// Adjustment + (ledger row) is reversed by an opposite entry, since the ledger is append-only.
+    /// </summary>
+    public async Task<bool> CancelAdjustmentAsync(string source, Guid id, CancellationToken cancellationToken = default)
+    {
+        if (source == AdjustmentSources.Ledger)
+            return await _ledgerService.ReverseManualAdjustmentAsync(id, cancellationToken);
+
+        if (source != AdjustmentSources.Discount)
+            throw new Exception("Unknown adjustment type");
+
+        var entity = await _transactionRepository.Query()
+            .FirstOrDefaultAsync(t => t.Id == id && t.TenantId == _tenantId
+                                      && t.TransactionHead != null
+                                      && t.TransactionHead.UsageFor == UsageFor.BILL_DISCOUNT, cancellationToken);
+        if (entity == null)
+            throw new Exception("Adjustment not found or already cancelled");
+
+        await _editWindowGuard.EnsureEditableAsync(entity.TransactionDate, "adjustment", cancellationToken);
+
+        _defaultValueInjector.InjectUpdatingAudit<Transaction, Guid>(entity);
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTime.UtcNow;
+        entity.DeletedById = entity.LastUpdatedById;
+        await _transactionRepository.UpdateAsync(entity, cancellationToken);
+        return true;
     }
 
     public async Task<List<CustomerDiscountItemResponse>> GetCustomerDiscountReportAsync(
@@ -1076,10 +1299,64 @@ public class BillCollectionService : IBillCollectionService
                 t.DiscountReason ?? string.Empty,
                 t.Note,
                 t.BookingId,
-                t.CreatedTime
+                t.CreatedTime,
+                t.Booking != null ? t.Booking.BookingNumber : null,
+                AdjustmentDirections.Minus
             ))
             .ToListAsync(cancellationToken);
 
-        return results;
+        // Adjustment + (manual extra charges on bookings); cancelled ones and their reversals are left out
+        var ledgerQuery = _ledgerEntryRepository.Query()
+            .Where(e => e.ChargeType == ChargeTypes.ManualAdjustment
+                        && e.Source == RecurringChargeSources.Manual
+                        && !_ledgerEntryRepository.Query().Any(r => r.ReversalOfId == e.Id)
+                        && e.Booking != null && !e.Booking.IsArchived);
+        if (startDate.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Local).ToUniversalTime();
+            ledgerQuery = ledgerQuery.Where(e => e.EntryDate >= fromUtc);
+        }
+        if (endDate.HasValue)
+        {
+            var toUtc = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+            ledgerQuery = ledgerQuery.Where(e => e.EntryDate < toUtc);
+        }
+        if (customerId.HasValue && customerId.Value > 0)
+            ledgerQuery = ledgerQuery.Where(e => e.Booking!.CustomerId == customerId.Value);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            ledgerQuery = ledgerQuery.Where(e => (e.ReferenceCode != null && e.ReferenceCode.ToLower().Contains(term))
+                                              || e.Booking!.BookingNumber.ToLower().Contains(term)
+                                              || (e.Booking!.Customer != null && e.Booking.Customer.CustomerName.ToLower().Contains(term))
+                                              || (e.Booking!.Customer != null && e.Booking.Customer.CustomerMobile != null && e.Booking.Customer.CustomerMobile.Contains(term))
+                                              || (e.Note != null && e.Note.ToLower().Contains(term)));
+        }
+
+        var plusEntries = await ledgerQuery
+            .Select(e => new CustomerDiscountItemResponse(
+                e.Id,
+                e.ReferenceCode ?? string.Empty,
+                e.EntryDate,
+                e.Booking!.CustomerId,
+                e.Booking.Customer != null ? e.Booking.Customer.CustomerName : "Unknown",
+                e.Booking.Customer != null ? e.Booking.Customer.CustomerMobile : null,
+                e.Booking.Customer != null ? e.Booking.Customer.Address : null,
+                0m,
+                e.Amount,
+                0m,
+                e.Note ?? string.Empty,
+                null,
+                e.BookingId,
+                e.CreatedAt,
+                e.Booking.BookingNumber,
+                AdjustmentDirections.Plus
+            ))
+            .ToListAsync(cancellationToken);
+
+        return results.Concat(plusEntries)
+            .OrderByDescending(r => r.TransactionDate)
+            .ThenByDescending(r => r.CreatedTime)
+            .ToList();
     }
 }

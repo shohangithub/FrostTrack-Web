@@ -158,8 +158,18 @@ export class CustomerDiscountReportComponent implements OnInit {
     return this.reportItems.reduce((sum, item) => sum + (item.totalDue || 0), 0);
   }
 
+  /** Adjustment − (discounts / reductions). */
   getTotalDiscount(): number {
-    return this.reportItems.reduce((sum, item) => sum + (item.discountAmount || 0), 0);
+    return this.reportItems
+      .filter((item) => item.direction !== 'PLUS')
+      .reduce((sum, item) => sum + (item.discountAmount || 0), 0);
+  }
+
+  /** Adjustment + (manual extra charges on bookings). */
+  getTotalPlus(): number {
+    return this.reportItems
+      .filter((item) => item.direction === 'PLUS')
+      .reduce((sum, item) => sum + (item.discountAmount || 0), 0);
   }
 
   getTotalCurrentDueAfter(): number {
@@ -180,8 +190,10 @@ export class CustomerDiscountReportComponent implements OnInit {
       'Date',
       'Customer Name',
       'Mobile',
+      'Booking No',
+      'Type',
       'Total Due Before',
-      'Discount Amount',
+      'Amount',
       'Current Due After',
       'Discount Reason',
       'Notes',
@@ -193,6 +205,8 @@ export class CustomerDiscountReportComponent implements OnInit {
       r.transactionDate ? r.transactionDate.substring(0, 10) : '',
       r.customerName,
       r.customerMobile || '',
+      r.bookingNumber || '',
+      r.direction === 'PLUS' ? 'Adjustment +' : 'Adjustment -',
       r.totalDue.toFixed(2),
       r.discountAmount.toFixed(2),
       r.currentDue.toFixed(2),

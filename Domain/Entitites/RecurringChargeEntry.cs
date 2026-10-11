@@ -63,6 +63,13 @@ public class RecurringChargeEntry : BaseEntity<Guid>
     [MaxLength(500)]
     public string? Note { get; set; }
 
+    /// <summary>Voucher number of a manual adjustment.</summary>
+    [MaxLength(50)]
+    public string? ReferenceCode { get; set; }
+
+    /// <summary>For a REVERSAL entry: the manual adjustment it cancels.</summary>
+    public Guid? ReversalOfId { get; set; }
+
     [Column(TypeName = "datetime2")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

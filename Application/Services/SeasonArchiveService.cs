@@ -150,7 +150,7 @@ public class SeasonArchiveService : ISeasonArchiveService
                 var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
                 var charges = ledgerCharges.GetValueOrDefault(b.Id) ?? new LedgerCharges();
-                totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment;
+                totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment + charges.ManualAdjustment;
                 totalRecurringCharges += charges.RentLaterMonths;
                 totalBookingCharges += charges.RentFirstMonth + charges.BookingLabour;
             }
@@ -356,7 +356,7 @@ public class SeasonArchiveService : ISeasonArchiveService
                     var bDels = deliveriesByBooking.TryGetValue(b.Id, out var dl) ? dl : new List<Delivery>();
 
                     var charges = ledgerCharges.GetValueOrDefault(b.Id) ?? new LedgerCharges();
-                    totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment;
+                    totalDeliveryCharges += charges.DeliveryLabour + charges.Adjustment + charges.ManualAdjustment;
                     totalRecurringCharges += charges.RentLaterMonths;
                     totalBookingCharges += charges.RentFirstMonth + charges.BookingLabour;
                 }
