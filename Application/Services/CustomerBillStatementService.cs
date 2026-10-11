@@ -13,6 +13,7 @@ public class CustomerBillStatementService : ICustomerBillStatementService
     private readonly IRepository<Transaction, Guid> _transactionRepository;
     private readonly IRepository<AdvanceAllocation, Guid> _advanceAllocationRepository;
     private readonly IBookingLedgerService _ledgerService;
+    private readonly IRepository<Company, int> _companyRepository;
 
     public CustomerBillStatementService(
         IRepository<Customer, int> customerRepository,
@@ -20,9 +21,11 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         IRepository<Delivery, Guid> deliveryRepository,
         IRepository<Transaction, Guid> transactionRepository,
         IRepository<AdvanceAllocation, Guid> advanceAllocationRepository,
-        IBookingLedgerService ledgerService)
+        IBookingLedgerService ledgerService,
+        IRepository<Company, int> companyRepository)
     {
         _ledgerService = ledgerService;
+        _companyRepository = companyRepository;
         _advanceAllocationRepository = advanceAllocationRepository;
         _customerRepository = customerRepository;
         _bookingRepository = bookingRepository;
@@ -236,10 +239,16 @@ public class CustomerBillStatementService : ICustomerBillStatementService
         }
         var entriesBefore = ledgerEntries.Where(e => e.EntryDate < fromUtc).ToList();
         var entriesInPeriod = ledgerEntries.Where(e => e.EntryDate >= fromUtc && e.EntryDate < toUtcExclusive).ToList();
-        response.ChargeEntries = entriesInPeriod.OrderBy(e => e.EntryDate).ThenBy(e => e.BookingNumber).ToList();
 
+        // Bills = rent months and labour posted on their own date. Everything else (corrections of earlier
+        // charges, delivery adjustments, Adjustment +) is shown separately so rent is never negative.
+        static bool IsBill(LedgerEntryResponse e) => e.Source == RecurringChargeSources.Posted
+            && e.ChargeType is ChargeTypes.RentCycle or ChargeTypes.BookingLabour or ChargeTypes.DeliveryLabour;
         static bool IsLabour(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.BookingLabour or ChargeTypes.DeliveryLabour;
-        static bool IsRentOrAdjustment(LedgerEntryResponse e) => e.ChargeType is ChargeTypes.RentCycle or ChargeTypes.DeliveryAdjustment or ChargeTypes.ManualAdjustment;
+        var bills = entriesInPeriod.Where(IsBill).ToList();
+        response.ChargeEntries = bills.OrderBy(e => e.EntryDate).ThenBy(e => e.BookingNumber).ToList();
+        response.Corrections = BuildCorrections(
+            entriesInPeriod.Where(e => !IsBill(e)).ToList(), bookings, await GoLiveRules.GetGoLiveUtcAsync(_companyRepository, cancellationToken));
 
         // ---- Stock in store and rent per booking line ----
         foreach (var booking in bookings)
@@ -254,7 +263,7 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                 var start = LineState(booking, bd, lineDeliveries, fromUtc);
                 var end = LineState(booking, bd, lineDeliveries, toUtcExclusive);
 
-                var lineRentEntries = entriesInPeriod
+                var lineRentEntries = bills
                     .Where(e => e.ChargeType == ChargeTypes.RentCycle && e.BookingDetailId == bd.Id)
                     .ToList();
                 var rentThisPeriod = lineRentEntries.Sum(e => e.Amount);
@@ -264,9 +273,8 @@ public class CustomerBillStatementService : ICustomerBillStatementService
                 if (!bookedInPeriod && start.Stock <= 0 && end.Stock <= 0 && lineRentEntries.Count == 0)
                     continue;
 
-                // Billing dates = months posted in the period (corrections are not new months)
+                // Billing dates = months posted in the period
                 var billingDates = lineRentEntries
-                    .Where(e => e.Source == RecurringChargeSources.Posted)
                     .Select(e => e.EntryDate)
                     .OrderBy(d => d)
                     .ToList();
@@ -297,14 +305,84 @@ public class CustomerBillStatementService : ICustomerBillStatementService
 
         var openingBalance = includeUnlinked ? customer.OpeningBalance : 0m;
         response.PreviousDue = openingBalance + entriesBefore.Sum(e => e.Amount) - paidBefore - discountBefore;
-        response.RentCharged = entriesInPeriod.Where(IsRentOrAdjustment).Sum(e => e.Amount);
-        response.LabourCharged = entriesInPeriod.Where(IsLabour).Sum(e => e.Amount);
-        response.TotalCharged = response.RentCharged + response.LabourCharged;
+        response.RentCharged = bills.Where(e => e.ChargeType == ChargeTypes.RentCycle).Sum(e => e.Amount);
+        response.LabourCharged = bills.Where(IsLabour).Sum(e => e.Amount);
+        response.CorrectionsTotal = response.Corrections.Sum(c => c.Amount);
+        // Same total as before: every ledger row dated in the period
+        response.TotalCharged = response.RentCharged + response.LabourCharged + response.CorrectionsTotal;
         response.TotalPaid = response.Payments.Sum(p => p.Amount);
         response.TotalDiscount = response.Discounts.Sum(p => p.Amount);
         response.ClosingDue = response.PreviousDue + response.TotalCharged - response.TotalPaid - response.TotalDiscount;
 
         return response;
+    }
+
+    /// <summary>
+    /// Corrections grouped per booking and reason (go-live / data changed), plus one line per delivery
+    /// adjustment and per Adjustment + (and its cancellation).
+    /// </summary>
+    private static List<BillStatementCorrectionLine> BuildCorrections(
+        List<LedgerEntryResponse> entries, List<Booking> bookings, DateTime? goLiveUtc)
+    {
+        var bookingByNumber = bookings.GroupBy(b => b.BookingNumber).ToDictionary(g => g.Key, g => g.First());
+        var billTypeByDetail = bookings.SelectMany(b => b.BookingDetails).ToDictionary(d => d.Id, d => d.BillType);
+        var goLiveLabel = goLiveUtc.HasValue ? ReportDateWindow.ToLocalDay(goLiveUtc.Value).ToString("dd-MMM-yy") : string.Empty;
+        var lines = new List<BillStatementCorrectionLine>();
+
+        var corrections = entries.Where(e => e.Source == RecurringChargeSources.Correction).ToList();
+        foreach (var group in corrections.GroupBy(e =>
+                 {
+                     var booking = bookingByNumber.GetValueOrDefault(e.BookingNumber ?? string.Empty);
+                     var billType = e.BookingDetailId.HasValue ? billTypeByDetail.GetValueOrDefault(e.BookingDetailId.Value) : null;
+                     var goLive = booking != null && GoLiveRules.IsGoLiveCorrection(e, billType, booking.BookingDate, goLiveUtc);
+                     return (Booking: e.BookingNumber ?? string.Empty, GoLive: goLive, e.ChargeType);
+                 }))
+        {
+            var rentMonths = GoLiveRules.MonthList(group.Where(e => e.CycleNo.HasValue).Select(e => e.CycleNo!.Value));
+            var what = group.Key.ChargeType switch
+            {
+                ChargeTypes.RentCycle => $"Rent month{(rentMonths.Contains('–') || rentMonths.Contains(',') ? "s" : "")} {rentMonths}",
+                ChargeTypes.BookingLabour => "Booking labour",
+                ChargeTypes.DeliveryLabour => "Delivery labour",
+                ChargeTypes.DeliveryAdjustment => "Delivery adjustment",
+                _ => group.Key.ChargeType,
+            };
+            var amount = group.Sum(e => e.Amount);
+            lines.Add(new BillStatementCorrectionLine
+            {
+                Date = group.Max(e => e.EntryDate),
+                BookingNumber = group.Key.Booking,
+                Category = group.Key.GoLive ? "GO_LIVE" : "DATA_CHANGE",
+                Particulars = group.Key.GoLive
+                    ? $"{what} removed — ended before go-live ({goLiveLabel}), settled outside the system"
+                    : $"{what} {(amount < 0 ? "reduced" : "increased")} — booking / delivery data changed",
+                Reference = string.Join(", ", group.Where(e => e.DeliveryNumber != null).Select(e => e.DeliveryNumber).Distinct()),
+                Amount = amount,
+            });
+        }
+
+        foreach (var e in entries.Where(e => e.Source != RecurringChargeSources.Correction))
+        {
+            var (category, particulars) = e.ChargeType switch
+            {
+                ChargeTypes.DeliveryAdjustment => ("DELIVERY_ADJUSTMENT", $"Delivery adjustment{(e.DeliveryNumber != null ? $" ({e.DeliveryNumber})" : "")}"),
+                ChargeTypes.ManualAdjustment when e.Source == RecurringChargeSources.Reversal => ("ADJUSTMENT_PLUS_CANCELLED", $"Adjustment (+) cancelled: {e.Note}"),
+                ChargeTypes.ManualAdjustment => ("ADJUSTMENT_PLUS", $"Adjustment (+): {e.Note}"),
+                _ => (e.ChargeType, e.Note ?? e.ChargeType),
+            };
+            lines.Add(new BillStatementCorrectionLine
+            {
+                Date = e.EntryDate,
+                BookingNumber = e.BookingNumber ?? string.Empty,
+                Category = category,
+                Particulars = particulars,
+                Reference = e.ReferenceCode ?? e.DeliveryNumber,
+                Amount = e.Amount,
+            });
+        }
+
+        return lines.Where(l => Math.Abs(l.Amount) >= 0.005m)
+            .OrderBy(l => l.Date).ThenBy(l => l.BookingNumber).ToList();
     }
 
     private readonly record struct LineAccrual(decimal Stock, decimal DeliveredQty, decimal Rent, decimal Labour);

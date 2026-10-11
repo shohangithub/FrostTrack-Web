@@ -751,7 +751,7 @@ export const ROUTES: RouteInfo[] = [
       },
       {
         path: '/reports/customer-bill-statement',
-        title: 'Customer Bill Statement',
+        title: 'Contract (চুক্তি) Bill',
         iconType: '',
         icon: '',
         class: 'ml-menu',

@@ -5,71 +5,60 @@
     <div class="row clearfix">
       <div class="col-lg-12">
         <div class="card mt-2">
-          <span class="card-label">গ্রাহক বিল বিবরণী / Customer Bill Statement</span>
-          <div class="p-10 mt-2">
+          <span class="card-label">চুক্তি বিল বিবরণী / Contract Bill Statement</span>
+          <div class="p-3">
             <form class="product-form" [formGroup]="reportForm" (ngSubmit)="generateReport()">
-              <div class="row align-items-end">
-                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <label for="customerId" class="col-sm-12 col-form-label">
-                      Customer <span class="text-danger">*</span>
-                    </label>
-                    <div class="col-sm-12">
-                      <ng-select id="customerId" [items]="customers" bindLabel="text" bindValue="value"
-                        placeholder="Select contract customer" formControlName="customerId" [clearable]="true"
-                        notFoundText="No customers with contract (চুক্তি) bookings"></ng-select>
-                      <small class="text-muted">Only contract (চুক্তি) bookings are billed here.</small>
-                    </div>
-                  </div>
+              <div class="row align-items-end filter-row">
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                  <label for="customerId" class="col-form-label py-1">
+                    Customer / গ্রাহক <span class="text-danger">*</span>
+                  </label>
+                  <ng-select id="customerId" [items]="customers" bindLabel="text" bindValue="value"
+                    placeholder="Select contract (চুক্তি) customer" formControlName="customerId" [clearable]="true"
+                    notFoundText="No customers with contract (চুক্তি) bookings"></ng-select>
                 </div>
 
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                  <div class="form-group row">
-                    <label for="fromDate" class="col-sm-12 col-form-label">
-                      From Date <span class="text-danger">*</span>
-                    </label>
-                    <div class="col-sm-12">
-                      <input type="date" id="fromDate" class="form-control form-control-sm" formControlName="fromDate" />
-                    </div>
-                  </div>
+                <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
+                  <label for="fromDate" class="col-form-label py-1">
+                    From Date / শুরু তারিখ <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" id="fromDate" class="form-control" formControlName="fromDate" />
                 </div>
 
-                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                  <div class="form-group row">
-                    <label for="toDate" class="col-sm-12 col-form-label">
-                      To Date <span class="text-danger">*</span>
-                    </label>
-                    <div class="col-sm-12">
-                      <input type="date" id="toDate" class="form-control form-control-sm" formControlName="toDate" />
-                    </div>
-                  </div>
+                <div class="col-lg-2 col-md-3 col-sm-6 mb-2">
+                  <label for="toDate" class="col-form-label py-1">
+                    To Date / শেষ তারিখ <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" id="toDate" class="form-control" formControlName="toDate" />
                 </div>
 
-                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
-                  <div class="form-group row">
-                    <div class="col-sm-12 text-end">
-                      <button type="button" class="btn btn-outline-secondary btn-sm me-1" (click)="selectMonth(-1)">
-                        Last Month
-                      </button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="selectMonth(0)">
-                        This Month
-                      </button>
-                      <button type="submit" class="btn btn-primary px-3" [disabled]="isLoading || reportForm.invalid">
-                        @if (isLoading) {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Show Bill
-                      </button>
-                      @if (statement) {
-                      <button type="button" class="btn btn-secondary ms-2 px-3" (click)="reset()">Clear</button>
+                <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                  <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-outline-secondary" (click)="selectMonth(-1)">Last Month</button>
+                      <button type="button" class="btn btn-outline-secondary" (click)="selectMonth(0)">This Month</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary px-3" [disabled]="isLoading || reportForm.invalid">
+                      @if (isLoading) {
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                       }
-                    </div>
+                      Show Bill
+                    </button>
+                    @if (statement) {
+                    <button type="button" class="btn btn-secondary px-3" (click)="reset()">Clear</button>
+                    }
                   </div>
                 </div>
               </div>
-              @if (reportForm.hasError('invalidRange')) {
-              <small class="form-text text-danger">From date cannot be after To date</small>
-              }
+
+              <div class="d-flex flex-wrap gap-3 small">
+                <span class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>Only contract (চুক্তি) bookings are billed in this statement.
+                </span>
+                @if (reportForm.hasError('invalidRange')) {
+                <span class="text-danger">From date cannot be after To date</span>
+                }
+              </div>
             </form>
           </div>
         </div>
@@ -86,7 +75,7 @@
             <div class="col-12">
               <div class="d-flex gap-2 justify-content-end">
                 <button type="button" class="btn" [openNewTab]="true" [closeWindow]="true" [previewOnly]="false"
-                  [useExistingCss]="true" printTitle="Customer Bill Statement"
+                  [useExistingCss]="true" printTitle="Contract Bill Statement"
                   printSectionId="customer-bill-print-section" ngxPrint>
                   <i class="fas fa-print me-1"></i>Print
                 </button>
@@ -99,7 +88,7 @@
               <div class="card-body p-0">
                 <div class="invoice-container">
 
-                  <app-report-invoice-header [Title]="'গ্রাহক বিল বিবরণী'" [InvoiceNumber]="''">
+                  <app-report-invoice-header [Title]="'চুক্তি বিল বিবরণী'" [InvoiceNumber]="''">
                   </app-report-invoice-header>
 
                   <!-- Customer & Period -->
@@ -127,7 +116,7 @@
                   </div>
 
                   <!-- Stock & storage rent -->
-                  <div class="section-title">মজুদ ও ভাড়া / Stock in store &amp; rent for this period</div>
+                  <div class="section-title">মজুদ ও ভাড়া</div>
                   <div class="stored-products-section">
                     <table class="products-table stock-table">
                       <thead>
@@ -185,176 +174,13 @@
                       }
                     </table>
                     <div class="statement-note">
-                      Rent = stock on bill date × rate for every billing date in the period (the booking date is the
-                      first cycle). Goods delivered in the period are charged through their delivery rent.
+                      Rent = the months billed in this period (stock at the start of each month × rate; the booking date
+                      is the first month).
                     </div>
                   </div>
 
-                  <!-- Bookings -->
-                  <div class="section-title">বুকিং বিবরণ / Bookings in this period</div>
-                  <div class="stored-products-section">
-                    <table class="products-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th style="width: 30px;">ক্রমিক</th>
-                          <th>Date</th>
-                          <th>Booking No</th>
-                          <th>Product</th>
-                          <th class="text-end">Qty</th>
-                          <th class="text-end">Rate</th>
-                          <th class="text-end">Rent (৳)</th>
-                          <th class="text-end">Labour (৳)</th>
-                          <th class="text-end">Total (৳)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (b of statement.bookings; track $index) {
-                        <tr>
-                          <td class="text-center">{{ $index + 1 }}</td>
-                          <td>{{ b.bookingDate | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ b.bookingNumber }}</td>
-                          <td>{{ b.productName }}</td>
-                          <td class="text-end">{{ b.quantity | number: '1.0-2' }} {{ b.unitName }}</td>
-                          <td class="text-end">{{ b.rate | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ b.rentAmount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ b.labourCharge | number: '1.2-2' }}</td>
-                          <td class="text-end fw-bold">{{ b.total | number: '1.2-2' }}</td>
-                        </tr>
-                        } @empty {
-                        <tr>
-                          <td colspan="9" class="text-center py-2">No bookings in this period.</td>
-                        </tr>
-                        }
-                      </tbody>
-                      @if (statement.bookings.length > 0) {
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="6" class="text-end">Total:</td>
-                          <td class="text-end">{{ statement.bookingRentTotal | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ statement.bookingLabourTotal | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ (statement.bookingRentTotal + statement.bookingLabourTotal) | number: '1.2-2' }}</td>
-                        </tr>
-                      </tfoot>
-                      }
-                    </table>
-                  </div>
-
-                  <!-- Deliveries -->
-                  <div class="section-title">ডেলিভারি বিবরণ / Deliveries in this period</div>
-                  <div class="stored-products-section">
-                    <table class="products-table stock-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th style="width: 30px;">ক্রমিক</th>
-                          <th>Date</th>
-                          <th>Delivery No</th>
-                          <th>Booking No</th>
-                          <th>Product</th>
-                          <th class="text-end">Qty</th>
-                          <th class="text-center">Cycles</th>
-                          <th class="text-end">Rent (৳)</th>
-                          <th class="text-end">Labour (৳)</th>
-                          <th class="text-end">Total (৳)</th>
-                          <th class="text-end">Collected (৳)</th>
-                          <th class="text-end">Due (৳)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (d of statement.deliveries; track $index) {
-                        <tr>
-                          <td class="text-center">{{ $index + 1 }}</td>
-                          <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ d.deliveryNumber }}</td>
-                          <td>{{ d.bookingNumber }}</td>
-                          <td>{{ d.productName }}</td>
-                          <td class="text-end">{{ d.quantity | number: '1.0-2' }} {{ d.unitName }}</td>
-                          <td class="text-center">{{ d.billingCycles }}</td>
-                          <td class="text-end">{{ d.rentCharge | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ d.labourCharge | number: '1.2-2' }}</td>
-                          <td class="text-end fw-bold">{{ d.total | number: '1.2-2' }}</td>
-                          <td class="text-end income-amount">{{ d.collectedAmount ? (d.collectedAmount | number: '1.2-2') : '-' }}</td>
-                          <td class="text-end">{{ d.dueAmount | number: '1.2-2' }}</td>
-                        </tr>
-                        } @empty {
-                        <tr>
-                          <td colspan="12" class="text-center py-2">No deliveries in this period.</td>
-                        </tr>
-                        }
-                      </tbody>
-                      @if (statement.deliveries.length > 0) {
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="7" class="text-end">Total:</td>
-                          <td class="text-end">{{ statement.deliveryRentTotal | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ statement.deliveryLabourTotal | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ (statement.deliveryRentTotal + statement.deliveryLabourTotal) | number: '1.2-2' }}</td>
-                          <td class="text-end income-amount">{{ statement.deliveryCollectedTotal | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ (statement.deliveryRentTotal + statement.deliveryLabourTotal - statement.deliveryCollectedTotal) | number: '1.2-2' }}</td>
-                        </tr>
-                        @if (statement.deliveryAdjustmentTotal !== 0) {
-                        <tr>
-                          <td colspan="9" class="text-end">Delivery adjustments:</td>
-                          <td class="text-end">{{ statement.deliveryAdjustmentTotal | number: '1.2-2' }}</td>
-                          <td colspan="2"></td>
-                        </tr>
-                        }
-                      </tfoot>
-                      }
-                    </table>
-                  </div>
-
-                  <!-- Payments & Discounts -->
-                  <div class="section-title">পরিশোধ / Payments received in this period</div>
-                  <div class="stored-products-section">
-                    <table class="products-table">
-                      <thead>
-                        <tr class="section-head">
-                          <th style="width: 30px;">ক্রমিক</th>
-                          <th>Date</th>
-                          <th>Receipt No</th>
-                          <th>Type</th>
-                          <th>Description</th>
-                          <th class="text-end">Amount (৳)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (p of statement.payments; track $index) {
-                        <tr>
-                          <td class="text-center">{{ $index + 1 }}</td>
-                          <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ p.transactionCode }}</td>
-                          <td>{{ p.paymentMethod || '-' }}</td>
-                          <td class="small-text">
-                            @if (p.deliveryNumber) {
-                            <span class="fw-bold">At delivery {{ p.deliveryNumber }}</span>
-                            } @else {
-                            {{ p.description }}
-                            }
-                          </td>
-                          <td class="text-end income-amount">{{ p.amount | number: '1.2-2' }}</td>
-                        </tr>
-                        }
-                        @for (p of statement.discounts; track $index) {
-                        <tr>
-                          <td class="text-center">{{ statement.payments.length + $index + 1 }}</td>
-                          <td>{{ p.date | date: 'dd-MMM-yy' }}</td>
-                          <td>{{ p.transactionCode }}</td>
-                          <td>DISCOUNT</td>
-                          <td class="small-text">{{ p.description }}</td>
-                          <td class="text-end">{{ p.amount | number: '1.2-2' }}</td>
-                        </tr>
-                        }
-                        @if (statement.payments.length === 0 && statement.discounts.length === 0) {
-                        <tr>
-                          <td colspan="6" class="text-center py-2">No payments in this period.</td>
-                        </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-
                   <!-- Charge log (ledger rows in the period) -->
-                  <div class="section-title">চার্জ খতিয়ান / Charges in this period</div>
+                  <div class="section-title">চার্জ খতিয়ান</div>
                   <div class="stored-products-section">
                     <table class="products-table stock-table">
                       <thead>
@@ -375,7 +201,6 @@
                           <td>{{ e.bookingNumber }}</td>
                           <td>
                             {{ chargeLabel(e.chargeType, e.cycleNo) }}
-                            @if (e.source === 'CORRECTION') { <span class="sub-text">(correction)</span> }
                           </td>
                           <td>{{ e.productName || '-' }}</td>
                           <td class="text-end">{{ e.quantity ? (e.quantity | number: '1.0-2') : '-' }}</td>
@@ -383,78 +208,69 @@
                           <td class="text-end fw-bold">{{ e.amount | number: '1.2-2' }}</td>
                         </tr>
                         } @empty {
-                        <tr><td colspan="7" class="text-center py-2">No charges in this period.</td></tr>
+                        <tr><td colspan="7" class="text-center py-2">No bills in this period.</td></tr>
                         }
                       </tbody>
                       @if (statement.chargeEntries.length > 0) {
                       <tfoot>
                         <tr class="total-row">
-                          <td colspan="6" class="text-end">Total charged:</td>
-                          <td class="text-end">{{ statement.totalCharged | number: '1.2-2' }}</td>
+                          <td colspan="6" class="text-end">Total billed:</td>
+                          <td class="text-end">{{ (statement.rentCharged + statement.labourCharged) | number: '1.2-2' }}</td>
                         </tr>
                       </tfoot>
                       }
                     </table>
                   </div>
 
-                  <!-- Bill Summary -->
-                  <div class="section-title">বিল সারসংক্ষেপ / Bill Summary</div>
-                  <div class="stored-products-section bill-summary">
-                    <table class="products-table">
+                  <!-- Deliveries -->
+                  <div class="section-title">ডেলিভারি বিবরণ</div>
+                  <div class="stored-products-section">
+                    <table class="products-table stock-table">
+                      <thead>
+                        <tr class="section-head">
+                          <th style="width: 30px;">ক্রমিক</th>
+                          <th>Date</th>
+                          <th>Delivery No</th>
+                          <th>Booking No</th>
+                          <th>Product</th>
+                          <th class="text-end">Qty</th>
+                          @if (hasDeliveryLabour) {
+                          <th class="text-end">Labour (৳)</th>
+                          }
+                        </tr>
+                      </thead>
                       <tbody>
+                        @for (d of statement.deliveries; track $index) {
                         <tr>
-                          <td>পূর্বের বকেয়া / Previous Due</td>
-                          <td class="text-end">{{ statement.previousDue | number: '1.2-2' }}</td>
+                          <td class="text-center">{{ $index + 1 }}</td>
+                          <td>{{ d.deliveryDate | date: 'dd-MMM-yy' }}</td>
+                          <td>{{ d.deliveryNumber }}</td>
+                          <td>{{ d.bookingNumber }}</td>
+                          <td>{{ d.productName }}</td>
+                          <td class="text-end">{{ d.quantity | number: '1.0-2' }} {{ d.unitName }}</td>
+                          @if (hasDeliveryLabour) {
+                          <td class="text-end">{{ d.labourCharge ? (d.labourCharge | number: '1.2-2') : '-' }}</td>
+                          }
                         </tr>
+                        } @empty {
                         <tr>
-                          <td>(+) ভাড়া / Rent charged this period</td>
-                          <td class="text-end">{{ statement.rentCharged | number: '1.2-2' }}</td>
-                        </tr>
-                        <tr>
-                          <td>(+) লেবার চার্জ / Labour charged this period</td>
-                          <td class="text-end">{{ statement.labourCharged | number: '1.2-2' }}</td>
-                        </tr>
-                        <tr class="total-row">
-                          <td class="fw-bold">মোট প্রদেয় / Total Payable</td>
-                          <td class="text-end fw-bold">{{ (statement.previousDue + statement.totalCharged) | number: '1.2-2' }}</td>
-                        </tr>
-                        @if (statement.paidAtDelivery > 0) {
-                        <tr>
-                          <td>(−) ডেলিভারির সময় পরিশোধ / Paid at delivery</td>
-                          <td class="text-end income-amount">{{ statement.paidAtDelivery | number: '1.2-2' }}</td>
-                        </tr>
-                        }
-                        <tr>
-                          <td>(−) {{ statement.paidAtDelivery > 0 ? 'অন্যান্য পরিশোধ / Other payments' : 'পরিশোধ / Paid this period' }}</td>
-                          <td class="text-end income-amount">{{ statement.otherPayments | number: '1.2-2' }}</td>
-                        </tr>
-                        @if (statement.totalDiscount > 0) {
-                        <tr>
-                          <td>(−) ছাড় / Discount</td>
-                          <td class="text-end">{{ statement.totalDiscount | number: '1.2-2' }}</td>
+                          <td [attr.colspan]="hasDeliveryLabour ? 7 : 6" class="text-center py-2">No deliveries in this period.</td>
                         </tr>
                         }
                       </tbody>
+                      @if (statement.deliveries.length > 0 && hasDeliveryLabour) {
                       <tfoot>
-                        <tr class="net-row">
-                          @if (statement.closingDue >= 0) {
-                          <td>বর্তমান বকেয়া / Current Due</td>
-                          <td class="text-end deficit-value">৳ {{ statement.closingDue | number: '1.2-2' }}</td>
-                          } @else {
-                          <td>অগ্রিম / Advance</td>
-                          <td class="text-end surplus-value">৳ {{ -statement.closingDue | number: '1.2-2' }}</td>
-                          }
+                        <tr class="total-row">
+                          <td colspan="6" class="text-end">Total labour:</td>
+                          <td class="text-end">{{ statement.deliveryLabourTotal | number: '1.2-2' }}</td>
                         </tr>
                       </tfoot>
+                      }
                     </table>
-                    <div class="statement-note">
-                      Rent charged this period = total of the "Stock in store &amp; rent" table
-                      @if (statement.deliveryAdjustmentTotal !== 0) { + delivery adjustments }.
-                    </div>
                   </div>
 
                   @if (!hasActivity) {
-                  <p class="text-center text-muted">No bookings, deliveries or payments in this period.</p>
+                  <p class="text-center text-muted">No stock, bills or deliveries in this period.</p>
                   }
 
                   <div class="signature-section">

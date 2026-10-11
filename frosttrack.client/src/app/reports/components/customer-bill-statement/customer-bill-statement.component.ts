@@ -122,9 +122,14 @@ export class CustomerBillStatementComponent implements OnInit {
     return (this.statement?.stockLines ?? []).reduce((s, l) => s + l.closingStock, 0);
   }
 
+  /** Delivery labour column is shown only when some delivery in the period has labour. */
+  get hasDeliveryLabour(): boolean {
+    return (this.statement?.deliveries ?? []).some((d) => d.labourCharge > 0);
+  }
+
   get hasActivity(): boolean {
     const s = this.statement;
-    return !!s && (s.stockLines.length > 0 || s.bookings.length > 0 || s.deliveries.length > 0 || s.payments.length > 0 || s.discounts.length > 0);
+    return !!s && (s.stockLines.length > 0 || s.bookings.length > 0 || s.deliveries.length > 0 || s.chargeEntries.length > 0);
   }
 
   chargeLabel(chargeType: string, cycleNo?: number | null): string {

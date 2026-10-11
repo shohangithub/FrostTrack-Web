@@ -71,7 +71,11 @@ export interface ICustomerBillStatement {
   payments: IBillStatementPaymentLine[];
   discounts: IBillStatementPaymentLine[];
   /** Charge-ledger rows dated in the period (the log of every charge on this bill). */
+  /** Monthly bills posted in the period (rent months and labour; no corrections). */
   chargeEntries: IChargeLedgerEntry[];
+  /** Corrections of earlier charges, delivery adjustments and Adjustment + in the period. */
+  corrections: IBillStatementCorrectionLine[];
+  correctionsTotal: number;
 
   bookingRentTotal: number;
   bookingLabourTotal: number;
@@ -106,4 +110,14 @@ export interface IChargeLedgerEntry {
   rate: number;
   amount: number;
   note?: string | null;
+}
+
+export interface IBillStatementCorrectionLine {
+  date: string;
+  bookingNumber: string;
+  /** GO_LIVE, DATA_CHANGE, DELIVERY_ADJUSTMENT, ADJUSTMENT_PLUS, ADJUSTMENT_PLUS_CANCELLED */
+  category: string;
+  particulars: string;
+  reference?: string | null;
+  amount: number;
 }

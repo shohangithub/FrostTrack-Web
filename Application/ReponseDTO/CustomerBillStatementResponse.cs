@@ -19,8 +19,11 @@ public class CustomerBillStatementResponse
     public List<BillStatementPaymentLine> Payments { get; set; } = [];
     public List<BillStatementPaymentLine> Discounts { get; set; } = [];
 
-    /// <summary>Charge ledger rows dated in the period (the log of every charge on this bill).</summary>
+    /// <summary>Monthly bills posted in the period: rent months and labour (never corrections).</summary>
     public List<LedgerEntryResponse> ChargeEntries { get; set; } = [];
+
+    /// <summary>Corrections of earlier charges, delivery adjustments and Adjustment + dated in the period.</summary>
+    public List<BillStatementCorrectionLine> Corrections { get; set; } = [];
 
     // Line totals (informational)
     public decimal BookingRentTotal { get; set; }
@@ -32,8 +35,13 @@ public class CustomerBillStatementResponse
 
     // Account summary (same accrual rules as the customer due report)
     public decimal PreviousDue { get; set; }
+    /// <summary>Rent of the months billed in the period (posted bills only).</summary>
     public decimal RentCharged { get; set; }
+    /// <summary>Labour billed in the period (posted bills only).</summary>
     public decimal LabourCharged { get; set; }
+    /// <summary>Corrections + delivery adjustments + Adjustment + in the period (may be negative).</summary>
+    public decimal CorrectionsTotal { get; set; }
+    /// <summary>RentCharged + LabourCharged + CorrectionsTotal.</summary>
     public decimal TotalCharged { get; set; }
     public decimal TotalPaid { get; set; }
     /// <summary>Part of TotalPaid collected together with a delivery.</summary>
@@ -64,8 +72,20 @@ public class BillStatementStockLine
     public List<DateTime> BillingDates { get; set; } = [];
     public int CyclesInPeriod { get; set; }
 
-    /// <summary>Storage + delivery rent accrued for this line during the period.</summary>
+    /// <summary>Rent of the months billed for this line in the period (posted bills only, never negative).</summary>
     public decimal RentThisPeriod { get; set; }
+}
+
+/// <summary>One correction / adjustment line (corrections are grouped per booking and reason).</summary>
+public class BillStatementCorrectionLine
+{
+    public DateTime Date { get; set; }
+    public string BookingNumber { get; set; } = string.Empty;
+    /// <summary>GO_LIVE, DATA_CHANGE, DELIVERY_ADJUSTMENT, ADJUSTMENT_PLUS, ADJUSTMENT_PLUS_CANCELLED</summary>
+    public string Category { get; set; } = string.Empty;
+    public string Particulars { get; set; } = string.Empty;
+    public string? Reference { get; set; }
+    public decimal Amount { get; set; }
 }
 
 public class BillStatementBookingLine

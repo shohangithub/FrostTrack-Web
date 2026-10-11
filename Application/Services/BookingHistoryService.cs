@@ -13,13 +13,16 @@ public class BookingHistoryService : IBookingHistoryService
     private readonly IRepository<Booking, Guid> _bookingRepository;
     private readonly IRepository<Delivery, Guid> _deliveryRepository;
     private readonly IRepository<DeliveryChallanItem, Guid> _challanItemRepository;
+    private readonly IRepository<Company, int> _companyRepository;
 
     public BookingHistoryService(
         IBillCollectionService billCollectionService,
         IRepository<Booking, Guid> bookingRepository,
         IRepository<Delivery, Guid> deliveryRepository,
-        IRepository<DeliveryChallanItem, Guid> challanItemRepository)
+        IRepository<DeliveryChallanItem, Guid> challanItemRepository,
+        IRepository<Company, int> companyRepository)
     {
+        _companyRepository = companyRepository;
         _billCollectionService = billCollectionService;
         _bookingRepository = bookingRepository;
         _deliveryRepository = deliveryRepository;
@@ -33,8 +36,15 @@ public class BookingHistoryService : IBookingHistoryService
 
         var booking = await _bookingRepository.Query()
             .Where(b => b.Id == bookingId)
-            .Select(b => new { b.ReferenceNumber, BranchName = b.Branch != null ? b.Branch.Name : null })
+            .Select(b => new
+            {
+                b.ReferenceNumber,
+                BranchName = b.Branch != null ? b.Branch.Name : null,
+                BillTypes = b.BookingDetails.Select(d => new { d.Id, d.BillType }).ToList(),
+            })
             .FirstAsync(cancellationToken);
+        var goLiveUtc = await GoLiveRules.GetGoLiveUtcAsync(_companyRepository, cancellationToken);
+        var billTypeByDetail = booking.BillTypes.ToDictionary(d => d.Id, d => d.BillType);
 
         var response = new BookingHistoryResponse
         {
@@ -56,7 +66,9 @@ public class BookingHistoryService : IBookingHistoryService
             Adjustments = await _billCollectionService.GetAdjustmentHistoryAsync(detail.CustomerId, bookingId, cancellationToken),
             GeneratedAt = DateTime.UtcNow,
         };
-        response.Statement = BuildStatement(detail);
+        response.Statement = BuildStatement(detail, e => GoLiveRules.IsGoLiveCorrection(
+            e, e.BookingDetailId.HasValue ? billTypeByDetail.GetValueOrDefault(e.BookingDetailId.Value) : null, detail.BookingDate, goLiveUtc),
+            goLiveUtc);
         return response;
     }
 
@@ -117,13 +129,17 @@ public class BookingHistoryService : IBookingHistoryService
     }
 
     /// <summary>Charges and money in, in date order (charges first on the same day), with a running due.</summary>
-    private static List<BookingStatementLine> BuildStatement(BookingPaymentDetailResponse detail)
+    private static List<BookingStatementLine> BuildStatement(
+        BookingPaymentDetailResponse detail, Func<LedgerEntryResponse, bool> isGoLiveCorrection, DateTime? goLiveUtc)
     {
+        var goLiveLabel = goLiveUtc.HasValue ? ReportDateWindow.ToLocalDay(goLiveUtc.Value).ToString("dd-MMM-yy") : string.Empty;
         var lines = new List<(BookingStatementLine Line, int Order, DateTime Created)>();
 
         foreach (var e in detail.LedgerEntries)
         {
-            var (category, particulars) = DescribeCharge(e);
+            var (category, particulars) = isGoLiveCorrection(e)
+                ? ("CORRECTION", $"সংশোধন / Correction – {(e.ChargeType == ChargeTypes.RentCycle ? $"Rent month {e.CycleNo}{(string.IsNullOrEmpty(e.ProductName) ? "" : $" — {e.ProductName}")}" : "Booking labour")} removed: ended before go-live ({goLiveLabel}), settled outside the system")
+                : DescribeCharge(e);
             lines.Add((new BookingStatementLine
             {
                 Date = e.EntryDate,
