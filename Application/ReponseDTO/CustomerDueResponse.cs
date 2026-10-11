@@ -10,8 +10,12 @@ public class CustomerDueSummaryResponse
     public decimal OpeningBalance { get; set; }
     public decimal TotalAmount { get; set; }       // total accrued (opening + all billing cycles delivered + pending)
     public decimal PendingRecurringChargeAmount { get; set; } // cycles accrued but not yet covered by a delivery record
+    /// <summary>Paid on the listed bookings (payments linked to them + advance applied to them).</summary>
     public decimal TotalPaid { get; set; }
     public decimal TotalDiscount { get; set; }
+    /// <summary>Customer advance not applied to any booking yet (reduces the due).</summary>
+    public decimal AdvanceBalance { get; set; }
+    /// <summary>TotalAmount − TotalPaid − TotalDiscount − AdvanceBalance (never below 0).</summary>
     public decimal TotalDue { get; set; }
     public DateTime OldestBookingDate { get; set; }
     public int DaysSinceOldestBooking { get; set; }
@@ -27,7 +31,10 @@ public class CustomerDueDetailResponse
     public string BookingNumber { get; set; } = string.Empty;
     public DateTime BookingDate { get; set; }
     public string? ReferenceNumber { get; set; }
+    /// <summary>Booking (inward) labour charged in the ledger.</summary>
     public decimal BookingLabourCharge { get; set; }
+    /// <summary>Delivery labour charged in the ledger.</summary>
+    public decimal DeliveryLabourCharge { get; set; }
     public decimal TotalRentAmount { get; set; }
     public decimal TotalLabourAmount { get; set; }
     public decimal OpeningBalance { get; set; }
@@ -37,6 +44,7 @@ public class CustomerDueDetailResponse
     public decimal TotalAmount { get; set; }          // kept for backward-compat (== TotalAccruedAmount)
     public decimal TotalPaid { get; set; }
     public decimal TotalDiscount { get; set; }
+    /// <summary>Charges − paid − discount; negative means the booking is in credit.</summary>
     public decimal TotalDue { get; set; }
     public int DaysSinceBooking { get; set; }
     public string Status { get; set; } = "normal"; // normal, warning, danger

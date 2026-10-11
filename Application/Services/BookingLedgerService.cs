@@ -17,6 +17,9 @@ namespace Application.Services;
 public class BookingLedgerService : IBookingLedgerService
 {
     private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> _bookingLocks = new();
+    // Local (Bangladesh) day each booking was last synced; lets read screens skip bookings already current today
+    private static readonly ConcurrentDictionary<Guid, DateTime> _syncedOn = new();
+    private static DateTime LocalToday => DateTime.UtcNow.AddHours(6).Date;
 
     private readonly IRepository<Booking, Guid> _bookingRepository;
     private readonly IRepository<BookingDetail, Guid> _bookingDetailRepository;
@@ -74,8 +77,14 @@ public class BookingLedgerService : IBookingLedgerService
     {
         var result = new LedgerSyncResult();
         var at = asOf ?? DateTime.UtcNow;
+        var today = LocalToday;
         foreach (var id in bookingIds.Distinct())
+        {
+            // Changes (booking/delivery edits) sync the booking directly, so a booking synced today is current
+            if (asOf == null && _syncedOn.TryGetValue(id, out var day) && day == today)
+                continue;
             await SyncOneAsync(id, at, null, false, result, cancellationToken);
+        }
         return result;
     }
 
@@ -99,6 +108,9 @@ public class BookingLedgerService : IBookingLedgerService
         await bookingLock.WaitAsync(cancellationToken);
         try
         {
+            if (!dryRun && asOf.AddMinutes(1) >= DateTime.UtcNow)
+                _syncedOn[bookingId] = LocalToday;
+
             var booking = await _bookingRepository.Query()
                 .Include(b => b.Customer)
                 .Include(b => b.BookingDetails).ThenInclude(bd => bd.BookingUnit)
@@ -195,6 +207,11 @@ public class BookingLedgerService : IBookingLedgerService
                 }
             }
         }
+        catch
+        {
+            _syncedOn.TryRemove(bookingId, out _); // not current; try again next time
+            throw;
+        }
         finally
         {
             bookingLock.Release();
@@ -277,6 +294,7 @@ public class BookingLedgerService : IBookingLedgerService
         // Setup only: current rows are kept as LEGACY history (not counted), then everything is posted again
         await _entryRepository.DeletableQuery(e => e.ChargeType != ChargeTypes.Legacy)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.ChargeType, ChargeTypes.Legacy), cancellationToken);
+        _syncedOn.Clear();
         return await SyncAllAsync(DateTime.UtcNow, cancellationToken: cancellationToken);
     }
 

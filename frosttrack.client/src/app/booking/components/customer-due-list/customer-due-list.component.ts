@@ -233,25 +233,19 @@ export class CustomerDueListComponent implements OnInit {
   }
 
   getBookingDeliveryLabour(booking: any): number {
+    if (booking?.deliveryLabourCharge !== undefined && booking?.deliveryLabourCharge !== null) {
+      return booking.deliveryLabourCharge;
+    }
     if (!booking || !booking.deliveries) return 0;
     return booking.deliveries.reduce((sum: number, del: any) => sum + Number(del.labourCharge || 0), 0);
-  }
-
-  getBookingDeliveriesTotal(booking: ICustomerDueDetailResponse): number {
-    return (
-      booking.deliveries?.reduce(
-        (sum, d) => sum + (d.chargeAmount + d.labourCharge + (d.adjustmentValue || 0)),
-        0
-      ) ?? 0
-    );
   }
 
   getBookingDeliveriesPaid(booking: ICustomerDueDetailResponse): number {
     return booking.deliveries?.reduce((sum, d) => sum + (d.paidAmount || 0), 0) ?? 0;
   }
 
-  getBookingDeliveriesDue(booking: ICustomerDueDetailResponse): number {
-    return booking.deliveries?.reduce((sum, d) => sum + (d.dueAmount || 0), 0) ?? 0;
+  getBookingDeliveriesLabour(booking: ICustomerDueDetailResponse): number {
+    return booking.deliveries?.reduce((sum, d) => sum + (d.labourCharge || 0), 0) ?? 0;
   }
 
   isBookingSettled(booking: ICustomerDueDetailResponse): boolean {

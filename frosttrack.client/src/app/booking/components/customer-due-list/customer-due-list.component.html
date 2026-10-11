@@ -243,6 +243,11 @@
                               (ছাড়: ৳{{ row.totalDiscount | number: "1.2-2" }})
                             </div>
                           }
+                          @if ((row.advanceBalance || 0) > 0) {
+                            <div class="small text-primary" style="font-size: 0.72rem;">
+                              (Advance: ৳{{ row.advanceBalance | number: "1.2-2" }})
+                            </div>
+                          }
                         </td>
 
                         <!-- Last payment / age -->
@@ -314,6 +319,12 @@
                                       <div class="stat-pill" style="background-color: #fffbeb; border-color: #fde68a;">
                                         <span class="text-warning">Discount:</span>
                                         <strong class="text-warning">৳{{ row.totalDiscount | number: "1.2-2" }}</strong>
+                                      </div>
+                                    }
+                                    @if ((row.advanceBalance || 0) > 0) {
+                                      <div class="stat-pill" style="background-color: #eff6ff; border-color: #bfdbfe;" title="Received without a booking, not applied yet">
+                                        <span class="text-primary">Advance:</span>
+                                        <strong class="text-primary">৳{{ row.advanceBalance | number: "1.2-2" }}</strong>
                                       </div>
                                     }
                                     <div class="stat-pill due">
@@ -391,6 +402,9 @@
                                           @if (booking.totalDue > 0) {
                                             <i class="material-icons" style="font-size: 14px;">warning</i>
                                             Due: ৳{{ booking.totalDue | number: "1.2-2" }}
+                                          } @else if (booking.totalDue < -0.009) {
+                                            <i class="material-icons" style="font-size: 14px;">savings</i>
+                                            Credit: ৳{{ -booking.totalDue | number: "1.2-2" }}
                                           } @else {
                                             <i class="material-icons" style="font-size: 14px;">check_circle</i>
                                             Paid in Full
@@ -414,7 +428,7 @@
                                         </div>
                                         @if (getBookingDeliveryLabour(booking) > 0) {
                                           <div class="text-muted" style="font-size: 0.72rem; margin-top: 2px;">
-                                            (Inward: ৳{{ (booking.bookingLabourCharge || 0) | number: "1.2-2" }} + Del: ৳{{ getBookingDeliveryLabour(booking) | number: "1.2-2" }})
+                                            (Inward: ৳{{ (booking.bookingLabourCharge || 0) | number: "1.2-2" }} + Delivery: ৳{{ getBookingDeliveryLabour(booking) | number: "1.2-2" }})
                                           </div>
                                         }
                                       </div>
@@ -439,10 +453,17 @@
                                         </div>
                                       }
                                       <div class="finance-box">
-                                        <div class="box-title">Net Due (অবশিষ্ট বকেয়া)</div>
-                                        <div class="box-amount" [class.highlight-red]="booking.totalDue > 0">
-                                          ৳{{ booking.totalDue | number: "1.2-2" }}
-                                        </div>
+                                        @if (booking.totalDue < -0.009) {
+                                          <div class="box-title">Credit (অগ্রিম)</div>
+                                          <div class="box-amount highlight-green">
+                                            ৳{{ -booking.totalDue | number: "1.2-2" }}
+                                          </div>
+                                        } @else {
+                                          <div class="box-title">Net Due (অবশিষ্ট বকেয়া)</div>
+                                          <div class="box-amount" [class.highlight-red]="booking.totalDue > 0">
+                                            ৳{{ booking.totalDue | number: "1.2-2" }}
+                                          </div>
+                                        }
                                       </div>
                                     </div>
 
@@ -461,11 +482,8 @@
                                                 <th style="width: 140px;">Challan #</th>
                                                 <th style="width: 110px;">Date</th>
                                                 <th>Products Delivered</th>
-                                                <th class="text-end" style="width: 100px;">Rent</th>
-                                                <th class="text-end" style="width: 90px;">Labour</th>
-                                                <th class="text-end" style="width: 110px;">Total Bill</th>
-                                                <th class="text-end" style="width: 110px;">Paid</th>
-                                                <th class="text-end" style="width: 110px;">Due</th>
+                                                <th class="text-end" style="width: 110px;">Labour</th>
+                                                <th class="text-end" style="width: 150px;" title="Money taken with this delivery">Collected at Delivery</th>
                                               </tr>
                                             </thead>
                                             <tbody>
@@ -485,44 +503,29 @@
                                                     </div>
                                                   </td>
                                                   <td class="text-end">
-                                                    ৳{{ delivery.chargeAmount | number: "1.2-2" }}
-                                                  </td>
-                                                  <td class="text-end">
                                                     ৳{{ delivery.labourCharge | number: "1.2-2" }}
-                                                  </td>
-                                                  <td class="text-end fw-bold">
-                                                    ৳{{ (delivery.chargeAmount + delivery.labourCharge + delivery.adjustmentValue) | number: "1.2-2" }}
                                                   </td>
                                                   <td class="text-end fw-semibold text-success">
                                                     ৳{{ delivery.paidAmount | number: "1.2-2" }}
-                                                  </td>
-                                                  <td class="text-end">
-                                                    <span
-                                                      class="fw-bold"
-                                                      [class.text-danger]="delivery.dueAmount > 0"
-                                                      [class.text-success]="delivery.dueAmount <= 0"
-                                                    >
-                                                      ৳{{ delivery.dueAmount | number: "1.2-2" }}
-                                                    </span>
                                                   </td>
                                                 </tr>
                                               }
                                             </tbody>
                                             <tfoot>
                                               <tr>
-                                                <td colspan="5" class="text-end">Booking Delivery Subtotal:</td>
+                                                <td colspan="3" class="text-end">Total:</td>
                                                 <td class="text-end fw-bold">
-                                                  ৳{{ getBookingDeliveriesTotal(booking) | number: "1.2-2" }}
+                                                  ৳{{ getBookingDeliveriesLabour(booking) | number: "1.2-2" }}
                                                 </td>
                                                 <td class="text-end fw-bold text-success">
                                                   ৳{{ getBookingDeliveriesPaid(booking) | number: "1.2-2" }}
                                                 </td>
-                                                <td class="text-end fw-bold" [class.text-danger]="getBookingDeliveriesDue(booking) > 0" [class.text-success]="getBookingDeliveriesDue(booking) <= 0">
-                                                  ৳{{ getBookingDeliveriesDue(booking) | number: "1.2-2" }}
-                                                </td>
                                               </tr>
                                             </tfoot>
                                           </table>
+                                        </div>
+                                        <div class="text-muted small mt-1" style="font-size: 0.72rem;">
+                                          Storage rent is billed monthly on the booking (Storage Rent above); money collected at delivery is already included in Paid.
                                         </div>
                                       } @else {
                                         <!-- No Deliveries Yet: Reassuring Chamber Active Banner -->

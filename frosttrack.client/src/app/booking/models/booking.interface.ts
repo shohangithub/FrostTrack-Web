@@ -157,6 +157,8 @@ export interface ICustomerDueSummaryResponse {
   pendingRecurringChargeAmount: number;
   totalPaid: number;
   totalDiscount: number;
+  /** Customer advance not yet applied to any booking (reduces the due) */
+  advanceBalance?: number;
   totalDue: number;
   oldestBookingDate: string;
   daysSinceOldestBooking: number;
@@ -172,6 +174,7 @@ export interface ICustomerDueDetailResponse {
   bookingDate: string;
   referenceNumber?: string;
   bookingLabourCharge: number;
+  deliveryLabourCharge?: number;
   totalRentAmount?: number;
   totalLabourAmount?: number;
   openingBalance: number;

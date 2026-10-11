@@ -873,10 +873,9 @@ public class BookingService : IBookingService
             .ToDictionary(g => g.Key, g => g.ToList());
 
         // Charges come from the charge ledger (entries up to the report date)
+        await _ledgerService.SyncBookingsAsync(bookingIds, cancellationToken: cancellationToken); // cheap: once a day per booking
         var ledgerCharges = await _ledgerService.GetChargesAsync(bookingIds, asOfDate, cancellationToken);
-        var advanceByBooking = includeSettled
-            ? new Dictionary<Guid, decimal>()
-            : await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
+        var advanceByBooking = await AdvanceAppliedByBookingAsync(bookingIds, cancellationToken);
 
         var customerGroups = bookings.GroupBy(b => b.CustomerId);
         var summaries = new List<CustomerDueSummaryResponse>();
@@ -891,7 +890,7 @@ public class BookingService : IBookingService
             decimal totalPaid = 0m;
             decimal totalDiscounts = 0m;
             decimal totalPendingRecurringCharge = 0m;
-            decimal settledAdvance = 0m;
+            decimal appliedAdvance = 0m;
             var openBookings = new List<Booking>();
 
             foreach (var booking in customerBookings)
@@ -906,12 +905,12 @@ public class BookingService : IBookingService
                         - advanceByBooking.GetValueOrDefault(booking.Id);
                     if (Math.Abs(bookingDue) < 0.01m)
                     {
-                        // Advance applied to it came from the customer's unassigned payments; take it out too
-                        settledAdvance += advanceByBooking.GetValueOrDefault(booking.Id);
+                        appliedAdvance += advanceByBooking.GetValueOrDefault(booking.Id);
                         continue;
                     }
                 }
                 openBookings.Add(booking);
+                appliedAdvance += advanceByBooking.GetValueOrDefault(booking.Id);
 
                 var activeDetails = booking.BookingDetails.Where(d => !d.IsDeleted).ToList();
                 var bDeliveries = deliveriesByBooking.TryGetValue(booking.Id, out var bdList) ? bdList : new List<Delivery>();
@@ -923,28 +922,20 @@ public class BookingService : IBookingService
                 totalAccrued += bookingAccrued;
                 totalPendingRecurringCharge += pendingRecurringCharge;
 
-                if (paymentsByBooking.TryGetValue(booking.Id, out var paid))
-                {
-                    totalPaid += paid;
-                }
-
-                if (discountsByBooking.TryGetValue(booking.Id, out var disc))
-                {
-                    totalDiscounts += disc;
-                }
+                // Same "paid" as each booking card: payments linked to the booking + advance applied to it
+                totalPaid += paymentsByBooking.GetValueOrDefault(booking.Id) + advanceByBooking.GetValueOrDefault(booking.Id);
+                totalDiscounts += discountsByBooking.GetValueOrDefault(booking.Id);
             }
 
-            if (unassignedPaymentsByCustomer.TryGetValue(group.Key, out var unassignedPaid))
-            {
-                totalPaid += unassignedPaid - settledAdvance;
-            }
+            // Money received without a booking that is not applied to any booking yet = customer advance
+            var advanceBalance = unassignedPaymentsByCustomer.GetValueOrDefault(group.Key) - appliedAdvance;
 
             if (unassignedDiscountsByCustomer.TryGetValue(group.Key, out var unassignedDisc))
             {
                 totalDiscounts += unassignedDisc;
             }
 
-            var totalDue = Math.Max(totalAccrued - totalPaid - totalDiscounts, 0m);
+            var totalDue = Math.Max(totalAccrued - totalPaid - totalDiscounts - advanceBalance, 0m);
 
             // Nothing open and nothing owed: not part of a due list without settled bookings
             if (!includeSettled && openBookings.Count == 0 && totalDue <= 0.005m)
@@ -991,6 +982,7 @@ public class BookingService : IBookingService
                 PendingRecurringChargeAmount = totalPendingRecurringCharge,
                 TotalPaid = totalPaid,
                 TotalDiscount = totalDiscounts,
+                AdvanceBalance = advanceBalance,
                 TotalDue = totalDue,
                 OldestBookingDate = oldestBooking.BookingDate,
                 DaysSinceOldestBooking = daysSinceOldestBooking,
@@ -1140,34 +1132,15 @@ public class BookingService : IBookingService
 
             if (bookingDeliveries.Any())
             {
-                var explicitDeliveryPaymentsTotal = bookingDeliveries
-                    .Sum(d => paymentsByDelivery.TryGetValue(d.Id, out var dp) ? dp : 0m);
-                var unallocatedBookingPayment = Math.Max(totalPaid - explicitDeliveryPaymentsTotal, 0m);
-
                 foreach (var delivery in bookingDeliveries)
                 {
-                    var labourCharge = delivery.DeliveryDetails?.Sum(dd => dd.LabourCharge) ?? 0m;
-                    var rentCharge = delivery.DeliveryDetails?.Any() == true
-                        ? delivery.DeliveryDetails.Sum(dd => dd.ChargeAmount)
-                        : Math.Max(0m, delivery.ChargeAmount - labourCharge);
-                    var deliveryTotal = rentCharge + labourCharge + delivery.AdjustmentValue;
+                    var labourCharge = delivery.DeliveryDetails?.Where(dd => !dd.IsDeleted).Sum(dd => dd.LabourCharge) ?? 0m;
+                    var rentCharge = delivery.DeliveryDetails?.Where(dd => !dd.IsDeleted).Sum(dd => dd.ChargeAmount) ?? 0m;
+                    // Money taken with this delivery (the delivery's own payment)
                     var paidAmount = paymentsByDelivery.TryGetValue(delivery.Id, out var paid) ? paid : 0m;
-
                     if (paidAmount == 0 && delivery.TransactionId.HasValue)
                     {
                         paidAmount = payments.Where(p => p.Id == delivery.TransactionId.Value).Sum(p => p.Amount);
-                    }
-
-                    if (delivery.PaymentStatus == PaymentStatuses.PAID && paidAmount < deliveryTotal)
-                    {
-                        paidAmount = deliveryTotal;
-                    }
-
-                    if (paidAmount < deliveryTotal && unallocatedBookingPayment > 0)
-                    {
-                        var additionalAlloc = Math.Min(deliveryTotal - paidAmount, unallocatedBookingPayment);
-                        paidAmount += additionalAlloc;
-                        unallocatedBookingPayment -= additionalAlloc;
                     }
 
                     deliveryResponses.Add(new CustomerDueDeliveryResponse
@@ -1180,7 +1153,7 @@ public class BookingService : IBookingService
                         AdjustmentValue = delivery.AdjustmentValue,
                         DiscountAmount = 0,
                         PaidAmount = paidAmount,
-                        DueAmount = Math.Max(deliveryTotal - paidAmount, 0m),
+                        DueAmount = 0m, // dues are tracked per booking (charge ledger), not per delivery
                         DeliveryDetails = delivery.DeliveryDetails.Select(dd => new DeliveryDetailInfoResponse
                         {
                             Id = dd.Id,
@@ -1196,7 +1169,7 @@ public class BookingService : IBookingService
                     });
                 }
 
-                deliveryCharge = deliveryResponses.Sum(x => x.ChargeAmount + x.LabourCharge + x.AdjustmentValue);
+                deliveryCharge = deliveryResponses.Sum(x => x.LabourCharge + x.AdjustmentValue);
                 lastDeliveryDate = activeDetails.Count > 0
                     ? activeDetails.Max(d => (DateTime?)d.LastDeliveryDate)
                     : bookingDeliveries.Max(d => (DateTime?)d.DeliveryDate);
@@ -1208,7 +1181,8 @@ public class BookingService : IBookingService
             var totalAccrued = charges.Total;
             var pendingRecurringCharge = charges.RentLaterMonths;
             var bDiscount = discountsByBooking.TryGetValue(booking.Id, out var bdVal) ? bdVal : 0m;
-            var totalDue = Math.Max(totalAccrued - totalPaid - bDiscount, 0m);
+            // Not clamped: a negative due is credit on this booking (it still lowers the customer total)
+            var totalDue = totalAccrued - totalPaid - bDiscount;
             var daysSinceBooking = (now - booking.BookingDate).Days;
 
             var status = "normal";
@@ -1223,7 +1197,8 @@ public class BookingService : IBookingService
                 BookingNumber = booking.BookingNumber,
                 BookingDate = booking.BookingDate,
                 ReferenceNumber = booking.ReferenceNumber,
-                BookingLabourCharge = booking.BookingDetails.Sum(bd => bd.LabourCharge),
+                BookingLabourCharge = charges.BookingLabour,
+                DeliveryLabourCharge = charges.DeliveryLabour,
                 TotalRentAmount = totalRent,
                 TotalLabourAmount = totalLabour,
                 OpeningBalance = 0m,         // per-booking; customer-level set at caller
