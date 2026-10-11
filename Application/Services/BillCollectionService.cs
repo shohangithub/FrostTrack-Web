@@ -236,8 +236,9 @@ public class BillCollectionService : IBillCollectionService
                 - discounted.GetValueOrDefault(booking.Id)
                 - allocated.GetValueOrDefault(booking.Id);
 
-            // includeAll: every active booking (e.g. to add a charge to a fully paid booking)
-            if (includeAll || due > 0.005m)
+            // includeAll: every active booking (e.g. to add a charge to a fully paid booking).
+            // Otherwise every booking that is not balanced: a due, or a credit (paid more than charged) to fix.
+            if (includeAll || Math.Abs(due) > 0.005m)
             {
                 response.Bookings.Add(new DueBookingOption
                 {

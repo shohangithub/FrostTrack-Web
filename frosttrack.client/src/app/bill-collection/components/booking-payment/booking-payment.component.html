@@ -41,14 +41,22 @@
                         }
                       </span>
                       @if (item.due !== undefined) {
+                      @if (item.due < 0) {
+                      <strong class="text-primary" title="Paid more than charged — not balanced">Credit ৳{{ -item.due | number: '1.2-2' }}</strong>
+                      } @else {
                       <strong class="text-danger">৳{{ item.due | number: '1.2-2' }}</strong>
+                      }
                       }
                     </div>
                   </ng-template>
                 </ng-select>
                 @if (dueBookings) {
                 <small class="text-muted">
-                  {{ dueBookings.bookings.length }} booking(s) with due · Advance balance:
+                  {{ dueCount }} booking(s) with due
+                  @if (creditCount) {
+                  · <span class="text-primary">{{ creditCount }} in credit</span>
+                  }
+                  · Advance balance:
                   <strong>৳{{ dueBookings.advanceBalance | number: '1.2-2' }}</strong>
                 </small>
                 }
@@ -92,7 +100,11 @@
                   @if (detail.summary.discount) {
                   <tr><td>(−) Adjustment</td><td class="text-end">{{ detail.summary.discount | number: '1.2-2' }}</td></tr>
                   }
+                  @if (detail.summary.due < -0.009) {
+                  <tr class="due-row credit-row"><td>Credit (অতিরিক্ত জমা)</td><td class="text-end">৳ {{ -detail.summary.due | number: '1.2-2' }}</td></tr>
+                  } @else {
                   <tr class="due-row"><td>Current Due (বকেয়া)</td><td class="text-end">৳ {{ bookingDue | number: '1.2-2' }}</td></tr>
+                  }
                 </table>
               </div>
             </div>
@@ -100,6 +112,15 @@
             <div class="card mb-3">
               <span class="card-label">পেমেন্ট গ্রহণ / Collect</span>
               <div class="card-body">
+                @if (detail.summary.due < -0.009) {
+                <div class="alert alert-info py-2 px-2 small mb-2">
+                  <strong>Not balanced:</strong> this booking is paid ৳{{ -detail.summary.due | number: '1.2-2' }} more than it is charged
+                  (e.g. rent before go-live that was removed). Add the missing charge as <strong>Adjustment +</strong>, then collect any remaining due here.
+                  <div class="mt-1">
+                    <a href="javascript:void(0)" (click)="openAdjustment()"><i class="fas fa-balance-scale me-1"></i>Open Discount &amp; Adjustment for this booking</a>
+                  </div>
+                </div>
+                }
                 <div class="mb-2">
                   <label class="col-form-label py-1 d-flex justify-content-between">
                     <span>Payment Amount (৳)</span>

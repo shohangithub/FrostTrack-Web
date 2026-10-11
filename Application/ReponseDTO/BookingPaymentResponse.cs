@@ -1,6 +1,6 @@
 namespace Application.ReponseDTO;
 
-/// <summary>Customer's bookings that still have a due (for the booking dropdown on the payment screen).</summary>
+/// <summary>Customer's bookings that are not balanced — a due or a credit (for the booking dropdown on the payment screen).</summary>
 public class CustomerDueBookingsResponse
 {
     public int CustomerId { get; set; }

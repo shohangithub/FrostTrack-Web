@@ -228,6 +228,22 @@ export class BookingPaymentComponent implements OnInit {
     return Number(this.form.get('discountAmount')?.value) || 0;
   }
 
+  /** Bookings in the dropdown with a due / with a credit (paid more than charged). */
+  get dueCount(): number {
+    return this.dueBookings?.bookings.filter((b) => b.due > 0.005).length ?? 0;
+  }
+
+  get creditCount(): number {
+    return this.dueBookings?.bookings.filter((b) => b.due < -0.005).length ?? 0;
+  }
+
+  openAdjustment(): void {
+    if (!this.detail) return;
+    this.router.navigate(['/bill-collection/discount'], {
+      queryParams: { customerId: this.detail.customerId, bookingId: this.detail.bookingId },
+    });
+  }
+
   get bookingDue(): number {
     return Math.max(this.detail?.summary.due ?? 0, 0);
   }
