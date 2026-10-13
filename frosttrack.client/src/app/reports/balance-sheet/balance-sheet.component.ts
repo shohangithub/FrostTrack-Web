@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -9,7 +9,13 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPrintModule } from 'ngx-print';
 import { BalanceSheetService } from './balance-sheet.service';
-import { IBalanceSheetSummary, IBalanceSheetComparative } from './balance-sheet.interfaces';
+import { RouterLink } from '@angular/router';
+import {
+  IBalanceSheetSummary,
+  IBalanceSheetComparative,
+  IBalanceSheetSectionGroup,
+} from './balance-sheet.interfaces';
+import { BalanceSheetSetupService } from '../balance-sheet-setup/balance-sheet-setup.service';
 import { ToastrService } from 'ngx-toastr';
 import { LayoutService } from '@core/service/layout.service';
 import { ReportFooterComponent } from '@shared/components/reports/report-footer.component/report-footer.component';
@@ -26,11 +32,12 @@ import { todayInputFormat } from 'app/utils/date-utils';
     ReactiveFormsModule,
     NgSelectModule,
     NgxPrintModule,
+    RouterLink,
     ReportInvoiceHeaderComponent,
     ReportFooterComponent,
   ],
 })
-export class BalanceSheetComponent {
+export class BalanceSheetComponent implements OnInit {
   activeTab: 'single' | 'comparative' = 'single';
 
   singleForm: UntypedFormGroup;
@@ -47,6 +54,7 @@ export class BalanceSheetComponent {
   constructor(
     private fb: UntypedFormBuilder,
     private balanceSheetService: BalanceSheetService,
+    private setupService: BalanceSheetSetupService,
     private toastr: ToastrService,
     private layoutService: LayoutService
   ) {
@@ -64,13 +72,62 @@ export class BalanceSheetComponent {
     });
   }
 
+  ngOnInit(): void {
+    // Comparative defaults: the last two fiscal year ends (like the audited statements)
+    this.setupService.getSettings().subscribe({
+      next: (settings) => {
+        const [previousEnd, lastEnd] = this.lastTwoFiscalYearEnds(settings.fiscalYearStartMonth || 7);
+        this.comparativeForm.patchValue({ date1: previousEnd, date2: lastEnd });
+      },
+    });
+  }
+
   lastMonthSameDay(): string {
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
+    return this.toInputDate(d);
+  }
+
+  /** End dates of the last completed fiscal year and the one before it. */
+  lastTwoFiscalYearEnds(startMonth: number): [string, string] {
+    const today = new Date();
+    let fyStart = new Date(today.getFullYear(), startMonth - 1, 1);
+    if (fyStart > today) fyStart = new Date(today.getFullYear() - 1, startMonth - 1, 1);
+    const lastEnd = new Date(fyStart.getFullYear(), fyStart.getMonth(), 0);
+    const previousEnd = new Date(fyStart.getFullYear() - 1, fyStart.getMonth(), 0);
+    return [this.toInputDate(previousEnd), this.toInputDate(lastEnd)];
+  }
+
+  private toInputDate(d: Date): string {
     const year = d.getFullYear();
     const month = (d.getMonth() + 1).toString().padStart(2, '0');
     const day = d.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /** Why the active report is empty (not set up / date before the start date). */
+  get currentMessage(): string | null {
+    if (this.activeTab === 'single') return this.balanceSheetData?.message ?? null;
+    return this.comparativeData?.sheet2?.message ?? this.comparativeData?.sheet1?.message ?? null;
+  }
+
+  /** Consecutive items of the same section (the server returns them in statement order). */
+  groupBySection<T extends { section: string }>(items: T[]): IBalanceSheetSectionGroup<T>[] {
+    const groups: IBalanceSheetSectionGroup<T>[] = [];
+    for (const item of items) {
+      const last = groups[groups.length - 1];
+      if (last && last.section === item.section) last.items.push(item);
+      else groups.push({ section: item.section, items: [item] });
+    }
+    return groups;
+  }
+
+  sumOf(items: { amount: number }[]): number {
+    return items.reduce((total, x) => total + x.amount, 0);
+  }
+
+  isBalanced(difference: number | null | undefined): boolean {
+    return Math.abs(difference ?? 0) < 0.01;
   }
 
   switchTab(tab: 'single' | 'comparative'): void {

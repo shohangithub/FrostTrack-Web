@@ -64,6 +64,19 @@ export const TRANSACTION_TYPE_LIST = [
   { id: 'CREDIT', value: 'ব্যয়' },
 ];
 
+/** Balance Sheet / P&L placement of a transaction head (empty = আয় → Income, ব্যয় → Admin expense). */
+export const ACCOUNT_CATEGORY_LIST = [
+  { id: 'INCOME', value: 'Income / আয়' },
+  { id: 'EXPENSE_DIRECT', value: 'Direct expense / প্রত্যক্ষ ব্যয় (electricity, gas, labour)' },
+  { id: 'EXPENSE_ADMIN', value: 'Administrative expense / প্রশাসনিক ব্যয়' },
+  { id: 'EXPENSE_FINANCE', value: 'Finance expense / আর্থিক ব্যয় (bank charge, interest)' },
+  { id: 'TAX', value: 'Income tax / আয়কর' },
+  { id: 'LIABILITY', value: 'Loan / creditor (দায়) – money in = borrowed, out = repaid' },
+  { id: 'ASSET', value: 'Advance / deposit (অগ্রিম/জামানত) – money out = paid, in = returned' },
+  { id: 'CAPITAL', value: 'Share capital (মূলধন) – money in = invested, out = withdrawn' },
+  { id: 'FIXED_ASSET', value: 'Fixed asset purchase (স্থায়ী সম্পদ ক্রয়) – value from asset list' },
+];
+
 export const USAGE_FOR = {
   CUSTOMER_PAYMENT: 'CUSTOMER_PAYMENT',
   BILL_COLLECTION: 'CUSTOMER_PAYMENT', // Alias pointing to CUSTOMER_PAYMENT

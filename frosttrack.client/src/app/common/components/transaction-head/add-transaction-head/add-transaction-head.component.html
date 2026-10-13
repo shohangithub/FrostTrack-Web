@@ -109,6 +109,25 @@
     </div>
     <div class="row">
       <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Balance Sheet Category</label>
+        <select
+          class="form-select form-control-sm"
+          formControlName="accountCategory"
+        >
+          <option [ngValue]="null">Default (আয় → Income, ব্যয় → Admin expense)</option>
+          @for (category of accountCategoryList; track category.id) {
+          <option [ngValue]="category.id">
+            {{ category.value }}
+          </option>
+          }
+        </select>
+        <small class="form-text text-muted">
+          Where this head goes in the Balance Sheet. The cash book and other reports are not affected.
+        </small>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
         <label>Description</label>
         <textarea
           class="form-control form-control-sm"
@@ -243,6 +262,25 @@
         </select>
         <small class="form-text text-muted">
           Heads in the same group show as one row in the Trial Balance (Debit and Credit together).
+        </small>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+        <label>Balance Sheet Category</label>
+        <select
+          class="form-select form-control-sm"
+          formControlName="accountCategory"
+        >
+          <option [ngValue]="null">Default (আয় → Income, ব্যয় → Admin expense)</option>
+          @for (category of accountCategoryList; track category.id) {
+          <option [ngValue]="category.id">
+            {{ category.value }}
+          </option>
+          }
+        </select>
+        <small class="form-text text-muted">
+          Where this head goes in the Balance Sheet. The cash book and other reports are not affected.
         </small>
       </div>
     </div>

@@ -29,6 +29,11 @@ internal class TransactionHeadValidator : AbstractValidator<TransactionHeadReque
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
 
+        RuleFor(x => x.AccountCategory)
+            .Must(x => AccountCategories.All.Contains(x))
+            .WithMessage("Invalid account category")
+            .When(x => !string.IsNullOrEmpty(x.AccountCategory));
+
         RuleFor(x => x.TransactionGroupId)
             .MustAsync(GroupExists).WithMessage("Selected transaction group not found")
             .When(x => x.TransactionGroupId.HasValue);

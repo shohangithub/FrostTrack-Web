@@ -21,6 +21,13 @@ public class Company : BaseEntity<int>
     /// date is charged, dated on the go-live date. Null = charge from each booking's own date.
     /// </summary>
     public DateTime? BillingStartDate { get; set; }
+    /// <summary>
+    /// Balance Sheet start (calendar date of the last audited balance sheet). The position on this date
+    /// comes from the opening balance entries; everything after it is calculated. Null = not set up.
+    /// </summary>
+    public DateTime? BalanceSheetStartDate { get; set; }
+    /// <summary>First month of the fiscal year (1-12), e.g. 7 = July–June.</summary>
+    public int FiscalYearStartMonth { get; set; } = 7;
     public string InvoiceHeader { get; set; } = string.Empty;
     public string InvoiceFooter { get; set; } = string.Empty;
     public bool IsSingleBranch { get; set; }

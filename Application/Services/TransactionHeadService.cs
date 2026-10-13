@@ -126,7 +126,8 @@ public class TransactionHeadService : ITransactionHeadService
             x.DisplayType,
             x.IsSystem,
             x.IsActive ? "Active" : "Inactive",
-            x.TransactionGroup != null ? x.TransactionGroup.Name : null
+            x.TransactionGroup != null ? x.TransactionGroup.Name : null,
+            x.AccountCategory
         );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);
@@ -151,6 +152,7 @@ public class TransactionHeadService : ITransactionHeadService
             existingData.IconClass = request.IconClass;
             existingData.IsActive = request.IsActive;
             existingData.TransactionGroupId = request.TransactionGroupId;
+            existingData.AccountCategory = request.AccountCategory;
         }
         else
         {

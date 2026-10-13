@@ -21,5 +21,6 @@ public record AssetRequest(
     string? Notes,
     string? ImageUrl,
     bool IsActive,
-    int? BranchId
+    int? BranchId,
+    decimal? OpeningWdv = null
     );

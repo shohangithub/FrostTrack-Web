@@ -22,6 +22,9 @@ public interface IBookingLedgerService
     /// <summary>Ledger charges per booking with EntryDate &lt;= <paramref name="asOf"/>.</summary>
     Task<Dictionary<Guid, LedgerCharges>> GetChargesAsync(IEnumerable<Guid> bookingIds, DateTime asOf, CancellationToken cancellationToken = default);
 
+    /// <summary>All charges of the tenant (bookings not deleted) with EntryDate before <paramref name="beforeUtc"/>.</summary>
+    Task<decimal> GetTotalChargesBeforeAsync(DateTime beforeUtc, CancellationToken cancellationToken = default);
+
     Task<List<LedgerEntryResponse>> GetEntriesAsync(Guid bookingId, CancellationToken cancellationToken = default);
 
     /// <summary>Posts a manual "Adjustment +" (extra charge) on a booking. Sync never touches these rows.</summary>

@@ -31,454 +31,746 @@
           </div>
 
           <!-- TAB 1: SINGLE AS-OF-DATE FORM -->
-          @if (activeTab === 'single') {
-          <div class="p-3">
-            <form class="product-form" [formGroup]="singleForm" (ngSubmit)="generateSingleReport()">
-              <div class="row align-items-end">
-                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-                  <div class="form-group mb-2">
-                    <label for="reportDate" class="col-form-label py-1">
-                      As of Date / তারিখ <span class="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="reportDate"
-                      class="form-control form-control-sm"
-                      formControlName="reportDate"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-lg-9 col-md-8 col-sm-6 col-xs-12 text-end mb-2">
-                  <button type="submit" class="btn btn-primary px-3 btn-sm" [disabled]="isLoading || singleForm.invalid">
-                    @if (isLoading) {
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    }
-                    Show Balance Sheet
-                  </button>
-                  @if (showReport) {
-                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm" (click)="resetSingle()">
-                    Clear
-                  </button>
-                  }
-                </div>
-              </div>
-            </form>
-          </div>
-          }
-
-          <!-- TAB 2: COMPARATIVE FORM -->
-          @if (activeTab === 'comparative') {
-          <div class="p-3">
-            <form class="product-form" [formGroup]="comparativeForm" (ngSubmit)="generateComparativeReport()">
-              <div class="row align-items-end">
-                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-                  <div class="form-group mb-2">
-                    <label for="date1" class="col-form-label py-1">
-                      Date 1 (Base Date) <span class="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="date1"
-                      class="form-control form-control-sm"
-                      formControlName="date1"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-                  <div class="form-group mb-2">
-                    <label for="date2" class="col-form-label py-1">
-                      Date 2 (Compare Date) <span class="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="date2"
-                      class="form-control form-control-sm"
-                      formControlName="date2"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-lg-6 col-md-4 col-sm-12 col-xs-12 text-end mb-2">
-                  <button type="submit" class="btn btn-primary px-3 btn-sm mb-1" [disabled]="isLoading || comparativeForm.invalid">
-                    @if (isLoading) {
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    }
-                    Show Comparative Report
-                  </button>
-                  @if (showReport) {
-                  <button type="button" class="btn btn-secondary ms-2 px-3 btn-sm mb-1" (click)="resetComparative()">
-                    Clear
-                  </button>
-                  }
-                </div>
-              </div>
-            </form>
-          </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- DISPLAY: TAB 1 (SINGLE BALANCE SHEET) -->
-    @if (activeTab === 'single' && showReport && !isLoading && balanceSheetData) {
-    <div class="row clearfix">
-      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card">
-          <div class="row no-print mb-3">
-            <div class="col-12">
-              <div class="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  [openNewTab]="true"
-                  [closeWindow]="true"
-                  [previewOnly]="false"
-                  [useExistingCss]="true"
-                  printTitle="Balance Sheet"
-                  printSectionId="print-section-bs-single"
-                  ngxPrint
-                >
-                  <i class="fas fa-print me-1"></i>Print Balance Sheet
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div id="print-section-bs-single" class="print-section-container">
-            <div class="card invoice-card">
-              <div class="card-body p-0">
-                <div class="invoice-container">
-                  <app-report-invoice-header [Title]="'সম্পদ ও দায়ের বিবরণী / Balance Sheet'" [InvoiceNumber]="''"></app-report-invoice-header>
-
-                  <div class="booking-info-box">
-                    <table class="info-table">
-                      <tr>
-                        <td class="info-label">As of Date:</td>
-                        <td class="info-value">
-                          {{ singleForm.get("reportDate")?.value | date: "dd-MMM-yyyy" }}
-                        </td>
-                        <td class="info-label">Generated On:</td>
-                        <td class="info-value">
-                          {{ today | date: "dd-MMM-yyyy HH:mm a" }}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td class="info-label">Total Assets:</td>
-                        <td class="info-value">
-                          ৳{{ balanceSheetData.totalAssets | number: "1.2-2" }}
-                        </td>
-                        <td class="info-label">Net Worth:</td>
-                        <td class="info-value">
-                          ৳{{ balanceSheetData.netWorth | number: "1.2-2" }}
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-
-                  <!-- Assets Section -->
-                  <div class="section-title mb-1 fw-bold">Assets / মোট সম্পদ</div>
-                  @if (balanceSheetData.assets.length > 0) {
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th class="text-center" style="width: 40px;">SL</th>
-                          <th>Account Name / হিসাবের নাম</th>
-                          <th class="text-center">Transactions</th>
-                          <th class="text-end">Amount Tk.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of balanceSheetData.assets; track i; let i = $index) {
-                        <tr>
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-center">{{ item.transactionCount }}</td>
-                          <td class="text-end amount-cell">{{ item.amount | number: "1.2-2" }}</td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="3" class="text-end"><strong>Total Assets:</strong></td>
-                          <td class="text-end"><strong>৳{{ balanceSheetData.totalAssets | number: "1.2-2" }}</strong></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  }
-
-                  <!-- Liabilities Section -->
-                  <div class="section-title mb-1 fw-bold">Liabilities / মোট দায়</div>
-                  @if (balanceSheetData.liabilities.length > 0) {
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th class="text-center" style="width: 40px;">SL</th>
-                          <th>Account Name / হিসাবের নাম</th>
-                          <th class="text-center">Count</th>
-                          <th class="text-end">Amount Tk.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of balanceSheetData.liabilities; track i; let i = $index) {
-                        <tr>
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-center">{{ item.transactionCount }}</td>
-                          <td class="text-end">{{ item.amount | number: "1.2-2" }}</td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="3" class="text-end"><strong>Total Liabilities:</strong></td>
-                          <td class="text-end"><strong>৳{{ balanceSheetData.totalLiabilities | number: "1.2-2" }}</strong></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  } @else {
-                  <div class="no-data-message mb-3">No liabilities recorded</div>
-                  }
-
-                  <!-- Equity Section -->
-                  <div class="section-title mb-1 fw-bold">Equity / মালিকানা স্বত্ব</div>
-                  @if (balanceSheetData.equity.length > 0) {
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th class="text-center" style="width: 40px;">SL</th>
-                          <th>Account Name / হিসাবের নাম</th>
-                          <th class="text-center">Count</th>
-                          <th class="text-end">Amount Tk.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of balanceSheetData.equity; track i; let i = $index) {
-                        <tr>
-                          <td class="text-center">{{ i + 1 }}</td>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-center">{{ item.transactionCount }}</td>
-                          <td class="text-end">{{ item.amount | number: "1.2-2" }}</td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td colspan="3" class="text-end"><strong>Total Equity:</strong></td>
-                          <td class="text-end"><strong>৳{{ balanceSheetData.totalEquity | number: "1.2-2" }}</strong></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  }
-
-                  <!-- Equation Verification -->
-                  <div class="equation-section mb-2">
-                    <div class="equation-box p-2 border bg-light text-center">
-                      <div class="fw-bold mb-1">Accounting Equation Verification: Assets = Liabilities + Equity</div>
-                      <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
-                        <span>Assets: ৳{{ balanceSheetData.totalAssets | number: "1.2-2" }}</span>
-                        <span>=</span>
-                        <span>Liab: ৳{{ balanceSheetData.totalLiabilities | number: "1.2-2" }}</span>
-                        <span>+</span>
-                        <span>Equity: ৳{{ balanceSheetData.totalEquity | number: "1.2-2" }}</span>
-                        <span class="ms-2 fw-bold text-success">
-                          {{ Math.abs(balanceSheetData.totalAssets - (balanceSheetData.totalLiabilities + balanceSheetData.totalEquity)) < 0.01 ? '✓ Balanced' : '⚠ Discrepancy' }}
-                        </span>
-                      </div>
+          @if (activeTab === "single") {
+            <div class="p-3">
+              <form
+                class="product-form"
+                [formGroup]="singleForm"
+                (ngSubmit)="generateSingleReport()"
+              >
+                <div class="row align-items-end">
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                    <div class="form-group mb-2">
+                      <label for="reportDate" class="col-form-label py-1">
+                        As of Date / তারিখ <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="reportDate"
+                        class="form-control form-control-sm"
+                        formControlName="reportDate"
+                      />
                     </div>
                   </div>
 
-                  <app-report-footer></app-report-footer>
+                  <div
+                    class="col-lg-9 col-md-8 col-sm-6 col-xs-12 text-end mb-2"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-primary px-3 btn-sm"
+                      [disabled]="isLoading || singleForm.invalid"
+                    >
+                      @if (isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm me-1"
+                          role="status"
+                        ></span>
+                      }
+                      Show Balance Sheet
+                    </button>
+                    @if (showReport) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-2 px-3 btn-sm"
+                        (click)="resetSingle()"
+                      >
+                        Clear
+                      </button>
+                    }
+                  </div>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- TAB 2: COMPARATIVE FORM -->
+          @if (activeTab === "comparative") {
+            <div class="p-3">
+              <form
+                class="product-form"
+                [formGroup]="comparativeForm"
+                (ngSubmit)="generateComparativeReport()"
+              >
+                <div class="row align-items-end">
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                    <div class="form-group mb-2">
+                      <label for="date1" class="col-form-label py-1">
+                        Date 1 (Base Date) <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="date1"
+                        class="form-control form-control-sm"
+                        formControlName="date1"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                    <div class="form-group mb-2">
+                      <label for="date2" class="col-form-label py-1">
+                        Date 2 (Compare Date) <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="date2"
+                        class="form-control form-control-sm"
+                        formControlName="date2"
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    class="col-lg-6 col-md-4 col-sm-12 col-xs-12 text-end mb-2"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-primary px-3 btn-sm mb-1"
+                      [disabled]="isLoading || comparativeForm.invalid"
+                    >
+                      @if (isLoading) {
+                        <span
+                          class="spinner-border spinner-border-sm me-1"
+                          role="status"
+                        ></span>
+                      }
+                      Show Comparative Report
+                    </button>
+                    @if (showReport) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-2 px-3 btn-sm mb-1"
+                        (click)="resetComparative()"
+                      >
+                        Clear
+                      </button>
+                    }
+                  </div>
+                </div>
+              </form>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- NOT CONFIGURED / OUT OF RANGE -->
+    @if (showReport && !isLoading && currentMessage) {
+      <div class="row clearfix">
+        <div class="col-lg-12">
+          <div class="alert alert-warning mb-2">
+            <i class="fas fa-info-circle me-1"></i>{{ currentMessage }}
+            <a routerLink="/reports/balance-sheet-setup" class="ms-2"
+              >Open Balance Sheet Setup</a
+            >
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- DISPLAY: TAB 1 (SINGLE BALANCE SHEET) -->
+    @if (
+      activeTab === "single" &&
+      showReport &&
+      !isLoading &&
+      balanceSheetData &&
+      !currentMessage
+    ) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card">
+            <div class="row no-print mb-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button
+                    type="button"
+                    class="btn"
+                    [openNewTab]="true"
+                    [closeWindow]="true"
+                    [previewOnly]="false"
+                    [useExistingCss]="true"
+                    printTitle="Balance Sheet"
+                    printSectionId="print-section-bs-single"
+                    ngxPrint
+                  >
+                    <i class="fas fa-print me-1"></i>Print Balance Sheet
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            @if (!isBalanced(balanceSheetData.difference)) {
+              <div class="alert alert-danger no-print mb-2">
+                <strong
+                  >Not balanced: Difference ৳{{
+                    balanceSheetData.difference | number: "1.2-2"
+                  }}.</strong
+                >
+                Some figures are missing or wrong: check the opening balances,
+                the Balance Sheet category of loan / deposit heads, and that
+                cash, bank and customer opening balances match the audited
+                statement.
+              </div>
+            }
+
+            <div id="print-section-bs-single" class="print-section-container">
+              <div class="card invoice-card">
+                <div class="card-body p-0">
+                  <div class="invoice-container">
+                    <app-report-invoice-header
+                      [Title]="
+                        'আর্থিক অবস্থার বিবরণী / Statement of Financial Position'
+                      "
+                      [InvoiceNumber]="''"
+                    ></app-report-invoice-header>
+
+                    <div class="booking-info-box">
+                      <table class="info-table">
+                        <tr>
+                          <td class="info-label">As at:</td>
+                          <td class="info-value">
+                            {{
+                              singleForm.get("reportDate")?.value
+                                | date: "dd-MMM-yyyy"
+                            }}
+                          </td>
+                          <td class="info-label">Generated On:</td>
+                          <td class="info-value">
+                            {{ today | date: "dd-MMM-yyyy HH:mm a" }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="info-label">Year from:</td>
+                          <td class="info-value">
+                            {{
+                              balanceSheetData.fiscalYearStart
+                                | date: "dd-MMM-yyyy"
+                            }}
+                          </td>
+                          <td class="info-label">Net Profit / (Loss):</td>
+                          <td class="info-value">
+                            ৳{{
+                              balanceSheetData.currentYearProfit
+                                | number: "1.2-2"
+                            }}
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Assets -->
+                    <div class="section-title mb-1 fw-bold">Assets / সম্পদ</div>
+                    <div class="stored-products-section">
+                      <table class="products-table">
+                        <thead>
+                          <tr>
+                            <th>Particulars / বিবরণ</th>
+                            <th class="text-end" style="width: 140px">
+                              Amount Tk.
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (
+                            group of groupBySection(balanceSheetData.assets);
+                            track group.section
+                          ) {
+                            <tr class="fw-bold">
+                              <td>{{ group.section }}</td>
+                              <td class="text-end">
+                                {{ sumOf(group.items) | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                            @for (item of group.items; track item.accountName) {
+                              <tr>
+                                <td class="ps-4">{{ item.accountName }}</td>
+                                <td class="text-end">
+                                  {{ item.amount | number: "1.2-2" }}
+                                </td>
+                              </tr>
+                            }
+                          }
+                        </tbody>
+                        <tfoot>
+                          <tr class="total-row">
+                            <td class="text-end">
+                              <strong>Total Assets:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong
+                                >৳{{
+                                  balanceSheetData.totalAssets | number: "1.2-2"
+                                }}</strong
+                              >
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+
+                    <!-- Equity and Liabilities -->
+                    <div class="section-title mb-1 fw-bold">
+                      Equity &amp; Liabilities / মূলধন ও দায়
+                    </div>
+                    <div class="stored-products-section">
+                      <table class="products-table">
+                        <thead>
+                          <tr>
+                            <th>Particulars / বিবরণ</th>
+                            <th class="text-end" style="width: 140px">
+                              Amount Tk.
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr class="fw-bold">
+                            <td>Shareholders' Equity / মূলধন</td>
+                            <td class="text-end">
+                              {{
+                                balanceSheetData.totalEquity | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+                          @for (
+                            item of balanceSheetData.equity;
+                            track item.accountName
+                          ) {
+                            <tr>
+                              <td class="ps-4">{{ item.accountName }}</td>
+                              <td class="text-end">
+                                {{ item.amount | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          }
+                          <tr class="fw-bold">
+                            <td>Current Liabilities / চলতি দায়</td>
+                            <td class="text-end">
+                              {{
+                                balanceSheetData.totalLiabilities
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+                          @for (
+                            item of balanceSheetData.liabilities;
+                            track item.accountName
+                          ) {
+                            <tr>
+                              <td class="ps-4">{{ item.accountName }}</td>
+                              <td class="text-end">
+                                {{ item.amount | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        <tfoot>
+                          <tr class="total-row">
+                            <td class="text-end">
+                              <strong>Total Equity &amp; Liabilities:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong
+                                >৳{{
+                                  balanceSheetData.totalEquity +
+                                    balanceSheetData.totalLiabilities
+                                    | number: "1.2-2"
+                                }}</strong
+                              >
+                            </td>
+                          </tr>
+                          @if (!isBalanced(balanceSheetData.difference)) {
+                            <tr class="text-danger">
+                              <td class="text-end">
+                                <strong
+                                  >Difference (Assets − Equity &amp;
+                                  Liabilities):</strong
+                                >
+                              </td>
+                              <td class="text-end">
+                                <strong
+                                  >৳{{
+                                    balanceSheetData.difference
+                                      | number: "1.2-2"
+                                  }}</strong
+                                >
+                              </td>
+                            </tr>
+                          }
+                        </tfoot>
+                      </table>
+                    </div>
+
+                    <!-- Net profit for the year -->
+                    @if (balanceSheetData.profitItems.length > 0) {
+                      <div class="section-title mb-1 fw-bold">
+                        Net Profit / (Loss) for the year / চলতি বছরের মুনাফা
+                      </div>
+                      <div class="stored-products-section">
+                        <table class="products-table">
+                          <tbody>
+                            @for (
+                              item of balanceSheetData.profitItems;
+                              track item.accountName
+                            ) {
+                              <tr>
+                                <td>{{ item.accountName }}</td>
+                                <td class="text-end" style="width: 140px">
+                                  {{ item.amount | number: "1.2-2" }}
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                          <tfoot>
+                            <tr class="total-row">
+                              <td class="text-end">
+                                <strong>Net Profit / (Loss):</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong
+                                  >৳{{
+                                    balanceSheetData.currentYearProfit
+                                      | number: "1.2-2"
+                                  }}</strong
+                                >
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    }
+
+                    <!-- Equation Verification -->
+                    <div class="equation-section mb-2">
+                      <div class="equation-box p-2 border bg-light text-center">
+                        <div class="fw-bold mb-1">
+                          Assets = Equity + Liabilities
+                        </div>
+                        <div
+                          class="d-flex justify-content-center align-items-center gap-2 flex-wrap"
+                        >
+                          <span
+                            >Assets: ৳{{
+                              balanceSheetData.totalAssets | number: "1.2-2"
+                            }}</span
+                          >
+                          <span>=</span>
+                          <span
+                            >Equity: ৳{{
+                              balanceSheetData.totalEquity | number: "1.2-2"
+                            }}</span
+                          >
+                          <span>+</span>
+                          <span
+                            >Liabilities: ৳{{
+                              balanceSheetData.totalLiabilities
+                                | number: "1.2-2"
+                            }}</span
+                          >
+                          @if (isBalanced(balanceSheetData.difference)) {
+                            <span class="ms-2 fw-bold text-success"
+                              >✓ Balanced</span
+                            >
+                          } @else {
+                            <span class="ms-2 fw-bold text-danger"
+                              >⚠ Difference ৳{{
+                                balanceSheetData.difference | number: "1.2-2"
+                              }}</span
+                            >
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <app-report-footer></app-report-footer>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     }
 
     <!-- DISPLAY: TAB 2 (COMPARATIVE BALANCE SHEET) -->
-    @if (activeTab === 'comparative' && showReport && !isLoading && comparativeData) {
-    <div class="row clearfix">
-      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="card">
-          <div class="row no-print mb-3">
-            <div class="col-12">
-              <div class="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  [openNewTab]="true"
-                  [closeWindow]="true"
-                  [previewOnly]="false"
-                  [useExistingCss]="true"
-                  printTitle="Comparative Balance Sheet"
-                  printSectionId="print-section-bs-comp"
-                  ngxPrint
-                >
-                  <i class="fas fa-print me-1"></i>Print Comparative Report
-                </button>
+    @if (
+      activeTab === "comparative" &&
+      showReport &&
+      !isLoading &&
+      comparativeData &&
+      !currentMessage
+    ) {
+      <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <div class="card">
+            <div class="row no-print mb-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    [openNewTab]="true"
+                    [closeWindow]="true"
+                    [previewOnly]="false"
+                    [useExistingCss]="true"
+                    printTitle="Comparative Balance Sheet"
+                    printSectionId="print-section-bs-comp"
+                    ngxPrint
+                  >
+                    <i class="fas fa-print me-1"></i>Print Comparative Report
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div id="print-section-bs-comp" class="print-section-container">
-            <div class="card invoice-card">
-              <div class="card-body p-0">
-                <div class="invoice-container">
-                  <app-report-invoice-header [Title]="'তুলনামূলক সম্পদ ও দায় / Comparative Balance Sheet'" [InvoiceNumber]="''"></app-report-invoice-header>
+            <div id="print-section-bs-comp" class="print-section-container">
+              <div class="card invoice-card">
+                <div class="card-body p-0">
+                  <div class="invoice-container">
+                    <app-report-invoice-header
+                      [Title]="
+                        'আর্থিক অবস্থার বিবরণী / Statement of Financial Position'
+                      "
+                      [InvoiceNumber]="''"
+                    ></app-report-invoice-header>
 
-                  <div class="booking-info-box">
-                    <table class="info-table">
-                      <tr>
-                        <td class="info-label">Base Date (১ম তারিখ):</td>
-                        <td class="info-value">{{ comparativeData.date1 | date: "dd-MMM-yyyy" }}</td>
-                        <td class="info-label">Compare Date (২য় তারিখ):</td>
-                        <td class="info-value">{{ comparativeData.date2 | date: "dd-MMM-yyyy" }}</td>
-                      </tr>
-                      <tr>
-                        <td class="info-label">Base Assets:</td>
-                        <td class="info-value">৳{{ comparativeData.sheet1.totalAssets | number: "1.2-2" }}</td>
-                        <td class="info-label">Compare Assets:</td>
-                        <td class="info-value">৳{{ comparativeData.sheet2.totalAssets | number: "1.2-2" }}</td>
-                      </tr>
-                    </table>
+                    <div class="booking-info-box">
+                      <table class="info-table">
+                        <tr>
+                          <td class="info-label">As at (current):</td>
+                          <td class="info-value">
+                            {{ comparativeData.date2 | date: "dd-MMM-yyyy" }}
+                          </td>
+                          <td class="info-label">As at (previous):</td>
+                          <td class="info-value">
+                            {{ comparativeData.date1 | date: "dd-MMM-yyyy" }}
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <div class="stored-products-section">
+                      <table class="products-table">
+                        <thead>
+                          <tr>
+                            <th>Particulars / বিবরণ</th>
+                            <th class="text-end">
+                              {{
+                                comparativeData.date2 | date: "dd-MM-yyyy"
+                              }}
+                              Tk.
+                            </th>
+                            <th class="text-end">
+                              {{
+                                comparativeData.date1 | date: "dd-MM-yyyy"
+                              }}
+                              Tk.
+                            </th>
+                            <th class="text-end">Change Tk.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Assets -->
+                          <tr class="fw-bold">
+                            <td colspan="4">Assets / সম্পদ</td>
+                          </tr>
+                          @for (
+                            group of groupBySection(comparativeData.assets);
+                            track group.section
+                          ) {
+                            <tr class="fw-bold">
+                              <td class="ps-2">{{ group.section }}</td>
+                              <td colspan="3"></td>
+                            </tr>
+                            @for (item of group.items; track item.accountName) {
+                              <tr>
+                                <td class="ps-4">{{ item.accountName }}</td>
+                                <td class="text-end">
+                                  {{ item.date2Amount | number: "1.2-2" }}
+                                </td>
+                                <td class="text-end">
+                                  {{ item.date1Amount | number: "1.2-2" }}
+                                </td>
+                                <td
+                                  class="text-end"
+                                  [class.text-success]="item.changeAmount > 0"
+                                  [class.text-danger]="item.changeAmount < 0"
+                                >
+                                  {{ item.changeAmount > 0 ? "+" : ""
+                                  }}{{ item.changeAmount | number: "1.2-2" }}
+                                </td>
+                              </tr>
+                            }
+                          }
+                          <tr class="total-row">
+                            <td class="text-end">
+                              <strong>Total Assets:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                comparativeData.sheet2.totalAssets
+                                  | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                comparativeData.sheet1.totalAssets
+                                  | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                comparativeData.sheet2.totalAssets -
+                                  comparativeData.sheet1.totalAssets
+                                  | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                          </tr>
+
+                          <!-- Equity -->
+                          <tr class="fw-bold">
+                            <td colspan="4">Shareholders' Equity / মূলধন</td>
+                          </tr>
+                          @for (
+                            item of comparativeData.equity;
+                            track item.accountName
+                          ) {
+                            <tr>
+                              <td class="ps-4">{{ item.accountName }}</td>
+                              <td class="text-end">
+                                {{ item.date2Amount | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ item.date1Amount | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ item.changeAmount > 0 ? "+" : ""
+                                }}{{ item.changeAmount | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          }
+                          <tr class="fw-bold">
+                            <td class="ps-2">Total Equity</td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet2.totalEquity
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet1.totalEquity
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet2.totalEquity -
+                                  comparativeData.sheet1.totalEquity
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+
+                          <!-- Liabilities -->
+                          <tr class="fw-bold">
+                            <td colspan="4">Current Liabilities / চলতি দায়</td>
+                          </tr>
+                          @for (
+                            item of comparativeData.liabilities;
+                            track item.accountName
+                          ) {
+                            <tr>
+                              <td class="ps-4">{{ item.accountName }}</td>
+                              <td class="text-end">
+                                {{ item.date2Amount | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ item.date1Amount | number: "1.2-2" }}
+                              </td>
+                              <td class="text-end">
+                                {{ item.changeAmount > 0 ? "+" : ""
+                                }}{{ item.changeAmount | number: "1.2-2" }}
+                              </td>
+                            </tr>
+                          }
+                          <tr class="fw-bold">
+                            <td class="ps-2">Total Liabilities</td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet2.totalLiabilities
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet1.totalLiabilities
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                            <td class="text-end">
+                              {{
+                                comparativeData.sheet2.totalLiabilities -
+                                  comparativeData.sheet1.totalLiabilities
+                                  | number: "1.2-2"
+                              }}
+                            </td>
+                          </tr>
+                          <tr class="total-row">
+                            <td class="text-end">
+                              <strong>Total Equity &amp; Liabilities:</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                comparativeData.sheet2.totalEquity +
+                                  comparativeData.sheet2.totalLiabilities
+                                  | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                            <td class="text-end">
+                              <strong>{{
+                                comparativeData.sheet1.totalEquity +
+                                  comparativeData.sheet1.totalLiabilities
+                                  | number: "1.2-2"
+                              }}</strong>
+                            </td>
+                            <td></td>
+                          </tr>
+                          @if (
+                            !isBalanced(comparativeData.sheet1.difference) ||
+                            !isBalanced(comparativeData.sheet2.difference)
+                          ) {
+                            <tr class="text-danger">
+                              <td class="text-end">
+                                <strong>Difference:</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
+                                  comparativeData.sheet2.difference
+                                    | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                              <td class="text-end">
+                                <strong>{{
+                                  comparativeData.sheet1.difference
+                                    | number: "1.2-2"
+                                }}</strong>
+                              </td>
+                              <td></td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <app-report-footer></app-report-footer>
                   </div>
-
-                  <!-- Comparative Assets -->
-                  <div class="section-title mb-1 fw-bold">Comparative Assets / সম্পদের তুলনা</div>
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th>Account Name</th>
-                          <th class="text-end">{{ comparativeData.date1 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">{{ comparativeData.date2 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">Change Tk.</th>
-                          <th class="text-end">Growth %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of comparativeData.assets; track item.accountName) {
-                        <tr>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-end">{{ item.date1Amount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.date2Amount | number: '1.2-2' }}</td>
-                          <td class="text-end" [class.text-success]="item.changeAmount > 0" [class.text-danger]="item.changeAmount < 0">
-                            {{ item.changeAmount > 0 ? '+' : '' }}{{ item.changeAmount | number: '1.2-2' }}
-                          </td>
-                          <td class="text-end">
-                            {{ item.changePercentage > 0 ? '+' : '' }}{{ item.changePercentage | number: '1.2-2' }}%
-                          </td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td><strong>Total Assets:</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet1.totalAssets | number: '1.2-2' }}</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet2.totalAssets | number: '1.2-2' }}</strong></td>
-                          <td class="text-end">
-                            <strong>{{ (comparativeData.sheet2.totalAssets - comparativeData.sheet1.totalAssets) | number: '1.2-2' }}</strong>
-                          </td>
-                          <td class="text-end">-</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-
-                  <!-- Comparative Liabilities -->
-                  <div class="section-title mb-1 fw-bold">Comparative Liabilities / দায়ের তুলনা</div>
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th>Account Name</th>
-                          <th class="text-end">{{ comparativeData.date1 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">{{ comparativeData.date2 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">Change Tk.</th>
-                          <th class="text-end">Growth %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of comparativeData.liabilities; track item.accountName) {
-                        <tr>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-end">{{ item.date1Amount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.date2Amount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.changeAmount > 0 ? '+' : '' }}{{ item.changeAmount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.changePercentage | number: '1.2-2' }}%</td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td><strong>Total Liabilities:</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet1.totalLiabilities | number: '1.2-2' }}</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet2.totalLiabilities | number: '1.2-2' }}</strong></td>
-                          <td class="text-end">
-                            <strong>{{ (comparativeData.sheet2.totalLiabilities - comparativeData.sheet1.totalLiabilities) | number: '1.2-2' }}</strong>
-                          </td>
-                          <td class="text-end">-</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-
-                  <!-- Comparative Equity -->
-                  <div class="section-title mb-1 fw-bold">Comparative Equity / মূলধনের তুলনা</div>
-                  <div class="stored-products-section mb-3">
-                    <table class="products-table">
-                      <thead>
-                        <tr>
-                          <th>Account Name</th>
-                          <th class="text-end">{{ comparativeData.date1 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">{{ comparativeData.date2 | date: 'dd-MMM-yy' }} Tk.</th>
-                          <th class="text-end">Change Tk.</th>
-                          <th class="text-end">Growth %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of comparativeData.equity; track item.accountName) {
-                        <tr>
-                          <td>{{ item.accountName }}</td>
-                          <td class="text-end">{{ item.date1Amount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.date2Amount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.changeAmount > 0 ? '+' : '' }}{{ item.changeAmount | number: '1.2-2' }}</td>
-                          <td class="text-end">{{ item.changePercentage | number: '1.2-2' }}%</td>
-                        </tr>
-                        }
-                      </tbody>
-                      <tfoot>
-                        <tr class="total-row">
-                          <td><strong>Total Equity:</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet1.totalEquity | number: '1.2-2' }}</strong></td>
-                          <td class="text-end"><strong>{{ comparativeData.sheet2.totalEquity | number: '1.2-2' }}</strong></td>
-                          <td class="text-end">
-                            <strong>{{ (comparativeData.sheet2.totalEquity - comparativeData.sheet1.totalEquity) | number: '1.2-2' }}</strong>
-                          </td>
-                          <td class="text-end">-</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-
-                  <app-report-footer></app-report-footer>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     }
   </div>
 </section>

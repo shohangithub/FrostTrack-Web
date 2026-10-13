@@ -1,0 +1,184 @@
+<section class="main-content">
+  <div class="section-body">
+    <!-- Settings -->
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card mt-2 mb-2">
+          <span class="card-label">Balance Sheet Setup / ব্যালেন্স শিট সেটআপ</span>
+          <div class="p-3">
+            <div class="alert alert-info py-2 mb-3 small">
+              <strong>One-time setup:</strong>
+              1) Set the start date = date of the last audited balance sheet (e.g. 30-06-2025).
+              2) Enter that balance sheet's share capital, retained earnings, creditors, deposits and provisions below,
+              dated on the start date.
+              3) Set the Balance Sheet category on special transaction heads (loans, deposits, asset purchases,
+              electricity/gas) and the opening WDV on fixed assets.
+              4) Open the <a routerLink="/reports/balance-sheet">Balance Sheet</a> for the start date: it should show
+              no Difference.
+            </div>
+            <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+              <div class="row align-items-end">
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Balance sheet start date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="balanceSheetStartDate" />
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Fiscal year starts in</label>
+                  <select class="form-select form-control-sm" formControlName="fiscalYearStartMonth">
+                    @for (month of monthList; track month.id) {
+                    <option [ngValue]="month.id">{{ month.value }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-lg-6 col-md-4 col-sm-12 mb-2 text-end">
+                  <button type="submit" class="btn btn-primary btn-sm px-3" [disabled]="isSavingSettings">
+                    @if (isSavingSettings) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entry form -->
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card mb-2">
+          <span class="card-label">
+            {{ editingId ? 'Edit' : 'Add' }} Opening Balance / Adjustment
+          </span>
+          <div class="p-3">
+            <form [formGroup]="entryForm" (ngSubmit)="saveEntry()">
+              <div class="row">
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control form-control-sm" formControlName="entryDate" />
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Type <span class="text-danger">*</span></label>
+                  <select class="form-select form-control-sm" formControlName="entryType" (change)="onEntryTypeChange()">
+                    @for (type of entryTypeList; track type.id) {
+                    <option [ngValue]="type.id">{{ type.value }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Balance sheet line <span class="text-danger">*</span></label>
+                  <select class="form-select form-control-sm" formControlName="lineItem">
+                    <option [ngValue]="null">Select</option>
+                    @for (line of availableLineItems; track line.id) {
+                    <option [ngValue]="line.id">{{ line.section }} – {{ line.value }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Account name <span class="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="accountName"
+                    placeholder="e.g. WAPDA PDB deposit, Provision – Electric bill"
+                  />
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Amount Tk. <span class="text-danger">*</span></label>
+                  <input type="number" step="0.01" class="form-control form-control-sm" formControlName="amount" />
+                  <small class="text-muted">Negative reduces the line (e.g. retained loss).</small>
+                </div>
+                @if (isAdjustment) {
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                  <label class="col-form-label py-1">Profit &amp; loss side <span class="text-danger">*</span></label>
+                  <select class="form-select form-control-sm" formControlName="profitCategory">
+                    <option [ngValue]="null">Select</option>
+                    @for (category of profitCategoryList; track category.id) {
+                    <option [ngValue]="category.id">{{ category.value }}</option>
+                    }
+                  </select>
+                  <small class="text-muted">A liability adjustment is an expense; an asset adjustment is income.</small>
+                </div>
+                }
+                <div class="col mb-2">
+                  <label class="col-form-label py-1">Note</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="note" />
+                </div>
+              </div>
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary btn-sm px-3" [disabled]="isSaving">
+                  @if (isSaving) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  {{ editingId ? 'Update' : 'Add' }}
+                </button>
+                @if (editingId) {
+                <button type="button" class="btn btn-secondary btn-sm ms-2 px-3" (click)="resetEntryForm()">Cancel</button>
+                }
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entries -->
+    <div class="row clearfix">
+      <div class="col-lg-12">
+        <div class="card">
+          <span class="card-label">Opening Balances &amp; Adjustments</span>
+          <div class="p-3 table-responsive">
+            @if (isLoading) {
+            <div class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></div>
+            } @else if (entries.length === 0) {
+            <div class="text-muted text-center py-3">No entries yet.</div>
+            } @else {
+            <table class="table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Line</th>
+                  <th>Account name</th>
+                  <th class="text-end">Amount Tk.</th>
+                  <th>P&amp;L side</th>
+                  <th>Note</th>
+                  <th class="text-center" style="width: 90px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of entries; track entry.id) {
+                <tr [class.table-warning]="entry.id === editingId">
+                  <td>{{ entry.entryDate | date: 'dd-MMM-yyyy' }}</td>
+                  <td>{{ entryTypeName(entry.entryType) }}</td>
+                  <td>
+                    <span class="text-muted small">{{ lineItemSection(entry.lineItem) }}</span><br />
+                    {{ lineItemName(entry.lineItem) }}
+                  </td>
+                  <td>{{ entry.accountName }}</td>
+                  <td class="text-end">{{ entry.amount | number: '1.2-2' }}</td>
+                  <td>{{ profitCategoryName(entry.profitCategory) }}</td>
+                  <td>{{ entry.note }}</td>
+                  <td class="text-center">
+                    <button class="btn btn-tbl-edit h-auto" (click)="editEntry(entry)" title="Edit">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="btn btn-tbl-delete h-auto" (click)="deleteEntry(entry)" title="Delete">
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

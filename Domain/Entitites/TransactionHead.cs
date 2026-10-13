@@ -40,6 +40,10 @@ public class TransactionHead : AuditableEntity<Guid>
     public Guid? TransactionGroupId { get; set; }
     public TransactionGroup? TransactionGroup { get; set; }
 
+    // Optional: where the head goes in the Balance Sheet / P&L (see AccountCategories). Null = by Type.
+    [MaxLength(50)]
+    public string? AccountCategory { get; set; }
+
     [NotMapped]
     public string Status => IsActive ? "Active" : "Inactive";
 }
@@ -51,6 +55,29 @@ public static class TransactionHeadTypes
     public const string CREDIT = "CREDIT"; // Income/In
 }
 
+
+/// <summary>
+/// Balance Sheet / P&amp;L placement of a transaction head. Null on the head = money in is INCOME,
+/// money out is EXPENSE_ADMIN.
+/// </summary>
+public static class AccountCategories
+{
+    public const string INCOME = "INCOME";
+    public const string EXPENSE_DIRECT = "EXPENSE_DIRECT";
+    public const string EXPENSE_ADMIN = "EXPENSE_ADMIN";
+    public const string EXPENSE_FINANCE = "EXPENSE_FINANCE";
+    public const string TAX = "TAX";
+    public const string LIABILITY = "LIABILITY";     // loans / sundry creditors: money in raises it, money out repays it
+    public const string ASSET = "ASSET";             // advances / deposits: money out raises it, money in returns it
+    public const string CAPITAL = "CAPITAL";         // share capital: money in raises it, money out withdraws it
+    public const string FIXED_ASSET = "FIXED_ASSET"; // asset purchases: value comes from the asset register
+
+    public static readonly string[] All =
+    [
+        INCOME, EXPENSE_DIRECT, EXPENSE_ADMIN, EXPENSE_FINANCE, TAX,
+        LIABILITY, ASSET, CAPITAL, FIXED_ASSET
+    ];
+}
 
 public static class UsageFor
 {

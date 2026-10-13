@@ -50,5 +50,10 @@ internal class AssetValidator : AbstractValidator<AssetRequest>
         RuleFor(cmd => cmd.DepreciationRate)
             .InclusiveBetween(0, 100)
             .WithMessage("Depreciation rate must be between 0 and 100 percent");
+
+        RuleFor(cmd => cmd.OpeningWdv)
+            .GreaterThanOrEqualTo(0)
+            .When(cmd => cmd.OpeningWdv.HasValue)
+            .WithMessage("Opening written down value cannot be negative");
     }
 }

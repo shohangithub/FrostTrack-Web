@@ -18,6 +18,7 @@ import {
 } from 'app/utils/server-error-handler';
 
 import {
+  ACCOUNT_CATEGORY_LIST,
   COMMON_STATUS_LIST,
   DISPLAY_TYPE_LIST,
   TRANSACTION_TYPE_LIST,
@@ -57,6 +58,7 @@ export class AddTransactionHeadComponent implements OnInit {
   statusList = COMMON_STATUS_LIST;
   typeList = TRANSACTION_TYPE_LIST;
   displayTypeList = DISPLAY_TYPE_LIST;
+  accountCategoryList = ACCOUNT_CATEGORY_LIST;
   transactionGroupList: ILookup<string>[] = [];
 
   constructor(
@@ -77,6 +79,7 @@ export class AddTransactionHeadComponent implements OnInit {
       colorCode: new UntypedFormControl(),
       iconClass: new UntypedFormControl(),
       transactionGroupId: new UntypedFormControl(null),
+      accountCategory: new UntypedFormControl(null),
     });
   }
 
@@ -99,6 +102,7 @@ export class AddTransactionHeadComponent implements OnInit {
       colorCode: [''],
       iconClass: [''],
       transactionGroupId: [null],
+      accountCategory: [null],
     });
   }
 
@@ -123,6 +127,7 @@ export class AddTransactionHeadComponent implements OnInit {
           colorCode: response.colorCode || '',
           iconClass: response.iconClass || '',
           transactionGroupId: response.transactionGroupId ?? null,
+          accountCategory: response.accountCategory ?? null,
         });
         this.isLoading = false;
       },
@@ -166,6 +171,7 @@ export class AddTransactionHeadComponent implements OnInit {
         colorCode: formData.colorCode,
         iconClass: formData.iconClass,
         transactionGroupId: formData.transactionGroupId || null,
+        accountCategory: formData.accountCategory || null,
       };
       this.transactionHeadService.update(formData.id, payload).subscribe({
         next: (response: ITransactionHeadResponse) => {

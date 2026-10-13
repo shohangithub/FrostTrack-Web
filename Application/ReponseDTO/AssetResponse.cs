@@ -21,7 +21,8 @@ public record AssetResponse(
     string? Notes,
     string? ImageUrl,
     bool IsActive,
-    string Status
+    string Status,
+    decimal? OpeningWdv
     );
 
 public record AssetListResponse(

@@ -93,6 +93,13 @@ export const reportRoutes: Route[] = [
       ),
   },
   {
+    path: 'balance-sheet-setup',
+    loadComponent: () =>
+      import('./balance-sheet-setup/balance-sheet-setup.component').then(
+        (m) => m.BalanceSheetSetupComponent,
+      ),
+  },
+  {
     path: 'employee-report',
     loadComponent: () =>
       import('./components/employee-report/employee-report.component').then(

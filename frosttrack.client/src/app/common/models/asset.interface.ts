@@ -43,6 +43,8 @@ export interface IAssetResponse {
   purchaseCost: number;
   currentValue: number;
   depreciationRate: number;
+  /** Written down value on the balance sheet start date (assets bought before it). */
+  openingWdv?: number | null;
   location?: string;
   department?: string;
   assignedTo?: string;
@@ -67,6 +69,7 @@ export interface IAssetRequest {
   purchaseCost?: number;
   currentValue?: number;
   depreciationRate?: number;
+  openingWdv?: number | null;
   location?: string;
   department?: string;
   assignedTo?: string;

@@ -300,6 +300,9 @@ namespace Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal?>("OpeningWdv")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<decimal>("PurchaseCost")
                         .HasColumnType("decimal(18, 2)");
 
@@ -320,6 +323,89 @@ namespace Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Assets");
+                });
+
+            modelBuilder.Entity("Domain.Entitites.BalanceSheetEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnOrder(0);
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ArchivedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EntryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EntryType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LineItem")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ProfitCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "EntryDate");
+
+                    b.ToTable("BalanceSheetEntries", "finance");
                 });
 
             modelBuilder.Entity("Domain.Entitites.Bank", b =>
@@ -818,6 +904,9 @@ namespace Persistence.Migrations
                     b.Property<bool>("AutoInvoicePrint")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("BalanceSheetStartDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("BillingStartDate")
                         .HasColumnType("datetime2");
 
@@ -844,6 +933,9 @@ namespace Persistence.Migrations
 
                     b.Property<bool>("EnableRecurringChargeJob")
                         .HasColumnType("bit");
+
+                    b.Property<int>("FiscalYearStartMonth")
+                        .HasColumnType("int");
 
                     b.Property<string>("InvoiceFooter")
                         .IsRequired()
@@ -2295,6 +2387,10 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnOrder(0);
+
+                    b.Property<string>("AccountCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("ArchivedAt")
                         .HasColumnType("datetime2");

@@ -53,6 +53,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<AdvanceAllocation> AdvanceAllocations { get; set; }
     public DbSet<TransactionHead> TransactionHeads { get; set; }
     public DbSet<TransactionGroup> TransactionGroups { get; set; }
+    public DbSet<BalanceSheetEntry> BalanceSheetEntries { get; set; }
     public DbSet<SalaryPayment> SalaryPayments { get; set; }
     public DbSet<RecurringChargeRun> RecurringChargeRuns { get; set; }
     public DbSet<RecurringChargeEntry> RecurringChargeEntries { get; set; }
@@ -214,6 +215,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         modelBuilder.Entity<TransactionGroup>(entity =>
         {
             entity.HasIndex(x => x.TenantId);
+            if (_tenantId != Guid.Empty)
+                entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<BalanceSheetEntry>(entity =>
+        {
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => new { x.TenantId, x.EntryDate });
             if (_tenantId != Guid.Empty)
                 entity.HasQueryFilter(x => x.TenantId == _tenantId && !x.IsDeleted);
         });

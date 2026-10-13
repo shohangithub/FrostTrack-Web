@@ -9,5 +9,6 @@ public record TransactionHeadRequest(
     bool IsActive,
     string? ColorCode,
     string? IconClass,
-    Guid? TransactionGroupId = null
+    Guid? TransactionGroupId = null,
+    string? AccountCategory = null
 );

@@ -48,7 +48,7 @@ $font-size: 11px;
 
 // Report Info Box Section
 .booking-info-box {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     border: 2px solid #000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -60,7 +60,7 @@ $font-size: 11px;
         tr {
             td {
                 border: 1px solid #000 !important;
-                padding: 6px 8px;
+                padding: 4px 8px;
                 font-size: $font-size;
                 vertical-align: middle;
                 color: #000;
@@ -85,7 +85,7 @@ $font-size: 11px;
 .section-title {
     font-weight: bold;
     font-size: 12px;
-    margin: 15px 0 8px 0;
+    margin: 8px 0 4px 0;
     text-align: center;
     text-decoration: underline;
     color: #000;
@@ -93,7 +93,7 @@ $font-size: 11px;
 
 // Products Section (for balance sheet details)
 .stored-products-section {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 
     .products-table {
         width: 100%;
@@ -101,7 +101,7 @@ $font-size: 11px;
 
         th {
             border: 1px solid #000 !important;
-            padding: 6px 8px;
+            padding: 3px 8px;
             font-size: $font-size;
             background-color: #f0f0f0;
             font-weight: bold;
@@ -113,7 +113,7 @@ $font-size: 11px;
 
         td {
             border: 1px solid #000 !important;
-            padding: 6px 8px;
+            padding: 3px 8px;
             font-size: $font-size;
             text-align: left;
             vertical-align: middle;
@@ -148,8 +148,8 @@ $font-size: 11px;
 
 // Balance Sheet Equation Section
 .equation-section {
-    margin: 20px 0;
-    padding: 15px;
+    margin: 8px 0;
+    padding: 4px;
     border: 2px solid #000;
     background-color: #f9f9f9;
     -webkit-print-color-adjust: exact;
@@ -215,15 +215,47 @@ $font-size: 11px;
     background-color: #f9f9f9;
 }
 
-// Print Specific Styles
+// Print Specific Styles: the statement fits on one A4 page
 @media print {
-    .print-section-container {
+    @page {
+        size: A4 portrait;
+        margin: 8mm;
+    }
+
+    .print-section-container,
+    .invoice-card,
+    .invoice-container {
+        width: 100%;
+        min-height: 0;
         box-shadow: none;
         margin: 0;
     }
 
     .invoice-container {
+        padding: 0;
+        font-size: 10px;
+        page-break-after: auto;
         page-break-inside: avoid;
+    }
+
+    .booking-info-box .info-table tr td,
+    .stored-products-section .products-table th,
+    .stored-products-section .products-table td {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+
+    .section-title {
+        margin: 5px 0 3px 0;
+    }
+
+    .stored-products-section {
+        margin-bottom: 5px;
+    }
+
+    .equation-section {
+        margin: 5px 0;
+        padding: 2px;
     }
 
     .products-table {

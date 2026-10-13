@@ -107,6 +107,7 @@ export class AddAssetComponent implements OnInit {
       purchaseCost: new UntypedFormControl(),
       currentValue: new UntypedFormControl(),
       depreciationRate: new UntypedFormControl(),
+      openingWdv: new UntypedFormControl(),
       location: new UntypedFormControl(),
       department: new UntypedFormControl(),
       assignedTo: new UntypedFormControl(),
@@ -141,6 +142,7 @@ export class AddAssetComponent implements OnInit {
       purchaseCost: [0, [Validators.required, Validators.min(0)]],
       currentValue: [0, [Validators.required, Validators.min(0)]],
       depreciationRate: [0, [Validators.min(0), Validators.max(100)]],
+      openingWdv: [null, [Validators.min(0)]],
       location: [null],
       department: [null],
       assignedTo: [null],
@@ -186,6 +188,7 @@ export class AddAssetComponent implements OnInit {
           purchaseCost: response.purchaseCost,
           currentValue: response.currentValue,
           depreciationRate: response.depreciationRate,
+          openingWdv: response.openingWdv ?? null,
           location: response.location,
           department: response.department,
           assignedTo: response.assignedTo,
@@ -231,6 +234,10 @@ export class AddAssetComponent implements OnInit {
     const payload: IAssetRequest = {
       id: this.isEditing ? this.row.id : 0,
       ...formData,
+      openingWdv:
+        formData.openingWdv === null || formData.openingWdv === ''
+          ? null
+          : Number(formData.openingWdv),
     };
 
     if (this.isEditing) {

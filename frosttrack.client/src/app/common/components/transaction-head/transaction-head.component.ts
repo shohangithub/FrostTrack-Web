@@ -29,6 +29,7 @@ import { Configuration } from '../../../config/configuration';
 import { ModalOption } from '../../../config/modal-option';
 import { LayoutService } from '@core/service/layout.service';
 import { AddTransactionHeadComponent } from './add-transaction-head/add-transaction-head.component';
+import { ACCOUNT_CATEGORY_LIST } from 'app/common/data/settings-data';
 
 @Component({
   selector: 'app-transaction-head',
@@ -65,6 +66,13 @@ export class TransactionHeadComponent implements OnInit {
   paging: PagingResponse | undefined;
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
+
+  accountCategoryName(id?: string | null): string {
+    if (!id) return 'Default';
+    const label = ACCOUNT_CATEGORY_LIST.find((x) => x.id === id)?.value ?? id;
+    return label.split(' – ')[0].split(' (')[0];
+  }
+
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,

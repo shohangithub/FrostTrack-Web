@@ -328,6 +328,13 @@ public class BookingLedgerService : IBookingLedgerService
         return result;
     }
 
+    public async Task<decimal> GetTotalChargesBeforeAsync(DateTime beforeUtc, CancellationToken cancellationToken = default)
+    {
+        return await _entryRepository.Query()
+            .Where(e => e.ChargeType != ChargeTypes.Legacy && e.EntryDate < beforeUtc && !e.Booking!.IsDeleted)
+            .SumAsync(e => e.Amount, cancellationToken);
+    }
+
     public async Task<List<LedgerEntryResponse>> GetEntriesAsync(Guid bookingId, CancellationToken cancellationToken = default)
     {
         var entries = await _entryRepository.Query()

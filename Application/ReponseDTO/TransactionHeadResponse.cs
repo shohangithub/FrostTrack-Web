@@ -13,7 +13,8 @@ public record TransactionHeadResponse(
     string? ColorCode,
     string? IconClass,
     string Status,
-    Guid? TransactionGroupId
+    Guid? TransactionGroupId,
+    string? AccountCategory
 );
 
 public record TransactionHeadListResponse(
@@ -24,7 +25,8 @@ public record TransactionHeadListResponse(
     string DisplayType,
     bool IsSystem,
     string Status,
-    string? TransactionGroupName = null
+    string? TransactionGroupName = null,
+    string? AccountCategory = null
 );
 
 public record TransactionHeadLookup(

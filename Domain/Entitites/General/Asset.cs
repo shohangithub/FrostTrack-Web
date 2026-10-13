@@ -16,6 +16,12 @@ public class Asset : AuditableEntity<int>
     public decimal CurrentValue { get; set; }
     [Column(TypeName = "decimal(5, 2)")]
     public decimal DepreciationRate { get; set; }
+    /// <summary>
+    /// Written down value on the Balance Sheet start date (for assets bought before it, from the audited
+    /// schedule). Null = depreciate from PurchaseCost and PurchaseDate.
+    /// </summary>
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? OpeningWdv { get; set; }
     public string? Location { get; set; }
     public string? Department { get; set; }
     public string? AssignedTo { get; set; }
