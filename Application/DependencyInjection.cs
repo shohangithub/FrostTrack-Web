@@ -13,10 +13,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-
+        ConfigureMappings();
         services.AddServices();
 
         return services;
+    }
+
+    /// <summary>
+    /// Mapster builds a record through its constructor only while the record has no other settable
+    /// property. BookingDetailResponse also has HasDeliveries { get; init; }, so it must be told to use
+    /// the constructor (otherwise creating / opening a booking fails with "No default constructor").
+    /// </summary>
+    private static void ConfigureMappings()
+    {
+        TypeAdapterConfig<BookingDetail, BookingDetailResponse>.NewConfig().MapToConstructor(true);
     }
 
 
