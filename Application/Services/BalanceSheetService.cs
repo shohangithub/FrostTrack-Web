@@ -327,7 +327,7 @@ public class BalanceSheetService : IBalanceSheetService
         AddItem(equity, "Share Capital / শেয়ার মূলধন", EQUITY, BalanceSheetSections.Equity, lines.ShareCapital);
         AddItem(equity, "Retained Earnings b/f / সঞ্চিত আয় (পূর্ববর্তী)", EQUITY, BalanceSheetSections.Equity,
             lines.RetainedEarnings.Amount + profitBefore.Net, lines.RetainedEarnings.Count);
-        AddItem(equity, "Net Profit / (Loss) for the year / চলতি বছরের মুনাফা", EQUITY, BalanceSheetSections.Equity,
+        AddItem(equity, "Profit & Loss (মুনাফা ও ক্ষতি)", EQUITY, BalanceSheetSections.Equity,
             currentYearProfit, 0);
 
         response.Assets = assets;
