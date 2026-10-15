@@ -17,6 +17,10 @@ public class TransactionGroup : AuditableEntity<Guid>
 
     public int SortOrder { get; set; } = 0;
 
+    /// <summary>Label shown in the Trial Balance "Account Type" column (e.g. দায়, আয়, ব্যয়). Null = the group name.</summary>
+    [MaxLength(100)]
+    public string? AccountType { get; set; }
+
     [MaxLength(500)]
     public string? Description { get; set; }
 

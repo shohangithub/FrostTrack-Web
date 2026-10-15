@@ -5,6 +5,7 @@ export interface ITransactionGroupListResponse {
   sortOrder: number;
   headCount: number;
   status: string;
+  accountType?: string | null;
 }
 
 export interface ITransactionGroupResponse {
@@ -15,6 +16,7 @@ export interface ITransactionGroupResponse {
   description?: string;
   isActive: boolean;
   status: string;
+  accountType?: string | null;
 }
 
 export interface ITransactionGroupRequest {
@@ -22,4 +24,5 @@ export interface ITransactionGroupRequest {
   sortOrder: number;
   description?: string;
   isActive: boolean;
+  accountType?: string | null;
 }

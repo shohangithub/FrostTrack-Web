@@ -7,7 +7,8 @@ public record TransactionGroupResponse(
     int SortOrder,
     string? Description,
     bool IsActive,
-    string Status
+    string Status,
+    string? AccountType
 );
 
 public record TransactionGroupListResponse(
@@ -16,5 +17,6 @@ public record TransactionGroupListResponse(
     string Name,
     int SortOrder,
     int HeadCount,
-    string Status
+    string Status,
+    string? AccountType = null
 );

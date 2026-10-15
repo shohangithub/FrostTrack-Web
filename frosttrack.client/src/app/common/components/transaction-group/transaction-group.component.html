@@ -54,6 +54,11 @@
                   {{ row.name }}
                 </ng-template>
               </ngx-datatable-column>
+              <ngx-datatable-column name="Account Type" prop="accountType" [width]="160" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.accountType || '-' }}
+                </ng-template>
+              </ngx-datatable-column>
               <ngx-datatable-column name="Sort Order" prop="sortOrder" [width]="100">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{ row.sortOrder }}

@@ -29,6 +29,7 @@ public class TransactionGroupService : ITransactionGroupService
 
         var entity = request.Adapt<TransactionGroup>();
         entity.Name = request.Name.Trim();
+        entity.AccountType = string.IsNullOrWhiteSpace(request.AccountType) ? null : request.AccountType.Trim();
         entity.Code = await _codeGenerationService.GenerateCodeAsync(
             _repository.Query(),
             "TG",
@@ -53,6 +54,7 @@ public class TransactionGroupService : ITransactionGroupService
         existingData.SortOrder = request.SortOrder;
         existingData.Description = request.Description;
         existingData.IsActive = request.IsActive;
+        existingData.AccountType = string.IsNullOrWhiteSpace(request.AccountType) ? null : request.AccountType.Trim();
 
         _defaultValueInjector.InjectUpdatingAudit<TransactionGroup, Guid>(existingData);
         var result = await _repository.UpdateAsync(existingData, cancellationToken);
@@ -126,7 +128,8 @@ public class TransactionGroupService : ITransactionGroupService
             x.Name,
             x.SortOrder,
             heads.Count(h => h.TransactionGroupId == x.Id && !h.IsDeleted),
-            x.IsActive ? "Active" : "Inactive"
+            x.IsActive ? "Active" : "Inactive",
+            x.AccountType
         );
 
         return await _repository.PaginationQuery(paginationQuery: requestQuery, predicate: predicate, selector: selector, cancellationToken);

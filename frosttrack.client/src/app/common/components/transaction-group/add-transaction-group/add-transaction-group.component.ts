@@ -54,6 +54,7 @@ export class AddTransactionGroupComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(200)]],
+      accountType: ['', [Validators.maxLength(100)]],
       sortOrder: [0],
       description: [''],
       isActive: ['true', [Validators.required]],
@@ -69,6 +70,7 @@ export class AddTransactionGroupComponent implements OnInit {
       next: (response: ITransactionGroupResponse) => {
         this.form.setValue({
           name: response.name,
+          accountType: response.accountType || '',
           sortOrder: response.sortOrder,
           description: response.description || '',
           isActive: String(response.isActive),
@@ -89,6 +91,7 @@ export class AddTransactionGroupComponent implements OnInit {
     const formData = this.form.value;
     const payload: ITransactionGroupRequest = {
       name: formData.name,
+      accountType: formData.accountType?.trim() || null,
       sortOrder: Number(formData.sortOrder) || 0,
       description: formData.description,
       isActive: formData.isActive === true || formData.isActive === 'true',

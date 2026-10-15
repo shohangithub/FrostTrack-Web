@@ -75,8 +75,8 @@ public class TrialBalanceService : ITrialBalanceService
                 var head = t.TransactionHead!;
                 var group = head.TransactionGroup;
                 return group != null
-                    ? new { Key = $"G:{group.Id}", Name = group.Name, IsGroup = true, IsIncome = false, group.SortOrder }
-                    : new { Key = $"H:{head.Type}:{head.Name}", Name = head.Name, IsGroup = false, IsIncome = head.Type == TransactionHeadTypes.DEBIT, SortOrder = 0 };
+                    ? new { Key = $"G:{group.Id}", Name = group.Name, AccountType = string.IsNullOrWhiteSpace(group.AccountType) ? group.Name : group.AccountType, IsGroup = true, IsIncome = false, group.SortOrder }
+                    : new { Key = $"H:{head.Type}:{head.Name}", Name = head.Name, AccountType = head.Name, IsGroup = false, IsIncome = head.Type == TransactionHeadTypes.DEBIT, SortOrder = 0 };
             })
             .Select(g =>
             {
@@ -90,7 +90,7 @@ public class TrialBalanceService : ITrialBalanceService
                     Item = new TrialBalanceItemResponse
                     {
                         AccountName = g.Key.Name,
-                        AccountType = g.Key.Name,
+                        AccountType = g.Key.AccountType,
                         DebitAmount = debit,
                         CreditAmount = credit,
                         TransactionCount = g.Count(),

@@ -19,6 +19,9 @@ internal class TransactionGroupValidator : AbstractValidator<TransactionGroupReq
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
+
+        RuleFor(x => x.AccountType)
+            .MaximumLength(100).WithMessage("Account type cannot exceed 100 characters");
     }
 
     private async Task<bool> BeUniqueName(string name, CancellationToken cancellationToken)
